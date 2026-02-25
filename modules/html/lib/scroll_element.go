@@ -76,6 +76,10 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 			}
 		default:
 			el, err = drivers.ToElement(args[0])
+			if err != nil {
+				return runtime.None, errors.Wrap(err, "element")
+			}
+
 			o, err := toScrollOptions(args[1])
 
 			if err != nil {

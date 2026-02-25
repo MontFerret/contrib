@@ -30,7 +30,7 @@ func StyleSet(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 		err = runtime.ValidateArgs(args, 3, 3)
 
 		if err != nil {
-			return runtime.None, nil
+			return runtime.None, err
 		}
 
 		return runtime.None, el.SetStyle(ctx, arg1, runtime.NewString(args[2].String()))

@@ -32,7 +32,7 @@ func AttributeSet(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		err = runtime.ValidateArgs(args, 3, 3)
 
 		if err != nil {
-			return runtime.None, nil
+			return runtime.None, err
 		}
 
 		switch arg2 := args[2].(type) {

@@ -36,13 +36,13 @@ func MouseMoveXY(ctx context.Context, args ...runtime.Value) (runtime.Value, err
 		return runtime.None, err
 	}
 
-	x, err := runtime.ToFloat(ctx, args[0])
+	x, err := runtime.ToFloat(ctx, args[1])
 
 	if err != nil {
 		return runtime.None, err
 	}
 
-	y, err := runtime.ToFloat(ctx, args[1])
+	y, err := runtime.ToFloat(ctx, args[2])
 
 	if err != nil {
 		return runtime.None, err

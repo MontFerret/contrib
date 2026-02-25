@@ -37,8 +37,7 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		}
 
 		switch args[1].(type) {
-		case runtime.String:
-		case runtime.Map:
+		case runtime.String, runtime.Map:
 			selector, err := drivers.ToQuerySelector(args[1])
 
 			if err != nil {
@@ -73,7 +72,7 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.False, err
 	}
 
-	// CLICK(doc, selector)
+	// CLICK(doc, selector, clicks)
 	selector, err := drivers.ToQuerySelector(args[1])
 
 	if err != nil {
@@ -90,7 +89,7 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return exists, nil
 	}
 
-	times, err := runtime.CastInt(args[1])
+	times, err := runtime.CastInt(args[2])
 
 	if err != nil {
 		return runtime.False, err

@@ -45,8 +45,8 @@ func ScrollXY(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 	}
 
 	var opts drivers.ScrollOptions
-	opts.Top = x
-	opts.Left = y
+	opts.Left = x
+	opts.Top = y
 
 	if len(args) > 3 {
 		opts, err = toScrollOptions(args[3])
@@ -55,8 +55,8 @@ func ScrollXY(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 			return runtime.None, err
 		}
 
-		opts.Top = x
-		opts.Left = y
+		opts.Left = x
+		opts.Top = y
 	}
 
 	return runtime.True, doc.Scroll(ctx, opts)
