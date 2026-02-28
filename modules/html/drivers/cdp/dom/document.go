@@ -329,7 +329,7 @@ func (doc *HTMLDocument) Eval() *eval.Runtime {
 	return doc.eval
 }
 
-func (doc *HTMLDocument) Query(ctx context.Context, q runtime.Query) (runtime.Value, error) {
+func (doc *HTMLDocument) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
 	//TODO implement me
 	panic("implement me")
 }

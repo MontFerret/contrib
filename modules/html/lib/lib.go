@@ -1,4 +1,4 @@
-package html
+package lib
 
 import (
 	"context"
@@ -9,73 +9,77 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-func RegisterLib(ns runtime.Namespace) error {
-	return ns.RegisterFunctions(
-		runtime.NewFunctionsFromMap(map[string]runtime.Function{
-			"ATTR_GET":          AttributeGet,
-			"ATTR_QUERY":        AttributeQuery,
-			"ATTR_REMOVE":       AttributeRemove,
-			"ATTR_SET":          AttributeSet,
-			"BLUR":              Blur,
-			"COOKIE_DEL":        CookieDel,
-			"COOKIE_GET":        CookieGet,
-			"COOKIE_SET":        CookieSet,
-			"CLICK":             Click,
-			"CLICK_ALL":         ClickAll,
-			"DOCUMENT":          Open,
-			"DOCUMENT_EXISTS":   DocumentExists,
-			"DOWNLOAD":          Download,
-			"ELEMENT":           Element,
-			"ELEMENT_EXISTS":    ElementExists,
-			"ELEMENTS":          Elements,
-			"ELEMENTS_COUNT":    ElementsCount,
-			"FRAMES":            Frames,
-			"FOCUS":             Focus,
-			"HOVER":             Hover,
-			"INNER_HTML":        GetInnerHTML,
-			"INNER_HTML_SET":    SetInnerHTML,
-			"INNER_HTML_ALL":    GetInnerHTMLAll,
-			"INNER_TEXT":        GetInnerText,
-			"INNER_TEXT_SET":    SetInnerText,
-			"INNER_TEXT_ALL":    GetInnerTextAll,
-			"INPUT":             Input,
-			"INPUT_CLEAR":       InputClear,
-			"MOUSE":             MouseMoveXY,
-			"NAVIGATE":          Navigate,
-			"NAVIGATE_BACK":     NavigateBack,
-			"NAVIGATE_FORWARD":  NavigateForward,
-			"PAGINATION":        Pagination,
-			"PARSE":             Parse,
-			"PDF":               PDF,
-			"PRESS":             Press,
-			"PRESS_SELECTOR":    PressSelector,
-			"SCREENSHOT":        Screenshot,
-			"SCROLL":            ScrollXY,
-			"SCROLL_BOTTOM":     ScrollBottom,
-			"SCROLL_ELEMENT":    ScrollInto,
-			"SCROLL_TOP":        ScrollTop,
-			"SELECT":            Select,
-			"STYLE_GET":         StyleGet,
-			"STYLE_REMOVE":      StyleRemove,
-			"STYLE_SET":         StyleSet,
-			"WAIT_ATTR":         WaitAttribute,
-			"WAIT_NO_ATTR":      WaitNoAttribute,
-			"WAIT_ATTR_ALL":     WaitAttributeAll,
-			"WAIT_NO_ATTR_ALL":  WaitNoAttributeAll,
-			"WAIT_ELEMENT":      WaitElement,
-			"WAIT_NO_ELEMENT":   WaitNoElement,
-			"WAIT_CLASS":        WaitClass,
-			"WAIT_NO_CLASS":     WaitNoClass,
-			"WAIT_CLASS_ALL":    WaitClassAll,
-			"WAIT_NO_CLASS_ALL": WaitNoClassAll,
-			"WAIT_STYLE":        WaitStyle,
-			"WAIT_NO_STYLE":     WaitNoStyle,
-			"WAIT_STYLE_ALL":    WaitStyleAll,
-			"WAIT_NO_STYLE_ALL": WaitNoStyleAll,
-			"WAIT_NAVIGATION":   WaitNavigation,
-			//"XPATH":             XPath,
-			//"X":                 XPathSelector,
-		}))
+func RegisterLib(ns runtime.Namespace) {
+	ns.Function().A1().
+		Add("IS_HTML_ELEMENT", IsHTMLElement).
+		Add("IS_HTML_DOCUMENT", IsHTMLDocument).
+		Add("X", XPathSelector)
+
+	ns.Function().A2().
+		Add("XPATH", XPath)
+
+	ns.Function().Var().
+		Add("ATTR_GET", AttributeGet).
+		Add("ATTR_QUERY", AttributeQuery).
+		Add("ATTR_REMOVE", AttributeRemove).
+		Add("ATTR_SET", AttributeSet).
+		Add("BLUR", Blur).
+		Add("COOKIE_DEL", CookieDel).
+		Add("COOKIE_GET", CookieGet).
+		Add("COOKIE_SET", CookieSet).
+		Add("CLICK", Click).
+		Add("CLICK_ALL", ClickAll).
+		Add("DOCUMENT", Open).
+		Add("DOCUMENT_EXISTS", DocumentExists).
+		Add("DOWNLOAD", Download).
+		Add("ELEMENT", Element).
+		Add("ELEMENT_EXISTS", ElementExists).
+		Add("ELEMENTS", Elements).
+		Add("ELEMENTS_COUNT", ElementsCount).
+		Add("FRAMES", Frames).
+		Add("FOCUS", Focus).
+		Add("HOVER", Hover).
+		Add("INNER_HTML", GetInnerHTML).
+		Add("INNER_HTML_SET", SetInnerHTML).
+		Add("INNER_HTML_ALL", GetInnerHTMLAll).
+		Add("INNER_TEXT", GetInnerText).
+		Add("INNER_TEXT_SET", SetInnerText).
+		Add("INNER_TEXT_ALL", GetInnerTextAll).
+		Add("INPUT", Input).
+		Add("INPUT_CLEAR", InputClear).
+		Add("MOUSE", MouseMoveXY).
+		Add("NAVIGATE", Navigate).
+		Add("NAVIGATE_BACK", NavigateBack).
+		Add("NAVIGATE_FORWARD", NavigateForward).
+		Add("PAGINATION", Pagination).
+		Add("PARSE", Parse).
+		Add("PDF", PDF).
+		Add("PRESS", Press).
+		Add("PRESS_SELECTOR", PressSelector).
+		Add("SCREENSHOT", Screenshot).
+		Add("SCROLL", ScrollXY).
+		Add("SCROLL_BOTTOM", ScrollBottom).
+		Add("SCROLL_ELEMENT", ScrollInto).
+		Add("SCROLL_TOP", ScrollTop).
+		Add("SELECT", Select).
+		Add("STYLE_GET", StyleGet).
+		Add("STYLE_REMOVE", StyleRemove).
+		Add("STYLE_SET", StyleSet).
+		Add("WAIT_ATTR", WaitAttribute).
+		Add("WAIT_NO_ATTR", WaitNoAttribute).
+		Add("WAIT_ATTR_ALL", WaitAttributeAll).
+		Add("WAIT_NO_ATTR_ALL", WaitNoAttributeAll).
+		Add("WAIT_ELEMENT", WaitElement).
+		Add("WAIT_NO_ELEMENT", WaitNoElement).
+		Add("WAIT_CLASS", WaitClass).
+		Add("WAIT_NO_CLASS", WaitNoClass).
+		Add("WAIT_CLASS_ALL", WaitClassAll).
+		Add("WAIT_NO_CLASS_ALL", WaitNoClassAll).
+		Add("WAIT_STYLE", WaitStyle).
+		Add("WAIT_NO_STYLE", WaitNoStyle).
+		Add("WAIT_STYLE_ALL", WaitStyleAll).
+		Add("WAIT_NO_STYLE_ALL", WaitNoStyleAll).
+		Add("WAIT_NAVIGATION", WaitNavigation)
 }
 
 func OpenOrCastPage(ctx context.Context, value runtime.Value) (drivers.HTMLPage, bool, error) {

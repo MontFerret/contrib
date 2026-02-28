@@ -3,7 +3,7 @@ module github.com/MontFerret/contrib/modules/html
 go 1.25.6
 
 require (
-	github.com/MontFerret/ferret/v2 v2.0.0-20260225132324-56429aefce65
+	github.com/MontFerret/ferret/v2 v2.0.0-20260227151638-e9259f5e1fca
 	github.com/PuerkitoBio/goquery v1.11.0
 	github.com/antchfx/htmlquery v1.3.5
 	github.com/antchfx/xpath v1.3.6

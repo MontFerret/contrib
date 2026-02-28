@@ -605,7 +605,7 @@ func (el *HTMLElement) HoverBySelector(ctx context.Context, selector drivers.Que
 	return el.input.MoveMouseBySelector(ctx, el.id, selector)
 }
 
-func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.Value, error) {
+func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
 	//TODO implement me
 	panic("implement me")
 }
