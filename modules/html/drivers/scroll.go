@@ -11,12 +11,12 @@ import (
 // ScrollBehavior defines the transition animation.
 // In HTML specification, default Value is auto, but in Ferret it's instant.
 // More details here https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView
-type ScrollBehavior int
+type ScrollBehavior string
 
 const (
-	ScrollBehaviorInstant ScrollBehavior = 0
-	ScrollBehaviorSmooth  ScrollBehavior = 1
-	ScrollBehaviorAuto    ScrollBehavior = 2
+	ScrollBehaviorInstant ScrollBehavior = "instant"
+	ScrollBehaviorSmooth  ScrollBehavior = "smooth"
+	ScrollBehaviorAuto    ScrollBehavior = "auto"
 )
 
 func NewScrollBehavior(value string) ScrollBehavior {
@@ -48,13 +48,13 @@ func (b ScrollBehavior) String() string {
 // ScrollVerticalAlignment defines vertical alignment after scrolling.
 // In HTML specification, default Value is start, but in Ferret it's center.
 // More details here https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView
-type ScrollVerticalAlignment int
+type ScrollVerticalAlignment string
 
 const (
-	ScrollVerticalAlignmentCenter  ScrollVerticalAlignment = 0
-	ScrollVerticalAlignmentStart   ScrollVerticalAlignment = 1
-	ScrollVerticalAlignmentEnd     ScrollVerticalAlignment = 2
-	ScrollVerticalAlignmentNearest ScrollVerticalAlignment = 3
+	ScrollVerticalAlignmentCenter  ScrollVerticalAlignment = "center"
+	ScrollVerticalAlignmentStart   ScrollVerticalAlignment = "start"
+	ScrollVerticalAlignmentEnd     ScrollVerticalAlignment = "end"
+	ScrollVerticalAlignmentNearest ScrollVerticalAlignment = "nearest"
 )
 
 func NewScrollVerticalAlignment(value string) ScrollVerticalAlignment {
@@ -94,13 +94,13 @@ func (a ScrollVerticalAlignment) String() string {
 // ScrollHorizontalAlignment defines horizontal alignment after scrolling.
 // In HTML specification, default Value is nearest, but in Ferret it's center.
 // More details here https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView
-type ScrollHorizontalAlignment int
+type ScrollHorizontalAlignment string
 
 const (
-	ScrollHorizontalAlignmentCenter  ScrollHorizontalAlignment = 0
-	ScrollHorizontalAlignmentStart   ScrollHorizontalAlignment = 1
-	ScrollHorizontalAlignmentEnd     ScrollHorizontalAlignment = 2
-	ScrollHorizontalAlignmentNearest ScrollHorizontalAlignment = 3
+	ScrollHorizontalAlignmentCenter  ScrollHorizontalAlignment = "center"
+	ScrollHorizontalAlignmentStart   ScrollHorizontalAlignment = "start"
+	ScrollHorizontalAlignmentEnd     ScrollHorizontalAlignment = "end"
+	ScrollHorizontalAlignmentNearest ScrollHorizontalAlignment = "nearest"
 )
 
 func NewScrollHorizontalAlignment(value string) ScrollHorizontalAlignment {

@@ -606,8 +606,38 @@ func (el *HTMLElement) HoverBySelector(ctx context.Context, selector drivers.Que
 }
 
 func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
-	//TODO implement me
-	panic("implement me")
+	switch strings.ToLower(string(q.Kind)) {
+	case "css":
+		fn, err := templates.CSSX(el.id, q.Payload)
+
+		if err != nil {
+			return runtime.NewArray(0), err
+		}
+
+		val, err := el.eval.EvalValue(ctx, fn)
+
+		if err != nil {
+			return runtime.NewArray(0), err
+		}
+
+		return runtime.ToList(ctx, val)
+	case "xpath":
+		out, err := el.XPath(ctx, q.Payload)
+
+		if err != nil {
+			return runtime.NewArray(0), err
+		}
+
+		list, ok := out.(runtime.List)
+
+		if ok {
+			return list, nil
+		}
+
+		return runtime.NewArrayWith(out), nil
+	default:
+		return nil, runtime.Error(runtime.ErrInvalidArgument, "unsupported query kind")
+	}
 }
 
 func (el *HTMLElement) Dispatch(ctx context.Context, event runtime.DispatchEvent) (runtime.Value, error) {

@@ -119,32 +119,5 @@ func toScrollOptions(value runtime.Value) (drivers.ScrollOptions, error) {
 		return result, err
 	}
 
-	// TODO: Add validation for the options
 	return result, nil
-
-	//err := runtime.ValidateType(value, runtime.TypeObject)
-	//
-	//if err != nil {
-	//	return result, err
-	//}
-	//
-	//obj := value.(*runtime.Object)
-	//
-	//behavior, exists := obj.Get("behavior")
-	//
-	//if exists {
-	//	result.Behavior = drivers.NewScrollBehavior(behavior.String())
-	//}
-	//
-	//block, exists := obj.Get("block")
-	//
-	//if exists {
-	//	result.Block = drivers.NewScrollVerticalAlignment(block.String())
-	//}
-	//
-	//inline, exists := obj.Get("inline")
-	//
-	//if exists {
-	//	result.Inline = drivers.NewScrollHorizontalAlignment(inline.String())
-	//}
 }

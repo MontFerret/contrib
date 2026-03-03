@@ -1,5 +1,7 @@
-github.com/MontFerret/ferret/v2 v2.0.0-20260227151638-e9259f5e1fca h1:VWG0Yu/gqAtwjsYqImgl+n4SjOOHWKAdgbRN4ZwAuqo=
-github.com/MontFerret/ferret/v2 v2.0.0-20260227151638-e9259f5e1fca/go.mod h1:Ky+agpNZ1ZVfZ6KCu83UOYIso2nROmntcQIV5I7tAso=
+github.com/MontFerret/cssx v0.2.0 h1:De0C6Irbg+qgFPXgWmPpVnwD4RRYUBQSbIYFTUVCNWU=
+github.com/MontFerret/cssx v0.2.0/go.mod h1:fmGtRUNVaeJYpiPSDlNIbbYzb3+K8NxmNmJOYqlHATU=
+github.com/MontFerret/ferret/v2 v2.0.0-20260301202943-8dbd0b0e590c h1:/KANiAUT8RZK/QWQ1ShIj9SFVElvhc2lS80w1WJBuyc=
+github.com/MontFerret/ferret/v2 v2.0.0-20260301202943-8dbd0b0e590c/go.mod h1:Ky+agpNZ1ZVfZ6KCu83UOYIso2nROmntcQIV5I7tAso=
 github.com/PuerkitoBio/goquery v1.11.0 h1:jZ7pwMQXIITcUXNH83LLk+txlaEy6NVOfTuP43xxfqw=
 github.com/PuerkitoBio/goquery v1.11.0/go.mod h1:wQHgxUOU3JGuj3oD/QFfxUdlzW6xPHfqyHre6VMY4DQ=
 github.com/andybalholm/cascadia v1.3.3 h1:AG2YHrzJIm4BZ19iwJ/DAua6Btl3IwJX+VI4kktS1LM=
