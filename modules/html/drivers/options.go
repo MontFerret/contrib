@@ -1,5 +1,7 @@
 package drivers
 
+import "net/textproto"
+
 type (
 	globalOptions struct {
 		defaultDriver string
@@ -52,16 +54,16 @@ func WithHeader(name string, value []string) Option {
 	}
 }
 
-func WithHeaders(headers *HTTPHeaders) Option {
+func WithHeaders(headers textproto.MIMEHeader) Option {
 	return func(opts *Options) {
 		if opts.Headers == nil {
 			opts.Headers = NewHTTPHeaders()
 		}
 
-		for key, _ := range headers.Data {
-			if _, exists := opts.Headers.Data[key]; !exists {
-				opts.Headers.Data[key] = headers.Data[key]
-			}
+		for key := range headers {
+			value := headers.Get(key)
+
+			opts.Headers.Data.Set(key, value)
 		}
 	}
 }

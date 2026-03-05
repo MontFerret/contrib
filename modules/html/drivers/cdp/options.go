@@ -1,6 +1,8 @@
 package cdp
 
 import (
+	"net/textproto"
+
 	"github.com/MontFerret/contrib/modules/html/drivers"
 )
 
@@ -80,7 +82,7 @@ func WithHeader(name string, header []string) Option {
 	}
 }
 
-func WithHeaders(headers *drivers.HTTPHeaders) Option {
+func WithHeaders(headers textproto.MIMEHeader) Option {
 	return func(opts *Options) {
 		drivers.WithHeaders(headers)(opts.Options)
 	}
