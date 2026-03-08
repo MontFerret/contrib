@@ -23,9 +23,13 @@ func New(opts ...Option) (ferret.Module, error) {
 	container := drivers.NewContainer()
 
 	for _, d := range o.drivers {
-		if err := container.Register(d, o.globalOpts...); err != nil {
+		if err := container.Register(d); err != nil {
 			return nil, err
 		}
+	}
+
+	if o.defaultDrv != "" {
+		container.SetDefault(o.defaultDrv)
 	}
 
 	return &module{

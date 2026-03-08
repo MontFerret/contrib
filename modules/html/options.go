@@ -10,7 +10,7 @@ type (
 	options struct {
 		noLib      bool
 		drivers    []drivers.Driver
-		globalOpts []drivers.GlobalOption
+		defaultDrv string
 	}
 
 	Option func(opts *options) error
@@ -36,23 +36,18 @@ func WithNoLib() Option {
 	}
 }
 
-func WithGlobalOptions(opts ...drivers.GlobalOption) Option {
+func WithDefaultDriver(drv drivers.Driver) Option {
 	return func(o *options) error {
-		if len(opts) == 0 {
-			return fmt.Errorf("global options must not be empty")
+		if drv == nil {
+			return fmt.Errorf("driver cannot be nil")
 		}
 
-		if o.globalOpts == nil {
-			o.globalOpts = make([]drivers.GlobalOption, 0, len(opts))
+		if o.drivers == nil {
+			o.drivers = make([]drivers.Driver, 0, 1)
 		}
 
-		for _, opt := range opts {
-			if opt == nil {
-				return fmt.Errorf("global option cannot be nil")
-			}
-
-			o.globalOpts = append(o.globalOpts, opt)
-		}
+		o.drivers = append(o.drivers, drv)
+		o.defaultDrv = drv.Name()
 
 		return nil
 	}

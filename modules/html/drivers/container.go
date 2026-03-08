@@ -6,20 +6,14 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-type (
-	DriverEntry struct {
-		Driver  Driver
-		Options []GlobalOption
-	}
-
-	Container struct {
-		drivers map[string]DriverEntry
-	}
-)
+type Container struct {
+	drivers    map[string]Driver
+	defaultDrv string
+}
 
 func NewContainer() *Container {
 	return &Container{
-		drivers: map[string]DriverEntry{},
+		drivers: map[string]Driver{},
 	}
 }
 
@@ -29,7 +23,19 @@ func (c *Container) Has(name string) bool {
 	return exists
 }
 
-func (c *Container) Register(drv Driver, opts ...GlobalOption) error {
+func (c *Container) Default() (Driver, bool) {
+	if c.defaultDrv == "" {
+		return nil, false
+	}
+
+	return c.Get(c.defaultDrv)
+}
+
+func (c *Container) SetDefault(name string) {
+	c.defaultDrv = name
+}
+
+func (c *Container) Register(drv Driver) error {
 	if drv == nil {
 		return runtime.Error(runtime.ErrMissedArgument, "driver")
 	}
@@ -41,10 +47,7 @@ func (c *Container) Register(drv Driver, opts ...GlobalOption) error {
 		return runtime.Errorf(runtime.ErrNotUnique, "driver: %s", name)
 	}
 
-	c.drivers[name] = DriverEntry{
-		Driver:  drv,
-		Options: opts,
-	}
+	c.drivers[name] = drv
 
 	return nil
 }
@@ -54,27 +57,27 @@ func (c *Container) Remove(name string) {
 }
 
 func (c *Container) Get(name string) (Driver, bool) {
+	if name == "" {
+		name = c.defaultDrv
+	}
+
 	found, exists := c.drivers[name]
 
-	return found.Driver, exists
+	return found, exists
 }
 
 func (c *Container) GetAll() []Driver {
 	res := make([]Driver, 0, len(c.drivers))
 
-	for _, entry := range c.drivers {
-		res = append(res, entry.Driver)
+	for _, drv := range c.drivers {
+		res = append(res, drv)
 	}
 
 	return res
 }
 
 func (c *Container) WithContext(ctx context.Context) context.Context {
-	next := ctx
+	key := ctxKey{}
 
-	for _, entry := range c.drivers {
-		next = withContext(next, entry.Driver, entry.Options)
-	}
-
-	return next
+	return context.WithValue(ctx, key, c)
 }

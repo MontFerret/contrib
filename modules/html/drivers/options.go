@@ -3,12 +3,6 @@ package drivers
 import "net/textproto"
 
 type (
-	globalOptions struct {
-		defaultDriver string
-	}
-
-	GlobalOption func(drv Driver, opts *globalOptions)
-
 	Options struct {
 		Name      string       `json:"name"`
 		Proxy     string       `json:"proxy"`
@@ -19,12 +13,6 @@ type (
 
 	Option func(opts *Options)
 )
-
-func AsDefault() GlobalOption {
-	return func(drv Driver, opts *globalOptions) {
-		opts.defaultDriver = drv.Name()
-	}
-}
 
 func WithProxy(address string) Option {
 	return func(opts *Options) {
