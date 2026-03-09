@@ -16,18 +16,19 @@ import (
 )
 
 type HTMLElement struct {
+	doc       *goquery.Document
 	selection *goquery.Selection
 	attrs     *runtime.Object
 	styles    *runtime.Object
 	children  *runtime.Array
 }
 
-func NewHTMLElement(node *goquery.Selection) (drivers.HTMLElement, error) {
+func NewHTMLElement(doc *goquery.Document, node *goquery.Selection) (drivers.HTMLElement, error) {
 	if node == nil {
 		return nil, runtime.Error(runtime.ErrMissedArgument, "element selection")
 	}
 
-	return &HTMLElement{node, nil, nil, nil}, nil
+	return &HTMLElement{doc, node, nil, nil, nil}, nil
 }
 
 func (el *HTMLElement) MarshalJSON() ([]byte, error) {
@@ -48,7 +49,7 @@ func (el *HTMLElement) String() string {
 	return ih.String()
 }
 
-func (el *HTMLElement) Compare(other runtime.Value) int64 {
+func (el *HTMLElement) Compare(other runtime.Value) int {
 	otherElement, ok := other.(drivers.HTMLElement)
 
 	if !ok {
@@ -61,7 +62,7 @@ func (el *HTMLElement) Compare(other runtime.Value) int64 {
 		return drivers.Compare(el.Type(), typed.Type())
 	}
 
-	return int64(strings.Compare(el.String(), otherElement.String()))
+	return strings.Compare(el.String(), otherElement.String())
 }
 
 func (el *HTMLElement) Unwrap() any {
@@ -85,7 +86,7 @@ func (el *HTMLElement) Hash() uint64 {
 }
 
 func (el *HTMLElement) Copy() runtime.Value {
-	c, _ := NewHTMLElement(el.selection.Clone())
+	c, _ := NewHTMLElement(el.doc, el.selection.Clone())
 
 	return c
 }
@@ -181,12 +182,16 @@ func (el *HTMLElement) SetStyle(ctx context.Context, name, value runtime.String)
 
 	_ = el.styles.Set(ctx, name, value)
 
-	str := common.SerializeStyles(ctx, el.styles)
+	str, err := common.SerializeStyles(ctx, el.styles)
+
+	if err != nil {
+		return err
+	}
 
 	return el.SetAttribute(ctx, "style", str)
 }
 
-func (el *HTMLElement) SetStyles(ctx context.Context, values runtime.Map) error {
+func (el *HTMLElement) SetStyles(ctx context.Context, newStyles runtime.Map) error {
 	if newStyles == nil {
 		return nil
 	}
@@ -201,7 +206,11 @@ func (el *HTMLElement) SetStyles(ctx context.Context, values runtime.Map) error 
 		return true, nil
 	})
 
-	str := common.SerializeStyles(ctx, el.styles)
+	str, err := common.SerializeStyles(ctx, el.styles)
+
+	if err != nil {
+		return err
+	}
 
 	return el.SetAttribute(ctx, "style", str)
 }
@@ -219,12 +228,16 @@ func (el *HTMLElement) RemoveStyle(ctx context.Context, name ...runtime.String) 
 		_ = el.styles.Remove(ctx, s)
 	}
 
-	str := common.SerializeStyles(ctx, el.styles)
+	str, err := common.SerializeStyles(ctx, el.styles)
+
+	if err != nil {
+		return err
+	}
 
 	return el.SetAttribute(ctx, "style", str)
 }
 
-func (el *HTMLElement) SetAttributes(ctx context.Context, values runtime.Map) error {
+func (el *HTMLElement) SetAttributes(ctx context.Context, attrs runtime.Map) error {
 	if attrs == nil {
 		return nil
 	}
@@ -297,7 +310,7 @@ func (el *HTMLElement) GetChildNode(ctx context.Context, idx runtime.Int) (runti
 		el.children = el.parseChildren()
 	}
 
-	return el.children.Get(ctx, idx)
+	return el.children.At(ctx, idx)
 }
 
 func (el *HTMLElement) QuerySelector(_ context.Context, selector drivers.QuerySelector) (runtime.Value, error) {
@@ -308,7 +321,7 @@ func (el *HTMLElement) QuerySelector(_ context.Context, selector drivers.QuerySe
 			return runtime.None, drivers.ErrNotFound
 		}
 
-		res, err := NewHTMLElement(selection)
+		res, err := NewHTMLElement(el.doc, selection)
 
 		if err != nil {
 			return runtime.None, err
@@ -341,7 +354,7 @@ func (el *HTMLElement) QuerySelectorAll(ctx context.Context, selector drivers.Qu
 		arr := runtime.NewArray(selection.Length())
 
 		selection.Each(func(_ int, selection *goquery.Selection) {
-			el, err := NewHTMLElement(selection)
+			el, err := NewHTMLElement(el.doc, selection)
 
 			if err == nil {
 				_ = arr.Append(ctx, el)
@@ -591,7 +604,7 @@ func (el *HTMLElement) GetParentElement(_ context.Context) (runtime.Value, error
 		return runtime.None, nil
 	}
 
-	return NewHTMLElement(parent)
+	return NewHTMLElement(el.doc, parent)
 }
 
 func (el *HTMLElement) GetPreviousElementSibling(_ context.Context) (runtime.Value, error) {
@@ -601,7 +614,7 @@ func (el *HTMLElement) GetPreviousElementSibling(_ context.Context) (runtime.Val
 		return runtime.None, nil
 	}
 
-	return NewHTMLElement(sibling)
+	return NewHTMLElement(el.doc, sibling)
 }
 
 func (el *HTMLElement) GetNextElementSibling(_ context.Context) (runtime.Value, error) {
@@ -611,7 +624,7 @@ func (el *HTMLElement) GetNextElementSibling(_ context.Context) (runtime.Value, 
 		return runtime.None, nil
 	}
 
-	return NewHTMLElement(sibling)
+	return NewHTMLElement(el.doc, sibling)
 }
 
 func (el *HTMLElement) Click(_ context.Context, _ runtime.Int) error {
@@ -650,7 +663,7 @@ func (el *HTMLElement) PressBySelector(_ context.Context, _ drivers.QuerySelecto
 	return runtime.ErrNotSupported
 }
 
-func (el *HTMLElement) Select(_ context.Context, _ *runtime.Array) (runtime.List, error) {
+func (el *HTMLElement) Select(_ context.Context, _ runtime.List) (runtime.List, error) {
 	return nil, runtime.ErrNotSupported
 }
 
@@ -730,14 +743,31 @@ func (el *HTMLElement) WaitForClassBySelectorAll(_ context.Context, _ drivers.Qu
 	return runtime.ErrNotSupported
 }
 
-func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.Value, error) {
-	//TODO implement me
-	panic("implement me")
+func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
+	switch common.ToQueryKind(string(q.Kind)) {
+	case common.CSSQuery:
+		return EvalCSSX(ctx, el, q.Payload)
+	case common.XPathQuery:
+		res, err := el.XPath(ctx, q.Payload)
+
+		if err != nil {
+			return nil, err
+		}
+
+		list, ok := res.(runtime.List)
+
+		if !ok {
+			return runtime.NewArrayWith(res), nil
+		}
+
+		return list, nil
+	default:
+		return nil, runtime.Error(runtime.ErrInvalidArgument, "unsupported query kind")
+	}
 }
 
-func (el *HTMLElement) Dispatch(ctx context.Context, event runtime.DispatchEvent) (runtime.Value, error) {
-	//TODO implement me
-	panic("implement me")
+func (el *HTMLElement) Dispatch(_ context.Context, _ runtime.DispatchEvent) (runtime.Value, error) {
+	return runtime.None, runtime.ErrNotSupported
 }
 
 func (el *HTMLElement) ensureStyles(ctx context.Context) error {
@@ -765,7 +795,7 @@ func (el *HTMLElement) parseStyles(ctx context.Context) (*runtime.Object, error)
 		return runtime.NewObject(), nil
 	}
 
-	styles, err := common.DeserializeStyles(runtime.NewString(str.String()))
+	styles, err := common.DeserializeStyles(ctx, runtime.NewString(str.String()))
 
 	if err != nil {
 		return nil, err
@@ -804,7 +834,7 @@ func (el *HTMLElement) parseChildren() *runtime.Array {
 	ctx := context.Background()
 
 	children.Each(func(_ int, selection *goquery.Selection) {
-		child, err := NewHTMLElement(selection)
+		child, err := NewHTMLElement(el.doc, selection)
 
 		if err == nil {
 			_ = arr.Append(ctx, child)

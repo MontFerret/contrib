@@ -606,8 +606,8 @@ func (el *HTMLElement) HoverBySelector(ctx context.Context, selector drivers.Que
 }
 
 func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
-	switch strings.ToLower(string(q.Kind)) {
-	case "css":
+	switch common.ToQueryKind(string(q.Kind)) {
+	case common.CSSQuery:
 		fn, err := templates.CSSX(el.id, q.Payload)
 
 		if err != nil {
@@ -621,7 +621,7 @@ func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List
 		}
 
 		return runtime.ToList(ctx, val)
-	case "xpath":
+	case common.XPathQuery:
 		out, err := el.XPath(ctx, q.Payload)
 
 		if err != nil {

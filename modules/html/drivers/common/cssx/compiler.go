@@ -18,6 +18,10 @@ func ResolveSelector(selector string) (Expression, error) {
 		return "", errors.New("selector is empty")
 	}
 
+	if !strings.HasPrefix(value, ":") {
+		value = ":" + value
+	}
+
 	resolved, ok := selectorLookup[value]
 	if !ok {
 		return "", fmt.Errorf("unknown selector %q", value)

@@ -2,6 +2,7 @@ package drivers
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -23,6 +24,7 @@ type (
 		runtime.Queryable
 		runtime.Dispatchable
 		io.Closer
+		json.Marshaler
 
 		GetNodeType(ctx context.Context) (runtime.Int, error)
 

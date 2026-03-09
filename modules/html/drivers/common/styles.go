@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/css/scanner"
 )
 
-func DeserializeStyles(ctx context.Context, input runtime.String) (runtime.Map, error) {
+func DeserializeStyles(ctx context.Context, input runtime.String) (*runtime.Object, error) {
 	styles := runtime.NewObject()
 
 	if input == runtime.EmptyString {

@@ -3,6 +3,8 @@ package http
 import (
 	"context"
 	"hash/fnv"
+	neturl "net/url"
+	"strings"
 
 	"github.com/MontFerret/contrib/modules/html/drivers"
 	"github.com/MontFerret/contrib/modules/html/drivers/common"
@@ -39,7 +41,13 @@ func NewHTMLDocument(
 		return nil, runtime.Error(runtime.ErrMissedArgument, "document root selection")
 	}
 
-	el, err := NewHTMLElement(node.Selection)
+	if node.Url == nil {
+		if parsed, err := neturl.Parse(url); err == nil {
+			node.Url = parsed
+		}
+	}
+
+	el, err := NewHTMLElement(node, node.Selection)
 
 	if err != nil {
 		return nil, err
@@ -80,14 +88,15 @@ func (doc *HTMLDocument) String() string {
 	return str
 }
 
-func (doc *HTMLDocument) Compare(other runtime.Value) int64 {
-	switch other.Type() {
-	case drivers.HTMLElementType:
-		otherDoc := other.(drivers.HTMLDocument)
+func (doc *HTMLDocument) Compare(other runtime.Value) int {
+	switch val := other.(type) {
+	case *HTMLDocument:
+		thisURL := strings.TrimSuffix(string(doc.url), "/")
+		otherURL := strings.TrimSuffix(string(val.url), "/")
 
-		return doc.url.Compare(otherDoc.GetURL())
+		return runtime.NewString(thisURL).Compare(runtime.NewString(otherURL))
 	default:
-		return drivers.Compare(doc.Type(), other.Type())
+		return drivers.CompareTypes(doc, other)
 	}
 }
 
@@ -233,9 +242,8 @@ func (doc *HTMLDocument) Close() error {
 	return nil
 }
 
-func (doc *HTMLDocument) Query(ctx context.Context, q runtime.Query) (runtime.Value, error) {
-	//TODO implement me
-	panic("implement me")
+func (doc *HTMLDocument) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
+	return doc.element.Query(ctx, q)
 }
 
 func (doc *HTMLDocument) Dispatch(ctx context.Context, event runtime.DispatchEvent) (runtime.Value, error) {
