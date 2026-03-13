@@ -4,13 +4,13 @@ go 1.25.6
 
 require (
 	github.com/MontFerret/cssx v0.2.0
-	github.com/MontFerret/ferret/v2 v2.0.0-20260307195221-a252ad8edcf8
+	github.com/MontFerret/ferret/v2 v2.0.0-20260313193546-d5c0aacbde72
 	github.com/PuerkitoBio/goquery v1.11.0
 	github.com/antchfx/htmlquery v1.3.5
 	github.com/antchfx/xpath v1.3.6
 	github.com/corpix/uarand v0.2.0
 	github.com/gobwas/glob v0.2.3
-	github.com/goccy/go-json v0.10.5
+	github.com/goccy/go-json v0.10.6
 	github.com/gorilla/css v1.0.1
 	github.com/jarcoal/httpmock v1.4.1
 	github.com/mafredri/cdp v0.35.0

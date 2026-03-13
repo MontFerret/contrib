@@ -208,7 +208,7 @@ func (drv *Driver) convertToUTF8(reader io.Reader, srcCharset string) (data io.R
 }
 
 func (drv *Driver) makeRequest(ctx context.Context, req *http.Request, params drivers.Params) {
-	logger := runtime.LoggerFromContext(ctx)
+	logger := runtime.GetLogger(ctx)
 
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9,ru;q=0.8")
@@ -216,38 +216,33 @@ func (drv *Driver) makeRequest(ctx context.Context, req *http.Request, params dr
 	req.Header.Set("Pragma", "no-cache")
 
 	if params.Headers != nil {
-		params.Headers.ForEach(func(_ []string, key string) bool {
-			v := params.Headers.Get(key)
+		headersData := params.Headers.Data
 
-			req.Header.Set(key, v)
+		for k := range headersData {
+			v := headersData.Get(k)
+
+			req.Header.Set(k, v)
 
 			logger.
 				Debug().
 				Timestamp().
-				Str("header", key).
+				Str("header", k).
 				Msg("set header")
-
-			return true
-		})
+		}
 	}
 
 	if params.Cookies != nil {
-		params.Cookies.ForEach(func(_ drivers.HTTPCookie, key runtime.String) bool {
-			v, exist := params.Cookies.Get(key)
-			if !exist {
-				return false
-			}
+		cookiesData := params.Cookies.Data
 
+		for k, v := range cookiesData {
 			req.AddCookie(fromDriverCookie(v))
 
 			logger.
 				Debug().
 				Timestamp().
-				Str("cookie", key.String()).
+				Str("cookie", k).
 				Msg("set cookie")
-
-			return true
-		})
+		}
 	}
 
 	ua := common.GetUserAgent(params.UserAgent)
