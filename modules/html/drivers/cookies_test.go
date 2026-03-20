@@ -1,6 +1,7 @@
 package drivers_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/MontFerret/contrib/modules/html/drivers"
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 func TestHTTPCookies(t *testing.T) {
@@ -35,7 +37,7 @@ func TestHTTPCookies(t *testing.T) {
 				t, e := expires.MarshalJSON()
 				So(e, ShouldBeNil)
 
-				expected := fmt.Sprintf(`{"Session":{"domain":"www.google.com","expires":%s,"http_only":true,"max_age":0,"name":"Session","path":"/","same_site":"Lax","secure":true,"Value":"asdfg"}}`, string(t))
+				expected := fmt.Sprintf(`{"Session":{"Value":"asdfg","domain":"www.google.com","expires":%s,"http_only":true,"max_age":0,"name":"Session","path":"/","same_site":"Lax","secure":true}}`, string(t))
 
 				So(err, ShouldBeNil)
 				So(string(out), ShouldEqual, expected)
@@ -43,8 +45,7 @@ func TestHTTPCookies(t *testing.T) {
 
 			Convey("Should set proper Data", func() {
 				headers := drivers.NewHTTPCookies()
-
-				headers.Set(drivers.HTTPCookie{
+				cookie := drivers.HTTPCookie{
 					Name:     "Authorization",
 					Value:    "e40b7d5eff464a4fb51efed2d1a19a24",
 					Path:     "/",
@@ -54,9 +55,17 @@ func TestHTTPCookies(t *testing.T) {
 					Secure:   false,
 					HTTPOnly: false,
 					SameSite: 0,
-				})
+				}
 
-				_, err := json.Marshal(headers)
+				err := headers.Set(
+					context.Background(),
+					runtime.NewString(cookie.Name),
+					cookie,
+				)
+
+				So(err, ShouldBeNil)
+
+				_, err = json.Marshal(headers)
 
 				So(err, ShouldBeNil)
 			})

@@ -1,12 +1,14 @@
 package drivers_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/goccy/go-json"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/MontFerret/contrib/modules/html/drivers"
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 func TestHTTPHeaders(t *testing.T) {
@@ -27,9 +29,15 @@ func TestHTTPHeaders(t *testing.T) {
 			Convey("Should set proper Data", func() {
 				headers := drivers.NewHTTPHeaders()
 
-				headers.Set("Authorization", `["Basic e40b7d5eff464a4fb51efed2d1a19a24"]`)
+				err := headers.Set(
+					context.Background(),
+					runtime.NewString("Authorization"),
+					runtime.NewString(`["Basic e40b7d5eff464a4fb51efed2d1a19a24"]`),
+				)
 
-				_, err := json.Marshal(headers)
+				So(err, ShouldBeNil)
+
+				_, err = json.Marshal(headers)
 
 				So(err, ShouldBeNil)
 			})

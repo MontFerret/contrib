@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/goccy/go-json"
+
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
@@ -37,6 +39,10 @@ func (c *HTTPCookies) Hash() uint64 {
 
 func (c *HTTPCookies) Type() runtime.Type {
 	return HTTPCookiesType
+}
+
+func (c *HTTPCookies) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.Data)
 }
 
 func (c *HTTPCookies) Get(_ context.Context, key runtime.Value) (runtime.Value, error) {

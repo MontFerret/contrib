@@ -5,6 +5,8 @@ import (
 	"net/textproto"
 	"strings"
 
+	"github.com/goccy/go-json"
+
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
@@ -89,6 +91,16 @@ func (h *HTTPHeaders) Hash() uint64 {
 
 func (h *HTTPHeaders) Copy() runtime.Value {
 	return &HTTPHeaders{h.Data}
+}
+
+func (h *HTTPHeaders) MarshalJSON() ([]byte, error) {
+	data := make(map[string]string, len(h.Data))
+
+	for key, values := range h.Data {
+		data[key] = strings.Join(values, ", ")
+	}
+
+	return json.Marshal(data)
 }
 
 func (h *HTTPHeaders) Get(_ context.Context, key runtime.Value) (runtime.Value, error) {

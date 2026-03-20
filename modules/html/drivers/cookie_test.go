@@ -26,7 +26,7 @@ func TestHTTPCookie(t *testing.T) {
 				out, err := cookie.MarshalJSON()
 
 				So(err, ShouldBeNil)
-				So(string(out), ShouldEqual, `{"domain":"montferret.dev","expires":"0001-01-01T00:00:00Z","http_only":true,"max_age":320,"name":"test_cookie","path":"/","same_site":"Lax","secure":true,"Value":"test_value"}`)
+				So(string(out), ShouldEqual, `{"Value":"test_value","domain":"montferret.dev","expires":"0001-01-01T00:00:00Z","http_only":true,"max_age":320,"name":"test_cookie","path":"/","same_site":"Lax","secure":true}`)
 			})
 		})
 	})
