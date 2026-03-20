@@ -50,7 +50,7 @@ func (p *HTMLPage) String() string {
 	return p.document.GetURL().String()
 }
 
-func (p *HTMLPage) Compare(other runtime.Value) int64 {
+func (p *HTMLPage) Compare(other runtime.Value) int {
 	typed, ok := other.(runtime.Typed)
 
 	if !ok {
@@ -169,18 +169,16 @@ func (p *HTMLPage) GetFrame(ctx context.Context, idx runtime.Int) (runtime.Value
 		p.frames = arr
 	}
 
-	return p.frames.Get(ctx, idx)
+	return p.frames.At(ctx, idx)
 }
 
 func (p *HTMLPage) GetCookies(_ context.Context) (*drivers.HTTPCookies, error) {
 	res := drivers.NewHTTPCookies()
 
 	if p.cookies != nil {
-		p.cookies.ForEach(func(value drivers.HTTPCookie, _ runtime.String) bool {
-			res.Set(value)
-
-			return true
-		})
+		for _, c := range p.cookies.Data {
+			res.SetCookie(c)
+		}
 	}
 
 	return res, nil

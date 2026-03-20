@@ -28,7 +28,7 @@ func toDriverCookies(cookies []*HTTP.Cookie) (*drivers.HTTPCookies, error) {
 			return nil, err
 		}
 
-		res.Set(dc)
+		res.SetCookie(dc)
 	}
 
 	return res, nil

@@ -108,7 +108,11 @@ func WithHeader(name string, value []string) Option {
 
 func WithHeaders(headers *drivers.HTTPHeaders) Option {
 	return func(opts *Options) {
-		drivers.WithHeaders(headers)(opts.Options)
+		if headers == nil {
+			return
+		}
+
+		drivers.WithHeaders(headers.Data)(opts.Options)
 	}
 }
 

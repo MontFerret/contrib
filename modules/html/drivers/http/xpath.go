@@ -12,18 +12,18 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-func EvalXPathToNode(selection *goquery.Selection, expression string) (drivers.HTMLNode, error) {
+func EvalXPathToNode(doc *goquery.Document, selection *goquery.Selection, expression string) (drivers.HTMLNode, error) {
 	node := htmlquery.FindOne(fromSelectionToNode(selection), expression)
 
 	if node == nil {
 		return nil, nil
 	}
 
-	return parseXPathNode(node)
+	return parseXPathNode(doc, node)
 }
 
-func EvalXPathToElement(selection *goquery.Selection, expression string) (drivers.HTMLElement, error) {
-	node, err := EvalXPathToNode(selection, expression)
+func EvalXPathToElement(doc *goquery.Document, selection *goquery.Selection, expression string) (drivers.HTMLElement, error) {
+	node, err := EvalXPathToNode(doc, selection, expression)
 
 	if err != nil {
 		return nil, err
@@ -36,9 +36,9 @@ func EvalXPathToElement(selection *goquery.Selection, expression string) (driver
 	return drivers.ToElement(node)
 }
 
-func EvalXPathToNodes(selection *goquery.Selection, expression string) (runtime.List, error) {
+func EvalXPathToNodes(doc *goquery.Document, selection *goquery.Selection, expression string) (runtime.List, error) {
 	return EvalXPathToNodesWith(selection, expression, func(node *html.Node) (runtime.Value, error) {
-		return parseXPathNode(node)
+		return parseXPathNode(doc, node)
 	})
 }
 
@@ -72,7 +72,7 @@ func EvalXPathToNodesWith(selection *goquery.Selection, expression string, mappe
 	}
 }
 
-func EvalXPathTo(selection *goquery.Selection, expression string) (runtime.Value, error) {
+func EvalXPathTo(doc *goquery.Document, selection *goquery.Selection, expression string) (runtime.Value, error) {
 	out, err := evalXPathToInternal(selection, expression)
 
 	if err != nil {
@@ -95,7 +95,7 @@ func EvalXPathTo(selection *goquery.Selection, expression string) (runtime.Value
 			case xpath.AttributeNode:
 				item = runtime.NewString(node.Value())
 			default:
-				i, err := parseXPathNode(node.(*htmlquery.NodeNavigator).Current())
+				i, err := parseXPathNode(doc, node.(*htmlquery.NodeNavigator).Current())
 
 				if err != nil {
 					return nil, err
@@ -125,7 +125,7 @@ func evalXPathToInternal(selection *goquery.Selection, expression string) (any, 
 	return exp.Evaluate(htmlquery.CreateXPathNavigator(fromSelectionToNode(selection))), nil
 }
 
-func parseXPathNode(node *html.Node) (drivers.HTMLNode, error) {
+func parseXPathNode(doc *goquery.Document, node *html.Node) (drivers.HTMLNode, error) {
 	if node == nil {
 		return nil, nil
 	}
@@ -135,7 +135,7 @@ func parseXPathNode(node *html.Node) (drivers.HTMLNode, error) {
 		url := htmlquery.SelectAttr(node, "url")
 		return NewHTMLDocument(goquery.NewDocumentFromNode(node), url, nil)
 	case html.ElementNode:
-		return NewHTMLElement(&goquery.Selection{Nodes: []*html.Node{node}})
+		return NewHTMLElement(doc, &goquery.Selection{Nodes: []*html.Node{node}})
 	default:
 		return nil, nil
 	}

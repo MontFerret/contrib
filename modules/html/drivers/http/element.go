@@ -330,7 +330,7 @@ func (el *HTMLElement) QuerySelector(_ context.Context, selector drivers.QuerySe
 		return res, nil
 	}
 
-	found, err := EvalXPathToNode(el.selection, selector.String())
+	found, err := EvalXPathToNode(el.doc, el.selection, selector.String())
 
 	if err != nil {
 		return runtime.None, err
@@ -364,11 +364,11 @@ func (el *HTMLElement) QuerySelectorAll(ctx context.Context, selector drivers.Qu
 		return arr, nil
 	}
 
-	return EvalXPathToNodes(el.selection, selector.String())
+	return EvalXPathToNodes(el.doc, el.selection, selector.String())
 }
 
 func (el *HTMLElement) XPath(_ context.Context, expression runtime.String) (runtime.Value, error) {
-	return EvalXPathTo(el.selection, expression.String())
+	return EvalXPathTo(el.doc, el.selection, expression.String())
 }
 
 func (el *HTMLElement) SetInnerHTMLBySelector(ctx context.Context, selector drivers.QuerySelector, innerHTML runtime.String) error {
@@ -382,7 +382,7 @@ func (el *HTMLElement) SetInnerHTMLBySelector(ctx context.Context, selector driv
 		selection.SetHtml(innerHTML.String())
 	}
 
-	found, err := EvalXPathToElement(el.selection, selector.String())
+	found, err := EvalXPathToElement(el.doc, el.selection, selector.String())
 
 	if err != nil {
 		return err
@@ -412,7 +412,7 @@ func (el *HTMLElement) GetInnerHTMLBySelector(ctx context.Context, selector driv
 		return runtime.NewString(str), nil
 	}
 
-	found, err := EvalXPathToElement(el.selection, selector.String())
+	found, err := EvalXPathToElement(el.doc, el.selection, selector.String())
 
 	if err != nil {
 		return runtime.EmptyString, err
@@ -452,7 +452,7 @@ func (el *HTMLElement) GetInnerHTMLBySelectorAll(ctx context.Context, selector d
 	}
 
 	return EvalXPathToNodesWith(el.selection, selector.String(), func(node *html.Node) (runtime.Value, error) {
-		n, err := parseXPathNode(node)
+		n, err := parseXPathNode(el.doc, node)
 
 		if err != nil {
 			return runtime.None, err
@@ -479,7 +479,7 @@ func (el *HTMLElement) GetInnerTextBySelector(ctx context.Context, selector driv
 		return runtime.NewString(selection.Text()), nil
 	}
 
-	found, err := EvalXPathToElement(el.selection, selector.String())
+	found, err := EvalXPathToElement(el.doc, el.selection, selector.String())
 
 	if err != nil {
 		return runtime.EmptyString, err
@@ -505,7 +505,7 @@ func (el *HTMLElement) SetInnerTextBySelector(ctx context.Context, selector driv
 		return nil
 	}
 
-	found, err := EvalXPathToElement(el.selection, selector.String())
+	found, err := EvalXPathToElement(el.doc, el.selection, selector.String())
 
 	if err != nil {
 		return err
@@ -531,7 +531,7 @@ func (el *HTMLElement) GetInnerTextBySelectorAll(ctx context.Context, selector d
 	}
 
 	return EvalXPathToNodesWith(el.selection, selector.String(), func(node *html.Node) (runtime.Value, error) {
-		n, err := parseXPathNode(node)
+		n, err := parseXPathNode(el.doc, node)
 
 		if err != nil {
 			return runtime.None, err
@@ -576,7 +576,7 @@ func (el *HTMLElement) ExistsBySelector(_ context.Context, selector drivers.Quer
 		return runtime.True, nil
 	}
 
-	found, err := EvalXPathToNode(el.selection, selector.String())
+	found, err := EvalXPathToNode(el.doc, el.selection, selector.String())
 
 	if err != nil {
 		return runtime.False, err
