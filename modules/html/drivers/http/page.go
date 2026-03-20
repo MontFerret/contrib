@@ -232,3 +232,7 @@ func (p *HTMLPage) Dispatch(ctx context.Context, event runtime.DispatchEvent) (r
 	//TODO implement me
 	panic("implement me")
 }
+
+func (p *HTMLPage) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
+	return p.document.Query(ctx, q)
+}
