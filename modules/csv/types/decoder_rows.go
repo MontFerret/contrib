@@ -8,7 +8,11 @@ import (
 )
 
 func DecodeRows(ctx context.Context, data runtime.String, opts Options) (runtime.Value, error) {
-	iter := NewDecodeRowsIterator(data, opts)
+	iter, err := NewDecodeRowsIterator(data, opts)
+	if err != nil {
+		return nil, err
+	}
+
 	out := runtime.NewArray(10)
 
 	for {

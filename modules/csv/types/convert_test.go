@@ -28,6 +28,12 @@ func TestConvertValue(t *testing.T) {
 		assertRuntimeInt(t, val, -10)
 	})
 
+	t.Run("large integer inference preserves int64 value", func(t *testing.T) {
+		opts := Options{InferTypes: true}
+		val := ConvertValue("9223372036854775807", opts)
+		assertRuntimeInt(t, val, 9223372036854775807)
+	})
+
 	t.Run("float inference", func(t *testing.T) {
 		opts := Options{InferTypes: true}
 		val := ConvertValue("3.14", opts)
@@ -112,7 +118,7 @@ func TestConvertValue(t *testing.T) {
 	})
 }
 
-func assertRuntimeInt(t *testing.T, val runtime.Value, expected int) {
+func assertRuntimeInt(t *testing.T, val runtime.Value, expected int64) {
 	t.Helper()
 
 	i, ok := val.(runtime.Int)
@@ -120,8 +126,8 @@ func assertRuntimeInt(t *testing.T, val runtime.Value, expected int) {
 		t.Fatalf("expected runtime.Int, got %T (%v)", val, val)
 	}
 
-	if int(i) != expected {
-		t.Fatalf("expected %d, got %d", expected, int(i))
+	if int64(i) != expected {
+		t.Fatalf("expected %d, got %d", expected, int64(i))
 	}
 }
 

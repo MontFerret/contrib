@@ -1,17 +1,20 @@
 package types
 
-import "encoding/csv"
+import (
+	"encoding/csv"
+	"fmt"
+)
 
 type Options struct {
 	Delimiter  string   `json:"delimiter"`
 	Header     bool     `json:"header"`
 	Columns    []string `json:"columns"`
 	Trim       bool     `json:"trim"`
-	SkipEmpty  bool     `json:"skip_empty"`
+	SkipEmpty  bool     `json:"skipEmpty"`
 	Strict     bool     `json:"strict"`
 	Comment    string   `json:"comment"`
-	InferTypes bool     `json:"infer_types"`
-	NullValues []string `json:"null_values"`
+	InferTypes bool     `json:"inferTypes"`
+	NullValues []string `json:"nullValues"`
 }
 
 func DefaultOptions() Options {
@@ -23,18 +26,52 @@ func DefaultOptions() Options {
 	}
 }
 
-func (o *Options) ApplyToReader(r *csv.Reader) {
+func (o *Options) ApplyToReader(r *csv.Reader) error {
 	if o.Delimiter != "" {
-		runes := []rune(o.Delimiter)
-		r.Comma = runes[0]
+		delimiter, err := validateSingleRuneOption("delimiter", o.Delimiter)
+		if err != nil {
+			return err
+		}
+
+		r.Comma = delimiter
 	}
 
 	if o.Comment != "" {
-		runes := []rune(o.Comment)
-		r.Comment = runes[0]
+		comment, err := validateSingleRuneOption("comment", o.Comment)
+		if err != nil {
+			return err
+		}
+
+		r.Comment = comment
 	}
 
 	r.LazyQuotes = !o.Strict
 	r.TrimLeadingSpace = o.Trim
 	r.FieldsPerRecord = -1 // we handle field count validation ourselves
+
+	return nil
+}
+
+func (o *Options) ApplyToWriter(w *csv.Writer) error {
+	if o.Delimiter == "" {
+		return nil
+	}
+
+	delimiter, err := validateSingleRuneOption("delimiter", o.Delimiter)
+	if err != nil {
+		return err
+	}
+
+	w.Comma = delimiter
+
+	return nil
+}
+
+func validateSingleRuneOption(name, value string) (rune, error) {
+	runes := []rune(value)
+	if len(runes) != 1 {
+		return 0, fmt.Errorf("csv: %s must be exactly one Unicode character", name)
+	}
+
+	return runes[0], nil
 }

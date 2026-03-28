@@ -243,6 +243,26 @@ func TestDecode(t *testing.T) {
 			t.Fatal("expected error for header+columns conflict")
 		}
 	})
+
+	t.Run("invalid multi-rune delimiter returns error", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.Delimiter = "||"
+
+		_, err := Decode(ctx, runtime.NewString("name,age\nAlice,30"), opts)
+		if err == nil {
+			t.Fatal("expected error for invalid delimiter")
+		}
+	})
+
+	t.Run("invalid multi-rune comment returns error", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.Comment = "##"
+
+		_, err := Decode(ctx, runtime.NewString("name,age\n# comment\nAlice,30"), opts)
+		if err == nil {
+			t.Fatal("expected error for invalid comment")
+		}
+	})
 }
 
 // Test helpers

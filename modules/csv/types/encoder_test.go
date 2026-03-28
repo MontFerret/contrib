@@ -145,6 +145,20 @@ func TestEncode(t *testing.T) {
 		}
 	})
 
+	t.Run("invalid multi-rune delimiter returns error", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.Delimiter = "||"
+
+		data := runtime.NewArrayWith(
+			runtime.NewArrayWith(runtime.NewString("a"), runtime.NewString("b")),
+		)
+
+		_, err := Encode(ctx, data, opts)
+		if err == nil {
+			t.Fatal("expected error for invalid delimiter")
+		}
+	})
+
 	t.Run("missing keys produce empty fields", func(t *testing.T) {
 		opts := DefaultOptions()
 		opts.Columns = []string{"name", "age", "city"}

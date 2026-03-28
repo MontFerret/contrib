@@ -8,6 +8,10 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
+// DecodeRowsStream decodes CSV content from any value supported by types.ResolveContent.
+// @param {String|Binary|Any} data - CSV content or value resolvable to CSV text.
+// @param {Options} [opts] - Options for decoding.
+// @return {Iterator<Any[]>} - Proxy exposing an iterator over decoded row arrays.
 func DecodeRowsStream(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err
@@ -31,7 +35,10 @@ func DecodeRowsStream(_ context.Context, args ...runtime.Value) (runtime.Value, 
 		}
 	}
 
-	iter := types.NewDecodeRowsIterator(content, opts)
+	iter, err := types.NewDecodeRowsIterator(content, opts)
+	if err != nil {
+		return nil, err
+	}
 
 	return sdk.NewProxy(iter), nil
 }

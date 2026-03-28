@@ -109,6 +109,26 @@ func TestDecodeRows(t *testing.T) {
 		assertArrayLen(t, ctx, row1, 3) // extra field preserved
 		assertArrayValue(t, ctx, row1, 2, "e")
 	})
+
+	t.Run("invalid multi-rune delimiter returns error", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.Delimiter = "||"
+
+		_, err := DecodeRows(ctx, runtime.NewString("a,b\nc,d"), opts)
+		if err == nil {
+			t.Fatal("expected error for invalid delimiter")
+		}
+	})
+
+	t.Run("invalid multi-rune comment returns error", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.Comment = "##"
+
+		_, err := DecodeRows(ctx, runtime.NewString("a,b\n# comment\nc,d"), opts)
+		if err == nil {
+			t.Fatal("expected error for invalid comment")
+		}
+	})
 }
 
 func mustArrayAt(t *testing.T, ctx context.Context, arr *runtime.Array, idx int) *runtime.Array {

@@ -99,6 +99,16 @@ func TestResolveHeaders(t *testing.T) {
 
 		assertStringSlice(t, headers, []string{"name", "col2", "age"})
 	})
+
+	t.Run("synthesized headers stay unique in relaxed mode", func(t *testing.T) {
+		opts := Options{Header: true, Strict: false}
+		headers, _, err := ResolveHeaders([]string{"col2", "", "col2"}, opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		assertStringSlice(t, headers, []string{"col2", "col2_2", "col2_3"})
+	})
 }
 
 func assertStringSlice(t *testing.T, got, want []string) {

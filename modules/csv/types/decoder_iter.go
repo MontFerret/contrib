@@ -20,7 +20,9 @@ type DecodeIterator struct {
 
 func NewDecodeIterator(data runtime.String, opts Options) (*DecodeIterator, error) {
 	reader := csv.NewReader(bytes.NewBufferString(data.String()))
-	opts.ApplyToReader(reader)
+	if err := opts.ApplyToReader(reader); err != nil {
+		return nil, err
+	}
 
 	// Read first row to determine headers
 	firstRow, err := reader.Read()

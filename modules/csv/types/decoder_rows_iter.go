@@ -16,16 +16,18 @@ type DecodeRowsIterator struct {
 	expectedCols int
 }
 
-func NewDecodeRowsIterator(data runtime.String, opts Options) *DecodeRowsIterator {
+func NewDecodeRowsIterator(data runtime.String, opts Options) (*DecodeRowsIterator, error) {
 	reader := csv.NewReader(bytes.NewBufferString(data.String()))
-	opts.ApplyToReader(reader)
+	if err := opts.ApplyToReader(reader); err != nil {
+		return nil, err
+	}
 
 	return &DecodeRowsIterator{
 		reader:       reader,
 		opts:         opts,
 		rowNum:       0,
 		expectedCols: -1,
-	}
+	}, nil
 }
 
 func (d *DecodeRowsIterator) Iterate(_ context.Context) (runtime.Iterator, error) {

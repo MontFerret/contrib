@@ -24,9 +24,8 @@ func Encode(ctx context.Context, data runtime.Value, opts Options) (*EncodeResul
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
-	if opts.Delimiter != "" {
-		runes := []rune(opts.Delimiter)
-		writer.Comma = runes[0]
+	if err := opts.ApplyToWriter(writer); err != nil {
+		return nil, err
 	}
 
 	// Peek at first element to determine mode

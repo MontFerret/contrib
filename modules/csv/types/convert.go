@@ -26,7 +26,7 @@ func ConvertValue(raw string, opts Options) runtime.Value {
 
 	// Try integer
 	if i, err := strconv.ParseInt(raw, 10, 64); err == nil {
-		return runtime.NewInt(int(i))
+		return runtime.NewInt64(i)
 	}
 
 	// Try float

@@ -43,16 +43,17 @@ func validateHeaders(headers []string, opts Options) ([]string, error) {
 			h = fmt.Sprintf("col%d", i+1)
 		}
 
-		if count, exists := seen[h]; exists {
+		base := h
+
+		if count, exists := seen[base]; exists {
 			if opts.Strict {
-				return nil, newCSVErrorf(1, "duplicate header name %q", h)
+				return nil, newCSVErrorf(1, "duplicate header name %q", base)
 			}
 
-			// Auto-rename: name_2, name_3, ...
-			h = fmt.Sprintf("%s_%d", h, count+1)
+			h = fmt.Sprintf("%s_%d", base, count+1)
 		}
 
-		seen[headers[i]]++
+		seen[base]++
 		result[i] = h
 	}
 
