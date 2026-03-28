@@ -232,6 +232,22 @@ func TestDecodeStreamLib(t *testing.T) {
 		}
 	})
 
+	t.Run("accepts binary input", func(t *testing.T) {
+		result, err := DecodeStream(ctx, runtime.NewBinary([]byte("name,age\nAlice,30")))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		iter := mustIterate(t, ctx, result)
+		first, _, err := iter.Next(ctx)
+		if err != nil {
+			t.Fatalf("unexpected error reading first row: %v", err)
+		}
+
+		firstObj := mustRuntimeObject(t, first)
+		assertObjectField(t, ctx, firstObj, "name", "Alice")
+	})
+
 	t.Run("propagates strict decode errors during iteration", func(t *testing.T) {
 		result, err := DecodeStream(ctx, runtime.NewString("name,age\nAlice,30\nBob,25,extra"))
 		if err != nil {
@@ -263,6 +279,13 @@ func TestDecodeStreamLib(t *testing.T) {
 		_, err := DecodeStream(ctx, runtime.NewString("name,age\nAlice,30"), opts)
 		if err == nil {
 			t.Fatal("expected error for invalid delimiter")
+		}
+	})
+
+	t.Run("rejects non-text input", func(t *testing.T) {
+		_, err := DecodeStream(ctx, runtime.NewInt(42))
+		if err == nil {
+			t.Fatal("expected error for non-text input")
 		}
 	})
 }
@@ -319,6 +342,22 @@ func TestDecodeRowsStreamLib(t *testing.T) {
 		assertRuntimeIntValue(t, val, 7)
 	})
 
+	t.Run("accepts binary input", func(t *testing.T) {
+		result, err := DecodeRowsStream(ctx, runtime.NewBinary([]byte("a,b\nc,d")))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		iter := mustIterate(t, ctx, result)
+		first, _, err := iter.Next(ctx)
+		if err != nil {
+			t.Fatalf("unexpected error reading first row: %v", err)
+		}
+
+		firstRow := mustRuntimeArray(t, first)
+		assertRuntimeArrayLen(t, ctx, firstRow, 2)
+	})
+
 	t.Run("propagates strict row errors during iteration", func(t *testing.T) {
 		result, err := DecodeRowsStream(ctx, runtime.NewString("a,b\nc,d,e"))
 		if err != nil {
@@ -350,6 +389,13 @@ func TestDecodeRowsStreamLib(t *testing.T) {
 		_, err := DecodeRowsStream(ctx, runtime.NewString("a,b\nc,d"), opts)
 		if err == nil {
 			t.Fatal("expected error for invalid comment")
+		}
+	})
+
+	t.Run("rejects non-text input", func(t *testing.T) {
+		_, err := DecodeRowsStream(ctx, runtime.NewObject())
+		if err == nil {
+			t.Fatal("expected error for non-text input")
 		}
 	})
 }

@@ -8,9 +8,8 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// DecodeStream decodes CSV content from any value supported by types.ResolveContent,
-// including strings, binary values, and stringer-backed host values.
-// @param {String|Binary|Any} data - CSV content or value resolvable to CSV text.
+// DecodeStream decodes CSV content from string or binary input.
+// @param {String|Binary} data - CSV content.
 // @param {Options} [opts] - Options for decoding.
 // @return {Iterator<Object>} - Proxy exposing an iterator over decoded objects.
 func DecodeStream(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
