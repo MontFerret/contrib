@@ -93,4 +93,15 @@ func TestDecodeLib(t *testing.T) {
 			t.Fatalf("expected null age to decode as None, got %v", age)
 		}
 	})
+
+	t.Run("invalid delimiter rune returns error", func(t *testing.T) {
+		opts := runtime.NewObjectWith(map[string]runtime.Value{
+			"delimiter": runtime.NewString("\n"),
+		})
+
+		_, err := Decode(ctx, runtime.NewString("name,age\nAlice,30"), opts)
+		if err == nil {
+			t.Fatal("expected error for invalid delimiter")
+		}
+	})
 }

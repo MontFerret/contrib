@@ -129,6 +129,16 @@ func TestDecodeRows(t *testing.T) {
 			t.Fatal("expected error for invalid comment")
 		}
 	})
+
+	t.Run("invalid comment rune returns error", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.Comment = "\""
+
+		_, err := DecodeRows(ctx, runtime.NewString("a,b\nc,d"), opts)
+		if err == nil {
+			t.Fatal("expected error for invalid comment")
+		}
+	})
 }
 
 func mustArrayAt(t *testing.T, ctx context.Context, arr *runtime.Array, idx int) *runtime.Array {

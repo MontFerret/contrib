@@ -3,11 +3,13 @@ package types
 import (
 	"encoding/csv"
 	"fmt"
+	"unicode/utf8"
 )
 
 // Options configures CSV decoding and encoding behavior.
 type Options struct {
-	// Delimiter is the single-character field separator. It defaults to ",".
+	// Delimiter is the single-character field separator. It defaults to "," and
+	// must be a valid CSV delimiter rune.
 	Delimiter string `json:"delimiter"`
 	// Header controls whether the first row is treated as column names. It
 	// defaults to true.
@@ -23,7 +25,8 @@ type Options struct {
 	// Strict enforces matching field counts and strict header validation. It
 	// defaults to true.
 	Strict bool `json:"strict"`
-	// Comment marks a single-character comment prefix for reader input.
+	// Comment marks a single-character comment prefix for reader input. It must
+	// be a valid CSV comment rune and must differ from the effective delimiter.
 	Comment string `json:"comment"`
 	// InferTypes converts decoded field values to booleans or numbers when
 	// possible.
@@ -44,12 +47,15 @@ func DefaultOptions() Options {
 
 // ApplyToReader applies the reader-supported options to r.
 func (o *Options) ApplyToReader(r *csv.Reader) error {
+	delimiter := r.Comma
+
 	if o.Delimiter != "" {
-		delimiter, err := validateSingleRuneOption("delimiter", o.Delimiter)
+		validDelimiter, err := validateSingleRuneOption("delimiter", o.Delimiter)
 		if err != nil {
 			return err
 		}
 
+		delimiter = validDelimiter
 		r.Comma = delimiter
 	}
 
@@ -57,6 +63,10 @@ func (o *Options) ApplyToReader(r *csv.Reader) error {
 		comment, err := validateSingleRuneOption("comment", o.Comment)
 		if err != nil {
 			return err
+		}
+
+		if comment == delimiter {
+			return fmt.Errorf("csv: comment must differ from delimiter")
 		}
 
 		r.Comment = comment
@@ -91,5 +101,14 @@ func validateSingleRuneOption(name, value string) (rune, error) {
 		return 0, fmt.Errorf("csv: %s must be exactly one Unicode character", name)
 	}
 
-	return runes[0], nil
+	r := runes[0]
+	if !isValidCSVOptionRune(r) {
+		return 0, fmt.Errorf("csv: invalid %s character", name)
+	}
+
+	return r, nil
+}
+
+func isValidCSVOptionRune(r rune) bool {
+	return r != 0 && r != '"' && r != '\r' && r != '\n' && utf8.ValidRune(r) && r != utf8.RuneError
 }

@@ -94,6 +94,26 @@ func TestDecode(t *testing.T) {
 		assertField(t, ctx, obj0, "age", "30")
 	})
 
+	t.Run("invalid delimiter rune returns error before decoding", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.Delimiter = "\n"
+
+		_, err := Decode(ctx, runtime.NewString("name,age\nAlice,30"), opts)
+		if err == nil {
+			t.Fatal("expected error for invalid delimiter")
+		}
+	})
+
+	t.Run("comment equal to delimiter returns error before decoding", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.Comment = ","
+
+		_, err := Decode(ctx, runtime.NewString("name,age\nAlice,30"), opts)
+		if err == nil {
+			t.Fatal("expected error for comment equal to delimiter")
+		}
+	})
+
 	t.Run("skip empty rows", func(t *testing.T) {
 		opts := DefaultOptions()
 		opts.SkipEmpty = true

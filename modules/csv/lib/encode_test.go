@@ -68,4 +68,19 @@ func TestEncodeLib(t *testing.T) {
 			t.Fatalf("unexpected encode result: %q", result.String())
 		}
 	})
+
+	t.Run("invalid delimiter rune returns error", func(t *testing.T) {
+		opts := runtime.NewObjectWith(map[string]runtime.Value{
+			"delimiter": runtime.NewString("\""),
+		})
+
+		data := runtime.NewArrayWith(
+			runtime.NewArrayWith(runtime.NewString("name"), runtime.NewString("age")),
+		)
+
+		_, err := Encode(ctx, data, opts)
+		if err == nil {
+			t.Fatal("expected error for invalid delimiter")
+		}
+	})
 }
