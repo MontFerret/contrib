@@ -107,11 +107,63 @@ func TestDecode(t *testing.T) {
 		assertArrayLen(t, ctx, arr, 2)
 	})
 
+	t.Run("skip leading empty record before header", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.SkipEmpty = true
+
+		result, err := Decode(ctx, runtime.NewString(",\nname,age\nAlice,30"), opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		arr := mustArray(t, result)
+		assertArrayLen(t, ctx, arr, 1)
+		assertField(t, ctx, mustObjectAt(t, ctx, arr, 0), "name", "Alice")
+		assertField(t, ctx, mustObjectAt(t, ctx, arr, 0), "age", "30")
+	})
+
+	t.Run("skip leading empty record before auto-generated columns", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.Header = false
+		opts.SkipEmpty = true
+		opts.Strict = true
+
+		result, err := Decode(ctx, runtime.NewString(",\nAlice,30\nBob,25"), opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		arr := mustArray(t, result)
+		assertArrayLen(t, ctx, arr, 2)
+		assertField(t, ctx, mustObjectAt(t, ctx, arr, 0), "col1", "Alice")
+		assertField(t, ctx, mustObjectAt(t, ctx, arr, 0), "col2", "30")
+	})
+
 	t.Run("strict mode inconsistent columns error", func(t *testing.T) {
 		opts := DefaultOptions()
 		opts.Strict = true
 
 		_, err := Decode(ctx, runtime.NewString("name,age\nAlice,30\nBob,25,extra"), opts)
+		if err == nil {
+			t.Fatal("expected error for inconsistent columns")
+		}
+
+		csvErr, ok := err.(*CSVError)
+		if !ok {
+			t.Fatalf("expected CSVError, got %T", err)
+		}
+
+		if csvErr.Row != 3 {
+			t.Fatalf("expected row 3, got %d", csvErr.Row)
+		}
+	})
+
+	t.Run("strict mode error row includes skipped leading empty record", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.SkipEmpty = true
+		opts.Strict = true
+
+		_, err := Decode(ctx, runtime.NewString(",\nname,age\nAlice,30,extra"), opts)
 		if err == nil {
 			t.Fatal("expected error for inconsistent columns")
 		}
@@ -212,6 +264,19 @@ func TestDecode(t *testing.T) {
 		opts := DefaultOptions()
 		result, err := Decode(ctx, runtime.NewString(""), opts)
 
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		arr := mustArray(t, result)
+		assertArrayLen(t, ctx, arr, 0)
+	})
+
+	t.Run("all leading empty records with skip empty returns empty result", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.SkipEmpty = true
+
+		result, err := Decode(ctx, runtime.NewString(",\n,\n"), opts)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}

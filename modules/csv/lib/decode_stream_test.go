@@ -83,6 +83,27 @@ func TestDecodeStreamLib(t *testing.T) {
 		assertObjectField(t, ctx, firstObj, "name", "Alice")
 	})
 
+	t.Run("skips leading empty record before header", func(t *testing.T) {
+		opts := runtime.NewObjectWith(map[string]runtime.Value{
+			"skipEmpty": runtime.True,
+		})
+
+		result, err := DecodeStream(ctx, runtime.NewString(",\nname,age\nAlice,30"), opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		iter := mustIterate(t, ctx, result)
+		first, _, err := iter.Next(ctx)
+		if err != nil {
+			t.Fatalf("unexpected error reading first row: %v", err)
+		}
+
+		firstObj := mustRuntimeObject(t, first)
+		assertObjectField(t, ctx, firstObj, "name", "Alice")
+		assertObjectField(t, ctx, firstObj, "age", "30")
+	})
+
 	t.Run("propagates strict decode errors during iteration", func(t *testing.T) {
 		result, err := DecodeStream(ctx, runtime.NewString("name,age\nAlice,30\nBob,25,extra"))
 		if err != nil {

@@ -24,18 +24,16 @@ func NewDecodeIterator(data runtime.String, opts Options) (*DecodeIterator, erro
 		return nil, err
 	}
 
-	// Read first row to determine headers
-	firstRow, err := reader.Read()
+	firstRow, rowNum, err := readFirstDataRow(reader, opts)
 	if err != nil {
-		if err == io.EOF {
-			// Empty input — return an exhausted iterator
-			return &DecodeIterator{
-				reader:          reader,
-				headersConsumed: true,
-			}, nil
-		}
+		return nil, err
+	}
 
-		return nil, runtime.Error(err, "csv: failed to read first row")
+	if firstRow == nil {
+		return &DecodeIterator{
+			reader:          reader,
+			headersConsumed: true,
+		}, nil
 	}
 
 	headers, headersConsumed, err := ResolveHeaders(firstRow, opts)
@@ -43,9 +41,17 @@ func NewDecodeIterator(data runtime.String, opts Options) (*DecodeIterator, erro
 		return nil, err
 	}
 
-	var rowNum runtime.Int
 	if headersConsumed {
-		rowNum = 1 // header was row 1, data starts at row 2
+		// Header was read from the original CSV record number tracked in rowNum.
+		// The next yielded row should continue from that record number.
+		return &DecodeIterator{
+			reader:          reader,
+			headers:         headers,
+			headersConsumed: headersConsumed,
+			firstRow:        firstRow,
+			opts:            opts,
+			rowNum:          rowNum,
+		}, nil
 	}
 
 	return &DecodeIterator{
@@ -56,6 +62,29 @@ func NewDecodeIterator(data runtime.String, opts Options) (*DecodeIterator, erro
 		opts:            opts,
 		rowNum:          rowNum,
 	}, nil
+}
+
+func readFirstDataRow(reader *csv.Reader, opts Options) ([]string, runtime.Int, error) {
+	var rowNum runtime.Int
+
+	for {
+		record, err := reader.Read()
+		if err != nil {
+			if err == io.EOF {
+				return nil, 0, nil
+			}
+
+			return nil, 0, runtime.Error(err, "csv: failed to read first row")
+		}
+
+		rowNum++
+
+		if opts.SkipEmpty && isEmptyRow(record) {
+			continue
+		}
+
+		return record, rowNum, nil
+	}
 }
 
 func (d *DecodeIterator) Iterate(_ context.Context) (runtime.Iterator, error) {
