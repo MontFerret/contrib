@@ -37,7 +37,9 @@ func Encode(ctx context.Context, data runtime.Value, opts Options) (*EncodeResul
 	firstVal, _, err := iter.Next(ctx)
 	if err != nil {
 		if err == io.EOF {
-			writer.Flush()
+			if err := flushWriter(writer); err != nil {
+				return nil, err
+			}
 
 			return &EncodeResult{Text: buf.String(), Rows: 0}, nil
 		}
@@ -110,7 +112,9 @@ func encodeRecords(ctx context.Context, writer *csv.Writer, buf *bytes.Buffer, i
 		rowCount++
 	}
 
-	writer.Flush()
+	if err := flushWriter(writer); err != nil {
+		return nil, err
+	}
 
 	return &EncodeResult{Text: buf.String(), Rows: rowCount}, nil
 }
@@ -153,9 +157,20 @@ func encodeArrays(ctx context.Context, writer *csv.Writer, buf *bytes.Buffer, it
 		rowCount++
 	}
 
-	writer.Flush()
+	if err := flushWriter(writer); err != nil {
+		return nil, err
+	}
 
 	return &EncodeResult{Text: buf.String(), Rows: rowCount}, nil
+}
+
+func flushWriter(writer *csv.Writer) error {
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return runtime.Error(err, "csv: failed to flush output")
+	}
+
+	return nil
 }
 
 func resolveEncodeColumns(ctx context.Context, first runtime.Map, opts Options) ([]string, error) {

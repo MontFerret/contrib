@@ -2,6 +2,8 @@ package types
 
 import (
 	"context"
+	"encoding/csv"
+	"errors"
 	"strings"
 	"testing"
 
@@ -216,4 +218,32 @@ func TestEncode(t *testing.T) {
 			t.Fatalf("round trip mismatch:\nexpected: %q\ngot:      %q", input, result.Text)
 		}
 	})
+
+	t.Run("flush helper returns deferred writer error", func(t *testing.T) {
+		writer := csv.NewWriter(failingWriter{})
+		if err := writer.Write([]string{"a", "b"}); err != nil {
+			t.Fatalf("unexpected write error before flush: %v", err)
+		}
+
+		err := flushWriter(writer)
+		if err == nil {
+			t.Fatal("expected flush error")
+		}
+
+		if !strings.Contains(err.Error(), "csv: failed to flush output") {
+			t.Fatalf("expected flush error wrapper, got %v", err)
+		}
+
+		if !errors.Is(err, errFailingWriter) {
+			t.Fatalf("expected wrapped failing writer error, got %v", err)
+		}
+	})
+}
+
+var errFailingWriter = errors.New("failing writer")
+
+type failingWriter struct{}
+
+func (failingWriter) Write(p []byte) (int, error) {
+	return 0, errFailingWriter
 }
