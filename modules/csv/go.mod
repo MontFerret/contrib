@@ -1,6 +1,6 @@
 module github.com/MontFerret/contrib/modules/csv
 
-go 1.26.1
+go 1.25.6
 
 require github.com/MontFerret/ferret/v2 v2.0.0-alpha.3
 
