@@ -95,7 +95,6 @@ func (d *DecodeIterator) Next(ctx context.Context) (runtime.Value, runtime.Value
 	// If first row was not consumed as header, yield it as data
 	if !d.headersConsumed {
 		d.headersConsumed = true
-		d.rowNum++
 
 		if !(d.opts.SkipEmpty && isEmptyRow(d.firstRow)) {
 			obj, err := rowToObject(ctx, d.firstRow, d.headers, int(d.rowNum), d.opts)

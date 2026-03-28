@@ -104,6 +104,53 @@ func TestDecodeStreamLib(t *testing.T) {
 		assertObjectField(t, ctx, firstObj, "age", "30")
 	})
 
+	t.Run("headerless first row keeps original iterator key", func(t *testing.T) {
+		opts := runtime.NewObjectWith(map[string]runtime.Value{
+			"header": runtime.False,
+		})
+
+		result, err := DecodeStream(ctx, runtime.NewString("Alice,30\nBob,25"), opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		iter := mustIterate(t, ctx, result)
+		first, key, err := iter.Next(ctx)
+		if err != nil {
+			t.Fatalf("unexpected error reading first row: %v", err)
+		}
+
+		assertRuntimeIntValue(t, key, 1)
+
+		firstObj := mustRuntimeObject(t, first)
+		assertObjectField(t, ctx, firstObj, "col1", "Alice")
+		assertObjectField(t, ctx, firstObj, "col2", "30")
+	})
+
+	t.Run("headerless first row preserves skipped leading empty record numbering", func(t *testing.T) {
+		opts := runtime.NewObjectWith(map[string]runtime.Value{
+			"header":    runtime.False,
+			"skipEmpty": runtime.True,
+		})
+
+		result, err := DecodeStream(ctx, runtime.NewString(",\nAlice,30\nBob,25"), opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		iter := mustIterate(t, ctx, result)
+		first, key, err := iter.Next(ctx)
+		if err != nil {
+			t.Fatalf("unexpected error reading first row: %v", err)
+		}
+
+		assertRuntimeIntValue(t, key, 2)
+
+		firstObj := mustRuntimeObject(t, first)
+		assertObjectField(t, ctx, firstObj, "col1", "Alice")
+		assertObjectField(t, ctx, firstObj, "col2", "30")
+	})
+
 	t.Run("propagates strict decode errors during iteration", func(t *testing.T) {
 		result, err := DecodeStream(ctx, runtime.NewString("name,age\nAlice,30\nBob,25,extra"))
 		if err != nil {
@@ -124,6 +171,34 @@ func TestDecodeStreamLib(t *testing.T) {
 
 		if _, ok := err.(*types.CSVError); !ok {
 			t.Fatalf("expected *types.CSVError, got %T", err)
+		}
+	})
+
+	t.Run("headerless strict error on first row keeps original row number", func(t *testing.T) {
+		opts := runtime.NewObjectWith(map[string]runtime.Value{
+			"header":  runtime.False,
+			"strict":  runtime.True,
+			"columns": runtime.NewArrayWith(runtime.NewString("first"), runtime.NewString("last")),
+		})
+
+		result, err := DecodeStream(ctx, runtime.NewString("Alice,Smith,extra\nBob,Jones"), opts)
+		if err != nil {
+			t.Fatalf("unexpected constructor error: %v", err)
+		}
+
+		iter := mustIterate(t, ctx, result)
+		_, _, err = iter.Next(ctx)
+		if err == nil {
+			t.Fatal("expected strict decode error on first row")
+		}
+
+		csvErr, ok := err.(*types.CSVError)
+		if !ok {
+			t.Fatalf("expected *types.CSVError, got %T", err)
+		}
+
+		if csvErr.Row != 1 {
+			t.Fatalf("expected row 1, got %d", csvErr.Row)
 		}
 	})
 

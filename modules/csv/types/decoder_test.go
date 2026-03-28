@@ -139,6 +139,49 @@ func TestDecode(t *testing.T) {
 		assertField(t, ctx, mustObjectAt(t, ctx, arr, 0), "col2", "30")
 	})
 
+	t.Run("strict mode first headerless row uses original row number", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.Header = false
+		opts.Strict = true
+		opts.Columns = []string{"first", "last"}
+
+		_, err := Decode(ctx, runtime.NewString("Alice,Smith,extra\nBob,Jones"), opts)
+		if err == nil {
+			t.Fatal("expected error for inconsistent columns")
+		}
+
+		csvErr, ok := err.(*CSVError)
+		if !ok {
+			t.Fatalf("expected CSVError, got %T", err)
+		}
+
+		if csvErr.Row != 1 {
+			t.Fatalf("expected row 1, got %d", csvErr.Row)
+		}
+	})
+
+	t.Run("strict mode headerless row preserves skipped leading empty record numbering", func(t *testing.T) {
+		opts := DefaultOptions()
+		opts.Header = false
+		opts.SkipEmpty = true
+		opts.Strict = true
+		opts.Columns = []string{"first", "last"}
+
+		_, err := Decode(ctx, runtime.NewString(",\nAlice,Smith,extra\nBob,Jones"), opts)
+		if err == nil {
+			t.Fatal("expected error for inconsistent columns")
+		}
+
+		csvErr, ok := err.(*CSVError)
+		if !ok {
+			t.Fatalf("expected CSVError, got %T", err)
+		}
+
+		if csvErr.Row != 2 {
+			t.Fatalf("expected row 2, got %d", csvErr.Row)
+		}
+	})
+
 	t.Run("strict mode inconsistent columns error", func(t *testing.T) {
 		opts := DefaultOptions()
 		opts.Strict = true
