@@ -8,6 +8,8 @@ import (
 type module struct {
 }
 
+// New returns the CSV module, which registers the CSV namespace functions on a
+// Ferret host during bootstrap.
 func New() (ferret.Module, error) {
 	return &module{}, nil
 }

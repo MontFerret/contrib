@@ -5,8 +5,12 @@ import (
 	"fmt"
 )
 
+// ErrHeaderColumnConflict reports that both a header row and explicit columns
+// were requested at the same time.
 var ErrHeaderColumnConflict = errors.New("csv: cannot specify both header: true and columns option")
 
+// ResolveHeaders returns the headers to use for object decoding, whether the
+// first row was consumed as a header row, and any validation error.
 func ResolveHeaders(firstRow []string, opts Options) ([]string, bool, error) {
 	if opts.Header && len(opts.Columns) > 0 {
 		return nil, false, ErrHeaderColumnConflict

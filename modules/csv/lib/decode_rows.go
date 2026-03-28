@@ -8,7 +8,8 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// DecodeRows decodes a CSV string into raw row arrays.
+// DecodeRows decodes CSV text into an array of raw row arrays.
+// It keeps header rows as data and applies decoding options to each field.
 // @param {String} data - CSV string.
 // @param {Options} [opts] - Options for decoding.
 // @return {Any[][]} - Array of row arrays.

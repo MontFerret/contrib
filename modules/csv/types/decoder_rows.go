@@ -7,6 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
+// DecodeRows eagerly decodes CSV text into an array of row arrays.
 func DecodeRows(ctx context.Context, data runtime.String, opts Options) (runtime.Value, error) {
 	iter, err := NewDecodeRowsIterator(data, opts)
 	if err != nil {

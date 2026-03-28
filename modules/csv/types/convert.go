@@ -7,6 +7,8 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
+// ConvertValue converts a decoded CSV field to the runtime representation
+// requested by opts.
 func ConvertValue(raw string, opts Options) runtime.Value {
 	if opts.Trim {
 		raw = strings.TrimSpace(raw)

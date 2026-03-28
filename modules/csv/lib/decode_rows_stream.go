@@ -9,6 +9,8 @@ import (
 )
 
 // DecodeRowsStream decodes CSV content from string or binary input.
+// It returns a proxy over an iterator of row arrays keyed by the original CSV
+// record number after parsing.
 // @param {String|Binary} data - CSV content.
 // @param {Options} [opts] - Options for decoding.
 // @return {Iterator<Any[]>} - Proxy exposing an iterator over decoded row arrays.

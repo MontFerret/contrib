@@ -9,6 +9,8 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
+// DecodeRowsIterator iterates over decoded CSV rows.
+// The iterator key is the original 1-based CSV record number after parsing.
 type DecodeRowsIterator struct {
 	reader       *csv.Reader
 	opts         Options
@@ -16,6 +18,7 @@ type DecodeRowsIterator struct {
 	expectedCols int
 }
 
+// NewDecodeRowsIterator returns an iterator over decoded CSV rows.
 func NewDecodeRowsIterator(data runtime.String, opts Options) (*DecodeRowsIterator, error) {
 	reader := csv.NewReader(bytes.NewBufferString(data.String()))
 	if err := opts.ApplyToReader(reader); err != nil {
@@ -30,10 +33,12 @@ func NewDecodeRowsIterator(data runtime.String, opts Options) (*DecodeRowsIterat
 	}, nil
 }
 
+// Iterate returns the iterator itself.
 func (d *DecodeRowsIterator) Iterate(_ context.Context) (runtime.Iterator, error) {
 	return d, nil
 }
 
+// Next returns the next decoded row and its CSV record number.
 func (d *DecodeRowsIterator) Next(ctx context.Context) (runtime.Value, runtime.Value, error) {
 	for {
 		d.rowNum++

@@ -10,11 +10,16 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
+// EncodeResult contains the encoded CSV text and the number of data rows
+// written.
 type EncodeResult struct {
+	// Text is the encoded CSV output.
 	Text string
+	// Rows is the number of data rows written, excluding any generated header.
 	Rows int
 }
 
+// Encode encodes an array of objects or row arrays into CSV text.
 func Encode(ctx context.Context, data runtime.Value, opts Options) (*EncodeResult, error) {
 	list, ok := data.(runtime.List)
 	if !ok {

@@ -8,10 +8,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// Decode decodes a CSV string into a table.
+// Decode decodes CSV text into an array of objects.
+// When opts.header is true, the first record defines object keys; otherwise
+// opts.columns or generated colN names are used.
 // @param {String} data - CSV string.
 // @param {Options} [opts] - Options for decoding.
-// @return {Any[]} - Sliced array.
+// @return {Any[]} - Array of decoded objects.
 func Decode(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err

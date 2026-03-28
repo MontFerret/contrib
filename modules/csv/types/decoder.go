@@ -7,6 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
+// Decode eagerly decodes CSV text into an array of objects.
 func Decode(ctx context.Context, data runtime.String, opts Options) (runtime.Value, error) {
 	iter, err := NewDecodeIterator(data, opts)
 	if err != nil {
