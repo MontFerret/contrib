@@ -32,7 +32,8 @@ func ResolveHeaders(firstRow []string, opts Options) ([]string, bool, error) {
 
 func validateHeaders(headers []string, opts Options) ([]string, error) {
 	result := make([]string, len(headers))
-	seen := make(map[string]int, len(headers))
+	baseCounts := make(map[string]int, len(headers))
+	emitted := make(map[string]struct{}, len(headers))
 
 	for i, h := range headers {
 		if h == "" {
@@ -45,15 +46,27 @@ func validateHeaders(headers []string, opts Options) ([]string, error) {
 
 		base := h
 
-		if count, exists := seen[base]; exists {
+		if count, exists := baseCounts[base]; exists {
 			if opts.Strict {
 				return nil, newCSVErrorf(1, "duplicate header name %q", base)
 			}
 
-			h = fmt.Sprintf("%s_%d", base, count+1)
+			next := count + 1
+			for {
+				candidate := fmt.Sprintf("%s_%d", base, next)
+				if _, exists := emitted[candidate]; !exists {
+					h = candidate
+					baseCounts[base] = next
+					break
+				}
+
+				next++
+			}
+		} else {
+			baseCounts[base] = 1
 		}
 
-		seen[base]++
+		emitted[h] = struct{}{}
 		result[i] = h
 	}
 

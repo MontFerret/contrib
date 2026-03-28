@@ -109,6 +109,26 @@ func TestResolveHeaders(t *testing.T) {
 
 		assertStringSlice(t, headers, []string{"col2", "col2_2", "col2_3"})
 	})
+
+	t.Run("renamed headers avoid existing literal suffix collisions", func(t *testing.T) {
+		opts := Options{Header: true, Strict: false}
+		headers, _, err := ResolveHeaders([]string{"a", "a_2", "a"}, opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		assertStringSlice(t, headers, []string{"a", "a_2", "a_3"})
+	})
+
+	t.Run("renamed headers skip multiple occupied suffixes", func(t *testing.T) {
+		opts := Options{Header: true, Strict: false}
+		headers, _, err := ResolveHeaders([]string{"a", "a_2", "a_3", "a"}, opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		assertStringSlice(t, headers, []string{"a", "a_2", "a_3", "a_4"})
+	})
 }
 
 func assertStringSlice(t *testing.T, got, want []string) {
