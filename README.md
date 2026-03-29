@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | `csv` | CSV module and CSV namespace helpers for Ferret. | [modules/csv/README.md](./modules/csv/README.md) |
 | `html` | HTML module for Ferret. | [modules/html/README.md](./modules/html/README.md) |
+| `toml` | TOML module and TOML namespace helpers for Ferret. | [modules/toml/README.md](./modules/toml/README.md) |
 | `xml` | XML module and XML namespace helpers for Ferret. | [modules/xml/README.md](./modules/xml/README.md) |
 | `yaml` | YAML module and YAML namespace helpers for Ferret. | [modules/yaml/README.md](./modules/yaml/README.md) |
 

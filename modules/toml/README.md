@@ -1,0 +1,127 @@
+# TOML Module
+
+`github.com/MontFerret/contrib/modules/toml` registers TOML helpers under the canonical `toml` namespace for Ferret hosts.
+
+The module exposes these canonical functions:
+
+- `toml::decode`
+- `toml::encode`
+
+Compatibility aliases are also registered:
+
+- `TOML::DECODE`
+- `TOML::ENCODE`
+
+## Install
+
+```sh
+go get github.com/MontFerret/contrib/modules/toml
+```
+
+## Register The Module
+
+```go
+package main
+
+import (
+	"github.com/MontFerret/ferret/v2"
+
+	tomlmodule "github.com/MontFerret/contrib/modules/toml"
+)
+
+func main() {
+	tomlMod, err := tomlmodule.New()
+	if err != nil {
+		panic(err)
+	}
+
+	engine, err := ferret.New(
+		ferret.WithModules(tomlMod),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	_ = engine
+}
+```
+
+## Function Reference
+
+| Function | Signature | Returns | Notes |
+| --- | --- | --- | --- |
+| `toml::decode` | `toml::decode(input[, options])` | `Object` | Decodes a whole TOML document from string or binary input. |
+| `toml::encode` | `toml::encode(value[, options])` | `String` | Encodes a Ferret object into TOML text. |
+
+## Decode Options
+
+```fql
+{
+  datetime: "string" | "native",
+  strict: true | false
+}
+```
+
+Default:
+
+```fql
+{
+  datetime: "string",
+  strict: true
+}
+```
+
+## Encode Options
+
+```fql
+{
+  sort_keys: true | false,
+  datetime: "rfc3339" | "preserve"
+}
+```
+
+Default:
+
+```fql
+{
+  sort_keys: false,
+  datetime: "rfc3339"
+}
+```
+
+## Examples
+
+### Decode
+
+```fql
+RETURN toml::decode("
+title = \"Ferret\"
+
+[server]
+host = \"localhost\"
+port = 8080
+")
+```
+
+### Encode
+
+```fql
+RETURN toml::encode({
+  title: "Ferret",
+  server: {
+    host: "localhost",
+    port: 8080
+  }
+})
+```
+
+## Behavior Notes
+
+- `toml::decode` accepts both string and binary TOML input.
+- The top-level TOML document always decodes to an object.
+- `datetime: "string"` returns TOML timestamps as canonical strings.
+- `datetime: "native"` returns Ferret `DateTime` values and preserves TOML local datetime/date/time flavor using the underlying location name.
+- `toml::encode` requires the top-level value to be an object or map.
+- Arrays of objects encode as arrays of tables when they appear as direct object fields.
+- Values without a TOML representation, such as `None`, binary data, iterators, and host-only values, return an explicit error.
+- Output formatting is implementation-defined apart from valid TOML syntax and the optional `sort_keys` behavior.

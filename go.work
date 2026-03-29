@@ -3,6 +3,7 @@ go 1.25.6
 use (
 	modules/csv
 	modules/html
+	modules/toml
 	modules/xml
 	modules/yaml
 )
