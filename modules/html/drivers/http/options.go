@@ -27,10 +27,10 @@ type (
 	Options struct {
 		*drivers.Options
 		Backoff         pester.BackoffStrategy
+		HTTPTransport   *stdhttp.Transport
+		HTTPCodesFilter []compiledStatusCodeFilter
 		MaxRetries      int
 		Concurrency     int
-		HTTPCodesFilter []compiledStatusCodeFilter
-		HTTPTransport   *stdhttp.Transport
 		Timeout         time.Duration
 	}
 )

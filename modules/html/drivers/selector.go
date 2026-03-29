@@ -10,8 +10,8 @@ type (
 	QuerySelectorKind int
 
 	QuerySelector struct {
-		Kind  QuerySelectorKind `json:"Kind"`
 		Value runtime.String    `json:"Value"`
+		Kind  QuerySelectorKind `json:"Kind"`
 	}
 )
 

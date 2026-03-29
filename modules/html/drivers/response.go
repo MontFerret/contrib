@@ -10,22 +10,22 @@ import (
 // HTTPResponse HTTP response object.
 type (
 	HTTPResponse struct {
-		URL          string
-		StatusCode   int
-		Status       string
 		Headers      *HTTPHeaders
+		URL          string
+		Status       string
 		Body         []byte
+		StatusCode   int
 		ResponseTime float64
 	}
 
 	// responseMarshal is a structure that repeats HTTPResponse. It allows
 	// easily Marshal the HTTPResponse object.
 	responseMarshal struct {
-		URL          string       `json:"url"`
-		StatusCode   int          `json:"status_code"`
-		Status       string       `json:"status"`
 		Headers      *HTTPHeaders `json:"headers"`
+		URL          string       `json:"url"`
+		Status       string       `json:"status"`
 		Body         []byte       `json:"body"`
+		StatusCode   int          `json:"status_code"`
 		ResponseTime float64      `json:"response_time"`
 	}
 )

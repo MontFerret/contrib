@@ -9,9 +9,9 @@ import (
 type (
 	Options struct {
 		*drivers.Options
+		Connection  *ConnectionOptions
 		Address     string
 		KeepCookies bool
-		Connection  *ConnectionOptions
 	}
 
 	ConnectionOptions struct {

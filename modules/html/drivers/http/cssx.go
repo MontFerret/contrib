@@ -24,8 +24,8 @@ type cssxCompiledOp struct {
 	Kind     cssxCompiledOpKind
 	Selector string
 	Name     cssx.Expression
-	Arity    int
 	Args     []any
+	Arity    int
 	Index    int
 }
 

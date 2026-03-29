@@ -19,15 +19,15 @@ type (
 
 	// HTTPCookie HTTPCookie object
 	HTTPCookie struct {
+		Expires  time.Time `json:"expires"`
 		Name     string    `json:"name"`
 		Value    string    `json:"Value"`
 		Path     string    `json:"path"`
 		Domain   string    `json:"domain"`
-		Expires  time.Time `json:"expires"`
 		MaxAge   int       `json:"maxAge"`
+		SameSite SameSite  `json:"sameSite"`
 		Secure   bool      `json:"secure"`
 		HTTPOnly bool      `json:"HTTPOnly"`
-		SameSite SameSite  `json:"sameSite"`
 	}
 )
 

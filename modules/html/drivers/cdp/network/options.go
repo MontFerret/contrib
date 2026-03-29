@@ -22,7 +22,7 @@ type (
 	}
 
 	WaitEventOptions struct {
-		FrameID page.FrameID
 		URL     *regexp.Regexp
+		FrameID page.FrameID
 	}
 )

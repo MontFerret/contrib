@@ -26,13 +26,13 @@ type (
 	HTMLPageEvent string
 
 	HTMLPage struct {
-		mu      sync.Mutex
-		closed  runtime.Boolean
 		logger  zerolog.Logger
 		conn    *rpcc.Conn
 		client  *cdp.Client
 		network *net.Manager
 		dom     *dom.Manager
+		mu      sync.Mutex
+		closed  runtime.Boolean
 	}
 )
 

@@ -13,9 +13,9 @@ type (
 
 	// Listener is an internal listener representation
 	Listener struct {
+		Handler Handler
 		ID      ListenerID
 		EventID ID
-		Handler Handler
 	}
 )
 

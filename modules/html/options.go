@@ -8,9 +8,9 @@ import (
 
 type (
 	options struct {
-		noLib      bool
-		drivers    []drivers.Driver
 		defaultDrv string
+		drivers    []drivers.Driver
+		noLib      bool
 	}
 
 	Option func(opts *options) error

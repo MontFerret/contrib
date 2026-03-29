@@ -20,9 +20,9 @@ const (
 type Runtime struct {
 	logger    zerolog.Logger
 	client    *cdp.Client
+	resolver  *Resolver
 	frame     page.Frame
 	contextID cdpruntime.ExecutionContextID
-	resolver  *Resolver
 }
 
 func Create(

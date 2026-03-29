@@ -17,11 +17,11 @@ type (
 
 	// ScreenshotParams defines parameters for the screenshot function.
 	ScreenshotParams struct {
+		Format  ScreenshotFormat
 		X       runtime.Float
 		Y       runtime.Float
 		Width   runtime.Float
 		Height  runtime.Float
-		Format  ScreenshotFormat
 		Quality runtime.Int
 	}
 )

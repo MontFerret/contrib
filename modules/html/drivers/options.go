@@ -4,11 +4,11 @@ import "net/textproto"
 
 type (
 	Options struct {
+		Headers   *HTTPHeaders `json:"headers"`
+		Cookies   *HTTPCookies `json:"cookies"`
 		Name      string       `json:"name"`
 		Proxy     string       `json:"proxy"`
 		UserAgent string       `json:"userAgent"`
-		Headers   *HTTPHeaders `json:"headers"`
-		Cookies   *HTTPCookies `json:"cookies"`
 	}
 
 	Option func(opts *Options)

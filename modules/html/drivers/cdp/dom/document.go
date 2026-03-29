@@ -23,8 +23,8 @@ type HTMLDocument struct {
 	dom       *Manager
 	input     *input.Manager
 	eval      *eval.Runtime
-	frameTree page.FrameTree
 	element   *HTMLElement
+	frameTree page.FrameTree
 }
 
 func NewHTMLDocument(

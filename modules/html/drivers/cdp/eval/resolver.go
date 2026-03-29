@@ -34,8 +34,8 @@ type (
 
 	Resolver struct {
 		runtime cdp.Runtime
-		frameID page.FrameID
 		loader  ValueLoader
+		frameID page.FrameID
 	}
 )
 

@@ -16,8 +16,8 @@ type cssxCompiledOp struct {
 	Kind     string `json:"kind"`
 	Selector string `json:"selector,omitempty"`
 	Name     string `json:"name,omitempty"`
-	Arity    int    `json:"arity,omitempty"`
 	Args     []any  `json:"args,omitempty"`
+	Arity    int    `json:"arity,omitempty"`
 	Index    int    `json:"index"`
 }
 
