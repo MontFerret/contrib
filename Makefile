@@ -1,4 +1,7 @@
-.PHONY: test lint fmt release-major release-minor release-patch
+.PHONY: build test lint fmt release-major release-minor release-patch
+
+build:
+	@./scripts/modules.sh build $(filter-out $@,$(MAKECMDGOALS))
 
 test:
 	@./scripts/modules.sh test $(filter-out $@,$(MAKECMDGOALS))

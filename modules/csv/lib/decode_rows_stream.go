@@ -3,6 +3,7 @@ package lib
 import (
 	"context"
 
+	"github.com/MontFerret/contrib/modules/csv/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )

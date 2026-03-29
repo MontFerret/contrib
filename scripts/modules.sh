@@ -39,6 +39,10 @@ main() {
 
   for module in "${selected_modules[@]}"; do
     case "$command" in
+      build)
+        echo "Building module '$module'"
+        go build "$DIR_MODULES/$module/..."
+        ;;
       test)
         echo "Testing module '$module'"
         go test "$DIR_MODULES/$module/..."
