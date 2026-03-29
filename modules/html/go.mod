@@ -4,7 +4,7 @@ go 1.25.6
 
 require (
 	github.com/MontFerret/cssx v0.2.0
-	github.com/MontFerret/ferret/v2 v2.0.0-20260313193546-d5c0aacbde72
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.3
 	github.com/PuerkitoBio/goquery v1.11.0
 	github.com/antchfx/htmlquery v1.3.5
 	github.com/antchfx/xpath v1.3.6
@@ -37,6 +37,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/smarty/assertions v1.16.0 // indirect
 	github.com/stretchr/objx v0.1.0 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/wI2L/jettison v0.7.4 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/sys v0.41.0 // indirect

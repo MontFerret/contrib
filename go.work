@@ -1,3 +1,6 @@
 go 1.25.6
 
-use modules/html
+use (
+	modules/csv
+	modules/html
+)
