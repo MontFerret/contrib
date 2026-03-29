@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/MontFerret/contrib/modules/csv/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
