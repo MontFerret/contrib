@@ -12,8 +12,21 @@ usage() {
   echo "  $0 <build|test|lint|fmt> [module ...]"
 }
 
+module_exists() {
+  local target="$1"
+  local module
+
+  for module in $(get_modules); do
+    if [ "$module" = "$target" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 main() {
-  if [[ $# -lt 1 ]]; then
+  if [ "$#" -lt 1 ]; then
     usage
     exit 1
   fi
@@ -21,23 +34,19 @@ main() {
   local command="$1"
   shift
 
-  all_modules="$(get_modules)"
-
-  local selected_modules=()
-  if [[ $# -eq 0 ]]; then
-    selected_modules=("${all_modules[@]}")
+  if [ "$#" -eq 0 ]; then
+    set -- $(get_modules)
   else
     for module in "$@"; do
-      if [[ ! -d "$DIR_MODULES/$module" ]]; then
+      if ! module_exists "$module"; then
         echo "Unknown module: $module" >&2
-        echo "Available modules: ${all_modules[*]}" >&2
+        echo "Available modules: $(get_modules)" >&2
         exit 1
       fi
-      selected_modules+=("$module")
     done
   fi
 
-  for module in "${selected_modules[@]}"; do
+  for module in "$@"; do
     case "$command" in
       build)
         echo "Building module '$module'"
