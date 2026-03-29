@@ -4,6 +4,10 @@
 
 The module exposes these functions:
 
+- `XML::ROOT`
+- `XML::TEXT`
+- `XML::ATTR`
+- `XML::CHILDREN`
 - `XML::DECODE`
 - `XML::DECODE_STREAM`
 - `XML::ENCODE`
@@ -46,6 +50,10 @@ func main() {
 
 | Function | Signature | Returns | Notes |
 | --- | --- | --- | --- |
+| `XML::ROOT` | `XML::ROOT(value)` | `Object \| None` | Returns the root element for a document, the element itself, or `None` for text nodes. |
+| `XML::TEXT` | `XML::TEXT(value)` | `String` | Concatenates descendant text in document order. |
+| `XML::ATTR` | `XML::ATTR(value, name)` | `String \| None` | Returns an attribute value from a document root or element. |
+| `XML::CHILDREN` | `XML::CHILDREN(value)` | `Array` | Returns element children, delegates through document roots, or `[]` for text nodes. |
 | `XML::DECODE` | `XML::DECODE(data)` | `Object` | Decodes XML text into a normalized document object. |
 | `XML::DECODE_STREAM` | `XML::DECODE_STREAM(data)` | `Iterator<Object>` | Streams normalized XML events. |
 | `XML::ENCODE` | `XML::ENCODE(value)` | `String` | Encodes a normalized document or element object into XML text. |
@@ -91,6 +99,32 @@ FOR event IN XML::DECODE_STREAM("<book><title>Hello</title></book>")
 RETURN event
 ```
 
+### Access The Root Element
+
+```fql
+LET doc = XML::DECODE("<book id=\"123\"><title>Hello</title></book>")
+RETURN XML::ROOT(doc)
+```
+
+### Read Descendant Text
+
+```fql
+LET doc = XML::DECODE("<book><title>Hello</title><subtitle>World</subtitle></book>")
+RETURN XML::TEXT(doc)
+```
+
+### Read Attributes And Children
+
+```fql
+LET doc = XML::DECODE("<book id=\"123\"><title>Hello</title></book>")
+LET root = XML::ROOT(doc)
+
+RETURN {
+  id: XML::ATTR(root, "id"),
+  children: XML::CHILDREN(root)
+}
+```
+
 ### Encode A Normalized Element
 
 ```fql
@@ -106,6 +140,11 @@ RETURN XML::ENCODE({
 
 ## Behavior Notes
 
+- `XML::ROOT`, `XML::TEXT`, `XML::ATTR`, and `XML::CHILDREN` operate on normalized XML document, element, and text nodes.
+- `XML::ROOT(document)` returns the document root, `XML::ROOT(element)` returns the element, and `XML::ROOT(text)` returns `None`.
+- `XML::TEXT` concatenates nested text nodes in document order and returns an empty string when no descendant text exists.
+- `XML::ATTR` returns `None` for missing attributes and for text nodes.
+- `XML::CHILDREN(text)` returns a fresh empty array.
 - `XML::DECODE` and `XML::DECODE_STREAM` accept both string and binary XML input.
 - Qualified names such as `ns:book` and `xmlns:ns` are preserved exactly.
 - CDATA is normalized into `text` nodes or events.

@@ -17,9 +17,13 @@ func TestRegisterLib(t *testing.T) {
 	}
 
 	expected := []string{
+		"XML::ATTR",
+		"XML::CHILDREN",
 		"XML::DECODE",
 		"XML::DECODE_STREAM",
 		"XML::ENCODE",
+		"XML::ROOT",
+		"XML::TEXT",
 	}
 
 	if funcs.Size() != len(expected) {
