@@ -2,26 +2,22 @@ package core
 
 import (
 	"context"
-	"encoding/xml"
 	"io"
-	"strings"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 // DecodeIterator iterates over normalized XML events.
 type DecodeIterator struct {
-	decoder  *xml.Decoder
-	stack    []string
+	cursor   *decodeCursor
 	eventNum runtime.Int
-	rootSeen bool
 	done     bool
 }
 
 // NewDecodeIterator returns an iterator over normalized XML events.
 func NewDecodeIterator(data runtime.String) (*DecodeIterator, error) {
 	return &DecodeIterator{
-		decoder: xml.NewDecoder(strings.NewReader(data.String())),
+		cursor: newDecodeCursor(data),
 	}, nil
 }
 
@@ -37,71 +33,23 @@ func (d *DecodeIterator) Next(_ context.Context) (runtime.Value, runtime.Value, 
 	}
 
 	for {
-		token, err := d.decoder.RawToken()
+		event, err := d.cursor.Next()
 		if err != nil {
 			d.done = true
 
-			if err == io.EOF {
-				if len(d.stack) > 0 {
-					return runtime.None, runtime.None, newXMLErrorf("unexpected EOF while closing %q", d.stack[len(d.stack)-1])
-				}
-
-				if !d.rootSeen {
-					return runtime.None, runtime.None, newXMLError("document has no root element")
-				}
-
-				return runtime.None, runtime.None, io.EOF
-			}
-
-			return runtime.None, runtime.None, wrapXMLError(err, "failed to decode XML data")
+			return runtime.None, runtime.None, err
 		}
 
-		switch typed := token.(type) {
-		case xml.StartElement:
-			if d.rootSeen && len(d.stack) == 0 {
-				d.done = true
-				return runtime.None, runtime.None, newXMLError("multiple root elements are not supported")
-			}
-
-			name := xmlNameToString(typed.Name)
-			d.stack = append(d.stack, name)
-			d.rootSeen = true
+		switch event.kind {
+		case decodeEventStart:
 			d.eventNum++
-
-			return newStartElementEvent(name, newAttrsObject(typed.Attr)), d.eventNum, nil
-		case xml.EndElement:
-			name := xmlNameToString(typed.Name)
-			if len(d.stack) == 0 {
-				d.done = true
-				return runtime.None, runtime.None, newXMLErrorf("unexpected closing tag %q", name)
-			}
-
-			expected := d.stack[len(d.stack)-1]
-			if expected != name {
-				d.done = true
-				return runtime.None, runtime.None, newXMLErrorf("mismatched closing tag: expected %q but got %q", expected, name)
-			}
-
-			d.stack = d.stack[:len(d.stack)-1]
+			return newStartElementEvent(event.name, event.attrs), d.eventNum, nil
+		case decodeEventEnd:
 			d.eventNum++
-
-			return newEndElementEvent(name), d.eventNum, nil
-		case xml.CharData:
-			text := string(typed)
-			if len(d.stack) == 0 {
-				if strings.TrimSpace(text) == "" {
-					continue
-				}
-
-				d.done = true
-				return runtime.None, runtime.None, newXMLError("text outside root element is not supported")
-			}
-
+			return newEndElementEvent(event.name), d.eventNum, nil
+		case decodeEventText:
 			d.eventNum++
-
-			return newTextNode(text), d.eventNum, nil
-		case xml.Comment, xml.Directive, xml.ProcInst:
-			continue
+			return newTextNode(event.text), d.eventNum, nil
 		}
 	}
 }

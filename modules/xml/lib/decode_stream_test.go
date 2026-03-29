@@ -141,6 +141,66 @@ func TestDecodeStreamLib(t *testing.T) {
 		}
 	})
 
+	t.Run("rejects text outside root during iteration", func(t *testing.T) {
+		result, err := DecodeStream(ctx, runtime.NewString("hello<root/>"))
+		if err != nil {
+			t.Fatalf("unexpected constructor error: %v", err)
+		}
+
+		iter := mustIterate(t, ctx, result)
+		_, _, err = iter.Next(ctx)
+		if err == nil {
+			t.Fatal("expected text outside root error")
+		}
+
+		if _, ok := err.(*core.XMLError); !ok {
+			t.Fatalf("expected *core.XMLError, got %T", err)
+		}
+	})
+
+	t.Run("rejects empty documents during iteration", func(t *testing.T) {
+		result, err := DecodeStream(ctx, runtime.NewString(" \n<!--ignored-->\n "))
+		if err != nil {
+			t.Fatalf("unexpected constructor error: %v", err)
+		}
+
+		iter := mustIterate(t, ctx, result)
+		_, _, err = iter.Next(ctx)
+		if err == nil {
+			t.Fatal("expected empty document error")
+		}
+
+		if _, ok := err.(*core.XMLError); !ok {
+			t.Fatalf("expected *core.XMLError, got %T", err)
+		}
+	})
+
+	t.Run("rejects multiple root elements during iteration", func(t *testing.T) {
+		result, err := DecodeStream(ctx, runtime.NewString("<first/><second/>"))
+		if err != nil {
+			t.Fatalf("unexpected constructor error: %v", err)
+		}
+
+		iter := mustIterate(t, ctx, result)
+
+		if _, _, err := iter.Next(ctx); err != nil {
+			t.Fatalf("unexpected error on first event: %v", err)
+		}
+
+		if _, _, err := iter.Next(ctx); err != nil {
+			t.Fatalf("unexpected error on second event: %v", err)
+		}
+
+		_, _, err = iter.Next(ctx)
+		if err == nil {
+			t.Fatal("expected multiple root error")
+		}
+
+		if _, ok := err.(*core.XMLError); !ok {
+			t.Fatalf("expected *core.XMLError, got %T", err)
+		}
+	})
+
 	t.Run("rejects non text input", func(t *testing.T) {
 		_, err := DecodeStream(ctx, runtime.NewInt(42))
 		if err == nil {

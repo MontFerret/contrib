@@ -110,6 +110,17 @@ func TestDecodeLib(t *testing.T) {
 		}
 	})
 
+	t.Run("rejects multiple root elements", func(t *testing.T) {
+		_, err := Decode(ctx, runtime.NewString("<first/><second/>"))
+		if err == nil {
+			t.Fatal("expected error for multiple roots")
+		}
+
+		if _, ok := err.(*core.XMLError); !ok {
+			t.Fatalf("expected *core.XMLError, got %T", err)
+		}
+	})
+
 	t.Run("rejects non text input", func(t *testing.T) {
 		_, err := Decode(ctx, runtime.NewInt(42))
 		if err == nil {
