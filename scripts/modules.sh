@@ -9,7 +9,7 @@ get_modules() {
 
 usage() {
   echo "Usage:"
-  echo "  $0 <test|lint|fmt> [module ...]"
+  echo "  $0 <build|test|lint|fmt> [module ...]"
 }
 
 main() {
