@@ -14,9 +14,9 @@ type (
 	KeyboardLocation int
 
 	KeyboardKey struct {
-		KeyCode  int
 		Key      string
 		Code     string
+		KeyCode  int
 		Modifier KeyboardModifier
 		Location KeyboardLocation
 	}

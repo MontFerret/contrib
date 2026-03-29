@@ -9,9 +9,9 @@ import (
 )
 
 type WaitNavigationParams struct {
+	Frame     drivers.HTMLDocument
 	TargetURL runtime.String
 	Timeout   runtime.Int
-	Frame     drivers.HTMLDocument
 }
 
 // WAIT_NAVIGATION waits for a given page to navigate to a new url.

@@ -23,7 +23,6 @@ type (
 	FrameLoadedListener = func(ctx context.Context, frame page.Frame)
 
 	Manager struct {
-		mu          sync.RWMutex
 		logger      zerolog.Logger
 		client      *cdp.Client
 		headers     *drivers.HTTPHeaders
@@ -31,6 +30,7 @@ type (
 		interceptor *Interceptor
 		stop        context.CancelFunc
 		response    *sync.Map
+		mu          sync.RWMutex
 	}
 )
 

@@ -7,9 +7,9 @@ import (
 )
 
 type Loop struct {
-	mu        sync.RWMutex
-	sources   []SourceFactory
 	listeners map[ID]map[ListenerID]Listener
+	sources   []SourceFactory
+	mu        sync.RWMutex
 }
 
 func NewLoop(sources ...SourceFactory) *Loop {

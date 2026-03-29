@@ -20,30 +20,30 @@ import (
 
 type (
 	PageAPI struct {
-		mock.Mock
 		cdp.Page
 		frameNavigated func(ctx context.Context) (page.FrameNavigatedClient, error)
+		mock.Mock
 	}
 
 	NetworkAPI struct {
-		mock.Mock
 		cdp.Network
 		responseReceived    func(ctx context.Context) (network2.ResponseReceivedClient, error)
 		setExtraHTTPHeaders func(ctx context.Context, args *network2.SetExtraHTTPHeadersArgs) error
+		mock.Mock
 	}
 
 	FetchAPI struct {
-		mock.Mock
 		cdp.Fetch
 		enable        func(context.Context, *fetch.EnableArgs) error
 		disable       func(context.Context) error
 		requestPaused func(context.Context) (fetch.RequestPausedClient, error)
+		mock.Mock
 	}
 
 	TestEventStream struct {
-		mock.Mock
 		ready   chan struct{}
 		message chan any
+		mock.Mock
 	}
 
 	FrameNavigatedClient struct {

@@ -12,8 +12,8 @@ type (
 
 	// Event represents a system event that is returned from an event source
 	Event struct {
-		ID   ID
 		Data any
+		ID   ID
 	}
 
 	// Source represents a custom source of system events
@@ -31,9 +31,9 @@ type (
 
 	// StreamSource represents a helper struct for generating custom event sources
 	StreamSource struct {
-		eventID ID
 		stream  rpcc.Stream
 		decoder StreamDecoder
+		eventID ID
 	}
 )
 

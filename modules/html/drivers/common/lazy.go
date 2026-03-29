@@ -13,11 +13,11 @@ type (
 
 	// LazyValue represents a value with late initialization
 	LazyValue struct {
-		mu      sync.Mutex
-		factory LazyValueFactory
-		ready   bool
 		value   runtime.Value
 		err     error
+		factory LazyValueFactory
+		mu      sync.Mutex
+		ready   bool
 	}
 )
 

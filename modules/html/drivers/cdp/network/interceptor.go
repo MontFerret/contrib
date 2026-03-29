@@ -22,12 +22,12 @@ type (
 	}
 
 	Interceptor struct {
-		mu      sync.RWMutex
-		running bool
 		logger  zerolog.Logger
 		client  *cdp.Client
 		filters map[string]*InterceptorFilter
 		loop    *events.Loop
+		mu      sync.RWMutex
+		running bool
 	}
 
 	InterceptorFilter struct {

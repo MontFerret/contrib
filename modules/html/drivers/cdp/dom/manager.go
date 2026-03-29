@@ -17,13 +17,13 @@ import (
 )
 
 type Manager struct {
-	mu        sync.RWMutex
 	logger    zerolog.Logger
 	client    *cdp.Client
 	mouse     *input.Mouse
 	keyboard  *input.Keyboard
 	mainFrame *AtomicFrameID
 	frames    *AtomicFrameCollection
+	mu        sync.RWMutex
 }
 
 func New(

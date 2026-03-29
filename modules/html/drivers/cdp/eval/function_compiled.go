@@ -3,8 +3,8 @@ package eval
 import cdpruntime "github.com/mafredri/cdp/protocol/runtime"
 
 type CompiledFunction struct {
-	id  cdpruntime.ScriptID
 	src *Function
+	id  cdpruntime.ScriptID
 }
 
 func CF(id cdpruntime.ScriptID, src *Function) *CompiledFunction {

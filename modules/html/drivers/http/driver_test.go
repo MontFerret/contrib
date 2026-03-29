@@ -25,8 +25,8 @@ func Test_newHTTPClientWithTransport(t *testing.T) {
 		options *Options
 	}
 	tests := []struct {
-		name string
 		args args
+		name string
 		want bool
 	}{
 		{

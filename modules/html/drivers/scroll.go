@@ -139,9 +139,9 @@ func (a ScrollHorizontalAlignment) String() string {
 
 // ScrollOptions defines how scroll animation should be performed.
 type ScrollOptions struct {
-	Top      runtime.Float             `json:"top"`
-	Left     runtime.Float             `json:"left"`
 	Behavior ScrollBehavior            `json:"behavior"`
 	Block    ScrollVerticalAlignment   `json:"block"`
 	Inline   ScrollHorizontalAlignment `json:"inline"`
+	Top      runtime.Float             `json:"top"`
+	Left     runtime.Float             `json:"left"`
 }

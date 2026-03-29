@@ -4,4 +4,5 @@ use (
 	modules/csv
 	modules/html
 	modules/xml
+	modules/yaml
 )

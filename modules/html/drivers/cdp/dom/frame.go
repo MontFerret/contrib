@@ -8,18 +8,18 @@ import (
 
 type (
 	Frame struct {
-		tree page.FrameTree
 		node *HTMLDocument
+		tree page.FrameTree
 	}
 
 	AtomicFrameID struct {
-		mu    sync.Mutex
 		value page.FrameID
+		mu    sync.Mutex
 	}
 
 	AtomicFrameCollection struct {
-		mu    sync.Mutex
 		value map[page.FrameID]Frame
+		mu    sync.Mutex
 	}
 )
 

@@ -14,11 +14,11 @@ import (
 )
 
 type HTMLDocument struct {
-	doc      *goquery.Document
 	element  drivers.HTMLElement
-	url      runtime.String
 	parent   drivers.HTMLDocument
 	children runtime.List
+	doc      *goquery.Document
+	url      runtime.String
 }
 
 func NewRootHTMLDocument(

@@ -27,9 +27,9 @@ type HTMLElement struct {
 	dom      *Manager
 	input    *input.Manager
 	eval     *eval.Runtime
-	id       cdpruntime.RemoteObjectID
 	nodeType *common.LazyValue
 	nodeName *common.LazyValue
+	id       cdpruntime.RemoteObjectID
 }
 
 func NewHTMLElement(

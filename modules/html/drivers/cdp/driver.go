@@ -24,13 +24,13 @@ var defaultViewport = &drivers.Viewport{
 }
 
 type Driver struct {
-	mu        sync.Mutex
 	dev       *devtool.DevTools
 	conn      *rpcc.Conn
 	client    *cdp.Client
 	session   *session.Manager
-	contextID browser.ContextID
 	options   *Options
+	contextID browser.ContextID
+	mu        sync.Mutex
 }
 
 func NewDriver(opts ...Option) *Driver {
