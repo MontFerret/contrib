@@ -70,7 +70,7 @@ func getClickablePoint(ctx context.Context, client *cdp.Client, qargs *dom.GetCo
 		return Quad{}, err
 	}
 
-	if contentQuadsReply.Quads == nil || len(contentQuadsReply.Quads) == 0 {
+	if len(contentQuadsReply.Quads) == 0 {
 		return Quad{}, errors.New("node is either not visible or not an HTMLElement")
 	}
 

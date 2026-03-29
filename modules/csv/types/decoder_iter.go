@@ -14,10 +14,10 @@ import (
 type DecodeIterator struct {
 	reader          *csv.Reader
 	headers         []string
-	headersConsumed bool
 	firstRow        []string
 	opts            Options
 	rowNum          runtime.Int
+	headersConsumed bool
 }
 
 // NewDecodeIterator returns an iterator over decoded CSV objects.

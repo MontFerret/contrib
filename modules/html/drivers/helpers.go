@@ -74,7 +74,7 @@ func SetDefaultParams(opts *Options, params Params) Params {
 
 	// set default headers
 	if opts.Headers != nil {
-		for key, _ := range opts.Headers.Data {
+		for key := range opts.Headers.Data {
 			val := params.Headers.Data.Get(key)
 
 			// do not override user's set Data
@@ -90,7 +90,7 @@ func SetDefaultParams(opts *Options, params Params) Params {
 
 	// set default cookies
 	if opts.Cookies != nil {
-		for name, _ := range opts.Cookies.Data {
+		for name := range opts.Cookies.Data {
 			_, exists := params.Cookies.Data[name]
 
 			// do not override user's set Data

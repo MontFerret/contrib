@@ -1,0 +1,24 @@
+# MontFerret Contrib
+
+`contrib` is a workspace for independently versioned [MontFerret](https://github.com/MontFerret/ferret) modules. This README acts as the top-level index for the modules currently available in this repository.
+
+## Available Modules
+
+| Module | Description | README |
+| --- | --- | --- |
+| `csv` | CSV module and CSV namespace helpers for Ferret. | [modules/csv/README.md](./modules/csv/README.md) |
+| `html` | HTML module for Ferret. | [modules/html/README.md](./modules/html/README.md) |
+
+Module-specific documentation lives in each module README and will be expanded there later.
+
+## Development
+
+Use the repo-level `Makefile` to run module commands:
+
+```sh
+make test [module ...]
+make lint [module ...]
+make fmt [module ...]
+```
+
+If no module names are provided, the commands run against all available modules.

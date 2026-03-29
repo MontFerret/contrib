@@ -94,7 +94,7 @@ func (drv *Driver) Open(ctx context.Context, params drivers.Params) (drivers.HTM
 
 	params = drivers.SetDefaultParams(drv.options.Options, params)
 
-	drv.makeRequest(ctx, req, params)
+	req = drv.makeRequest(ctx, req, params)
 
 	resp, err := drv.client.Do(req)
 	if err != nil {
@@ -207,7 +207,7 @@ func (drv *Driver) convertToUTF8(reader io.Reader, srcCharset string) (data io.R
 	return
 }
 
-func (drv *Driver) makeRequest(ctx context.Context, req *http.Request, params drivers.Params) {
+func (drv *Driver) makeRequest(ctx context.Context, req *http.Request, params drivers.Params) *http.Request {
 	logger := runtime.GetLogger(ctx)
 
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
@@ -256,5 +256,5 @@ func (drv *Driver) makeRequest(ctx context.Context, req *http.Request, params dr
 		req.Header.Set("User-Agent", ua)
 	}
 
-	req = req.WithContext(ctx)
+	return req.WithContext(ctx)
 }

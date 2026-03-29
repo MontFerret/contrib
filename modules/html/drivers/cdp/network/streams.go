@@ -231,8 +231,6 @@ func newResponseReceivedReader(logger zerolog.Logger, client *cdp.Client, input 
 		resp, err := client.Network.GetResponseBody(ctx, network.NewGetResponseBodyArgs(repl.RequestID))
 
 		if err == nil {
-			body = make([]byte, 0, 0)
-
 			if resp.Base64Encoded {
 				body, err = base64.StdEncoding.DecodeString(resp.Body)
 

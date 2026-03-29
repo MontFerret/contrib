@@ -8,31 +8,15 @@ import (
 
 // Options configures CSV decoding and encoding behavior.
 type Options struct {
-	// Delimiter is the single-character field separator. It defaults to "," and
-	// must be a valid CSV delimiter rune.
-	Delimiter string `json:"delimiter"`
-	// Header controls whether the first row is treated as column names. It
-	// defaults to true.
-	Header bool `json:"header"`
-	// Columns provides explicit column names for object decoding and object
-	// encoding order.
-	Columns []string `json:"columns"`
-	// Trim trims leading space while decoding fields.
-	Trim bool `json:"trim"`
-	// SkipEmpty skips rows whose fields are all empty strings. It defaults to
-	// true.
-	SkipEmpty bool `json:"skipEmpty"`
-	// Strict enforces matching field counts and strict header validation. It
-	// defaults to true.
-	Strict bool `json:"strict"`
-	// Comment marks a single-character comment prefix for reader input. It must
-	// be a valid CSV comment rune and must differ from the effective delimiter.
-	Comment string `json:"comment"`
-	// InferTypes converts decoded field values to booleans or numbers when
-	// possible.
-	InferTypes bool `json:"inferTypes"`
-	// NullValues lists string values that should decode as runtime.None.
+	Delimiter  string   `json:"delimiter"`
+	Comment    string   `json:"comment"`
+	Columns    []string `json:"columns"`
 	NullValues []string `json:"nullValues"`
+	Header     bool     `json:"header"`
+	Trim       bool     `json:"trim"`
+	SkipEmpty  bool     `json:"skipEmpty"`
+	Strict     bool     `json:"strict"`
+	InferTypes bool     `json:"inferTypes"`
 }
 
 // DefaultOptions returns the default CSV options used by the module.

@@ -74,7 +74,7 @@ func New(
 		}
 	}
 
-	if options.Cookies != nil && len(options.Cookies) > 0 {
+	if len(options.Cookies) > 0 {
 		for url, cookies := range options.Cookies {
 			err = m.setCookiesInternal(ctx, url, cookies)
 

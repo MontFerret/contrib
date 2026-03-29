@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/MontFerret/contrib/modules/html/drivers/common/cssx"
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
 )
@@ -329,7 +330,7 @@ func cssxApplyCall(name cssx.Expression, args []any, values []any, baseURL *url.
 
 		item := any(cssxFirstNode(input))
 
-		if item == nil {
+		if runtime.IsNil(item) {
 			item = input
 		}
 

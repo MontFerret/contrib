@@ -73,7 +73,11 @@ func (evt *NavigationEvent) Hash() uint64 {
 }
 
 func (evt *NavigationEvent) Copy() runtime.Value {
-	return *(&evt)
+	return &NavigationEvent{
+		URL:      evt.URL,
+		FrameID:  evt.FrameID,
+		MimeType: evt.MimeType,
+	}
 }
 
 func (evt *NavigationEvent) Get(_ context.Context, key runtime.Value) (runtime.Value, error) {

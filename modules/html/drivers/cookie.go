@@ -14,7 +14,7 @@ import (
 )
 
 type (
-	// Polyfill for Go 1.10
+	// SameSite Polyfill for Go 1.10
 	SameSite int
 
 	// HTTPCookie HTTPCookie object

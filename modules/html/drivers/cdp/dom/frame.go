@@ -73,7 +73,7 @@ func (fc *AtomicFrameCollection) ForEach(predicate func(value Frame, key page.Fr
 	defer fc.mu.Unlock()
 
 	for k, v := range fc.value {
-		if predicate(v, k) == false {
+		if !predicate(v, k) {
 			break
 		}
 	}
