@@ -3,7 +3,6 @@ package lib
 import (
 	"context"
 
-	"github.com/MontFerret/contrib/modules/csv/types"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
@@ -19,12 +18,12 @@ func DecodeRowsStream(_ context.Context, args ...runtime.Value) (runtime.Value, 
 		return nil, err
 	}
 
-	content, err := types.ResolveContent(args[0])
+	content, err := core.ResolveContent(args[0])
 	if err != nil {
 		return nil, err
 	}
 
-	opts := types.DefaultOptions()
+	opts := core.DefaultOptions()
 
 	if len(args) > 1 {
 		optsmap, err := runtime.CastArgAt[runtime.Map](args, 1)
@@ -37,7 +36,7 @@ func DecodeRowsStream(_ context.Context, args ...runtime.Value) (runtime.Value, 
 		}
 	}
 
-	iter, err := types.NewDecodeRowsIterator(content, opts)
+	iter, err := core.NewDecodeRowsIterator(content, opts)
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/MontFerret/contrib/modules/csv/types"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -108,7 +107,7 @@ func TestDecodeRowsStreamLib(t *testing.T) {
 			t.Fatal("expected strict decode error on second row")
 		}
 
-		if _, ok := err.(*types.CSVError); !ok {
+		if _, ok := err.(*core.CSVError); !ok {
 			t.Fatalf("expected *types.CSVError, got %T", err)
 		}
 	})
