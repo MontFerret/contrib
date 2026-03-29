@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | `csv` | CSV module and CSV namespace helpers for Ferret. | [modules/csv/README.md](./modules/csv/README.md) |
 | `html` | HTML module for Ferret. | [modules/html/README.md](./modules/html/README.md) |
+| `xml` | XML module and XML namespace helpers for Ferret. | [modules/xml/README.md](./modules/xml/README.md) |
 
 Module-specific documentation lives in each module README and will be expanded there later.
 
