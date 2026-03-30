@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"io"
+	"strings"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
@@ -15,7 +16,7 @@ type elementFrame struct {
 
 // Decode eagerly decodes XML text into a normalized document object.
 func Decode(ctx context.Context, data runtime.String) (runtime.Value, error) {
-	cursor := newDecodeCursor(data)
+	cursor := newDecodeCursorFromReader(strings.NewReader(data.String()))
 
 	var (
 		root  *runtime.Object

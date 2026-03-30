@@ -23,9 +23,7 @@ jobs:
         shell: bash
         run: |
           modules_json="$(
-            find ./modules -mindepth 1 -maxdepth 1 -type d \
-              -exec basename {} \; \
-              | sort \
+            make modules \
               | jq -R . \
               | jq -s -c .
           )"

@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"io"
+	"strings"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
@@ -16,8 +17,18 @@ type DecodeIterator struct {
 
 // NewDecodeIterator returns an iterator over normalized XML events.
 func NewDecodeIterator(data runtime.String) (*DecodeIterator, error) {
+	return NewDecodeIteratorFromReader(strings.NewReader(data.String()))
+}
+
+// NewDecodeIteratorFromReader returns an iterator over normalized XML events
+// read directly from an io.Reader.
+func NewDecodeIteratorFromReader(reader io.Reader) (*DecodeIterator, error) {
+	if runtime.IsNil(reader) {
+		return nil, newError("reader must not be nil")
+	}
+
 	return &DecodeIterator{
-		cursor: newDecodeCursor(data),
+		cursor: newDecodeCursorFromReader(reader),
 	}, nil
 }
 

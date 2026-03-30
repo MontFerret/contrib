@@ -1,11 +1,10 @@
-module github.com/MontFerret/contrib/modules/yaml
+module github.com/MontFerret/contrib/modules/web/sitemap
 
 go 1.25.6
 
-require (
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.4
-	github.com/goccy/go-yaml v1.19.2
-)
+require github.com/MontFerret/ferret/v2 v2.0.0-alpha.4
+
+require github.com/MontFerret/contrib/modules/xml v0.0.0-20260330180809-8a916f8c063b
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect

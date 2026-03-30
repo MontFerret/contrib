@@ -32,8 +32,12 @@ const (
 )
 
 func newDecodeCursor(data runtime.String) *decodeCursor {
+	return newDecodeCursorFromReader(strings.NewReader(data.String()))
+}
+
+func newDecodeCursorFromReader(reader io.Reader) *decodeCursor {
 	return &decodeCursor{
-		decoder: xml.NewDecoder(strings.NewReader(data.String())),
+		decoder: xml.NewDecoder(reader),
 	}
 }
 
