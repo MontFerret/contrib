@@ -56,7 +56,7 @@ func TestParse(t *testing.T) {
 			t.Fatalf("unexpected second group userAgents %v", got)
 		}
 
-		if got := doc.Groups[1].Disallow; !slicesEqual(got, []string{"", "/tmp"}) {
+		if got := doc.Groups[1].Disallow; !slicesEqual(got, []string{"/tmp"}) {
 			t.Fatalf("unexpected second group disallow %v", got)
 		}
 

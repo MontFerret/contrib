@@ -52,14 +52,20 @@ func Parse(text string) (Document, error) {
 				continue
 			}
 
-			current.Allow = append(current.Allow, value)
+			if value != "" {
+				current.Allow = append(current.Allow, value)
+			}
+
 			currentSealed = true
 		case "disallow":
 			if current == nil || len(current.UserAgents) == 0 {
 				continue
 			}
 
-			current.Disallow = append(current.Disallow, value)
+			if value != "" {
+				current.Disallow = append(current.Disallow, value)
+			}
+
 			currentSealed = true
 		case "crawl-delay":
 			if current == nil || len(current.UserAgents) == 0 {

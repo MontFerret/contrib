@@ -234,6 +234,54 @@ func TestMatch(t *testing.T) {
 		}
 	})
 
+	t.Run("anchored wildcard matches when literal appears multiple times", func(t *testing.T) {
+		doc := Document{
+			Groups: []Group{
+				{
+					UserAgents: []string{"*"},
+					Disallow: []string{
+						"/*.json$",
+						"/*/a$",
+					},
+				},
+			},
+		}
+
+		if result := Match(doc, "/api/data.json.json", "Crawler"); result.Allowed {
+			t.Fatalf("expected /*.json$ to match path with repeated .json, got %+v", result)
+		}
+
+		if result := Match(doc, "/x/a/a", "Crawler"); result.Allowed {
+			t.Fatalf("expected /*/a$ to match path with repeated /a, got %+v", result)
+		}
+
+		if result := Match(doc, "/api/data.json.txt", "Crawler"); !result.Allowed {
+			t.Fatalf("expected /*.json$ to not match non-.json suffix, got %+v", result)
+		}
+	})
+
+	t.Run("trailing wildcard with end anchor matches any path", func(t *testing.T) {
+		doc := Document{
+			Groups: []Group{
+				{
+					UserAgents: []string{"*"},
+					Disallow: []string{
+						"/*$",
+						"/foo/*$",
+					},
+				},
+			},
+		}
+
+		if result := Match(doc, "/any/path/here", "Crawler"); result.Allowed {
+			t.Fatalf("expected /*$ to match any path, got %+v", result)
+		}
+
+		if result := Match(doc, "/foo/bar/baz", "Crawler"); result.Allowed {
+			t.Fatalf("expected /foo/*$ to match path under /foo/, got %+v", result)
+		}
+	})
+
 	t.Run("treats regex significant characters as plain literals", func(t *testing.T) {
 		doc := Document{
 			Groups: []Group{

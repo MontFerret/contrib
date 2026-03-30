@@ -191,22 +191,74 @@ func matchPattern(pattern, path string) (bool, int) {
 
 func matchNormalizedPattern(pattern, path string, anchored bool) bool {
 	parts := strings.Split(pattern, "*")
-	offset := 0
-	seenLiteral := false
+	hasWildcard := len(parts) > 1
 
-	for _, part := range parts {
+	// No wildcards: simple prefix or exact match.
+	if !hasWildcard {
+		if anchored {
+			return path == pattern
+		}
+
+		return strings.HasPrefix(path, pattern)
+	}
+
+	// Pattern is only wildcards (all parts empty): matches everything.
+	allEmpty := true
+	for _, p := range parts {
+		if p != "" {
+			allEmpty = false
+			break
+		}
+	}
+
+	if allEmpty {
+		return true
+	}
+
+	// First literal part must be a prefix of the path.
+	if parts[0] != "" {
+		if !strings.HasPrefix(path, parts[0]) {
+			return false
+		}
+	}
+
+	// Last literal part, when anchored, must be a suffix of the path.
+	if anchored && parts[len(parts)-1] != "" {
+		last := parts[len(parts)-1]
+		if !strings.HasSuffix(path, last) {
+			return false
+		}
+	}
+
+	// If anchored and pattern ends with *, the trailing wildcard
+	// consumes the rest of the path — anchor is satisfied.
+	if anchored && parts[len(parts)-1] == "" {
+		anchored = false
+	}
+
+	// Match interior parts left-to-right.
+	offset := 0
+
+	for i, part := range parts {
 		if part == "" {
 			continue
 		}
 
-		if !seenLiteral {
-			if !strings.HasPrefix(path, part) {
+		if i == 0 {
+			// Already verified as prefix above.
+			offset = len(part)
+			continue
+		}
+
+		// For the last part of an anchored pattern, verify the suffix
+		// alignment rather than using a greedy first-match.
+		if anchored && i == len(parts)-1 {
+			suffixStart := len(path) - len(part)
+			if suffixStart < offset {
 				return false
 			}
 
-			offset = len(part)
-			seenLiteral = true
-			continue
+			return true
 		}
 
 		idx := strings.Index(path[offset:], part)
@@ -215,10 +267,6 @@ func matchNormalizedPattern(pattern, path string, anchored bool) bool {
 		}
 
 		offset += idx + len(part)
-	}
-
-	if !seenLiteral {
-		return !anchored || path == pattern
 	}
 
 	if anchored {
@@ -329,6 +377,7 @@ func normalizePattern(pattern string) string {
 
 func normalizeComparable(input string) string {
 	var b strings.Builder
+	b.Grow(len(input))
 
 	for i := 0; i < len(input); {
 		if input[i] == '%' && i+2 < len(input) && isHex(input[i+1]) && isHex(input[i+2]) {
