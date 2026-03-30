@@ -19,7 +19,7 @@ func (m *module) Name() string {
 }
 
 func (m *module) Register(bootstrap ferret.Bootstrap) error {
-	lib.RegisterLib(bootstrap.Host().Library())
+	lib.RegisterLib(bootstrap.Host().Library().Namespace("TOML"))
 
 	return nil
 }
