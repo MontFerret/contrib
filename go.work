@@ -4,6 +4,7 @@ use (
 	modules/csv
 	modules/html
 	modules/toml
+	modules/web/robots
 	modules/web/sitemap
 	modules/xml
 	modules/yaml
