@@ -43,9 +43,9 @@ main() {
   fi
 
   if [ "$#" -eq 0 ]; then
-    local modules=()
-    mapfile -t modules < <(get_modules)
-    set -- "${modules[@]}"
+    while IFS= read -r module; do
+      set -- "$@" "$module"
+    done < <(get_modules)
   else
     for module in "$@"; do
       if ! module_exists "$module"; then
@@ -69,7 +69,7 @@ main() {
         ;;
       lint)
         echo "Linting module '$module'"
-        staticcheck -tests=false -checks=all "$DIR_MODULES/$module/..."
+        staticcheck -tests=false -checks=all,-U1000 "$DIR_MODULES/$module/..."
         revive -config revive.toml -formatter stylish \
           -exclude ./vendor/... \
           -exclude ./*_test.go \

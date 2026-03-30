@@ -18,11 +18,11 @@ type (
 	}
 
 	walker struct {
-		opts            Options
 		visitedSitemaps map[string]struct{}
 		yieldedURLs     map[string]struct{}
 		pending         []workItem
 		current         []URLEntry
+		opts            Options
 		currentIndex    int
 		done            bool
 	}

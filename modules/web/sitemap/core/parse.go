@@ -41,12 +41,7 @@ type frame struct {
 
 // Parse decodes a sitemap XML document by interpreting xml/core events.
 func Parse(reader io.Reader, source string) (doc Document, retErr error) {
-	data, err := io.ReadAll(reader)
-	if err != nil {
-		return Document{}, wrapError(source, StageParse, err, "failed to buffer sitemap XML")
-	}
-
-	iter, err := xmlcore.NewDecodeIterator(runtime.NewString(string(data)))
+	iter, err := xmlcore.NewDecodeIteratorFromReader(reader)
 	if err != nil {
 		return Document{}, wrapError(source, StageParse, err, "failed to initialize XML decoder")
 	}

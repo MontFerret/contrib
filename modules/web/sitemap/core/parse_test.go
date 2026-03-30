@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	xmlcore "github.com/MontFerret/contrib/modules/xml/core"
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 func TestParse(t *testing.T) {
@@ -120,7 +119,7 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("xml core iterator remains compatible with sitemap interpreter", func(t *testing.T) {
-		iter, err := xmlcore.NewDecodeIterator(runtime.NewString(`
+		iter, err := xmlcore.NewDecodeIteratorFromReader(strings.NewReader(`
 			<sm:sitemapindex xmlns:sm="http://www.sitemaps.org/schemas/sitemap/0.9">
 			  <sm:sitemap>
 			    <sm:loc>https://example.com/posts.xml</sm:loc>
