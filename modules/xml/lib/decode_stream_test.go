@@ -136,7 +136,7 @@ func TestDecodeStreamLib(t *testing.T) {
 			t.Fatal("expected iteration error")
 		}
 
-		if _, ok := err.(*core.XMLError); !ok {
+		if _, ok := err.(*core.Error); !ok {
 			t.Fatalf("expected *core.XMLError, got %T", err)
 		}
 	})
@@ -153,7 +153,7 @@ func TestDecodeStreamLib(t *testing.T) {
 			t.Fatal("expected text outside root error")
 		}
 
-		if _, ok := err.(*core.XMLError); !ok {
+		if _, ok := err.(*core.Error); !ok {
 			t.Fatalf("expected *core.XMLError, got %T", err)
 		}
 	})
@@ -170,7 +170,7 @@ func TestDecodeStreamLib(t *testing.T) {
 			t.Fatal("expected empty document error")
 		}
 
-		if _, ok := err.(*core.XMLError); !ok {
+		if _, ok := err.(*core.Error); !ok {
 			t.Fatalf("expected *core.XMLError, got %T", err)
 		}
 	})
@@ -196,7 +196,7 @@ func TestDecodeStreamLib(t *testing.T) {
 			t.Fatal("expected multiple root error")
 		}
 
-		if _, ok := err.(*core.XMLError); !ok {
+		if _, ok := err.(*core.Error); !ok {
 			t.Fatalf("expected *core.XMLError, got %T", err)
 		}
 	})

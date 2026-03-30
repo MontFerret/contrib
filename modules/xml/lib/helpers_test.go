@@ -137,7 +137,7 @@ func TestHelperLib(t *testing.T) {
 		if _, err := Root(ctx, invalidNode); err == nil {
 			t.Fatal("expected invalid node type error")
 		} else {
-			var xmlErr *core.XMLError
+			var xmlErr *core.Error
 			if !errors.As(err, &xmlErr) {
 				t.Fatalf("expected *core.XMLError, got %T", err)
 			}
