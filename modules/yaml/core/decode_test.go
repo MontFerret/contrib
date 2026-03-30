@@ -124,7 +124,7 @@ user:
 			t.Fatal("expected malformed YAML error")
 		}
 
-		if _, ok := err.(*YAMLError); !ok {
+		if _, ok := err.(*Error); !ok {
 			t.Fatalf("expected *YAMLError, got %T", err)
 		}
 

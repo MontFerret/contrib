@@ -45,7 +45,7 @@ func TestDecodeLib(t *testing.T) {
 			t.Fatal("expected malformed YAML error")
 		}
 
-		if _, ok := err.(*core.YAMLError); !ok {
+		if _, ok := err.(*core.Error); !ok {
 			t.Fatalf("expected *core.YAMLError, got %T", err)
 		}
 	})

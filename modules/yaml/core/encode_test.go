@@ -86,7 +86,7 @@ meta:
 			t.Fatal("expected unsupported type error")
 		}
 
-		if _, ok := err.(*YAMLError); !ok {
+		if _, ok := err.(*Error); !ok {
 			t.Fatalf("expected *YAMLError, got %T", err)
 		}
 

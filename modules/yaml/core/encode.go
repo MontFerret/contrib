@@ -17,7 +17,7 @@ func Encode(ctx context.Context, value runtime.Value) (string, error) {
 
 	data, err := yaml.Marshal(native)
 	if err != nil {
-		return "", wrapYAMLError(err, "failed to encode YAML output")
+		return "", wrapError(err, "failed to encode YAML output")
 	}
 
 	return string(data), nil
@@ -42,9 +42,9 @@ func toYAMLValue(ctx context.Context, value runtime.Value) (any, error) {
 	case runtime.Map:
 		return encodeMap(ctx, current)
 	case runtime.Binary, runtime.DateTime, runtime.Iterator, runtime.Observable, runtime.Queryable:
-		return nil, newYAMLError("unsupported value type for YAML encoding")
+		return nil, newError("unsupported value type for YAML encoding")
 	default:
-		return nil, newYAMLErrorf("unsupported value type for YAML encoding: %T", value)
+		return nil, newErrorf("unsupported value type for YAML encoding: %T", value)
 	}
 }
 

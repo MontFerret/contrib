@@ -2,14 +2,33 @@ package core
 
 import "fmt"
 
-// YAMLError reports a YAML-specific decode or encode failure.
-type YAMLError struct {
+// Error reports a YAML-specific decode or encode failure.
+type Error struct {
 	Err error
 	Msg string
 }
 
+func newError(msg string) error {
+	return &Error{Msg: msg}
+}
+
+func newErrorf(format string, args ...any) error {
+	return newError(fmt.Sprintf(format, args...))
+}
+
+func wrapError(err error, msg string) error {
+	if err == nil {
+		return nil
+	}
+
+	return &Error{
+		Err: err,
+		Msg: msg,
+	}
+}
+
 // Error formats the YAML error with the module prefix.
-func (e *YAMLError) Error() string {
+func (e *Error) Error() string {
 	if e.Err != nil {
 		return fmt.Sprintf("yaml: %s: %v", e.Msg, e.Err)
 	}
@@ -18,25 +37,6 @@ func (e *YAMLError) Error() string {
 }
 
 // Unwrap returns the wrapped error, when present.
-func (e *YAMLError) Unwrap() error {
+func (e *Error) Unwrap() error {
 	return e.Err
-}
-
-func newYAMLError(msg string) error {
-	return &YAMLError{Msg: msg}
-}
-
-func newYAMLErrorf(format string, args ...any) error {
-	return newYAMLError(fmt.Sprintf(format, args...))
-}
-
-func wrapYAMLError(err error, msg string) error {
-	if err == nil {
-		return nil
-	}
-
-	return &YAMLError{
-		Err: err,
-		Msg: msg,
-	}
 }
