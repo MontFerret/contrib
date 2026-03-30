@@ -1,6 +1,7 @@
 go 1.25.6
 
 use (
+	modules/web/article
 	./modules/web/html
 	modules/csv
 	modules/toml
