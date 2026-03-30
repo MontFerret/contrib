@@ -12,7 +12,7 @@ get_modules() {
 
 usage() {
   echo "Usage:"
-  echo "  $0 <build|test|lint|fmt> [module ...]"
+  echo "  $0 <list|build|test|lint|fmt> [module ...]"
 }
 
 module_exists() {
@@ -37,6 +37,11 @@ main() {
   local command="$1"
   shift
 
+  if [ "$command" = "list" ]; then
+    get_modules
+    exit 0
+  fi
+
   if [ "$#" -eq 0 ]; then
     local modules=()
     mapfile -t modules < <(get_modules)
@@ -45,7 +50,8 @@ main() {
     for module in "$@"; do
       if ! module_exists "$module"; then
         echo "Unknown module: $module" >&2
-        echo "Available modules: $(get_modules)" >&2
+        echo "Available modules:" >&2
+        get_modules >&2
         exit 1
       fi
     done
