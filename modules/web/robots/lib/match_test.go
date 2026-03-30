@@ -47,6 +47,36 @@ func TestAllowsAndMatch(t *testing.T) {
 	if got := mustObjectField(t, t.Context(), obj, "userAgent").String(); got != "*" {
 		t.Fatalf("unexpected userAgent %q", got)
 	}
+
+	fallbackMatched, err := Match(t.Context(), parsed, runtime.NewString("/admin/page"), runtime.NewString("FerretBot"))
+	if err != nil {
+		t.Fatalf("unexpected fallback match error: %v", err)
+	}
+
+	fallbackObj := mustRuntimeObject(t, fallbackMatched)
+	if got := mustObjectField(t, t.Context(), fallbackObj, "userAgent").String(); got != "*" {
+		t.Fatalf("expected wildcard fallback userAgent %q, got %q", "*", got)
+	}
+
+	exactParsed, err := Parse(t.Context(), runtime.NewString(`
+		User-agent: *
+		Disallow: /admin
+		User-agent: FerretBot
+		Allow: /admin
+	`))
+	if err != nil {
+		t.Fatalf("unexpected exact parse error: %v", err)
+	}
+
+	exactMatched, err := Match(t.Context(), exactParsed, runtime.NewString("/admin/page"), runtime.NewString("FerretBot"))
+	if err != nil {
+		t.Fatalf("unexpected exact match error: %v", err)
+	}
+
+	exactObj := mustRuntimeObject(t, exactMatched)
+	if got := mustObjectField(t, t.Context(), exactObj, "userAgent").String(); got != "FerretBot" {
+		t.Fatalf("expected exact-match userAgent %q, got %q", "FerretBot", got)
+	}
 }
 
 func TestSitemapsAndManualObject(t *testing.T) {

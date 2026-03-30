@@ -84,7 +84,7 @@ func main() {
 }
 ```
 
-When access is allowed by default with no matching rule, `directive` and `pattern` are returned as `null`.
+`userAgent` reports the effective matched group token. When evaluation falls back to wildcard groups, it is returned as `"*"`. When access is allowed by default with no matching rule, `directive` and `pattern` are returned as `null`.
 
 ## Examples
 

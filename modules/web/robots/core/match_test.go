@@ -19,6 +19,10 @@ func TestMatch(t *testing.T) {
 		if result.Directive == nil || *result.Directive != directiveAllow {
 			t.Fatalf("unexpected directive %v", result.Directive)
 		}
+
+		if result.UserAgent != "FerretBot" {
+			t.Fatalf("expected exact-match userAgent %q, got %q", "FerretBot", result.UserAgent)
+		}
 	})
 
 	t.Run("falls back to wildcard groups", func(t *testing.T) {
@@ -31,6 +35,10 @@ func TestMatch(t *testing.T) {
 		result := Match(doc, "/blocked/page", "OtherBot")
 		if result.Allowed {
 			t.Fatalf("expected disallowed result, got %+v", result)
+		}
+
+		if result.UserAgent != "*" {
+			t.Fatalf("expected wildcard fallback userAgent %q, got %q", "*", result.UserAgent)
 		}
 	})
 
@@ -126,6 +134,10 @@ func TestMatch(t *testing.T) {
 		if !result.Allowed || result.Directive != nil || result.Pattern != nil {
 			t.Fatalf("expected default-allow result, got %+v", result)
 		}
+
+		if result.UserAgent != "*" {
+			t.Fatalf("expected wildcard fallback userAgent %q, got %q", "*", result.UserAgent)
+		}
 	})
 
 	t.Run("always allows robots.txt", func(t *testing.T) {
@@ -141,6 +153,28 @@ func TestMatch(t *testing.T) {
 
 		if !Allows(doc, "/robots.txt?cache=1", "Crawler") {
 			t.Fatal("expected /robots.txt with query to be allowed")
+		}
+
+		result := Match(doc, "/robots.txt", "Crawler")
+		if result.UserAgent != "Crawler" {
+			t.Fatalf("expected implicit-allow userAgent %q, got %q", "Crawler", result.UserAgent)
+		}
+	})
+
+	t.Run("no matching groups keep the requested token", func(t *testing.T) {
+		doc := Document{
+			Groups: []Group{
+				{UserAgents: []string{"SpecificBot"}, Disallow: []string{"/private"}},
+			},
+		}
+
+		result := Match(doc, "/public", "Crawler")
+		if !result.Allowed {
+			t.Fatalf("expected default-allow result, got %+v", result)
+		}
+
+		if result.UserAgent != "Crawler" {
+			t.Fatalf("expected unmatched userAgent %q, got %q", "Crawler", result.UserAgent)
 		}
 	})
 

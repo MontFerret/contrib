@@ -11,12 +11,19 @@ const (
 	directiveDisallow = "disallow"
 )
 
-type candidateRule struct {
-	Directive   string
-	Pattern     string
-	Specificity int
-	Order       int
-}
+type (
+	candidateRule struct {
+		Directive   string
+		Pattern     string
+		Specificity int
+		Order       int
+	}
+
+	effectiveSelection struct {
+		UserAgent string
+		Groups    []Group
+	}
+)
 
 // Allows reports whether the path is allowed for the effective user-agent.
 func Allows(doc Document, path, userAgent string) bool {
@@ -35,13 +42,13 @@ func Match(doc Document, path, userAgent string) MatchResult {
 		}
 	}
 
-	groups := effectiveGroups(doc.Groups, agent)
-	best := chooseBestRule(groups, matchPath)
+	selection := effectiveGroups(doc.Groups, agent)
+	best := chooseBestRule(selection.Groups, matchPath)
 
 	if best == nil {
 		return MatchResult{
 			Allowed:   true,
-			UserAgent: agent,
+			UserAgent: selection.UserAgent,
 		}
 	}
 
@@ -52,7 +59,7 @@ func Match(doc Document, path, userAgent string) MatchResult {
 		Allowed:   best.Directive == directiveAllow,
 		Directive: &directive,
 		Pattern:   &pattern,
-		UserAgent: agent,
+		UserAgent: selection.UserAgent,
 	}
 }
 
@@ -68,7 +75,7 @@ func SitemapValues(doc Document) []string {
 	return out
 }
 
-func effectiveGroups(groups []Group, userAgent string) []Group {
+func effectiveGroups(groups []Group, userAgent string) effectiveSelection {
 	exact := make([]Group, 0)
 	wildcard := make([]Group, 0)
 
@@ -84,10 +91,23 @@ func effectiveGroups(groups []Group, userAgent string) []Group {
 	}
 
 	if len(exact) > 0 {
-		return exact
+		return effectiveSelection{
+			Groups:    exact,
+			UserAgent: userAgent,
+		}
 	}
 
-	return wildcard
+	if len(wildcard) > 0 {
+		return effectiveSelection{
+			Groups:    wildcard,
+			UserAgent: "*",
+		}
+	}
+
+	return effectiveSelection{
+		Groups:    nil,
+		UserAgent: userAgent,
+	}
 }
 
 func groupMatches(group Group, userAgent string) bool {
