@@ -108,7 +108,7 @@ local_time = 07:32:00
 		}
 
 		if _, ok := err.(*Error); !ok {
-			t.Fatalf("expected *TOMLError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if !strings.Contains(err.Error(), "invalid TOML document") {
@@ -125,7 +125,7 @@ local_time = 07:32:00
 		}
 
 		if _, ok := err.(*Error); !ok {
-			t.Fatalf("expected *TOMLError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if !strings.Contains(err.Error(), "invalid TOML document") {
@@ -143,7 +143,7 @@ local_time = 07:32:00
 		}
 
 		if _, ok := err.(*Error); !ok {
-			t.Fatalf("expected *TOMLError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if !strings.Contains(err.Error(), `strict=false" is not implemented yet`) {
@@ -215,7 +215,7 @@ func TestNormalizeScalarValue(t *testing.T) {
 		}
 
 		if _, ok := err.(*Error); !ok {
-			t.Fatalf("expected *TOMLError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if !strings.Contains(err.Error(), "exceeds Ferret int range") {
@@ -233,7 +233,7 @@ func TestNormalizeScalarValue(t *testing.T) {
 			}
 
 			if _, ok := err.(*Error); !ok {
-				t.Fatalf("expected *TOMLError, got %T", err)
+				t.Fatalf("expected *Error, got %T", err)
 			}
 
 			if !strings.Contains(err.Error(), "exceeds Ferret int range") {
@@ -258,7 +258,7 @@ func TestNormalizeScalarValue(t *testing.T) {
 		}
 
 		if _, ok := err.(*Error); !ok {
-			t.Fatalf("expected *TOMLError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if !strings.Contains(err.Error(), "unsupported TOML value type []int") {

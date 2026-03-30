@@ -82,7 +82,7 @@ func TestXMLErrorHelpers(t *testing.T) {
 
 		xmlErr, ok := err.(*Error)
 		if !ok {
-			t.Fatalf("expected *XMLError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if xmlErr.Unwrap() != io.EOF {
@@ -271,7 +271,7 @@ func TestNodeHelpers(t *testing.T) {
 		} else {
 			var xmlErr *Error
 			if !errors.As(err, &xmlErr) {
-				t.Fatalf("expected *XMLError, got %T", err)
+				t.Fatalf("expected *Error, got %T", err)
 			}
 		}
 	})

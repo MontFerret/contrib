@@ -139,7 +139,7 @@ func TestHelperLib(t *testing.T) {
 		} else {
 			var xmlErr *core.Error
 			if !errors.As(err, &xmlErr) {
-				t.Fatalf("expected *core.XMLError, got %T", err)
+				t.Fatalf("expected *core.Error, got %T", err)
 			}
 		}
 	})

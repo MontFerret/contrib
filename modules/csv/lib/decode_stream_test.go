@@ -170,7 +170,7 @@ func TestDecodeStreamLib(t *testing.T) {
 		}
 
 		if _, ok := err.(*core.Error); !ok {
-			t.Fatalf("expected *types.CSVError, got %T", err)
+			t.Fatalf("expected *core.Error, got %T", err)
 		}
 	})
 
@@ -194,7 +194,7 @@ func TestDecodeStreamLib(t *testing.T) {
 
 		csvErr, ok := err.(*core.Error)
 		if !ok {
-			t.Fatalf("expected *types.CSVError, got %T", err)
+			t.Fatalf("expected *core.Error, got %T", err)
 		}
 
 		if csvErr.Row != 1 {

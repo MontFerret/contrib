@@ -87,7 +87,7 @@ meta:
 		}
 
 		if _, ok := err.(*Error); !ok {
-			t.Fatalf("expected *YAMLError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if !strings.Contains(err.Error(), "unsupported value type for YAML encoding") {

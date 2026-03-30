@@ -61,7 +61,7 @@ func TestDecodeLib(t *testing.T) {
 		}
 
 		if _, ok := err.(*core.Error); !ok {
-			t.Fatalf("expected *core.TOMLError, got %T", err)
+			t.Fatalf("expected *core.Error, got %T", err)
 		}
 	})
 
@@ -72,7 +72,7 @@ func TestDecodeLib(t *testing.T) {
 		}
 
 		if _, ok := err.(*core.Error); !ok {
-			t.Fatalf("expected *core.TOMLError, got %T", err)
+			t.Fatalf("expected *core.Error, got %T", err)
 		}
 	})
 
