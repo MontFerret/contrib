@@ -60,7 +60,7 @@ func (d *DecodeRowsIterator) Next(ctx context.Context) (runtime.Value, runtime.V
 			if d.expectedCols < 0 {
 				d.expectedCols = len(record)
 			} else if len(record) != d.expectedCols {
-				return runtime.None, runtime.None, newCSVErrorf(int(d.rowNum), "expected %d fields but got %d", d.expectedCols, len(record))
+				return runtime.None, runtime.None, newErrorf(int(d.rowNum), "expected %d fields but got %d", d.expectedCols, len(record))
 			}
 		}
 

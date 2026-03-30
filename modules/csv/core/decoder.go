@@ -40,7 +40,7 @@ func rowToObject(ctx context.Context, record []string, headers []string, rowNum 
 	}
 
 	if opts.Strict && len(record) != len(headers) {
-		return nil, newCSVErrorf(rowNum, "expected %d fields but got %d", len(headers), len(record))
+		return nil, newErrorf(rowNum, "expected %d fields but got %d", len(headers), len(record))
 	}
 
 	obj := runtime.NewObject()

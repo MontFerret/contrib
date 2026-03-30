@@ -108,7 +108,7 @@ func TestDecodeRowsStreamLib(t *testing.T) {
 			t.Fatal("expected strict decode error on second row")
 		}
 
-		if _, ok := err.(*core.CSVError); !ok {
+		if _, ok := err.(*core.Error); !ok {
 			t.Fatalf("expected *core.CSVError, got %T", err)
 		}
 	})

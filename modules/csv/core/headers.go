@@ -42,7 +42,7 @@ func validateHeaders(headers []string, opts Options) ([]string, error) {
 	for i, h := range headers {
 		if h == "" {
 			if opts.Strict {
-				return nil, newCSVErrorf(1, "empty header name at column %d", i+1)
+				return nil, newErrorf(1, "empty header name at column %d", i+1)
 			}
 
 			h = fmt.Sprintf("col%d", i+1)
@@ -52,7 +52,7 @@ func validateHeaders(headers []string, opts Options) ([]string, error) {
 
 		if count, exists := baseCounts[base]; exists {
 			if opts.Strict {
-				return nil, newCSVErrorf(1, "duplicate header name %q", base)
+				return nil, newErrorf(1, "duplicate header name %q", base)
 			}
 
 			next := count + 1
