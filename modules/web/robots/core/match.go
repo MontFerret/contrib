@@ -274,11 +274,8 @@ func matchNormalizedPattern(pattern, path string, anchored bool) bool {
 		// alignment rather than using a greedy first-match.
 		if anchored && i == len(parts)-1 {
 			suffixStart := len(path) - len(part)
-			if suffixStart < offset {
-				return false
-			}
 
-			return true
+			return suffixStart >= offset
 		}
 
 		idx := strings.Index(path[offset:], part)
