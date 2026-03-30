@@ -4,7 +4,10 @@ set -euo pipefail
 DIR_MODULES="./modules"
 
 get_modules() {
-  find "$DIR_MODULES" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort
+  find "$DIR_MODULES" -type f -name go.mod \
+    -exec dirname {} \; \
+    | sed "s|^$DIR_MODULES/||" \
+    | sort
 }
 
 usage() {
@@ -16,11 +19,11 @@ module_exists() {
   local target="$1"
   local module
 
-  for module in $(get_modules); do
+  while IFS= read -r module; do
     if [ "$module" = "$target" ]; then
       return 0
     fi
-  done
+  done < <(get_modules)
 
   return 1
 }
@@ -35,7 +38,9 @@ main() {
   shift
 
   if [ "$#" -eq 0 ]; then
-    set -- $(get_modules)
+    local modules=()
+    mapfile -t modules < <(get_modules)
+    set -- "${modules[@]}"
   else
     for module in "$@"; do
       if ! module_exists "$module"; then

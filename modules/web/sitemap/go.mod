@@ -1,11 +1,10 @@
-module github.com/MontFerret/contrib/modules/toml
+module github.com/MontFerret/contrib/modules/web/sitemap
 
 go 1.25.6
 
-require (
-	github.com/BurntSushi/toml v1.6.0
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.4
-)
+require github.com/MontFerret/ferret/v2 v2.0.0-alpha.4
+
+require github.com/MontFerret/contrib/modules/xml v0.0.0-20260330180809-8a916f8c063b
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
