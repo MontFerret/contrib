@@ -170,9 +170,9 @@ func TestDecode(t *testing.T) {
 			t.Fatal("expected error for inconsistent columns")
 		}
 
-		csvErr, ok := err.(*CSVError)
+		csvErr, ok := err.(*Error)
 		if !ok {
-			t.Fatalf("expected CSVError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if csvErr.Row != 1 {
@@ -192,9 +192,9 @@ func TestDecode(t *testing.T) {
 			t.Fatal("expected error for inconsistent columns")
 		}
 
-		csvErr, ok := err.(*CSVError)
+		csvErr, ok := err.(*Error)
 		if !ok {
-			t.Fatalf("expected CSVError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if csvErr.Row != 2 {
@@ -211,9 +211,9 @@ func TestDecode(t *testing.T) {
 			t.Fatal("expected error for inconsistent columns")
 		}
 
-		csvErr, ok := err.(*CSVError)
+		csvErr, ok := err.(*Error)
 		if !ok {
-			t.Fatalf("expected CSVError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if csvErr.Row != 3 {
@@ -231,9 +231,9 @@ func TestDecode(t *testing.T) {
 			t.Fatal("expected error for inconsistent columns")
 		}
 
-		csvErr, ok := err.(*CSVError)
+		csvErr, ok := err.(*Error)
 		if !ok {
-			t.Fatalf("expected CSVError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if csvErr.Row != 3 {

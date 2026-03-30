@@ -60,14 +60,14 @@ func TestXMLNameFromString(t *testing.T) {
 
 func TestXMLErrorHelpers(t *testing.T) {
 	t.Run("formats bare errors", func(t *testing.T) {
-		err := newXMLError("boom")
+		err := newError("boom")
 		if err.Error() != "xml: boom" {
 			t.Fatalf("unexpected error string: %q", err.Error())
 		}
 	})
 
 	t.Run("wraps underlying errors", func(t *testing.T) {
-		err := wrapXMLError(io.EOF, "failed to decode")
+		err := wrapError(io.EOF, "failed to decode")
 		if err == nil {
 			t.Fatal("expected wrapped error")
 		}
@@ -80,9 +80,9 @@ func TestXMLErrorHelpers(t *testing.T) {
 			t.Fatalf("unexpected wrapped error string: %q", err.Error())
 		}
 
-		xmlErr, ok := err.(*XMLError)
+		xmlErr, ok := err.(*Error)
 		if !ok {
-			t.Fatalf("expected *XMLError, got %T", err)
+			t.Fatalf("expected *Error, got %T", err)
 		}
 
 		if xmlErr.Unwrap() != io.EOF {
@@ -91,7 +91,7 @@ func TestXMLErrorHelpers(t *testing.T) {
 	})
 
 	t.Run("ignores nil wrap input", func(t *testing.T) {
-		if err := wrapXMLError(nil, "ignored"); err != nil {
+		if err := wrapError(nil, "ignored"); err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
 	})
@@ -269,9 +269,9 @@ func TestNodeHelpers(t *testing.T) {
 		if _, err := Text(ctx, invalidNode); err == nil {
 			t.Fatal("expected invalid node type error")
 		} else {
-			var xmlErr *XMLError
+			var xmlErr *Error
 			if !errors.As(err, &xmlErr) {
-				t.Fatalf("expected *XMLError, got %T", err)
+				t.Fatalf("expected *Error, got %T", err)
 			}
 		}
 	})

@@ -13,6 +13,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
+type mapEntry struct {
+	value any
+	key   string
+}
+
 // Decode eagerly decodes a single YAML document into a Ferret runtime value.
 func Decode(ctx context.Context, data runtime.String) (runtime.Value, error) {
 	docs, err := decodeDocuments(data)
@@ -21,7 +26,7 @@ func Decode(ctx context.Context, data runtime.String) (runtime.Value, error) {
 	}
 
 	if len(docs) > 1 {
-		return nil, newYAMLError("multiple YAML documents provided to YAML::DECODE")
+		return nil, newError("multiple YAML documents provided to YAML::DECODE")
 	}
 
 	return normalizeValue(ctx, docs[0])
@@ -52,7 +57,7 @@ func DecodeAll(ctx context.Context, data runtime.String) (runtime.Value, error) 
 
 func decodeDocuments(data runtime.String) ([]any, error) {
 	if strings.TrimSpace(data.String()) == "" {
-		return nil, newYAMLError("empty YAML input")
+		return nil, newError("empty YAML input")
 	}
 
 	decoder := yaml.NewDecoder(strings.NewReader(data.String()))
@@ -66,14 +71,14 @@ func decodeDocuments(data runtime.String) ([]any, error) {
 				break
 			}
 
-			return nil, wrapYAMLError(err, "invalid YAML document")
+			return nil, wrapError(err, "invalid YAML document")
 		}
 
 		docs = append(docs, doc)
 	}
 
 	if len(docs) == 0 {
-		return nil, newYAMLError("empty YAML input")
+		return nil, newError("empty YAML input")
 	}
 
 	return docs, nil
@@ -99,7 +104,7 @@ func normalizeValue(ctx context.Context, input any) (runtime.Value, error) {
 		return runtime.NewInt64(value), nil
 	case uint:
 		if uint64(value) > math.MaxInt64 {
-			return nil, newYAMLErrorf("invalid YAML integer %d exceeds Ferret int range", value)
+			return nil, newErrorf("invalid YAML integer %d exceeds Ferret int range", value)
 		}
 
 		return runtime.NewInt64(int64(value)), nil
@@ -111,7 +116,7 @@ func normalizeValue(ctx context.Context, input any) (runtime.Value, error) {
 		return runtime.NewInt64(int64(value)), nil
 	case uint64:
 		if value > math.MaxInt64 {
-			return nil, newYAMLErrorf("invalid YAML integer %d exceeds Ferret int range", value)
+			return nil, newErrorf("invalid YAML integer %d exceeds Ferret int range", value)
 		}
 
 		return runtime.NewInt64(int64(value)), nil
@@ -126,7 +131,7 @@ func normalizeValue(ctx context.Context, input any) (runtime.Value, error) {
 	case map[any]any:
 		return normalizeInterfaceMap(ctx, value)
 	default:
-		return nil, newYAMLErrorf("invalid YAML document: unsupported value type %T", input)
+		return nil, newErrorf("invalid YAML document: unsupported value type %T", input)
 	}
 }
 
@@ -220,7 +225,7 @@ func applyMerge(ctx context.Context, out *runtime.Object, rawValue any) error {
 
 		return nil
 	default:
-		return newYAMLError("invalid YAML document")
+		return newError("invalid YAML document")
 	}
 }
 
@@ -273,11 +278,6 @@ func normalizeMapKey(key any) (string, error) {
 	case float64:
 		return strconv.FormatFloat(value, 'g', -1, 64), nil
 	default:
-		return "", newYAMLErrorf("invalid YAML document: unsupported mapping key type %T", key)
+		return "", newErrorf("invalid YAML document: unsupported mapping key type %T", key)
 	}
-}
-
-type mapEntry struct {
-	value any
-	key   string
 }

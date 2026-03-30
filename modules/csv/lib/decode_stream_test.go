@@ -169,8 +169,8 @@ func TestDecodeStreamLib(t *testing.T) {
 			t.Fatal("expected strict decode error on second row")
 		}
 
-		if _, ok := err.(*core.CSVError); !ok {
-			t.Fatalf("expected *types.CSVError, got %T", err)
+		if _, ok := err.(*core.Error); !ok {
+			t.Fatalf("expected *core.Error, got %T", err)
 		}
 	})
 
@@ -192,9 +192,9 @@ func TestDecodeStreamLib(t *testing.T) {
 			t.Fatal("expected strict decode error on first row")
 		}
 
-		csvErr, ok := err.(*core.CSVError)
+		csvErr, ok := err.(*core.Error)
 		if !ok {
-			t.Fatalf("expected *types.CSVError, got %T", err)
+			t.Fatalf("expected *core.Error, got %T", err)
 		}
 
 		if csvErr.Row != 1 {

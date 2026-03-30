@@ -98,8 +98,8 @@ func TestDecodeLib(t *testing.T) {
 			t.Fatal("expected malformed XML error")
 		}
 
-		if _, ok := err.(*core.XMLError); !ok {
-			t.Fatalf("expected *core.XMLError, got %T", err)
+		if _, ok := err.(*core.Error); !ok {
+			t.Fatalf("expected *core.Error, got %T", err)
 		}
 	})
 
@@ -116,8 +116,8 @@ func TestDecodeLib(t *testing.T) {
 			t.Fatal("expected error for multiple roots")
 		}
 
-		if _, ok := err.(*core.XMLError); !ok {
-			t.Fatalf("expected *core.XMLError, got %T", err)
+		if _, ok := err.(*core.Error); !ok {
+			t.Fatalf("expected *core.Error, got %T", err)
 		}
 	})
 

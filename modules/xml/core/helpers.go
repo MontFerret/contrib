@@ -68,7 +68,7 @@ func Attr(ctx context.Context, value runtime.Value, name runtime.String) (runtim
 
 	attr, err := attrs.Get(ctx, name)
 	if err != nil {
-		return nil, wrapXMLError(err, fmt.Sprintf("failed to read attribute %q", name.String()))
+		return nil, wrapError(err, fmt.Sprintf("failed to read attribute %q", name.String()))
 	}
 
 	if attr == runtime.None {
@@ -77,7 +77,7 @@ func Attr(ctx context.Context, value runtime.Value, name runtime.String) (runtim
 
 	str, ok := attr.(runtime.String)
 	if !ok {
-		return nil, newXMLErrorf("attribute %q must be a string", name.String())
+		return nil, newErrorf("attribute %q must be a string", name.String())
 	}
 
 	return str, nil
@@ -138,7 +138,7 @@ func resolveDocumentRoot(ctx context.Context, node runtime.Map) (runtime.Map, er
 
 	rootNode, err := asNodeMap(rootValue)
 	if err != nil {
-		return nil, newXMLError("document root must be an element node")
+		return nil, newError("document root must be an element node")
 	}
 
 	rootType, err := getRequiredStringField(ctx, rootNode, "type")
@@ -147,7 +147,7 @@ func resolveDocumentRoot(ctx context.Context, node runtime.Map) (runtime.Map, er
 	}
 
 	if rootType != nodeTypeElement {
-		return nil, newXMLError("document root must be an element node")
+		return nil, newError("document root must be an element node")
 	}
 
 	return rootNode, nil
@@ -170,7 +170,7 @@ func collectNodeText(ctx context.Context, node runtime.Map, nodeType string) (te
 
 		iter, err := children.Iterate(ctx)
 		if err != nil {
-			return "", wrapXMLError(err, "failed to iterate XML children")
+			return "", wrapError(err, "failed to iterate XML children")
 		}
 
 		defer closeIterator(iter, &retErr)
@@ -184,7 +184,7 @@ func collectNodeText(ctx context.Context, node runtime.Map, nodeType string) (te
 					return builder.String(), nil
 				}
 
-				return "", wrapXMLError(err, "failed to iterate XML children")
+				return "", wrapError(err, "failed to iterate XML children")
 			}
 
 			childNode, childType, err := requireXMLNode(ctx, child)
@@ -206,7 +206,7 @@ func collectNodeText(ctx context.Context, node runtime.Map, nodeType string) (te
 				}
 				builder.WriteString(text)
 			case nodeTypeDocument:
-				return "", newXMLError("document nodes are not allowed inside element children")
+				return "", newError("document nodes are not allowed inside element children")
 			default:
 				return "", invalidXMLNodeType(childType)
 			}
@@ -219,5 +219,5 @@ func collectNodeText(ctx context.Context, node runtime.Map, nodeType string) (te
 }
 
 func invalidXMLNodeType(nodeType string) error {
-	return newXMLErrorf("expected XML document, element, or text node, got %q", nodeType)
+	return newErrorf("expected XML document, element, or text node, got %q", nodeType)
 }

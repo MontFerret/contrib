@@ -56,7 +56,7 @@ func Decode(ctx context.Context, data runtime.String) (runtime.Value, error) {
 	}
 
 	if root == nil {
-		return nil, newXMLError("document has no root element")
+		return nil, newError("document has no root element")
 	}
 
 	return newDocumentNode(root), nil

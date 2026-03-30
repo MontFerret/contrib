@@ -2,7 +2,7 @@ module github.com/MontFerret/contrib/modules/csv
 
 go 1.25.6
 
-require github.com/MontFerret/ferret/v2 v2.0.0-alpha.3
+require github.com/MontFerret/ferret/v2 v2.0.0-alpha.4
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect

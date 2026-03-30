@@ -77,8 +77,8 @@ func TestEncodeLib(t *testing.T) {
 			t.Fatal("expected attribute validation error")
 		}
 
-		if _, ok := err.(*core.XMLError); !ok {
-			t.Fatalf("expected *core.XMLError, got %T", err)
+		if _, ok := err.(*core.Error); !ok {
+			t.Fatalf("expected *core.Error, got %T", err)
 		}
 	})
 

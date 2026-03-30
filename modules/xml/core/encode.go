@@ -21,7 +21,7 @@ func Encode(ctx context.Context, value runtime.Value) (string, error) {
 	}
 
 	if err := encoder.Flush(); err != nil {
-		return "", wrapXMLError(err, "failed to flush XML output")
+		return "", wrapError(err, "failed to flush XML output")
 	}
 
 	return buf.String(), nil
@@ -30,7 +30,7 @@ func Encode(ctx context.Context, value runtime.Value) (string, error) {
 func encodeTopLevel(ctx context.Context, encoder *xml.Encoder, value runtime.Value) error {
 	node, err := asNodeMap(value)
 	if err != nil {
-		return newXMLError("encode expects a document or element node")
+		return newError("encode expects a document or element node")
 	}
 
 	nodeType, err := getRequiredStringField(ctx, node, "type")
@@ -47,7 +47,7 @@ func encodeTopLevel(ctx context.Context, encoder *xml.Encoder, value runtime.Val
 
 		rootNode, err := asNodeMap(rootValue)
 		if err != nil {
-			return newXMLError("document root must be an element node")
+			return newError("document root must be an element node")
 		}
 
 		rootType, err := getRequiredStringField(ctx, rootNode, "type")
@@ -56,21 +56,21 @@ func encodeTopLevel(ctx context.Context, encoder *xml.Encoder, value runtime.Val
 		}
 
 		if rootType != nodeTypeElement {
-			return newXMLError("document root must be an element node")
+			return newError("document root must be an element node")
 		}
 
 		return encodeElement(ctx, encoder, rootNode)
 	case nodeTypeElement:
 		return encodeElement(ctx, encoder, node)
 	default:
-		return newXMLError("encode expects a document or element node")
+		return newError("encode expects a document or element node")
 	}
 }
 
 func encodeNode(ctx context.Context, encoder *xml.Encoder, value runtime.Value) error {
 	node, err := asNodeMap(value)
 	if err != nil {
-		return newXMLError("element children must be element or text nodes")
+		return newError("element children must be element or text nodes")
 	}
 
 	nodeType, err := getRequiredStringField(ctx, node, "type")
@@ -84,9 +84,9 @@ func encodeNode(ctx context.Context, encoder *xml.Encoder, value runtime.Value) 
 	case nodeTypeText:
 		return encodeText(ctx, encoder, node)
 	case nodeTypeDocument:
-		return newXMLError("document nodes are not allowed inside element children")
+		return newError("document nodes are not allowed inside element children")
 	default:
-		return newXMLErrorf("unsupported XML node type %q", nodeType)
+		return newErrorf("unsupported XML node type %q", nodeType)
 	}
 }
 
@@ -117,7 +117,7 @@ func encodeElement(ctx context.Context, encoder *xml.Encoder, node runtime.Map) 
 	}
 
 	if err := encoder.EncodeToken(start); err != nil {
-		return wrapXMLError(err, fmt.Sprintf("failed to encode start element %q", name))
+		return wrapError(err, fmt.Sprintf("failed to encode start element %q", name))
 	}
 
 	children, err := getOptionalListField(ctx, node, "children")
@@ -130,7 +130,7 @@ func encodeElement(ctx context.Context, encoder *xml.Encoder, node runtime.Map) 
 	}
 
 	if err := encoder.EncodeToken(start.End()); err != nil {
-		return wrapXMLError(err, fmt.Sprintf("failed to encode end element %q", name))
+		return wrapError(err, fmt.Sprintf("failed to encode end element %q", name))
 	}
 
 	return nil
@@ -143,7 +143,7 @@ func encodeText(ctx context.Context, encoder *xml.Encoder, node runtime.Map) err
 	}
 
 	if err := encoder.EncodeToken(xml.CharData([]byte(value))); err != nil {
-		return wrapXMLError(err, "failed to encode text node")
+		return wrapError(err, "failed to encode text node")
 	}
 
 	return nil
@@ -152,7 +152,7 @@ func encodeText(ctx context.Context, encoder *xml.Encoder, node runtime.Map) err
 func encodeChildren(ctx context.Context, encoder *xml.Encoder, children runtime.List) (retErr error) {
 	iter, err := children.Iterate(ctx)
 	if err != nil {
-		return wrapXMLError(err, "failed to iterate XML children")
+		return wrapError(err, "failed to iterate XML children")
 	}
 
 	defer closeIterator(iter, &retErr)
@@ -164,7 +164,7 @@ func encodeChildren(ctx context.Context, encoder *xml.Encoder, children runtime.
 				return nil
 			}
 
-			return wrapXMLError(err, "failed to iterate XML children")
+			return wrapError(err, "failed to iterate XML children")
 		}
 
 		if err := encodeNode(ctx, encoder, child); err != nil {
@@ -184,7 +184,7 @@ func collectAttrs(ctx context.Context, attrs runtime.Map) ([]xml.Attr, error) {
 	if err := attrs.ForEach(ctx, func(_ context.Context, value, key runtime.Value) (runtime.Boolean, error) {
 		attrValue, ok := value.(runtime.String)
 		if !ok {
-			return false, newXMLErrorf("attribute %q must be a string", key.String())
+			return false, newErrorf("attribute %q must be a string", key.String())
 		}
 
 		pairs = append(pairs, pair{
@@ -221,11 +221,11 @@ func collectAttrs(ctx context.Context, attrs runtime.Map) ([]xml.Attr, error) {
 func getRequiredField(ctx context.Context, node runtime.Map, key string) (runtime.Value, error) {
 	value, err := node.Get(ctx, runtime.NewString(key))
 	if err != nil {
-		return nil, wrapXMLError(err, fmt.Sprintf("failed to read field %q", key))
+		return nil, wrapError(err, fmt.Sprintf("failed to read field %q", key))
 	}
 
 	if value == runtime.None {
-		return nil, newXMLErrorf("field %q is required", key)
+		return nil, newErrorf("field %q is required", key)
 	}
 
 	return value, nil
@@ -239,7 +239,7 @@ func getRequiredStringField(ctx context.Context, node runtime.Map, key string) (
 
 	str, ok := value.(runtime.String)
 	if !ok {
-		return "", newXMLErrorf("field %q must be a string", key)
+		return "", newErrorf("field %q must be a string", key)
 	}
 
 	return str.String(), nil
@@ -248,7 +248,7 @@ func getRequiredStringField(ctx context.Context, node runtime.Map, key string) (
 func getOptionalMapField(ctx context.Context, node runtime.Map, key string) (runtime.Map, error) {
 	value, err := node.Get(ctx, runtime.NewString(key))
 	if err != nil {
-		return nil, wrapXMLError(err, fmt.Sprintf("failed to read field %q", key))
+		return nil, wrapError(err, fmt.Sprintf("failed to read field %q", key))
 	}
 
 	if value == runtime.None {
@@ -257,7 +257,7 @@ func getOptionalMapField(ctx context.Context, node runtime.Map, key string) (run
 
 	attrs, ok := value.(runtime.Map)
 	if !ok {
-		return nil, newXMLErrorf("field %q must be an object", key)
+		return nil, newErrorf("field %q must be an object", key)
 	}
 
 	return attrs, nil
@@ -266,7 +266,7 @@ func getOptionalMapField(ctx context.Context, node runtime.Map, key string) (run
 func getOptionalListField(ctx context.Context, node runtime.Map, key string) (runtime.List, error) {
 	value, err := node.Get(ctx, runtime.NewString(key))
 	if err != nil {
-		return nil, wrapXMLError(err, fmt.Sprintf("failed to read field %q", key))
+		return nil, wrapError(err, fmt.Sprintf("failed to read field %q", key))
 	}
 
 	if value == runtime.None {
@@ -275,7 +275,7 @@ func getOptionalListField(ctx context.Context, node runtime.Map, key string) (ru
 
 	list, ok := value.(runtime.List)
 	if !ok {
-		return nil, newXMLErrorf("field %q must be an array", key)
+		return nil, newErrorf("field %q must be an array", key)
 	}
 
 	return list, nil
@@ -284,7 +284,7 @@ func getOptionalListField(ctx context.Context, node runtime.Map, key string) (ru
 func asNodeMap(value runtime.Value) (runtime.Map, error) {
 	node, ok := value.(runtime.Map)
 	if !ok {
-		return nil, newXMLError("expected XML node object")
+		return nil, newError("expected XML node object")
 	}
 
 	return node, nil
@@ -297,6 +297,6 @@ func closeIterator(iter runtime.Iterator, retErr *error) {
 	}
 
 	if err := closer.Close(); err != nil && *retErr == nil {
-		*retErr = wrapXMLError(err, "failed to close XML iterator")
+		*retErr = wrapError(err, "failed to close XML iterator")
 	}
 }
