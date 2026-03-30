@@ -8,8 +8,8 @@ import (
 type module struct {
 }
 
-// New returns the WEB module, which registers WEB namespace helpers on a
-// Ferret host during bootstrap.
+// New returns the WEB::SITEMAP module, which registers the WEB::SITEMAP
+// namespace functions on a Ferret host during bootstrap.
 func New() (ferret.Module, error) {
 	return &module{}, nil
 }
