@@ -2,7 +2,6 @@ package core
 
 import (
 	"net/url"
-	"regexp"
 	"strings"
 	"unicode/utf8"
 )
@@ -183,32 +182,50 @@ func matchPattern(pattern, path string) (bool, int) {
 		normalized = normalized[:len(normalized)-1]
 	}
 
-	expr := "^" + wildcardExpression(normalized)
-	if anchored {
-		expr += "$"
-	}
-
-	matched, err := regexp.MatchString(expr, path)
-	if err != nil || !matched {
+	if !matchNormalizedPattern(normalized, path, anchored) {
 		return false, 0
 	}
 
 	return true, patternSpecificity(normalized)
 }
 
-func wildcardExpression(pattern string) string {
+func matchNormalizedPattern(pattern, path string, anchored bool) bool {
 	parts := strings.Split(pattern, "*")
-	var b strings.Builder
+	offset := 0
+	seenLiteral := false
 
-	for idx, part := range parts {
-		if idx > 0 {
-			b.WriteString(".*")
+	for _, part := range parts {
+		if part == "" {
+			continue
 		}
 
-		b.WriteString(regexp.QuoteMeta(part))
+		if !seenLiteral {
+			if !strings.HasPrefix(path, part) {
+				return false
+			}
+
+			offset = len(part)
+			seenLiteral = true
+			continue
+		}
+
+		idx := strings.Index(path[offset:], part)
+		if idx < 0 {
+			return false
+		}
+
+		offset += idx + len(part)
 	}
 
-	return b.String()
+	if !seenLiteral {
+		return !anchored || path == pattern
+	}
+
+	if anchored {
+		return offset == len(path)
+	}
+
+	return true
 }
 
 func patternSpecificity(pattern string) int {

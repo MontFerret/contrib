@@ -178,4 +178,81 @@ func TestMatch(t *testing.T) {
 			t.Fatalf("expected encoded utf8 rule to match, got %+v", result)
 		}
 	})
+
+	t.Run("supports repeated wildcards and empty segments", func(t *testing.T) {
+		doc := Document{
+			Groups: []Group{
+				{UserAgents: []string{"*"}, Disallow: []string{"/**/foo"}},
+			},
+		}
+
+		if result := Match(doc, "/abc/def/foo", "Crawler"); result.Allowed {
+			t.Fatalf("expected repeated wildcard rule to match, got %+v", result)
+		}
+	})
+
+	t.Run("supports wildcard at start middle and end", func(t *testing.T) {
+		doc := Document{
+			Groups: []Group{
+				{
+					UserAgents: []string{"*"},
+					Disallow: []string{
+						"/*suffix",
+						"/mid/*/tail",
+						"/prefix*",
+					},
+				},
+			},
+		}
+
+		if result := Match(doc, "/aaa/suffix", "Crawler"); result.Allowed {
+			t.Fatalf("expected wildcard-at-start rule to match, got %+v", result)
+		}
+
+		if result := Match(doc, "/mid/value/tail/rest", "Crawler"); result.Allowed {
+			t.Fatalf("expected wildcard-in-middle rule to match, got %+v", result)
+		}
+
+		if result := Match(doc, "/prefix-and-more", "Crawler"); result.Allowed {
+			t.Fatalf("expected wildcard-at-end rule to match, got %+v", result)
+		}
+	})
+
+	t.Run("supports anchored wildcard patterns", func(t *testing.T) {
+		doc := Document{
+			Groups: []Group{
+				{UserAgents: []string{"*"}, Disallow: []string{"/foo/*/bar$"}},
+			},
+		}
+
+		if result := Match(doc, "/foo/value/bar", "Crawler"); result.Allowed {
+			t.Fatalf("expected anchored wildcard rule to match, got %+v", result)
+		}
+
+		if result := Match(doc, "/foo/value/bar/baz", "Crawler"); !result.Allowed {
+			t.Fatalf("expected anchored wildcard mismatch to allow, got %+v", result)
+		}
+	})
+
+	t.Run("treats regex significant characters as plain literals", func(t *testing.T) {
+		doc := Document{
+			Groups: []Group{
+				{
+					UserAgents: []string{"*"},
+					Disallow: []string{
+						"/file?.txt",
+						"/report.(final)",
+					},
+				},
+			},
+		}
+
+		if result := Match(doc, "/file?.txt", "Crawler"); result.Allowed {
+			t.Fatalf("expected literal question mark rule to match, got %+v", result)
+		}
+
+		if result := Match(doc, "/report.(final)/v2", "Crawler"); result.Allowed {
+			t.Fatalf("expected literal punctuation rule to match, got %+v", result)
+		}
+	})
 }
