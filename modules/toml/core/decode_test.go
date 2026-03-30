@@ -2,6 +2,9 @@ package core
 
 import (
 	"context"
+	"fmt"
+	"math"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -112,6 +115,23 @@ local_time = 07:32:00
 		}
 	})
 
+	t.Run("rejects TOML integers above int64 range before normalization", func(t *testing.T) {
+		input := fmt.Sprintf("value = %d", uint64(math.MaxInt64)+1)
+
+		_, err := Decode(ctx, runtime.NewString(input), DefaultDecodeOptions())
+		if err == nil {
+			t.Fatal("expected out-of-range integer error")
+		}
+
+		if _, ok := err.(*TOMLError); !ok {
+			t.Fatalf("expected *TOMLError, got %T", err)
+		}
+
+		if !strings.Contains(err.Error(), "invalid TOML document") {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
 	t.Run("rejects strict false until non-strict mode exists", func(t *testing.T) {
 		opts := DefaultDecodeOptions()
 		opts.Strict = false
@@ -129,4 +149,52 @@ local_time = 07:32:00
 			t.Fatalf("unexpected error: %v", err)
 		}
 	})
+}
+
+func TestNormalizeUnsignedIntegerRange(t *testing.T) {
+	ctx := context.Background()
+	opts := DefaultDecodeOptions()
+
+	t.Run("accepts max int64 uint64", func(t *testing.T) {
+		value, err := normalizeValue(ctx, uint64(math.MaxInt64), opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		assertRuntimeIntValue(t, value, math.MaxInt64)
+	})
+
+	t.Run("rejects overflowing uint64", func(t *testing.T) {
+		_, err := normalizeValue(ctx, uint64(math.MaxInt64)+1, opts)
+		if err == nil {
+			t.Fatal("expected uint64 overflow error")
+		}
+
+		if _, ok := err.(*TOMLError); !ok {
+			t.Fatalf("expected *TOMLError, got %T", err)
+		}
+
+		if !strings.Contains(err.Error(), "exceeds Ferret int range") {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	if strconv.IntSize == 64 {
+		t.Run("rejects overflowing uint on 64-bit", func(t *testing.T) {
+			overflow := uint(uint64(math.MaxInt64) + 1)
+
+			_, err := normalizeValue(ctx, overflow, opts)
+			if err == nil {
+				t.Fatal("expected uint overflow error")
+			}
+
+			if _, ok := err.(*TOMLError); !ok {
+				t.Fatalf("expected *TOMLError, got %T", err)
+			}
+
+			if !strings.Contains(err.Error(), "exceeds Ferret int range") {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+	}
 }

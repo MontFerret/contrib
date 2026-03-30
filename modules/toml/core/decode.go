@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"math"
 	"time"
 
 	burnttoml "github.com/BurntSushi/toml"
@@ -55,15 +56,15 @@ func normalizeValue(ctx context.Context, input any, opts DecodeOptions) (runtime
 	case int64:
 		return runtime.NewInt64(value), nil
 	case uint:
-		return runtime.NewInt64(int64(value)), nil
+		return normalizeUnsignedInteger(uint64(value))
 	case uint8:
-		return runtime.NewInt(int(value)), nil
+		return normalizeUnsignedInteger(uint64(value))
 	case uint16:
-		return runtime.NewInt(int(value)), nil
+		return normalizeUnsignedInteger(uint64(value))
 	case uint32:
-		return runtime.NewInt64(int64(value)), nil
+		return normalizeUnsignedInteger(uint64(value))
 	case uint64:
-		return runtime.NewInt64(int64(value)), nil
+		return normalizeUnsignedInteger(value)
 	case float32:
 		return runtime.NewFloat(float64(value)), nil
 	case float64:
@@ -107,6 +108,14 @@ func normalizeValue(ctx context.Context, input any, opts DecodeOptions) (runtime
 	default:
 		return nil, newTOMLErrorf("unsupported TOML value type %T", input)
 	}
+}
+
+func normalizeUnsignedInteger(value uint64) (runtime.Value, error) {
+	if value > math.MaxInt64 {
+		return nil, newTOMLErrorf("invalid TOML integer %d exceeds Ferret int range", value)
+	}
+
+	return runtime.NewInt64(int64(value)), nil
 }
 
 func normalizeMap(ctx context.Context, input map[string]any, opts DecodeOptions) (*runtime.Object, error) {
