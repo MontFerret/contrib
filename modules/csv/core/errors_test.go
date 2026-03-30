@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestCSVError(t *testing.T) {
+func TestError(t *testing.T) {
 	t.Run("row only", func(t *testing.T) {
 		err := newError(5, "something went wrong")
 		expected := "csv: row 5: something went wrong"
