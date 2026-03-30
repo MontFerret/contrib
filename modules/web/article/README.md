@@ -46,9 +46,9 @@ func main() {
 
 | Function | Signature | Returns | Notes |
 | --- | --- | --- | --- |
-| `WEB::ARTICLE::EXTRACT` | `WEB::ARTICLE::EXTRACT(html)` | `Object` | Extracts a normalized article object from raw HTML. |
-| `WEB::ARTICLE::TEXT` | `WEB::ARTICLE::TEXT(html)` | `String \| None` | Returns the cleaned main article text when meaningful content is found. |
-| `WEB::ARTICLE::MARKDOWN` | `WEB::ARTICLE::MARKDOWN(html)` | `String \| None` | Returns the cleaned article body rendered as Markdown when available. |
+| `WEB::ARTICLE::EXTRACT` | `WEB::ARTICLE::EXTRACT(input)` | `Object` | Extracts a normalized article object from raw HTML, `HTMLPage`, `HTMLDocument`, or `HTMLElement`. |
+| `WEB::ARTICLE::TEXT` | `WEB::ARTICLE::TEXT(input)` | `String \| None` | Returns the cleaned main article text when meaningful content is found. |
+| `WEB::ARTICLE::MARKDOWN` | `WEB::ARTICLE::MARKDOWN(input)` | `String \| None` | Returns the cleaned article body rendered as Markdown when available. |
 
 ## Return Shape
 
@@ -87,6 +87,13 @@ LET response = HTTP::GET($url)
 RETURN WEB::ARTICLE::EXTRACT(response.body)
 ```
 
+### Extract From A JS-Rendered Page
+
+```fql
+LET page = HTML::DOCUMENT($url, true)
+RETURN WEB::ARTICLE::EXTRACT(page)
+```
+
 ### Get Clean Article Text
 
 ```fql
@@ -105,8 +112,10 @@ RETURN {
 ## Behavior Notes
 
 - Extraction is heuristic and best-effort; malformed HTML is parsed when practical.
+- `input` may be raw HTML, `HTMLPage`, `HTMLDocument`, or `HTMLElement`.
 - `EXTRACT` may still return metadata when no meaningful article body is found.
 - `TEXT` and `MARKDOWN` return `null` when the page is parseable but not article-like enough.
+- For `HTMLPage` and `HTMLDocument` inputs, the page URL is used as the fallback base URL when the DOM does not contain `<base href>`.
 - URL metadata preserves relative values unless a `<base href>` allows safe resolution.
 - Timestamps are normalized to RFC3339 UTC when parseable; otherwise the original trimmed value is preserved.
 - `text`, `html`, and `markdown` contain the cleaned body only and do not prepend the title.

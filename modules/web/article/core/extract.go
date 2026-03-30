@@ -25,6 +25,13 @@ var negativeKeywords = []string{
 }
 
 type (
+	// Source is the normalized article extraction input.
+	Source struct {
+		SourceURL *url.URL
+		TitleHint *string
+		HTML      string
+	}
+
 	scoredCandidate struct {
 		Selection  *goquery.Selection
 		Score      float64
@@ -45,13 +52,22 @@ type (
 
 // Extract returns the best-effort normalized article extracted from raw HTML.
 func Extract(input string) types.Article {
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(input))
+	return ExtractSource(Source{HTML: input})
+}
+
+// ExtractSource returns the best-effort normalized article extracted from a normalized source.
+func ExtractSource(source Source) types.Article {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(source.HTML))
 	if err != nil {
 		return types.Article{}
 	}
 
 	baseURL := parseBaseURL(doc)
-	article := extractMetadata(doc, baseURL)
+	if baseURL == nil {
+		baseURL = source.SourceURL
+	}
+
+	article := extractMetadata(doc, baseURL, source.TitleHint)
 	body := extractBody(doc, article.Title, baseURL)
 
 	article.Text = body.Text

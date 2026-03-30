@@ -22,13 +22,14 @@ var articleTypes = map[string]struct{}{
 
 type metaIndex map[string][]string
 
-func extractMetadata(doc *goquery.Document, baseURL *url.URL) types.Article {
+func extractMetadata(doc *goquery.Document, baseURL *url.URL, titleHint *string) types.Article {
 	article := types.Article{}
 
 	mergeArticle(&article, extractJSONLDMetadata(doc, baseURL))
 	mergeArticle(&article, extractMetaTagMetadata(doc, baseURL))
 	mergeArticle(&article, extractDOMFallbackMetadata(doc, baseURL))
-	fillTitleAndSiteFromDocumentTitle(doc, &article)
+	fillTitleAndSiteFromText(doc.Find("title").First().Text(), &article)
+	fillTitleAndSiteFromText(valueOrEmpty(titleHint), &article)
 
 	return article
 }
@@ -399,8 +400,8 @@ func extractDOMFallbackMetadata(doc *goquery.Document, baseURL *url.URL) types.A
 	}
 }
 
-func fillTitleAndSiteFromDocumentTitle(doc *goquery.Document, article *types.Article) {
-	titleText := normalizeWhitespace(doc.Find("title").First().Text())
+func fillTitleAndSiteFromText(titleText string, article *types.Article) {
+	titleText = normalizeWhitespace(titleText)
 	if titleText == "" {
 		return
 	}

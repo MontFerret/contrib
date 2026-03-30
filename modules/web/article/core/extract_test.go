@@ -1,6 +1,7 @@
 package core
 
 import (
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -228,5 +229,63 @@ func TestExtractMalformedHTML(t *testing.T) {
 
 	if article.Text == nil || !strings.Contains(*article.Text, "best-effort parsing") {
 		t.Fatalf("unexpected text %+v", article.Text)
+	}
+}
+
+func TestExtractSourceUsesSourceURLFallback(t *testing.T) {
+	sourceURL, err := url.Parse("https://example.com/docs/rendered-guide")
+	if err != nil {
+		t.Fatalf("unexpected url parse error: %v", err)
+	}
+
+	article := ExtractSource(Source{
+		HTML: `
+			<html>
+			  <head>
+			    <link rel="canonical" href="/docs/rendered-guide" />
+			    <meta property="og:image" content="/media/guide.jpg" />
+			  </head>
+			  <body>
+			    <article class="guide">
+			      <p>This rendered guide is extracted from a DOM snapshot and should still resolve relative metadata URLs by falling back to the source page URL.</p>
+			      <p>That fallback matters for pages opened through the HTML module where there is no explicit base tag in the document.</p>
+			    </article>
+			  </body>
+			</html>
+		`,
+		SourceURL: sourceURL,
+	})
+
+	if article.CanonicalURL == nil || *article.CanonicalURL != "https://example.com/docs/rendered-guide" {
+		t.Fatalf("unexpected canonicalUrl %+v", article.CanonicalURL)
+	}
+
+	if article.LeadImage == nil || *article.LeadImage != "https://example.com/media/guide.jpg" {
+		t.Fatalf("unexpected leadImage %+v", article.LeadImage)
+	}
+}
+
+func TestExtractSourceUsesTitleHintAsFallback(t *testing.T) {
+	article := ExtractSource(Source{
+		HTML: `
+			<html>
+			  <body>
+			    <main class="docs-content">
+			      <h1>Rendered Guide</h1>
+			      <p>This guide was loaded through a rendered DOM snapshot and still needs sensible title and site-name fallback behavior.</p>
+			      <p>The document lacks a title element, so the source title hint should be able to fill the publication name without overriding the in-body heading.</p>
+			    </main>
+			  </body>
+			</html>
+		`,
+		TitleHint: stringPtr("Rendered Guide | Example Docs"),
+	})
+
+	if article.Title == nil || *article.Title != "Rendered Guide" {
+		t.Fatalf("unexpected title %+v", article.Title)
+	}
+
+	if article.SiteName == nil || *article.SiteName != "Example Docs" {
+		t.Fatalf("unexpected siteName %+v", article.SiteName)
 	}
 }
