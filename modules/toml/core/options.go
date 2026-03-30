@@ -105,10 +105,10 @@ func ParseEncodeOptions(ctx context.Context, input runtime.Value) (EncodeOptions
 		}
 
 		switch name {
-		case "sort_keys":
+		case "sortKeys":
 			raw, ok := value.(runtime.Boolean)
 			if !ok {
-				return false, newTOMLError(`encode option "sort_keys" must be a boolean`)
+				return false, newTOMLError(`encode option "sortKeys" must be a boolean`)
 			}
 
 			opts.SortKeys = bool(raw)

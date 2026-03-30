@@ -75,7 +75,7 @@ Default:
 
 ```fql
 {
-  sort_keys: true | false,
+  sortKeys: true | false,
   datetime: "rfc3339" | "preserve"
 }
 ```
@@ -84,7 +84,7 @@ Default:
 
 ```fql
 {
-  sort_keys: false,
+  sortKeys: false,
   datetime: "rfc3339"
 }
 ```
@@ -121,7 +121,8 @@ RETURN toml::encode({
 - The top-level TOML document always decodes to an object.
 - `datetime: "string"` returns TOML timestamps as canonical strings.
 - `datetime: "native"` returns Ferret `DateTime` values and preserves TOML local datetime/date/time flavor using the underlying location name.
+- `strict: false` is reserved for a future relaxed mode and currently returns an explicit error.
 - `toml::encode` requires the top-level value to be an object or map.
 - Arrays of objects encode as arrays of tables when they appear as direct object fields.
 - Values without a TOML representation, such as `None`, binary data, iterators, and host-only values, return an explicit error.
-- Output formatting is implementation-defined apart from valid TOML syntax and the optional `sort_keys` behavior.
+- Output formatting is implementation-defined apart from valid TOML syntax and the optional `sortKeys` behavior.

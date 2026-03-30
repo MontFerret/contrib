@@ -126,6 +126,10 @@ func TestEncodeCore(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected top-level object error")
 		}
+
+		if _, ok := err.(*TOMLError); !ok {
+			t.Fatalf("expected *TOMLError, got %T", err)
+		}
 	})
 
 	t.Run("rejects none values", func(t *testing.T) {
@@ -165,6 +169,21 @@ func TestEncodeCore(t *testing.T) {
 		_, err := Encode(ctx, value, DefaultEncodeOptions())
 		if err == nil {
 			t.Fatal("expected nested object array error")
+		}
+	})
+
+	t.Run("rejects binary values without panicking", func(t *testing.T) {
+		value := runtime.NewObjectWith(map[string]runtime.Value{
+			"blob": runtime.NewBinary([]byte("toml")),
+		})
+
+		_, err := Encode(ctx, value, DefaultEncodeOptions())
+		if err == nil {
+			t.Fatal("expected binary encoding error")
+		}
+
+		if !strings.Contains(err.Error(), "Binary") {
+			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 }

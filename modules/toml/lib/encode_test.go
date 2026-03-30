@@ -47,7 +47,7 @@ func TestEncodeLib(t *testing.T) {
 		})
 
 		options := runtime.NewObjectWith(map[string]runtime.Value{
-			"sort_keys": runtime.True,
+			"sortKeys": runtime.True,
 		})
 
 		result, err := Encode(ctx, value, options)

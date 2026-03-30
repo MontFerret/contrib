@@ -74,7 +74,7 @@ type encoder struct {
 func Encode(ctx context.Context, value runtime.Value, opts EncodeOptions) (string, error) {
 	root, err := runtime.CastMap(value)
 	if err != nil {
-		return "", err
+		return "", wrapTOMLError(err, "top-level TOML value must be an object")
 	}
 
 	enc := &encoder{opts: opts}
@@ -443,6 +443,8 @@ func isNoneValue(value runtime.Value) bool {
 		return true
 	}
 
+	// runtime.Value can hold non-comparable dynamic values such as runtime.Binary.
+	// Direct interface equality against runtime.None can panic for those values.
 	raw := reflect.ValueOf(value)
 	if raw.Kind() != reflect.Ptr || raw.IsNil() {
 		return false

@@ -48,8 +48,8 @@ func TestParseEncodeOptions(t *testing.T) {
 
 	t.Run("valid options", func(t *testing.T) {
 		input := runtime.NewObjectWith(map[string]runtime.Value{
-			"sort_keys": runtime.True,
-			"datetime":  runtime.NewString(EncodeDateTimePreserve),
+			"sortKeys": runtime.True,
+			"datetime": runtime.NewString(EncodeDateTimePreserve),
 		})
 
 		opts, err := ParseEncodeOptions(ctx, input)
@@ -70,6 +70,21 @@ func TestParseEncodeOptions(t *testing.T) {
 		_, err := ParseEncodeOptions(ctx, input)
 		if err == nil {
 			t.Fatal("expected invalid encode datetime error")
+		}
+	})
+
+	t.Run("rejects snake case sort keys option", func(t *testing.T) {
+		input := runtime.NewObjectWith(map[string]runtime.Value{
+			"sort_keys": runtime.True,
+		})
+
+		_, err := ParseEncodeOptions(ctx, input)
+		if err == nil {
+			t.Fatal("expected unknown option error")
+		}
+
+		if !strings.Contains(err.Error(), `unknown encode option "sort_keys"`) {
+			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 }

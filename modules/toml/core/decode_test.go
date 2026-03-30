@@ -111,4 +111,22 @@ local_time = 07:32:00
 			t.Fatalf("unexpected error: %v", err)
 		}
 	})
+
+	t.Run("rejects strict false until non-strict mode exists", func(t *testing.T) {
+		opts := DefaultDecodeOptions()
+		opts.Strict = false
+
+		_, err := Decode(ctx, runtime.NewString("title = \"Ferret\""), opts)
+		if err == nil {
+			t.Fatal("expected strict=false error")
+		}
+
+		if _, ok := err.(*TOMLError); !ok {
+			t.Fatalf("expected *TOMLError, got %T", err)
+		}
+
+		if !strings.Contains(err.Error(), `strict=false" is not implemented yet`) {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
 }

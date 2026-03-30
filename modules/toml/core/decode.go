@@ -11,6 +11,10 @@ import (
 
 // Decode eagerly decodes a single TOML document into a Ferret runtime object.
 func Decode(ctx context.Context, data runtime.String, opts DecodeOptions) (runtime.Value, error) {
+	if !opts.Strict {
+		return nil, newTOMLError(`decode option "strict=false" is not implemented yet`)
+	}
+
 	decoded := make(map[string]any)
 
 	if _, err := burnttoml.Decode(data.String(), &decoded); err != nil {

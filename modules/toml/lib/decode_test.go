@@ -50,6 +50,21 @@ func TestDecodeLib(t *testing.T) {
 		}
 	})
 
+	t.Run("rejects strict false until non-strict mode exists", func(t *testing.T) {
+		options := runtime.NewObjectWith(map[string]runtime.Value{
+			"strict": runtime.False,
+		})
+
+		_, err := Decode(ctx, runtime.NewString("title = \"Ferret\"\n"), options)
+		if err == nil {
+			t.Fatal("expected strict=false error")
+		}
+
+		if _, ok := err.(*core.TOMLError); !ok {
+			t.Fatalf("expected *core.TOMLError, got %T", err)
+		}
+	})
+
 	t.Run("rejects malformed toml", func(t *testing.T) {
 		_, err := Decode(ctx, runtime.NewString("title = [unterminated"))
 		if err == nil {
