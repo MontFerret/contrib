@@ -239,7 +239,7 @@ func (e *encoder) renderInlineValue(ctx context.Context, value runtime.Value) (s
 	case runtime.List:
 		return e.renderInlineArray(ctx, current)
 	case runtime.Map:
-		return "", newTOMLError("objects are not representable inside TOML arrays in v1")
+		return "", newTOMLError("objects (inline tables) inside TOML arrays are not supported by this encoder; use arrays-of-tables instead")
 	case runtime.Binary:
 		return "", newTOMLError("unsupported value type for TOML encoding: Binary")
 	case runtime.Iterator:
