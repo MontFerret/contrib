@@ -9,7 +9,7 @@ import (
 
 func TestRegisterLib(t *testing.T) {
 	library := runtime.NewLibrary()
-	RegisterLib(library)
+	RegisterLib(library.Namespace("TOML"))
 
 	funcs, err := library.Build()
 	if err != nil {
