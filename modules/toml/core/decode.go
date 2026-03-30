@@ -2,7 +2,7 @@ package core
 
 import (
 	"context"
-	"math"
+	"errors"
 	"time"
 
 	burnttoml "github.com/BurntSushi/toml"
@@ -22,10 +22,6 @@ func Decode(ctx context.Context, data runtime.String, opts DecodeOptions) (runti
 		return nil, wrapTOMLError(err, "invalid TOML document")
 	}
 
-	if decoded == nil {
-		return runtime.NewObject(), nil
-	}
-
 	value, err := normalizeValue(ctx, decoded, opts)
 	if err != nil {
 		return nil, err
@@ -41,34 +37,6 @@ func Decode(ctx context.Context, data runtime.String, opts DecodeOptions) (runti
 
 func normalizeValue(ctx context.Context, input any, opts DecodeOptions) (runtime.Value, error) {
 	switch value := input.(type) {
-	case string:
-		return runtime.NewString(value), nil
-	case bool:
-		return runtime.NewBoolean(value), nil
-	case int:
-		return runtime.NewInt(value), nil
-	case int8:
-		return runtime.NewInt(int(value)), nil
-	case int16:
-		return runtime.NewInt(int(value)), nil
-	case int32:
-		return runtime.NewInt64(int64(value)), nil
-	case int64:
-		return runtime.NewInt64(value), nil
-	case uint:
-		return normalizeUnsignedInteger(uint64(value))
-	case uint8:
-		return normalizeUnsignedInteger(uint64(value))
-	case uint16:
-		return normalizeUnsignedInteger(uint64(value))
-	case uint32:
-		return normalizeUnsignedInteger(uint64(value))
-	case uint64:
-		return normalizeUnsignedInteger(value)
-	case float32:
-		return runtime.NewFloat(float64(value)), nil
-	case float64:
-		return runtime.NewFloat(value), nil
 	case time.Time:
 		return decodeTemporalValue(value, opts)
 	case map[string]any:
@@ -106,16 +74,26 @@ func normalizeValue(ctx context.Context, input any, opts DecodeOptions) (runtime
 	case nil:
 		return nil, newTOMLError("TOML null values are not supported")
 	default:
-		return nil, newTOMLErrorf("unsupported TOML value type %T", input)
+		return normalizeScalarValue(input)
 	}
 }
 
-func normalizeUnsignedInteger(value uint64) (runtime.Value, error) {
-	if value > math.MaxInt64 {
-		return nil, newTOMLErrorf("invalid TOML integer %d exceeds Ferret int range", value)
+func normalizeScalarValue(input any) (runtime.Value, error) {
+	value, err := runtime.ValueOf(input)
+	if err != nil {
+		if errors.Is(err, runtime.ErrRange) {
+			return nil, newTOMLErrorf("invalid TOML integer %d exceeds Ferret int range", input)
+		}
+
+		return nil, wrapTOMLError(err, "unsupported TOML scalar value")
 	}
 
-	return runtime.NewInt64(int64(value)), nil
+	switch value.(type) {
+	case runtime.String, runtime.Boolean, runtime.Int, runtime.Float:
+		return value, nil
+	default:
+		return nil, newTOMLErrorf("unsupported TOML value type %T", input)
+	}
 }
 
 func normalizeMap(ctx context.Context, input map[string]any, opts DecodeOptions) (*runtime.Object, error) {

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
@@ -151,11 +152,54 @@ local_time = 07:32:00
 	})
 }
 
-func TestNormalizeUnsignedIntegerRange(t *testing.T) {
+func TestNormalizeScalarValue(t *testing.T) {
 	ctx := context.Background()
 	opts := DefaultDecodeOptions()
 
-	t.Run("accepts max int64 uint64", func(t *testing.T) {
+	t.Run("accepts string through scalar fallback", func(t *testing.T) {
+		value, err := normalizeValue(ctx, "Ferret", opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		assertRuntimeStringValue(t, value, "Ferret")
+	})
+
+	t.Run("accepts bool through scalar fallback", func(t *testing.T) {
+		value, err := normalizeValue(ctx, true, opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		assertRuntimeBoolValue(t, value, true)
+	})
+
+	t.Run("accepts int64 through scalar fallback", func(t *testing.T) {
+		value, err := normalizeValue(ctx, int64(42), opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		assertRuntimeIntValue(t, value, 42)
+	})
+
+	t.Run("accepts float64 through scalar fallback", func(t *testing.T) {
+		value, err := normalizeValue(ctx, 3.14, opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		f, ok := value.(runtime.Float)
+		if !ok {
+			t.Fatalf("expected runtime.Float, got %T", value)
+		}
+
+		if float64(f) != 3.14 {
+			t.Fatalf("expected 3.14, got %v", float64(f))
+		}
+	})
+
+	t.Run("accepts max int64 uint64 through scalar fallback", func(t *testing.T) {
 		value, err := normalizeValue(ctx, uint64(math.MaxInt64), opts)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -197,4 +241,28 @@ func TestNormalizeUnsignedIntegerRange(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("keeps time values under TOML temporal handling", func(t *testing.T) {
+		value, err := normalizeValue(ctx, time.Date(1979, 5, 27, 7, 32, 0, 0, time.UTC), opts)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		assertRuntimeStringValue(t, value, "1979-05-27T07:32:00Z")
+	})
+
+	t.Run("rejects non scalar valueof result", func(t *testing.T) {
+		_, err := normalizeValue(ctx, []int{1}, opts)
+		if err == nil {
+			t.Fatal("expected unsupported non-scalar error")
+		}
+
+		if _, ok := err.(*TOMLError); !ok {
+			t.Fatalf("expected *TOMLError, got %T", err)
+		}
+
+		if !strings.Contains(err.Error(), "unsupported TOML value type []int") {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
 }

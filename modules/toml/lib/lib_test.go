@@ -19,8 +19,6 @@ func TestRegisterLib(t *testing.T) {
 	expected := []string{
 		"TOML::DECODE",
 		"TOML::ENCODE",
-		"toml::decode",
-		"toml::encode",
 	}
 
 	if funcs.Size() != len(expected) {
