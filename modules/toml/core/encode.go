@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"math"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -439,17 +438,5 @@ func floatAddDecimal(raw string) string {
 }
 
 func isNoneValue(value runtime.Value) bool {
-	if value == nil {
-		return true
-	}
-
-	// runtime.Value can hold non-comparable dynamic values such as runtime.Binary.
-	// Direct interface equality against runtime.None can panic for those values.
-	raw := reflect.ValueOf(value)
-	if raw.Kind() != reflect.Ptr || raw.IsNil() {
-		return false
-	}
-
-	elem := raw.Elem().Type()
-	return elem.PkgPath() == "github.com/MontFerret/ferret/v2/pkg/runtime" && elem.Name() == "none"
+	return value == nil || value == runtime.None
 }
