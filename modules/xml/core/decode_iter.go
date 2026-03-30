@@ -23,7 +23,7 @@ func NewDecodeIterator(data runtime.String) (*DecodeIterator, error) {
 // NewDecodeIteratorFromReader returns an iterator over normalized XML events
 // read directly from an io.Reader.
 func NewDecodeIteratorFromReader(reader io.Reader) (*DecodeIterator, error) {
-	if reader == nil {
+	if runtime.IsNil(reader) {
 		return nil, newError("reader must not be nil")
 	}
 

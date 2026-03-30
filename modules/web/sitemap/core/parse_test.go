@@ -2,15 +2,19 @@ package core
 
 import (
 	"context"
+	"errors"
+	"io"
 	"strings"
 	"testing"
+	"time"
 
 	xmlcore "github.com/MontFerret/contrib/modules/xml/core"
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 func TestParse(t *testing.T) {
 	t.Run("parses urlset with namespaces and unknown tags", func(t *testing.T) {
-		doc, err := Parse(strings.NewReader(`
+		doc, err := Parse(t.Context(), strings.NewReader(`
 			<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 			  <url>
 			    <loc>https://example.com/a</loc>
@@ -70,7 +74,7 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("parses sitemapindex with prefixed namespaces", func(t *testing.T) {
-		doc, err := Parse(strings.NewReader(`
+		doc, err := Parse(t.Context(), strings.NewReader(`
 			<sm:sitemapindex xmlns:sm="http://www.sitemaps.org/schemas/sitemap/0.9">
 			  <sm:sitemap>
 			    <sm:loc>https://example.com/posts.xml</sm:loc>
@@ -101,7 +105,7 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("rejects unsupported roots", func(t *testing.T) {
-		_, err := Parse(strings.NewReader(`<feed></feed>`), "https://example.com/feed.xml")
+		_, err := Parse(t.Context(), strings.NewReader(`<feed></feed>`), "https://example.com/feed.xml")
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -110,12 +114,27 @@ func TestParse(t *testing.T) {
 	})
 
 	t.Run("rejects malformed xml", func(t *testing.T) {
-		_, err := Parse(strings.NewReader(`<urlset><url><loc>https://example.com</url></urlset>`), "https://example.com/bad.xml")
+		_, err := Parse(t.Context(), strings.NewReader(`<urlset><url><loc>https://example.com</url></urlset>`), "https://example.com/bad.xml")
 		if err == nil {
 			t.Fatal("expected error")
 		}
 
 		assertStageError(t, err, StageParse, "https://example.com/bad.xml")
+	})
+
+	t.Run("returns parse-stage cancellation when context is already canceled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		_, err := Parse(ctx, strings.NewReader(`<urlset/>`), "https://example.com/canceled.xml")
+		if err == nil {
+			t.Fatal("expected error")
+		}
+
+		assertStageError(t, err, StageParse, "https://example.com/canceled.xml")
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("expected wrapped context.Canceled, got %v", err)
+		}
 	})
 
 	t.Run("xml core iterator remains compatible with sitemap interpreter", func(t *testing.T) {
@@ -130,7 +149,7 @@ func TestParse(t *testing.T) {
 			t.Fatalf("unexpected iterator error: %v", err)
 		}
 
-		doc, err := parseIterator(context.Background(), iter, "https://example.com/index.xml")
+		doc, err := parseIterator(t.Context(), iter, "https://example.com/index.xml")
 		if err != nil {
 			t.Fatalf("unexpected parse error: %v", err)
 		}
@@ -143,4 +162,76 @@ func TestParse(t *testing.T) {
 			t.Fatalf("unexpected sitemaps %+v", doc.Sitemaps)
 		}
 	})
+
+	t.Run("parse iterator stops on context cancellation before consuming another event", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		iter := newBlockingIterator()
+
+		result := make(chan error, 1)
+		go func() {
+			_, err := parseIterator(ctx, iter, "https://example.com/blocked.xml")
+			result <- err
+		}()
+
+		<-iter.firstCalled
+		cancel()
+		close(iter.releaseFirst)
+
+		select {
+		case err := <-result:
+			if err == nil {
+				t.Fatal("expected error")
+			}
+
+			assertStageError(t, err, StageParse, "https://example.com/blocked.xml")
+			if !errors.Is(err, context.Canceled) {
+				t.Fatalf("expected wrapped context.Canceled, got %v", err)
+			}
+		case <-time.After(200 * time.Millisecond):
+			t.Fatal("parseIterator did not stop after cancellation")
+		}
+
+		select {
+		case <-iter.secondCalled:
+			t.Fatal("expected parseIterator to stop before requesting another event")
+		default:
+		}
+	})
+}
+
+type blockingIterator struct {
+	firstCalled  chan struct{}
+	secondCalled chan struct{}
+	releaseFirst chan struct{}
+	calls        int
+}
+
+func newBlockingIterator() *blockingIterator {
+	return &blockingIterator{
+		firstCalled:  make(chan struct{}),
+		secondCalled: make(chan struct{}),
+		releaseFirst: make(chan struct{}),
+	}
+}
+
+func (i *blockingIterator) Next(_ context.Context) (runtime.Value, runtime.Value, error) {
+	i.calls++
+
+	if i.calls == 1 {
+		close(i.firstCalled)
+		<-i.releaseFirst
+
+		return runtime.NewObjectWith(map[string]runtime.Value{
+			"type": runtime.NewString(xmlEventStartElement),
+			"name": runtime.NewString(TypeURLSet),
+		}), runtime.NewInt(1), nil
+	}
+
+	select {
+	case <-i.secondCalled:
+	default:
+		close(i.secondCalled)
+	}
+
+	return runtime.None, runtime.None, io.EOF
 }

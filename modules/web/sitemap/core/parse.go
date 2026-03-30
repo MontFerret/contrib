@@ -40,13 +40,13 @@ type frame struct {
 }
 
 // Parse decodes a sitemap XML document by interpreting xml/core events.
-func Parse(reader io.Reader, source string) (doc Document, retErr error) {
+func Parse(ctx context.Context, reader io.Reader, source string) (doc Document, retErr error) {
 	iter, err := xmlcore.NewDecodeIteratorFromReader(reader)
 	if err != nil {
 		return Document{}, wrapError(source, StageParse, err, "failed to initialize XML decoder")
 	}
 
-	return parseIterator(context.Background(), iter, source)
+	return parseIterator(ctx, iter, source)
 }
 
 func parseIterator(ctx context.Context, iter runtime.Iterator, source string) (doc Document, retErr error) {
@@ -61,6 +61,10 @@ func parseIterator(ctx context.Context, iter runtime.Iterator, source string) (d
 	stack := make([]frame, 0, 8)
 
 	for {
+		if err := parseContextErr(ctx, source); err != nil {
+			return Document{}, err
+		}
+
 		event, _, err := iter.Next(ctx)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
@@ -68,6 +72,10 @@ func parseIterator(ctx context.Context, iter runtime.Iterator, source string) (d
 			}
 
 			return Document{}, wrapError(source, StageParse, err, "failed to decode sitemap XML")
+		}
+
+		if err := parseContextErr(ctx, source); err != nil {
+			return Document{}, err
 		}
 
 		if err := applyEvent(ctx, &doc, &stack, event, source); err != nil {
@@ -84,6 +92,14 @@ func parseIterator(ctx context.Context, iter runtime.Iterator, source string) (d
 	}
 
 	return doc, nil
+}
+
+func parseContextErr(ctx context.Context, source string) error {
+	if err := ctx.Err(); err != nil {
+		return wrapError(source, StageParse, err, "parsing canceled")
+	}
+
+	return nil
 }
 
 func applyEvent(ctx context.Context, doc *Document, stack *[]frame, event runtime.Value, source string) error {

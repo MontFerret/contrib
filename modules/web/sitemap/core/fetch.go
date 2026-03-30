@@ -16,7 +16,7 @@ func Fetch(ctx context.Context, target string, opts Options) (Document, error) {
 
 	defer body.Close()
 
-	return Parse(body, target)
+	return Parse(ctx, body, target)
 }
 
 func open(ctx context.Context, target string, opts Options) (io.ReadCloser, error) {
