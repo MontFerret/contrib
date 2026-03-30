@@ -61,21 +61,21 @@ func TestAllowsAndMatch(t *testing.T) {
 	exactParsed, err := Parse(t.Context(), runtime.NewString(`
 		User-agent: *
 		Disallow: /admin
-		User-agent: FerretBot
+		User-agent: ManualBot
 		Allow: /admin
 	`))
 	if err != nil {
 		t.Fatalf("unexpected exact parse error: %v", err)
 	}
 
-	exactMatched, err := Match(t.Context(), exactParsed, runtime.NewString("/admin/page"), runtime.NewString("FerretBot"))
+	exactMatched, err := Match(t.Context(), exactParsed, runtime.NewString("/admin/page"), runtime.NewString("manualbot"))
 	if err != nil {
 		t.Fatalf("unexpected exact match error: %v", err)
 	}
 
 	exactObj := mustRuntimeObject(t, exactMatched)
-	if got := mustObjectField(t, t.Context(), exactObj, "userAgent").String(); got != "FerretBot" {
-		t.Fatalf("expected exact-match userAgent %q, got %q", "FerretBot", got)
+	if got := mustObjectField(t, t.Context(), exactObj, "userAgent").String(); got != "manualbot" {
+		t.Fatalf("expected exact-match userAgent %q, got %q", "manualbot", got)
 	}
 }
 

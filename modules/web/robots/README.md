@@ -84,7 +84,7 @@ func main() {
 }
 ```
 
-`userAgent` reports the effective matched group token. When evaluation falls back to wildcard groups, it is returned as `"*"`. When access is allowed by default with no matching rule, `directive` and `pattern` are returned as `null`.
+`userAgent` reports the normalized debug token used for evaluation. Exact matches, no-match default allows, and implicit `/robots.txt` allows return the normalized requested token. When evaluation falls back to wildcard groups, it is returned as `"*"`. The field does not preserve the original `User-agent:` casing from the robots file. When access is allowed by default with no matching rule, `directive` and `pattern` are returned as `null`.
 
 ## Examples
 

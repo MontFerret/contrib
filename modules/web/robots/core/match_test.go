@@ -7,11 +7,11 @@ func TestMatch(t *testing.T) {
 		doc := Document{
 			Groups: []Group{
 				{UserAgents: []string{"*"}, Disallow: []string{"/blocked"}},
-				{UserAgents: []string{"FerretBot"}, Allow: []string{"/blocked"}},
+				{UserAgents: []string{"ManualBot"}, Allow: []string{"/blocked"}},
 			},
 		}
 
-		result := Match(doc, "/blocked/page", "FerretBot")
+		result := Match(doc, "/blocked/page", "manualbot")
 		if !result.Allowed {
 			t.Fatalf("expected allowed result, got %+v", result)
 		}
@@ -20,8 +20,8 @@ func TestMatch(t *testing.T) {
 			t.Fatalf("unexpected directive %v", result.Directive)
 		}
 
-		if result.UserAgent != "FerretBot" {
-			t.Fatalf("expected exact-match userAgent %q, got %q", "FerretBot", result.UserAgent)
+		if result.UserAgent != "manualbot" {
+			t.Fatalf("expected exact-match userAgent %q, got %q", "manualbot", result.UserAgent)
 		}
 	})
 
