@@ -61,24 +61,24 @@ func ParseDecodeOptions(ctx context.Context, input runtime.Value) (DecodeOptions
 		case "datetime":
 			raw, ok := value.(runtime.String)
 			if !ok {
-				return false, newTOMLError(`decode option "datetime" must be a string`)
+				return false, newError(`decode option "datetime" must be a string`)
 			}
 
 			switch raw.String() {
 			case DecodeDateTimeString, DecodeDateTimeNative:
 				opts.DateTime = raw.String()
 			default:
-				return false, newTOMLErrorf(`decode option "datetime" must be %q or %q`, DecodeDateTimeString, DecodeDateTimeNative)
+				return false, newErrorf(`decode option "datetime" must be %q or %q`, DecodeDateTimeString, DecodeDateTimeNative)
 			}
 		case "strict":
 			raw, ok := value.(runtime.Boolean)
 			if !ok {
-				return false, newTOMLError(`decode option "strict" must be a boolean`)
+				return false, newError(`decode option "strict" must be a boolean`)
 			}
 
 			opts.Strict = bool(raw)
 		default:
-			return false, newTOMLErrorf("unknown decode option %q", name)
+			return false, newErrorf("unknown decode option %q", name)
 		}
 
 		return true, nil
@@ -108,24 +108,24 @@ func ParseEncodeOptions(ctx context.Context, input runtime.Value) (EncodeOptions
 		case "sortKeys":
 			raw, ok := value.(runtime.Boolean)
 			if !ok {
-				return false, newTOMLError(`encode option "sortKeys" must be a boolean`)
+				return false, newError(`encode option "sortKeys" must be a boolean`)
 			}
 
 			opts.SortKeys = bool(raw)
 		case "datetime":
 			raw, ok := value.(runtime.String)
 			if !ok {
-				return false, newTOMLError(`encode option "datetime" must be a string`)
+				return false, newError(`encode option "datetime" must be a string`)
 			}
 
 			switch raw.String() {
 			case EncodeDateTimeRFC3339, EncodeDateTimePreserve:
 				opts.DateTime = raw.String()
 			default:
-				return false, newTOMLErrorf(`encode option "datetime" must be %q or %q`, EncodeDateTimeRFC3339, EncodeDateTimePreserve)
+				return false, newErrorf(`encode option "datetime" must be %q or %q`, EncodeDateTimeRFC3339, EncodeDateTimePreserve)
 			}
 		default:
-			return false, newTOMLErrorf("unknown encode option %q", name)
+			return false, newErrorf("unknown encode option %q", name)
 		}
 
 		return true, nil
@@ -139,7 +139,7 @@ func ParseEncodeOptions(ctx context.Context, input runtime.Value) (EncodeOptions
 func optionKey(key runtime.Value) (string, error) {
 	str, ok := key.(runtime.String)
 	if !ok {
-		return "", newTOMLError("option keys must be strings")
+		return "", newError("option keys must be strings")
 	}
 
 	return str.String(), nil

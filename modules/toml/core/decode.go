@@ -13,13 +13,13 @@ import (
 // Decode eagerly decodes a single TOML document into a Ferret runtime object.
 func Decode(ctx context.Context, data runtime.String, opts DecodeOptions) (runtime.Value, error) {
 	if !opts.Strict {
-		return nil, newTOMLError(`decode option "strict=false" is not implemented yet`)
+		return nil, newError(`decode option "strict=false" is not implemented yet`)
 	}
 
 	decoded := make(map[string]any)
 
 	if _, err := burnttoml.Decode(data.String(), &decoded); err != nil {
-		return nil, wrapTOMLError(err, "invalid TOML document")
+		return nil, wrapError(err, "invalid TOML document")
 	}
 
 	value, err := normalizeValue(ctx, decoded, opts)
@@ -29,7 +29,7 @@ func Decode(ctx context.Context, data runtime.String, opts DecodeOptions) (runti
 
 	obj, ok := value.(*runtime.Object)
 	if !ok {
-		return nil, newTOMLError("top-level TOML document must decode to an object")
+		return nil, newError("top-level TOML document must decode to an object")
 	}
 
 	return obj, nil
@@ -72,7 +72,7 @@ func normalizeValue(ctx context.Context, input any, opts DecodeOptions) (runtime
 
 		return out, nil
 	case nil:
-		return nil, newTOMLError("TOML null values are not supported")
+		return nil, newError("TOML null values are not supported")
 	default:
 		return normalizeScalarValue(input)
 	}
@@ -82,17 +82,17 @@ func normalizeScalarValue(input any) (runtime.Value, error) {
 	value, err := runtime.ValueOf(input)
 	if err != nil {
 		if errors.Is(err, runtime.ErrRange) {
-			return nil, newTOMLErrorf("invalid TOML integer %d exceeds Ferret int range", input)
+			return nil, newErrorf("invalid TOML integer %d exceeds Ferret int range", input)
 		}
 
-		return nil, wrapTOMLError(err, "unsupported TOML scalar value")
+		return nil, wrapError(err, "unsupported TOML scalar value")
 	}
 
 	switch value.(type) {
 	case runtime.String, runtime.Boolean, runtime.Int, runtime.Float:
 		return value, nil
 	default:
-		return nil, newTOMLErrorf("unsupported TOML value type %T", input)
+		return nil, newErrorf("unsupported TOML value type %T", input)
 	}
 }
 

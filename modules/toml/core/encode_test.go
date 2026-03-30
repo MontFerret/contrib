@@ -127,7 +127,7 @@ func TestEncodeCore(t *testing.T) {
 			t.Fatal("expected top-level object error")
 		}
 
-		if _, ok := err.(*TOMLError); !ok {
+		if _, ok := err.(*Error); !ok {
 			t.Fatalf("expected *TOMLError, got %T", err)
 		}
 	})

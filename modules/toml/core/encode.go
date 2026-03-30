@@ -51,7 +51,19 @@ var (
 	)
 )
 
-type fieldKind int
+type (
+	fieldKind int
+
+	mapEntry struct {
+		value runtime.Value
+		key   string
+	}
+
+	encoder struct {
+		opts    EncodeOptions
+		builder strings.Builder
+	}
+)
 
 const (
 	fieldInline fieldKind = iota
@@ -59,21 +71,11 @@ const (
 	fieldArrayTables
 )
 
-type mapEntry struct {
-	value runtime.Value
-	key   string
-}
-
-type encoder struct {
-	opts    EncodeOptions
-	builder strings.Builder
-}
-
 // Encode serializes a Ferret runtime value into TOML text.
 func Encode(ctx context.Context, value runtime.Value, opts EncodeOptions) (string, error) {
 	root, err := runtime.CastMap(value)
 	if err != nil {
-		return "", wrapTOMLError(err, "top-level TOML value must be an object")
+		return "", wrapError(err, "top-level TOML value must be an object")
 	}
 
 	enc := &encoder{opts: opts}
@@ -109,7 +111,7 @@ func (e *encoder) writeTableBody(ctx context.Context, path []string, table runti
 		case fieldArrayTables:
 			arrayTableEntries = append(arrayTableEntries, entry)
 		default:
-			return newTOMLErrorf("unsupported TOML field classification for key %q", entry.key)
+			return newErrorf("unsupported TOML field classification for key %q", entry.key)
 		}
 	}
 
@@ -142,7 +144,7 @@ func (e *encoder) writeTableBody(ctx context.Context, path []string, table runti
 	for _, entry := range arrayTableEntries {
 		list, ok := entry.value.(runtime.List)
 		if !ok {
-			return runtime.Errorf(newTOMLError("arrays of tables require array values"), "at key %q", entry.key)
+			return runtime.Errorf(newError("arrays of tables require array values"), "at key %q", entry.key)
 		}
 
 		childPath := appendPath(path, entry.key)
@@ -156,7 +158,7 @@ func (e *encoder) writeTableBody(ctx context.Context, path []string, table runti
 
 func (e *encoder) classifyFieldValue(ctx context.Context, value runtime.Value) (fieldKind, error) {
 	if isNoneValue(value) {
-		return fieldInline, newTOMLError("TOML does not support null values")
+		return fieldInline, newError("TOML does not support null values")
 	}
 
 	switch current := value.(type) {
@@ -167,15 +169,15 @@ func (e *encoder) classifyFieldValue(ctx context.Context, value runtime.Value) (
 	case runtime.List:
 		return e.classifyListField(ctx, current)
 	case runtime.Binary:
-		return fieldInline, newTOMLError("unsupported value type for TOML encoding: Binary")
+		return fieldInline, newError("unsupported value type for TOML encoding: Binary")
 	case runtime.Iterator:
-		return fieldInline, newTOMLError("unsupported value type for TOML encoding: Iterator")
+		return fieldInline, newError("unsupported value type for TOML encoding: Iterator")
 	case runtime.Observable:
-		return fieldInline, newTOMLError("unsupported value type for TOML encoding: Observable")
+		return fieldInline, newError("unsupported value type for TOML encoding: Observable")
 	case runtime.Queryable:
-		return fieldInline, newTOMLError("unsupported value type for TOML encoding: Queryable")
+		return fieldInline, newError("unsupported value type for TOML encoding: Queryable")
 	default:
-		return fieldInline, newTOMLErrorf("unsupported value type for TOML encoding: %T", value)
+		return fieldInline, newErrorf("unsupported value type for TOML encoding: %T", value)
 	}
 }
 
@@ -194,7 +196,7 @@ func (e *encoder) classifyListField(ctx context.Context, list runtime.List) (fie
 
 	for idx, item := range items {
 		if isNoneValue(item) {
-			return fieldInline, runtime.Errorf(newTOMLError("TOML arrays cannot contain null values"), "at index %d", idx)
+			return fieldInline, runtime.Errorf(newError("TOML arrays cannot contain null values"), "at index %d", idx)
 		}
 
 		if _, ok := item.(runtime.Map); ok {
@@ -206,7 +208,7 @@ func (e *encoder) classifyListField(ctx context.Context, list runtime.List) (fie
 	}
 
 	if hasObjects && hasNonObjects {
-		return fieldInline, newTOMLError("mixed arrays containing objects and non-objects are not representable in TOML")
+		return fieldInline, newError("mixed arrays containing objects and non-objects are not representable in TOML")
 	}
 
 	if hasObjects {
@@ -222,7 +224,7 @@ func (e *encoder) classifyListField(ctx context.Context, list runtime.List) (fie
 
 func (e *encoder) renderInlineValue(ctx context.Context, value runtime.Value) (string, error) {
 	if isNoneValue(value) {
-		return "", newTOMLError("TOML does not support null values")
+		return "", newError("TOML does not support null values")
 	}
 
 	switch current := value.(type) {
@@ -239,17 +241,17 @@ func (e *encoder) renderInlineValue(ctx context.Context, value runtime.Value) (s
 	case runtime.List:
 		return e.renderInlineArray(ctx, current)
 	case runtime.Map:
-		return "", newTOMLError("objects (inline tables) inside TOML arrays are not supported by this encoder; use arrays-of-tables instead")
+		return "", newError("objects (inline tables) inside TOML arrays are not supported by this encoder; use arrays-of-tables instead")
 	case runtime.Binary:
-		return "", newTOMLError("unsupported value type for TOML encoding: Binary")
+		return "", newError("unsupported value type for TOML encoding: Binary")
 	case runtime.Iterator:
-		return "", newTOMLError("unsupported value type for TOML encoding: Iterator")
+		return "", newError("unsupported value type for TOML encoding: Iterator")
 	case runtime.Observable:
-		return "", newTOMLError("unsupported value type for TOML encoding: Observable")
+		return "", newError("unsupported value type for TOML encoding: Observable")
 	case runtime.Queryable:
-		return "", newTOMLError("unsupported value type for TOML encoding: Queryable")
+		return "", newError("unsupported value type for TOML encoding: Queryable")
 	default:
-		return "", newTOMLErrorf("unsupported value type for TOML encoding: %T", value)
+		return "", newErrorf("unsupported value type for TOML encoding: %T", value)
 	}
 }
 
@@ -267,7 +269,7 @@ func (e *encoder) renderInlineArray(ctx context.Context, list runtime.List) (str
 
 	for idx, item := range items {
 		if _, ok := item.(runtime.Map); ok {
-			return "", runtime.Errorf(newTOMLError("objects are not representable inside TOML arrays in v1"), "at index %d", idx)
+			return "", runtime.Errorf(newError("objects are not representable inside TOML arrays in v1"), "at index %d", idx)
 		}
 
 		encoded, err := e.renderInlineValue(ctx, item)
@@ -290,7 +292,7 @@ func (e *encoder) writeArrayTables(ctx context.Context, path []string, list runt
 	for idx, item := range items {
 		table, err := runtime.CastMap(item)
 		if err != nil {
-			return runtime.Errorf(newTOMLError("arrays of tables require object elements"), "at index %d", idx)
+			return runtime.Errorf(newError("arrays of tables require object elements"), "at index %d", idx)
 		}
 
 		e.startArrayTable(path)
@@ -329,7 +331,7 @@ func collectMapEntries(ctx context.Context, m runtime.Map, sortKeys bool) ([]map
 	if err := m.ForEach(ctx, func(_ context.Context, value, key runtime.Value) (runtime.Boolean, error) {
 		name, ok := key.(runtime.String)
 		if !ok {
-			return false, newTOMLError("TOML object keys must be strings")
+			return false, newError("TOML object keys must be strings")
 		}
 
 		entries = append(entries, mapEntry{

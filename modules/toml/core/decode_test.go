@@ -107,7 +107,7 @@ local_time = 07:32:00
 			t.Fatal("expected malformed TOML error")
 		}
 
-		if _, ok := err.(*TOMLError); !ok {
+		if _, ok := err.(*Error); !ok {
 			t.Fatalf("expected *TOMLError, got %T", err)
 		}
 
@@ -124,7 +124,7 @@ local_time = 07:32:00
 			t.Fatal("expected out-of-range integer error")
 		}
 
-		if _, ok := err.(*TOMLError); !ok {
+		if _, ok := err.(*Error); !ok {
 			t.Fatalf("expected *TOMLError, got %T", err)
 		}
 
@@ -142,7 +142,7 @@ local_time = 07:32:00
 			t.Fatal("expected strict=false error")
 		}
 
-		if _, ok := err.(*TOMLError); !ok {
+		if _, ok := err.(*Error); !ok {
 			t.Fatalf("expected *TOMLError, got %T", err)
 		}
 
@@ -214,7 +214,7 @@ func TestNormalizeScalarValue(t *testing.T) {
 			t.Fatal("expected uint64 overflow error")
 		}
 
-		if _, ok := err.(*TOMLError); !ok {
+		if _, ok := err.(*Error); !ok {
 			t.Fatalf("expected *TOMLError, got %T", err)
 		}
 
@@ -232,7 +232,7 @@ func TestNormalizeScalarValue(t *testing.T) {
 				t.Fatal("expected uint overflow error")
 			}
 
-			if _, ok := err.(*TOMLError); !ok {
+			if _, ok := err.(*Error); !ok {
 				t.Fatalf("expected *TOMLError, got %T", err)
 			}
 
@@ -257,7 +257,7 @@ func TestNormalizeScalarValue(t *testing.T) {
 			t.Fatal("expected unsupported non-scalar error")
 		}
 
-		if _, ok := err.(*TOMLError); !ok {
+		if _, ok := err.(*Error); !ok {
 			t.Fatalf("expected *TOMLError, got %T", err)
 		}
 

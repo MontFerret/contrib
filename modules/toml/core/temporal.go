@@ -23,7 +23,7 @@ func decodeTemporalValue(value time.Time, opts DecodeOptions) (runtime.Value, er
 	case DecodeDateTimeNative:
 		return runtime.NewDateTime(value), nil
 	default:
-		return nil, newTOMLErrorf(`unsupported decode datetime mode %q`, opts.DateTime)
+		return nil, newErrorf(`unsupported decode datetime mode %q`, opts.DateTime)
 	}
 }
 
@@ -34,7 +34,7 @@ func encodeTemporalValue(value runtime.DateTime, opts EncodeOptions) (string, er
 	case EncodeDateTimePreserve:
 		return canonicalTOMLDateTime(value.Time), nil
 	default:
-		return "", newTOMLErrorf(`unsupported encode datetime mode %q`, opts.DateTime)
+		return "", newErrorf(`unsupported encode datetime mode %q`, opts.DateTime)
 	}
 }
 

@@ -60,7 +60,7 @@ func TestDecodeLib(t *testing.T) {
 			t.Fatal("expected strict=false error")
 		}
 
-		if _, ok := err.(*core.TOMLError); !ok {
+		if _, ok := err.(*core.Error); !ok {
 			t.Fatalf("expected *core.TOMLError, got %T", err)
 		}
 	})
@@ -71,7 +71,7 @@ func TestDecodeLib(t *testing.T) {
 			t.Fatal("expected malformed TOML error")
 		}
 
-		if _, ok := err.(*core.TOMLError); !ok {
+		if _, ok := err.(*core.Error); !ok {
 			t.Fatalf("expected *core.TOMLError, got %T", err)
 		}
 	})
