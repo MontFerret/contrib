@@ -35,7 +35,7 @@ type frame struct {
 	url     URLEntry
 	sitemap SitemapRef
 	name    string
-	text    strings.Builder
+	text    string
 	kind    frameKind
 }
 
@@ -227,7 +227,7 @@ func handleText(stack *[]frame, text, source string) error {
 	top := &(*stack)[len(*stack)-1]
 	switch top.kind {
 	case frameFieldLoc, frameFieldLastMod, frameFieldChangeFreq, frameFieldPriority:
-		top.text.WriteString(text)
+		top.text += text
 	case frameIgnored:
 		return nil
 	case frameRootURLSet:
@@ -291,7 +291,7 @@ func applyField(stack *[]frame, field frame, source string) error {
 		return newErrorf(source, StageParse, "field %q has no parent entry", localName(field.name))
 	}
 
-	value := strings.TrimSpace(field.text.String())
+	value := strings.TrimSpace(field.text)
 	parent := &(*stack)[len(*stack)-1]
 
 	switch parent.kind {

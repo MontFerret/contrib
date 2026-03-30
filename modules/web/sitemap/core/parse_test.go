@@ -163,6 +163,46 @@ func TestParse(t *testing.T) {
 		}
 	})
 
+	t.Run("concatenates split text events and preserves sibling fields", func(t *testing.T) {
+		iter := &eventIterator{
+			events: []runtime.Value{
+				xmlStartEvent(TypeURLSet),
+				xmlStartEvent("url"),
+				xmlStartEvent("loc"),
+				xmlTextEvent("https://example.com/"),
+				xmlTextEvent("split"),
+				xmlEndEvent("loc"),
+				xmlStartEvent("lastmod"),
+				xmlTextEvent("2026-03-01"),
+				xmlEndEvent("lastmod"),
+				xmlEndEvent("url"),
+				xmlEndEvent(TypeURLSet),
+			},
+		}
+
+		doc, err := parseIterator(t.Context(), iter, "https://example.com/split.xml")
+		if err != nil {
+			t.Fatalf("unexpected parse error: %v", err)
+		}
+
+		if doc.Type != TypeURLSet {
+			t.Fatalf("expected type %q, got %q", TypeURLSet, doc.Type)
+		}
+
+		if len(doc.URLs) != 1 {
+			t.Fatalf("expected 1 URL, got %d", len(doc.URLs))
+		}
+
+		entry := doc.URLs[0]
+		if entry.Loc != "https://example.com/split" {
+			t.Fatalf("unexpected loc %q", entry.Loc)
+		}
+
+		if entry.LastMod != "2026-03-01" {
+			t.Fatalf("unexpected lastmod %q", entry.LastMod)
+		}
+	})
+
 	t.Run("parse iterator stops on context cancellation before consuming another event", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		iter := newBlockingIterator()
@@ -206,6 +246,11 @@ type blockingIterator struct {
 	calls        int
 }
 
+type eventIterator struct {
+	events []runtime.Value
+	index  int
+}
+
 func newBlockingIterator() *blockingIterator {
 	return &blockingIterator{
 		firstCalled:  make(chan struct{}),
@@ -234,4 +279,36 @@ func (i *blockingIterator) Next(_ context.Context) (runtime.Value, runtime.Value
 	}
 
 	return runtime.None, runtime.None, io.EOF
+}
+
+func (i *eventIterator) Next(_ context.Context) (runtime.Value, runtime.Value, error) {
+	if i.index >= len(i.events) {
+		return runtime.None, runtime.None, io.EOF
+	}
+
+	value := i.events[i.index]
+	i.index++
+
+	return value, runtime.NewInt(i.index), nil
+}
+
+func xmlStartEvent(name string) runtime.Value {
+	return runtime.NewObjectWith(map[string]runtime.Value{
+		"type": runtime.NewString(xmlEventStartElement),
+		"name": runtime.NewString(name),
+	})
+}
+
+func xmlEndEvent(name string) runtime.Value {
+	return runtime.NewObjectWith(map[string]runtime.Value{
+		"type": runtime.NewString(xmlEventEndElement),
+		"name": runtime.NewString(name),
+	})
+}
+
+func xmlTextEvent(value string) runtime.Value {
+	return runtime.NewObjectWith(map[string]runtime.Value{
+		"type":  runtime.NewString(xmlEventText),
+		"value": runtime.NewString(value),
+	})
 }
