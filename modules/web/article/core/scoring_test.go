@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"strconv"
 	"strings"
 	"testing"
@@ -111,7 +112,7 @@ func TestBuildCandidateStatsIndexMatchesLiveSelectionMetrics(t *testing.T) {
 }
 
 func TestExtractLargeNestedPageStillFindsArticle(t *testing.T) {
-	article := Extract(buildLargeCandidateFixture(120))
+	article := Extract(context.Background(), buildLargeCandidateFixture(120))
 
 	if article.Title == nil || *article.Title != "Deep Feature" {
 		t.Fatalf("unexpected title %+v", article.Title)
