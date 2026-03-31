@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// ATTR_REMOVE removes single or more attribute(s) of a given element.
+// AttributeRemove removes single or more attribute(s) of a given element.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target node.
 // @param {String, repeated} attrNames - Attribute name(s).
 func AttributeRemove(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {

@@ -8,7 +8,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// PRESS presses a keyboard key.
+// Press presses a keyboard key.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String | String[]} key - Target keyboard key(s).
 // @param {Int} [presses=1] - Count of presses.

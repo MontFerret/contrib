@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// STYLE_GET gets single or more style attribute value(s) of a given element.
+// StyleGet gets single or more style attribute value(s) of a given element.
 // @param {HTMLElement} element - Target html element.
 // @param {String, repeated} names - Style name(s).
 // @return {Object} - Collection of key-value pairs of style runtime.

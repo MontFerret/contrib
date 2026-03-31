@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// ELEMENT finds an element by a given CSS selector.
+// Element finds an element by a given CSS selector.
 // Returns NONE if element not found.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selector - CSS selector.

@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// WAIT_CLASS waits for a class to appear on a given element.
+// WaitClass waits for a class to appear on a given element.
 // Stops the execution until the navigation ends or operation times out.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selectorOrClass - If document is passed, this param must represent an element selector. Otherwise target class.
@@ -17,7 +17,7 @@ func WaitClass(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 	return waitClassWhen(ctx, args, drivers.WaitEventPresence)
 }
 
-// WAIT_NO_CLASS waits for a class to disappear on a given element.
+// WaitNoClass waits for a class to disappear on a given element.
 // Stops the execution until the navigation ends or operation times out.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selectorOrClass - If document is passed, this param must represent an element selector. Otherwise target class.

@@ -8,7 +8,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// ATTR_GET gets single or more attribute(s) of a given element.
+// AttributeGet gets single or more attribute(s) of a given element.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target node.
 // @param {String, repeated} attrNames - Attribute name(s).
 // @return {Object} - Key-value pairs of attribute runtime.

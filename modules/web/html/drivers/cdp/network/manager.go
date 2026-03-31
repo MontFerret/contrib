@@ -8,6 +8,7 @@ import (
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/network"
 	"github.com/mafredri/cdp/protocol/page"
+	"github.com/mafredri/cdp/protocol/storage"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 
@@ -117,7 +118,7 @@ func (m *Manager) Close() error {
 func (m *Manager) GetCookies(ctx context.Context) (*drivers.HTTPCookies, error) {
 	m.logger.Trace().Msg("starting to get cookies")
 
-	repl, err := m.client.Network.GetAllCookies(ctx)
+	repl, err := m.client.Storage.GetCookies(ctx, storage.NewGetCookiesArgs())
 
 	if err != nil {
 		m.logger.Trace().Err(err).Msg("failed to get cookies")

@@ -6,7 +6,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// ELEMENTS_COUNT returns a number of found HTML elements by a given CSS selector.
+// ElementsCount returns the number of found HTML elements by a given CSS selector.
 // Returns an empty array if element not found.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selector - CSS selector.

@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// INNER_TEXT_SET sets inner text string to a given or matched by CSS selector element
+// SetInnerText sets the inner text string on a given or matched CSS selector element.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} textOrCssSelector - String of CSS selector.
 // @param {String} [text] - String of inner text.

@@ -9,7 +9,7 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
 
-// PRESS_SELECTOR presses a keyboard key.
+// PressSelector presses a keyboard key.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selector - CSS selector.
 // @param {String | String[]} key - Target keyboard key(s).

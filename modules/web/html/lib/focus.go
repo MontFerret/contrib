@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// FOCUS Sets focus on the element.
+// Focus sets focus on the element.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} [selector] - CSS selector.
 func Focus(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {

@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// WAIT_ATTR waits until a target attribute's value appears
+// WaitAttribute waits until a target attribute value appears.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} attrNameOrSelector - String of an attr name or CSS selector.
 // @param {String | Any} attrValueOrAttrName - Attr value or name.
@@ -17,7 +17,7 @@ func WaitAttribute(ctx context.Context, args ...runtime.Value) (runtime.Value, e
 	return waitAttributeWhen(ctx, args, drivers.WaitEventPresence)
 }
 
-// WAIT_NO_ATTR waits until a target attribute's value disappears
+// WaitNoAttribute waits until a target attribute value disappears.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} attrNameOrSelector - String of an attr name or CSS selector.
 // @param {String | Any} attrValueOrAttrName - Attr value or name.

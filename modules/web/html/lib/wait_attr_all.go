@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// WAIT_ATTR_ALL waits for an attribute to appear on all matched elements with a given value.
+// WaitAttributeAll waits for an attribute to appear on all matched elements with a given value.
 // Stops the execution until the navigation ends or operation times out.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selector - String of CSS selector.
@@ -17,7 +17,7 @@ func WaitAttributeAll(ctx context.Context, args ...runtime.Value) (runtime.Value
 	return waitAttributeAllWhen(ctx, args, drivers.WaitEventPresence)
 }
 
-// WAIT_NO_ATTR_ALL waits for an attribute to disappear on all matched elements by a given value.
+// WaitNoAttributeAll waits for an attribute to disappear on all matched elements by a given value.
 // Stops the execution until the navigation ends or operation times out.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selector - String of CSS selector.

@@ -14,7 +14,7 @@ type ParseParams struct {
 	drivers.ParseParams
 }
 
-// PARSE loads an HTML page from a given string or byte array
+// Parse loads an HTML page from a given string or byte array.
 // @param {String} html - HTML string to parse.
 // @param {Object} [params] - An object containing the following properties:
 // @param {String} [params.driver] - Name of a driver to parse with.

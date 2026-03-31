@@ -8,7 +8,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// FRAMES finds HTML frames by a given property selector.
+// Frames finds HTML frames by a given property selector.
 // Returns an empty array if frames not found.
 // @param {HTMLPage} page - HTML page.
 // @param {String} property - Property selector.

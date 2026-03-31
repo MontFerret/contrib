@@ -16,7 +16,7 @@ type PageLoadParams struct {
 	Timeout time.Duration `json:"timeout"`
 }
 
-// DOCUMENT opens an HTML page by a given url.
+// Open opens an HTML page by a given URL.
 // By default, loads a page by http call - resulted page does not support any interactions.
 // @param {Object} [params] - An object containing the following properties :
 // @param {String} [params.driver] - Driver name to use.
