@@ -2,7 +2,6 @@ package core
 
 import (
 	"net/url"
-	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
@@ -80,7 +79,7 @@ func measureLinkDensity(sel *goquery.Selection, textLength int) float64 {
 	return float64(linkLength) / float64(textLength)
 }
 
-func cleanCandidate(sel *goquery.Selection, title *string, baseURL *url.URL) extractedBody {
+func (e *Extractor) cleanCandidate(sel *goquery.Selection, title *string, baseURL *url.URL) extractedBody {
 	if sel == nil || sel.Length() == 0 {
 		return extractedBody{}
 	}
@@ -92,15 +91,19 @@ func cleanCandidate(sel *goquery.Selection, title *string, baseURL *url.URL) ext
 	rewriteBodyURLs(root, baseURL)
 	pruneEmptyContainers(root)
 
-	htmlValue := strings.TrimSpace(innerHTML(root))
 	textValue := normalizeWhitespace(root.Text())
-	if htmlValue == "" || textValue == "" {
+	if textValue == "" {
+		return extractedBody{}
+	}
+
+	htmlValue := e.sanitizeHTML(innerHTML(root))
+	if htmlValue == nil {
 		return extractedBody{}
 	}
 
 	return extractedBody{
 		Text:      stringPtr(textValue),
-		HTML:      stringPtr(htmlValue),
+		HTML:      htmlValue,
 		Excerpt:   firstParagraphExcerpt(root),
 		LeadImage: firstImageURL(root, baseURL),
 	}

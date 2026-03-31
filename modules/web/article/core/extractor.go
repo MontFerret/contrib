@@ -7,6 +7,7 @@ import (
 
 	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/microcosm-cc/bluemonday"
 
 	"github.com/MontFerret/contrib/modules/web/article/types"
 )
@@ -31,12 +32,14 @@ type (
 
 	Extractor struct {
 		markdownConverter *converter.Converter
+		htmlSanitizer     *bluemonday.Policy
 	}
 )
 
 func NewExtractor() *Extractor {
 	return &Extractor{
 		markdownConverter: newMarkdownConverter(),
+		htmlSanitizer:     newHTMLSanitizer(),
 	}
 }
 
@@ -83,7 +86,7 @@ func (e *Extractor) extractBody(doc *goquery.Document, title *string, baseURL *u
 		return extractedBody{}
 	}
 
-	body := cleanCandidate(selectionFromNode(candidate.Node), title, baseURL)
+	body := e.cleanCandidate(selectionFromNode(candidate.Node), title, baseURL)
 	if body.Text == nil || !isMeaningfulBody(*body.Text, candidate.Score) {
 		return extractedBody{}
 	}

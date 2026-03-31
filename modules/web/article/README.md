@@ -67,7 +67,7 @@ func main() {
   "canonicalUrl": "https://example.com/post",
   "leadImage": "https://example.com/image.jpg",
   "text": "Clean main article text",
-  "html": "<p>Clean article body</p>",
+  "html": "<p>Sanitized article body</p>",
   "markdown": "Body rendered as Markdown",
   "wordCount": 1234,
   "readingTimeMinutes": 7,
@@ -118,4 +118,6 @@ RETURN {
 - For `HTMLPage` and `HTMLDocument` inputs, the page URL is used as the fallback base URL when the DOM does not contain `<base href>`.
 - URL metadata is resolved to absolute URLs whenever a base URL is available (from `<base href>` or the page URL for `HTMLPage`/`HTMLDocument`); for raw HTML or `HTMLElement` inputs without a base URL, relative URL values are preserved.
 - Timestamps are normalized to RFC3339 UTC when parseable; otherwise the original trimmed value is preserved.
+- `html` is sanitized with an allowlist policy before it is returned, so dangerous attributes and URL schemes are stripped from the article body fragment.
+- `markdown` is rendered from that sanitized body HTML.
 - `text`, `html`, and `markdown` contain the cleaned body only and do not prepend the title.

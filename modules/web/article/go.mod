@@ -7,6 +7,7 @@ require (
 	github.com/MontFerret/contrib/modules/web/html v0.0.0-20260330220155-415840fb6708
 	github.com/MontFerret/ferret/v2 v2.0.0-alpha.4
 	github.com/PuerkitoBio/goquery v1.12.0
+	github.com/microcosm-cc/bluemonday v1.0.27
 	golang.org/x/net v0.52.0
 )
 
@@ -17,6 +18,7 @@ require (
 	github.com/antchfx/htmlquery v1.3.5 // indirect
 	github.com/antchfx/xpath v1.3.6 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
+	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/corpix/uarand v0.2.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect

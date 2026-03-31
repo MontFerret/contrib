@@ -232,6 +232,58 @@ func TestExtractMalformedHTML(t *testing.T) {
 	}
 }
 
+func TestExtractSanitizesReturnedHTMLAndMarkdown(t *testing.T) {
+	article := NewExtractor().Extract(`
+		<html>
+		  <head>
+		    <base href="https://example.com/posts/" />
+		  </head>
+		  <body>
+		    <article class="story">
+		      <p>This article includes enough prose to remain meaningful after sanitization while still exercising the returned HTML safety rules for consumers that render the extracted body directly.</p>
+		      <p>The second paragraph adds safe and unsafe links, images, and attributes so the extractor can prove that markdown is rendered from the sanitized HTML fragment instead of the raw cleaned DOM.</p>
+		      <p>
+		        <a href="javascript:alert(1)" onclick="steal()">Unsafe</a>
+		        <a href="/safe" style="color:red">Safe link</a>
+		        <a href="mailto:news@example.com">Email</a>
+		        <a href="tel:+15551234567">Call</a>
+		      </p>
+		      <p>
+		        <img src="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==" onerror="steal()" alt="Bad" />
+		        <img src="/hero.jpg" onerror="steal()" alt="Hero" />
+		      </p>
+		      <table><tr><th scope="col" onclick="boom()">Field</th><td rowspan="2" style="color:red">Value</td></tr></table>
+		      <pre><code>const answer = 42;</code></pre>
+		    </article>
+		  </body>
+		</html>
+	`)
+
+	if article.HTML == nil {
+		t.Fatal("expected sanitized html")
+	}
+
+	if strings.Contains(*article.HTML, "onclick=") || strings.Contains(*article.HTML, "onerror=") || strings.Contains(*article.HTML, "style=") || strings.Contains(*article.HTML, "javascript:") || strings.Contains(*article.HTML, "data:text/html") {
+		t.Fatalf("expected sanitized html, got %q", *article.HTML)
+	}
+
+	if !strings.Contains(*article.HTML, `href="https://example.com/safe"`) || !strings.Contains(*article.HTML, `href="mailto:news@example.com"`) || !strings.Contains(*article.HTML, `href="tel:+15551234567"`) || !strings.Contains(*article.HTML, `src="https://example.com/hero.jpg"`) {
+		t.Fatalf("expected safe urls to remain in html, got %q", *article.HTML)
+	}
+
+	if article.Markdown == nil {
+		t.Fatal("expected markdown")
+	}
+
+	if strings.Contains(*article.Markdown, "javascript:") || strings.Contains(*article.Markdown, "data:text/html") {
+		t.Fatalf("expected sanitized markdown, got %q", *article.Markdown)
+	}
+
+	if !strings.Contains(*article.Markdown, "https://example.com/safe") || !strings.Contains(*article.Markdown, "mailto:news@example.com") || !strings.Contains(*article.Markdown, "tel:+15551234567") || !strings.Contains(*article.Markdown, "https://example.com/hero.jpg") {
+		t.Fatalf("expected safe urls to remain in markdown, got %q", *article.Markdown)
+	}
+}
+
 func TestExtractSourceUsesSourceURLFallback(t *testing.T) {
 	sourceURL, err := url.Parse("https://example.com/docs/rendered-guide")
 	if err != nil {
