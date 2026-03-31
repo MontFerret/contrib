@@ -102,6 +102,51 @@ func TestAcceptsHTMLModuleInputs(t *testing.T) {
 	})
 }
 
+func TestSerializeAttributesPreservesKeyValueOrderAndSkipsNone(t *testing.T) {
+	attrs := runtime.NewObject()
+	if err := attrs.Set(t.Context(), runtime.NewString("title"), runtime.NewString("hero image")); err != nil {
+		t.Fatalf("unexpected set error: %v", err)
+	}
+
+	if err := attrs.Set(t.Context(), runtime.NewString("alt"), runtime.NewString("")); err != nil {
+		t.Fatalf("unexpected set error: %v", err)
+	}
+
+	if err := attrs.Set(t.Context(), runtime.NewString("data-ignore"), runtime.None); err != nil {
+		t.Fatalf("unexpected set error: %v", err)
+	}
+
+	if err := attrs.Set(t.Context(), runtime.NewString("class"), runtime.NewString("story hero")); err != nil {
+		t.Fatalf("unexpected set error: %v", err)
+	}
+
+	serialized, err := serializeAttributes(t.Context(), attrs)
+	if err != nil {
+		t.Fatalf("unexpected serialize error: %v", err)
+	}
+
+	if serialized != ` alt="" class="story hero" title="hero image"` {
+		t.Fatalf("unexpected serialized attrs %q", serialized)
+	}
+}
+
+func TestSnapshotElementHTMLPreservesExistingAttributeNamesAndValues(t *testing.T) {
+	element := mustHTMLElement(t, `<html><body><article class="story hero" data-slot="top story" title="Lead story"><p>Body</p></article></body></html>`, "article")
+
+	htmlValue, err := snapshotElementHTML(t.Context(), element)
+	if err != nil {
+		t.Fatalf("unexpected snapshot error: %v", err)
+	}
+
+	if !strings.Contains(htmlValue, `<article class="story hero" data-slot="top story" title="Lead story">`) {
+		t.Fatalf("unexpected snapshot html %q", htmlValue)
+	}
+
+	if strings.Contains(htmlValue, `story hero="class"`) || strings.Contains(htmlValue, `Lead story="title"`) || strings.Contains(htmlValue, `top story="data-slot"`) {
+		t.Fatalf("expected attribute names and values to remain in the correct order, got %q", htmlValue)
+	}
+}
+
 func mustHTMLPage(t *testing.T, input string, targetURL string) htmldrivers.HTMLPage {
 	t.Helper()
 

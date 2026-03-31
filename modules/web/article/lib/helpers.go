@@ -117,7 +117,11 @@ func serializeAttributes(ctx context.Context, attrs runtime.Map) (string, error)
 	}
 
 	values := make(map[string]string)
-	err := attrs.ForEach(ctx, func(_ context.Context, key, value runtime.Value) (runtime.Boolean, error) {
+	err := attrs.ForEach(ctx, func(_ context.Context, value, key runtime.Value) (runtime.Boolean, error) {
+		if value == runtime.None {
+			return runtime.True, nil
+		}
+
 		values[key.String()] = value.String()
 
 		return runtime.True, nil
