@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// BLUR Calls blur on the element.
+// Blur calls blur on the element.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target node.
 // @param {String} [selector] - CSS selector.
 func Blur(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {

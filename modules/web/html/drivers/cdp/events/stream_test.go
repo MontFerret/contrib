@@ -17,9 +17,9 @@ import (
 
 type (
 	TestStream struct {
-		mock.Mock
 		ready   chan struct{}
-		message chan events.Message
+		message chan runtime.Message
+		mock.Mock
 	}
 )
 
@@ -30,7 +30,7 @@ func NewTestStream() *TestStream {
 func NewBufferedTestStream(buffer int) *TestStream {
 	es := new(TestStream)
 	es.ready = make(chan struct{}, buffer)
-	es.message = make(chan events.Message, buffer)
+	es.message = make(chan runtime.Message, buffer)
 	return es
 }
 
@@ -51,12 +51,12 @@ func (ts *TestStream) Close() error {
 
 func (ts *TestStream) Emit(val runtime.Value) {
 	ts.ready <- struct{}{}
-	ts.message <- events.WithValue(val)
+	ts.message <- runtime.NewValueMessage(val)
 }
 
 func (ts *TestStream) EmitError(err error) {
 	ts.ready <- struct{}{}
-	ts.message <- events.WithErr(err)
+	ts.message <- runtime.NewErrorMessage(err)
 }
 
 func (ts *TestStream) Recv() (runtime.Value, error) {
@@ -71,7 +71,7 @@ func TestStreamReader(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 
 			stream := NewTestStream()
-			stream.On("Close", mock.Anything).Maybe().Return(nil)
+			stream.On("Close").Maybe().Return(nil)
 
 			go func() {
 				stream.Emit(runtime.NewString("foo"))
@@ -97,14 +97,14 @@ func TestStreamReader(t *testing.T) {
 
 			stream.AssertExpectations(t)
 
-			So(es.Close(context.Background()), ShouldBeNil)
+			So(es.Close(), ShouldBeNil)
 		})
 
 		Convey("Should handle error but do not close Stream", func() {
 			ctx := context.Background()
 
 			stream := NewTestStream()
-			stream.On("Close", mock.Anything).Maybe().Return(nil)
+			stream.On("Close").Maybe().Return(nil)
 
 			go func() {
 				stream.EmitError(errors.New("foo"))
@@ -125,7 +125,7 @@ func TestStreamReader(t *testing.T) {
 
 		Convey("Should not close Stream when Context is cancelled", func() {
 			stream := NewTestStream()
-			stream.On("Close", mock.Anything).Maybe().Return(nil)
+			stream.On("Close").Maybe().Return(nil)
 
 			reader := events2.NewEventStream(stream, func(_ context.Context, stream rpcc.Stream) (runtime.Value, error) {
 				return runtime.EmptyArray(), nil

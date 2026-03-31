@@ -7,6 +7,7 @@ func GetLayoutViewportWH(metrics *page.GetLayoutMetricsReply) (width int, height
 		width = metrics.CSSLayoutViewport.ClientWidth
 	} else {
 		// Chrome version <=89
+		//lint:ignore SA1019 Older Chrome versions may only populate the deprecated layout viewport fields.
 		width = metrics.LayoutViewport.ClientWidth
 	}
 
@@ -14,6 +15,7 @@ func GetLayoutViewportWH(metrics *page.GetLayoutMetricsReply) (width int, height
 		height = metrics.CSSLayoutViewport.ClientHeight
 	} else {
 		// Chrome version <=89
+		//lint:ignore SA1019 Older Chrome versions may only populate the deprecated layout viewport fields.
 		height = metrics.LayoutViewport.ClientHeight
 	}
 

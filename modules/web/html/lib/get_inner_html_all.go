@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// INNER_HTML_ALL returns an array of inner HTML strings of matched elements.
+// GetInnerHTMLAll returns an array of inner HTML strings of matched elements.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selector - String of CSS selector.
 // @return {String[]} - An array of inner HTML strings if all matched elements, otherwise empty array.

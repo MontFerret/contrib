@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// INPUT_CLEAR clears a value from an underlying input element.
+// InputClear clears a value from an underlying input element.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} [selector] - CSS selector.
 func InputClear(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {

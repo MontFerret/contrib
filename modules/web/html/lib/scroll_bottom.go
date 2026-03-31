@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// SCROLL_BOTTOM scrolls the document's window to its bottom.
+// ScrollBottom scrolls the document window to its bottom.
 // @param {HTMLDocument} document - HTML document.
 // @param {Int | Float} x - X coordinate.
 // @param {Int | Float} y - Y coordinate.

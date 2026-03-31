@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// SELECT selects a value from an underlying select element.
+// Select selects a value from an underlying select element.
 // @param {HTMLElement} element - Target html element.
 // @param {String | String[]} valueOrSelector - Selector or a an array of strings as a value.
 // @param {String[]} value - Target value. Optional.

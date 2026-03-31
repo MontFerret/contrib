@@ -3,13 +3,14 @@ package lib
 import (
 	"context"
 
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/pkg/errors"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
 
-// SCROLL_ELEMENT scrolls an element on.
+// ScrollInto scrolls an element into view.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selector - If document is passed, this param must represent an element selector.
 // @param {Object} [params] - Scroll params.

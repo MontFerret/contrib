@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// CLICK_ALL dispatches click event on all matched element
+// ClickAll dispatches a click event on all matched elements.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selector - CSS selector.
 // @param {Int} [clicks=1] - Optional count of clicks.

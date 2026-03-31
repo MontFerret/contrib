@@ -57,7 +57,7 @@ func TestNewOptions(t *testing.T) {
 			cdp.WithHeader("Authorization", []string{"Bearer dfsd7f98sd9fsd9fsd"}),
 			cdp.WithHeaders(drivers.NewHTTPHeadersWith(map[string][]string{
 				"x-correlation-id": {"232483833833839"},
-			})),
+			}).Data),
 		})
 		So(opts.Options, ShouldNotBeNil)
 		So(opts.Name, ShouldEqual, expectedName)
@@ -65,7 +65,7 @@ func TestNewOptions(t *testing.T) {
 		So(opts.UserAgent, ShouldEqual, expectedUA)
 		So(opts.Proxy, ShouldEqual, expectedProxy)
 		So(opts.KeepCookies, ShouldBeTrue)
-		So(opts.Cookies.Length(), ShouldEqual, 2)
-		So(opts.Headers.Length(), ShouldEqual, 2)
+		So(len(opts.Cookies.Data), ShouldEqual, 2)
+		So(len(opts.Headers.Data), ShouldEqual, 2)
 	})
 }

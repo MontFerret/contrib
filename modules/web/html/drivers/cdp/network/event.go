@@ -3,9 +3,10 @@ package network
 import (
 	"context"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/goccy/go-json"
 	"github.com/mafredri/cdp/protocol/page"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/dom"
 

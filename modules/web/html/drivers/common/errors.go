@@ -4,9 +4,10 @@ import (
 	"errors"
 	"io"
 
+	"github.com/rs/zerolog"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/rs/zerolog"
 )
 
 var (

@@ -4,6 +4,11 @@ import (
 	"context"
 	"hash/fnv"
 
+	"github.com/mafredri/cdp"
+	"github.com/mafredri/cdp/protocol/page"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"
@@ -11,10 +16,6 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/mafredri/cdp"
-	"github.com/mafredri/cdp/protocol/page"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
 )
 
 type HTMLDocument struct {

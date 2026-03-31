@@ -3,9 +3,10 @@ package dom
 import (
 	"strings"
 
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/goccy/go-json"
 	"github.com/mafredri/cdp/protocol/page"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 var FrameIDType = runtime.NewTypeFor[FrameID]("html.drivers.cdp.dom", "FrameID")

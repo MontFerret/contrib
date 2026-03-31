@@ -9,7 +9,7 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
 
-// ATTR_SET sets or updates a single or more attribute(s) of a given element.
+// AttributeSet sets or updates a single or more attribute(s) of a given element.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target node.
 // @param {String | Object} nameOrObj - Attribute name or an object representing a key-value pair of attributes.
 // @param {String} value - If a second parameter is a string value, this parameter represent an attribute value.

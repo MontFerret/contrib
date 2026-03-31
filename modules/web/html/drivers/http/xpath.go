@@ -3,11 +3,12 @@ package http
 import (
 	"context"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/antchfx/htmlquery"
 	"github.com/antchfx/xpath"
 	"golang.org/x/net/html"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )

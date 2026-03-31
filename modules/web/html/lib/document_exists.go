@@ -8,7 +8,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// DOCUMENT_EXISTS returns a boolean value indicating whether a web page exists by a given url.
+// DocumentExists returns a boolean value indicating whether a web page exists by a given URL.
 // @param {String} url - Target url.
 // @param {Object} [options] - Request options.
 // @param {Object} [options.headers] - Request headers.

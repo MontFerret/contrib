@@ -2,6 +2,7 @@ package common_test
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
@@ -11,13 +12,14 @@ import (
 )
 
 type style struct {
+	value runtime.Value
 	raw   string
 	name  runtime.String
-	value runtime.Value
 }
 
 func TestDeserializeStyles(t *testing.T) {
 	Convey("DeserializeStyles", t, func() {
+		ctx := context.Background()
 		styles := []style{
 			{
 				raw:   "min-height: 1.15",
@@ -63,16 +65,19 @@ func TestDeserializeStyles(t *testing.T) {
 
 		Convey("Should parse a single style", func() {
 			for _, s := range styles {
-				out, err := common.DeserializeStyles(runtime.NewString(s.raw))
+				out, err := common.DeserializeStyles(ctx, runtime.NewString(s.raw))
 
 				So(err, ShouldBeNil)
 				So(out, ShouldNotBeNil)
 
-				value, exists := out.Get(s.name)
-
+				exists, err := out.ContainsKey(ctx, s.name)
+				So(err, ShouldBeNil)
 				So(bool(exists), ShouldBeTrue)
 
-				So(value.Compare(s.value) == 0, ShouldBeTrue)
+				value, err := out.Get(ctx, s.name)
+				So(err, ShouldBeNil)
+
+				So(runtime.CompareValues(value, s.value), ShouldEqual, 0)
 			}
 		})
 
@@ -84,18 +89,24 @@ func TestDeserializeStyles(t *testing.T) {
 				buff.WriteString("; ")
 			}
 
-			out, err := common.DeserializeStyles(runtime.NewString(buff.String()))
+			out, err := common.DeserializeStyles(ctx, runtime.NewString(buff.String()))
 
 			So(err, ShouldBeNil)
 			So(out, ShouldNotBeNil)
-			So(int(out.Length()), ShouldEqual, len(styles))
+
+			length, err := out.Length(ctx)
+			So(err, ShouldBeNil)
+			So(length, ShouldEqual, runtime.NewInt(len(styles)))
 
 			for _, s := range styles {
-				value, exists := out.Get(s.name)
-
+				exists, err := out.ContainsKey(ctx, s.name)
+				So(err, ShouldBeNil)
 				So(bool(exists), ShouldBeTrue)
 
-				So(value.Compare(s.value) == 0, ShouldBeTrue)
+				value, err := out.Get(ctx, s.name)
+				So(err, ShouldBeNil)
+
+				So(runtime.CompareValues(value, s.value), ShouldEqual, 0)
 			}
 		})
 	})

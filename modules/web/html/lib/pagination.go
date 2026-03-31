@@ -4,16 +4,17 @@ import (
 	"context"
 	"io"
 
+	"github.com/rs/zerolog"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/MontFerret/ferret/v2/pkg/logging"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
-	"github.com/rs/zerolog"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
 
-// PAGINATION creates an iterator that goes through pages using CSS selector.
+// Pagination creates an iterator that goes through pages using a CSS selector.
 // The iterator starts from the current page i.e. it does not change the page on 1st iteration.
 // That allows you to keep scraping logic inside FOR loop.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.

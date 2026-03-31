@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// INNER_HTML_SET sets inner HTML string to a given or matched by CSS selector element
+// SetInnerHTML sets the inner HTML string on a given or matched CSS selector element.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} htmlOrSelector - HTML or CSS selector.
 // @param {String} [html] - String of inner HTML.

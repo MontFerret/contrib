@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/gobwas/glob"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/MontFerret/ferret/v2/pkg/logging"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/gobwas/glob"
 
 	"golang.org/x/net/html/charset"
 

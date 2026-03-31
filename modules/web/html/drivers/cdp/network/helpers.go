@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/mafredri/cdp/protocol/network"
 	"github.com/mafredri/cdp/protocol/page"
 	"github.com/rs/zerolog/log"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
@@ -23,6 +24,28 @@ func toDriverBody(body *string) []byte {
 	}
 
 	return []byte(*body)
+}
+
+func toDriverBodyEntries(entries []network.PostDataEntry) []byte {
+	if len(entries) == 0 {
+		return nil
+	}
+
+	var body strings.Builder
+
+	for _, entry := range entries {
+		if entry.Bytes == nil {
+			continue
+		}
+
+		body.WriteString(*entry.Bytes)
+	}
+
+	if body.Len() == 0 {
+		return nil
+	}
+
+	return []byte(body.String())
 }
 
 func toDriverHeaders(headers network.Headers) *drivers.HTTPHeaders {
@@ -58,11 +81,18 @@ func toDriverResponse(resp network.Response, body []byte) *drivers.HTTPResponse 
 }
 
 func toDriverRequest(req network.Request) *drivers.HTTPRequest {
+	body := toDriverBodyEntries(req.PostDataEntries)
+
+	if body == nil {
+		//lint:ignore SA1019 Older CDP endpoints may omit postDataEntries and only populate PostData.
+		body = toDriverBody(req.PostData)
+	}
+
 	return &drivers.HTTPRequest{
 		URL:     req.URL,
 		Method:  req.Method,
 		Headers: toDriverHeaders(req.Headers),
-		Body:    toDriverBody(req.PostData),
+		Body:    body,
 	}
 }
 

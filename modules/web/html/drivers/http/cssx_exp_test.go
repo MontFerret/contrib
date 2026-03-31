@@ -5,8 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	cssxcommon "github.com/MontFerret/contrib/modules/web/html/drivers/common/cssx"
 	"github.com/PuerkitoBio/goquery"
+
+	cssxcommon "github.com/MontFerret/contrib/modules/web/html/drivers/common/cssx"
 )
 
 func TestCSSXTraversalOps(t *testing.T) {

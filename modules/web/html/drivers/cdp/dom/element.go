@@ -6,6 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/goccy/go-json"
+	"github.com/mafredri/cdp"
+	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"
@@ -14,11 +20,6 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
-	"github.com/goccy/go-json"
-	"github.com/mafredri/cdp"
-	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
 )
 
 type HTMLElement struct {

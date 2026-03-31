@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// CLICK dispatches click event on a given element
+// Click dispatches a click event on a given element.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String | Int} [cssSelectorOrClicks] - CSS selector or count of clicks.
 // @param {Int} [clicks=1] - Count of clicks.

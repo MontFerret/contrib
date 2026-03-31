@@ -10,6 +10,7 @@ import (
 	"github.com/mafredri/cdp/protocol/fetch"
 	network2 "github.com/mafredri/cdp/protocol/network"
 	"github.com/mafredri/cdp/protocol/page"
+	storage2 "github.com/mafredri/cdp/protocol/storage"
 	"github.com/rs/zerolog"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/mock"
@@ -37,6 +38,12 @@ type (
 		enable        func(context.Context, *fetch.EnableArgs) error
 		disable       func(context.Context) error
 		requestPaused func(context.Context) (fetch.RequestPausedClient, error)
+		mock.Mock
+	}
+
+	StorageAPI struct {
+		cdp.Storage
+		getCookies func(context.Context, *storage2.GetCookiesArgs) (*storage2.GetCookiesReply, error)
 		mock.Mock
 	}
 
@@ -89,6 +96,10 @@ func (api *FetchAPI) Disable(ctx context.Context) error {
 
 func (api *FetchAPI) RequestPaused(ctx context.Context) (fetch.RequestPausedClient, error) {
 	return api.requestPaused(ctx)
+}
+
+func (api *StorageAPI) GetCookies(ctx context.Context, args *storage2.GetCookiesArgs) (*storage2.GetCookiesReply, error) {
+	return api.getCookies(ctx, args)
 }
 
 func NewTestEventStream() *TestEventStream {
@@ -236,6 +247,54 @@ func TestManager(t *testing.T) {
 
 				responseReceivedClient.AssertExpectations(t)
 				requestPausedClient.AssertExpectations(t)
+			})
+		})
+
+		Convey("GetCookies", func() {
+			Convey("Should read cookies via the Storage domain", func() {
+				responseReceivedClient := NewResponseReceivedClient()
+				responseReceivedClient.On("Close").Maybe().Return(nil)
+
+				networkAPI := new(NetworkAPI)
+				networkAPI.responseReceived = func(ctx context.Context) (network2.ResponseReceivedClient, error) {
+					return responseReceivedClient, nil
+				}
+
+				storageAPI := new(StorageAPI)
+				storageAPI.getCookies = func(ctx context.Context, args *storage2.GetCookiesArgs) (*storage2.GetCookiesReply, error) {
+					return &storage2.GetCookiesReply{
+						Cookies: []network2.Cookie{
+							{
+								Name:   "Session",
+								Value:  "abc123",
+								Path:   "/",
+								Domain: "example.com",
+							},
+						},
+					}, nil
+				}
+
+				client := &cdp.Client{
+					Network: networkAPI,
+					Storage: storageAPI,
+				}
+
+				mgr, err := network.New(
+					zerolog.New(os.Stdout).Level(zerolog.Disabled),
+					client,
+					network.Options{},
+				)
+				So(err, ShouldBeNil)
+
+				cookies, err := mgr.GetCookies(context.Background())
+				So(err, ShouldBeNil)
+				So(cookies, ShouldNotBeNil)
+				So(len(cookies.Data), ShouldEqual, 1)
+				So(cookies.Data["Session"].Value, ShouldEqual, "abc123")
+
+				So(mgr.Close(), ShouldBeNil)
+				time.Sleep(time.Duration(100) * time.Millisecond)
+				responseReceivedClient.AssertExpectations(t)
 			})
 		})
 	})

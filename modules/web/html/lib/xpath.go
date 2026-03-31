@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// XPATH evaluates the XPath expression.
+// XPath evaluates the XPath expression.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} expression - XPath expression.
 // @return {Any} - Returns result of a given XPath expression.

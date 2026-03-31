@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/dom"
 	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
 	"github.com/rs/zerolog"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"

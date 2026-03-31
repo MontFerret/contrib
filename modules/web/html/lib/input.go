@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// INPUT types a value to an underlying input element.
+// Input types a value into an underlying input element.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} valueOrSelector - CSS selector or a value.
 // @param {String} value - Target value.

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers/http"
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/smartystreets/goconvey/convey"
@@ -223,6 +224,7 @@ func TestDocument(t *testing.T) {
 	`
 	Convey(".GetNodeType", t, func() {
 		Convey("Should serialize a boolean value", func() {
+			ctx := context.Background()
 			buff := bytes.NewBuffer([]byte(doc))
 
 			buff.Write([]byte(doc))
@@ -231,14 +233,14 @@ func TestDocument(t *testing.T) {
 
 			So(err, ShouldBeNil)
 
-			el, err := http.NewHTMLElement(doc.Selection)
+			el, err := http.NewHTMLElement(doc, doc.Selection)
 
 			So(err, ShouldBeNil)
 
-			nt, err := el.GetNodeType(context.Background())
+			nt, err := el.GetNodeType(ctx)
 
 			So(err, ShouldBeNil)
-			So(nt, ShouldEqual, 9)
+			So(nt, ShouldEqual, runtime.NewInt(9))
 		})
 	})
 }

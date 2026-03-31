@@ -10,10 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common/cssx"
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers/common/cssx"
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 var cssxNonNumeric = regexp.MustCompile(`[^\d+\-.,eE]`)

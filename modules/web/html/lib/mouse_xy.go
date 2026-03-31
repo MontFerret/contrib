@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// MOUSE moves mouse by given coordinates.
+// MouseMoveXY moves the mouse by given coordinates.
 // @param {HTMLDocument} document - HTML document.
 // @param {Int|Float} x - X coordinate.
 // @param {Int|Float} y - Y coordinate.

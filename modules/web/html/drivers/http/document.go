@@ -6,9 +6,10 @@ import (
 	neturl "net/url"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
-	"github.com/PuerkitoBio/goquery"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )

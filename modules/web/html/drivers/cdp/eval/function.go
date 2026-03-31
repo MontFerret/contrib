@@ -4,11 +4,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/goccy/go-json"
+	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	jsonf "github.com/MontFerret/ferret/v2/pkg/encoding/json"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/goccy/go-json"
-	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
 )
 
 type Function struct {

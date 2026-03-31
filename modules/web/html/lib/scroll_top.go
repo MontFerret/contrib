@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// SCROLL_TOP scrolls the document's window to its top.
+// ScrollTop scrolls the document window to its top.
 // @param {HTMLDocument} document - HTML document.
 // @param {Int | Float} x - X coordinate.
 // @param {Int | Float} y - Y coordinate.

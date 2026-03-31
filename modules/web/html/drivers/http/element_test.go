@@ -246,6 +246,7 @@ func TestElement(t *testing.T) {
     <script src="../../assets/js/vendor/holder.min.js"></script>
 	<svg xmlns="http://www.w3.org/2000/svg" width="348" height="225" viewBox="0 0 348 225" preserveAspectRatio="none" style="display: none; visibility: hidden; position: absolute; top: -100%; left: -100%;"><defs><style type="text/css"></style></defs><text x="0" y="17" style="font-weight:bold;font-size:17pt;font-family:Arial, Helvetica, Open Sans, sans-serif">Thumbnail</text></svg></body></html>
 `
+	ctx := context.Background()
 
 	Convey(".GetNodeType", t, func() {
 		buff := bytes.NewBuffer([]byte(doc))
@@ -256,11 +257,11 @@ func TestElement(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		el, err := http.NewHTMLElement(doc.Find("body"))
+		el, err := http.NewHTMLElement(doc, doc.Find("body"))
 
 		So(err, ShouldBeNil)
 
-		nt, err := el.GetNodeType(context.Background())
+		nt, err := el.GetNodeType(ctx)
 
 		So(err, ShouldBeNil)
 		So(nt, ShouldEqual, runtime.NewInt(1))
@@ -275,14 +276,14 @@ func TestElement(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		el, err := http.NewHTMLElement(doc.Find("body"))
+		el, err := http.NewHTMLElement(doc, doc.Find("body"))
 
 		So(err, ShouldBeNil)
 
-		nn, err := el.GetNodeName(context.Background())
+		nn, err := el.GetNodeName(ctx)
 
 		So(err, ShouldBeNil)
-		So(nn.Unwrap(), ShouldEqual, "body")
+		So(runtime.CompareValues(nn, runtime.NewString("body")), ShouldEqual, 0)
 	})
 
 	Convey(".Length", t, func() {
@@ -302,11 +303,13 @@ func TestElement(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		el, err := http.NewHTMLElement(doc.Find("body"))
+		el, err := http.NewHTMLElement(doc, doc.Find("body"))
 
 		So(err, ShouldBeNil)
 
-		So(el.Length().Unwrap(), ShouldEqual, 4)
+		length, err := el.Length(ctx)
+		So(err, ShouldBeNil)
+		So(length, ShouldEqual, runtime.NewInt(4))
 	})
 
 	Convey(".Value", t, func() {
@@ -327,14 +330,14 @@ func TestElement(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		el, err := http.NewHTMLElement(doc.Find("#q"))
+		el, err := http.NewHTMLElement(doc, doc.Find("#q"))
 
 		So(err, ShouldBeNil)
 
-		v, err := el.GetValue(context.Background())
+		v, err := el.GetValue(ctx)
 
 		So(err, ShouldBeNil)
-		So(v.Unwrap(), ShouldEqual, "find")
+		So(runtime.CompareValues(v, runtime.NewString("find")), ShouldEqual, 0)
 	})
 
 	Convey(".GetInnerText", t, func() {
@@ -355,13 +358,14 @@ func TestElement(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		el, err := http.NewHTMLElement(doc.Find("h2"))
+		el, err := http.NewHTMLElement(doc, doc.Find("h2"))
 
 		So(err, ShouldBeNil)
 
-		v, _ := el.GetInnerText(context.Background())
+		v, err := el.GetInnerText(ctx)
 
-		So(v.Unwrap(), ShouldEqual, "Ferret")
+		So(err, ShouldBeNil)
+		So(runtime.CompareValues(v, runtime.NewString("Ferret")), ShouldEqual, 0)
 	})
 
 	Convey(".InnerHtml", t, func() {
@@ -382,14 +386,14 @@ func TestElement(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		el, err := http.NewHTMLElement(doc.Find("#content"))
+		el, err := http.NewHTMLElement(doc, doc.Find("#content"))
 
 		So(err, ShouldBeNil)
 
-		v, err := el.GetInnerHTML(context.Background())
+		v, err := el.GetInnerHTML(ctx)
 
 		So(err, ShouldBeNil)
-		So(v.Unwrap(), ShouldEqual, "<h2>Ferret</h2>")
+		So(runtime.CompareValues(v, runtime.NewString("<h2>Ferret</h2>")), ShouldEqual, 0)
 	})
 
 	Convey(".QuerySelector", t, func() {
@@ -399,11 +403,11 @@ func TestElement(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		el, err := http.NewHTMLElement(doc.Selection)
+		el, err := http.NewHTMLElement(doc, doc.Selection)
 
 		So(err, ShouldBeNil)
 
-		found, err := el.QuerySelector(context.Background(), drivers.NewCSSSelector("body .card-img-top:nth-child(1)"))
+		found, err := el.QuerySelector(ctx, drivers.NewCSSSelector("body .card-img-top:nth-child(1)"))
 
 		So(err, ShouldBeNil)
 
@@ -411,10 +415,10 @@ func TestElement(t *testing.T) {
 			t.Fatalf("expected to find element")
 		}
 
-		v, err := found.(drivers.HTMLNode).GetNodeName(context.Background())
+		v, err := found.(drivers.HTMLNode).GetNodeName(ctx)
 
 		So(err, ShouldBeNil)
-		So(v.Unwrap(), ShouldEqual, "img")
+		So(runtime.CompareValues(v, runtime.NewString("img")), ShouldEqual, 0)
 	})
 
 	Convey(".CountBySelector", t, func() {
@@ -424,14 +428,14 @@ func TestElement(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		el, err := http.NewHTMLElement(doc.Selection)
+		el, err := http.NewHTMLElement(doc, doc.Selection)
 
 		So(err, ShouldBeNil)
 
-		v, err := el.CountBySelector(context.Background(), drivers.NewCSSSelector("head meta"))
+		v, err := el.CountBySelector(ctx, drivers.NewCSSSelector("head meta"))
 
 		So(err, ShouldBeNil)
-		So(v.Unwrap(), ShouldEqual, 4)
+		So(v, ShouldEqual, runtime.NewInt(4))
 	})
 
 	Convey(".XPath", t, func() {
@@ -444,11 +448,11 @@ func TestElement(t *testing.T) {
 
 			So(err, ShouldBeNil)
 
-			el, err := http.NewHTMLElement(doc.Find("html"))
+			el, err := http.NewHTMLElement(doc, doc.Find("html"))
 
 			So(err, ShouldBeNil)
 
-			nt, err := el.XPath(context.Background(), runtime.NewString("/head/title/text()"))
+			nt, err := el.XPath(ctx, runtime.NewString("/head/title/text()"))
 
 			So(err, ShouldBeNil)
 			So(nt.String(), ShouldEqual, "[\"Album example for Bootstrap\"]")
@@ -463,14 +467,14 @@ func TestElement(t *testing.T) {
 
 			So(err, ShouldBeNil)
 
-			el, err := http.NewHTMLElement(doc.Find("html"))
+			el, err := http.NewHTMLElement(doc, doc.Find("html"))
 
 			So(err, ShouldBeNil)
 
-			nt, err := el.XPath(context.Background(), runtime.NewString("count(//div)"))
+			nt, err := el.XPath(ctx, runtime.NewString("count(//div)"))
 
 			So(err, ShouldBeNil)
-			So(nt.Type().String(), ShouldEqual, types.Float.String())
+			So(runtime.TypeOf(nt).String(), ShouldEqual, runtime.TypeFloat.String())
 		})
 
 		Convey("Attributes", func() {
@@ -481,12 +485,15 @@ func TestElement(t *testing.T) {
 			doc, err := http.NewRootHTMLDocument(godoc, "localhost:9090")
 			So(err, ShouldBeNil)
 
-			nt, err := doc.XPath(context.Background(), runtime.NewString("//a/@title"))
+			nt, err := doc.XPath(ctx, runtime.NewString("//a/@title"))
 
 			So(err, ShouldBeNil)
-			So(nt.Type().String(), ShouldEqual, types.Array.String())
-			So(nt.(*runtime.Array).First().Type().String(), ShouldEqual, types.String.String())
-			So(nt.(*runtime.Array).First().String(), ShouldEqual, "30")
+			So(runtime.TypeOf(nt).String(), ShouldEqual, runtime.TypeArray.String())
+
+			first, err := nt.(*runtime.Array).First(ctx)
+			So(err, ShouldBeNil)
+			So(runtime.TypeOf(first).String(), ShouldEqual, runtime.TypeString.String())
+			So(first.String(), ShouldEqual, "30")
 		})
 
 		Convey("Element node", func() {
@@ -497,11 +504,14 @@ func TestElement(t *testing.T) {
 			doc, err := http.NewRootHTMLDocument(godoc, "localhost:9090")
 			So(err, ShouldBeNil)
 
-			nt, err := doc.XPath(context.Background(), runtime.NewString("//div"))
+			nt, err := doc.XPath(ctx, runtime.NewString("//div"))
 
 			So(err, ShouldBeNil)
-			So(nt.Type().String(), ShouldEqual, types.Array.String())
-			So(nt.(*runtime.Array).First().Type().String(), ShouldEqual, drivers.HTMLElementType.String())
+			So(runtime.TypeOf(nt).String(), ShouldEqual, runtime.TypeArray.String())
+
+			first, err := nt.(*runtime.Array).First(ctx)
+			So(err, ShouldBeNil)
+			So(runtime.TypeOf(first).String(), ShouldEqual, drivers.HTMLElementType.String())
 		})
 	})
 }

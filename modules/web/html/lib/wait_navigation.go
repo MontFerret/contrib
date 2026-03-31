@@ -14,7 +14,7 @@ type WaitNavigationParams struct {
 	Timeout   runtime.Int
 }
 
-// WAIT_NAVIGATION waits for a given page to navigate to a new url.
+// WaitNavigation waits for a given page to navigate to a new URL.
 // Stops the execution until the navigation ends or operation times out.
 // @param {HTMLPage} page - Target page.
 // @param {Int} [timeout=5000] - Navigation timeout.

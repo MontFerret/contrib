@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// ATTR_QUERY finds a single or more attribute(s) by an query selector.
+// AttributeQuery finds a single or more attribute(s) by a query selector.
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target node.
 // @param {String} selector - Query selector.
 // @param {String, repeated} attrName - Attr name(s).
