@@ -8,7 +8,8 @@
 |---------------| --- | --- |
 | `csv`         | CSV module and ``CSV`` namespace helpers for Ferret. | [modules/csv/README.md](./modules/csv/README.md) |
 | `toml`        | TOML module and ``TOML`` namespace helpers for Ferret. | [modules/toml/README.md](./modules/toml/README.md) |
-| `web/html`    | HTML module for Ferret. | [modules/html/README.md](modules/web/html/README.md) |
+| `web/article` | Article extraction helpers under `WEB::ARTICLE` for Ferret. | [modules/web/article/README.md](./modules/web/article/README.md) |
+| `web/html`    | HTML module for Ferret. | [modules/web/html/README.md](./modules/web/html/README.md) |
 | `web/robots`  | robots.txt parsing and policy helpers under `WEB::ROBOTS` for Ferret. | [modules/web/robots/README.md](./modules/web/robots/README.md) |
 | `web/sitemap` | Sitemap discovery helpers under `WEB::SITEMAP` for Ferret. | [modules/web/sitemap/README.md](./modules/web/sitemap/README.md) |
 | `xml`         | XML module and ``XML`` namespace helpers for Ferret. | [modules/xml/README.md](./modules/xml/README.md) |
