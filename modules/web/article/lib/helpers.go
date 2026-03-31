@@ -23,7 +23,12 @@ func extractArticle(ctx context.Context, args ...runtime.Value) (types.Article, 
 		return types.Article{}, err
 	}
 
-	return core.ExtractSource(ctx, source), nil
+	extractor := core.ExtractorFromContext(ctx)
+	if extractor == nil {
+		extractor = core.NewExtractor()
+	}
+
+	return extractor.ExtractSource(source), nil
 }
 
 func normalizeSource(ctx context.Context, value runtime.Value) (core.Source, error) {

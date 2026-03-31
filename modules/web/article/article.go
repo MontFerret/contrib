@@ -21,11 +21,11 @@ func (m *module) Name() string {
 }
 
 func (m *module) Register(bootstrap ferret.Bootstrap) error {
-	markdownConverter := core.NewMarkdownConverter()
+	extractor := core.NewExtractor()
 
 	lib.RegisterLib(bootstrap.Host().Library().Namespace("WEB").Namespace("ARTICLE"))
 	bootstrap.Hooks().Session().BeforeRun(func(ctx context.Context) (context.Context, error) {
-		return core.WithMarkdownConverter(ctx, markdownConverter), nil
+		return core.WithExtractor(ctx, extractor), nil
 	})
 
 	return nil

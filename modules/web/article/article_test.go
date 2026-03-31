@@ -25,18 +25,18 @@ func TestNewSmoke(t *testing.T) {
 	}
 }
 
-func TestRegisterInstallsSessionMarkdownConverter(t *testing.T) {
+func TestRegisterInstallsSessionExtractor(t *testing.T) {
 	mod, err := New()
 	if err != nil {
 		t.Fatalf("unexpected module error: %v", err)
 	}
 
-	seenConverter := false
+	seenExtractor := false
 	engine, err := ferret.New(
 		ferret.WithModules(mod),
 		ferret.WithAfterRunHook(func(ctx context.Context, err error) error {
-			if err == nil && core.MarkdownConverterFromContext(ctx) != nil {
-				seenConverter = true
+			if err == nil && core.ExtractorFromContext(ctx) != nil {
+				seenExtractor = true
 			}
 
 			return nil
@@ -76,7 +76,7 @@ func TestRegisterInstallsSessionMarkdownConverter(t *testing.T) {
 		t.Fatal("expected markdown output")
 	}
 
-	if !seenConverter {
-		t.Fatal("expected after-run hook to observe session markdown converter")
+	if !seenExtractor {
+		t.Fatal("expected after-run hook to observe session extractor")
 	}
 }

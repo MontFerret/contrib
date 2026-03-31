@@ -1,11 +1,11 @@
 package core
 
 import (
-	"context"
 	"math"
 	"net/url"
 	"strings"
 
+	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
 
@@ -45,15 +45,25 @@ type (
 		Excerpt            *string
 		LeadImage          *string
 	}
+
+	Extractor struct {
+		markdownConverter *converter.Converter
+	}
 )
 
+func NewExtractor() *Extractor {
+	return &Extractor{
+		markdownConverter: newMarkdownConverter(),
+	}
+}
+
 // Extract returns the best-effort normalized article extracted from raw HTML.
-func Extract(ctx context.Context, input string) types.Article {
-	return ExtractSource(ctx, Source{HTML: input})
+func (e *Extractor) Extract(input string) types.Article {
+	return e.ExtractSource(Source{HTML: input})
 }
 
 // ExtractSource returns the best-effort normalized article extracted from a normalized source.
-func ExtractSource(ctx context.Context, source Source) types.Article {
+func (e *Extractor) ExtractSource(source Source) types.Article {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(source.HTML))
 	if err != nil {
 		return types.Article{}
@@ -65,7 +75,7 @@ func ExtractSource(ctx context.Context, source Source) types.Article {
 	}
 
 	article := extractMetadata(doc, baseURL, source.TitleHint)
-	body := extractBody(ctx, doc, article.Title, baseURL)
+	body := e.extractBody(doc, article.Title, baseURL)
 
 	article.Text = body.Text
 	article.HTML = body.HTML
@@ -84,7 +94,7 @@ func ExtractSource(ctx context.Context, source Source) types.Article {
 	return article
 }
 
-func extractBody(ctx context.Context, doc *goquery.Document, title *string, baseURL *url.URL) extractedBody {
+func (e *Extractor) extractBody(doc *goquery.Document, title *string, baseURL *url.URL) extractedBody {
 	candidate := selectBestCandidate(doc, title)
 	if candidate == nil {
 		return extractedBody{}
@@ -96,7 +106,7 @@ func extractBody(ctx context.Context, doc *goquery.Document, title *string, base
 	}
 
 	if body.HTML != nil {
-		body.Markdown = renderMarkdown(ctx, *body.HTML, baseURL)
+		body.Markdown = e.renderMarkdown(*body.HTML, baseURL)
 	}
 
 	if body.Text != nil {
@@ -108,6 +118,23 @@ func extractBody(ctx context.Context, doc *goquery.Document, title *string, base
 	}
 
 	return body
+}
+
+func (e *Extractor) renderMarkdown(fragment string, baseURL *url.URL) *string {
+	conv := e.markdownConverterOrNew()
+	convertOptions := markdownConvertOptions(baseURL)
+
+	markdown, err := conv.ConvertString(fragment, convertOptions...)
+	if err != nil {
+		return nil
+	}
+
+	markdown = strings.TrimSpace(markdown)
+	if markdown == "" {
+		return nil
+	}
+
+	return stringPtr(markdown)
 }
 
 func selectBestCandidate(doc *goquery.Document, title *string) *scoredCandidate {
@@ -276,23 +303,6 @@ func isMeaningfulBody(text string, score float64) bool {
 	}
 
 	return len(text) >= 220 && score >= 55
-}
-
-func renderMarkdown(ctx context.Context, fragment string, baseURL *url.URL) *string {
-	conv := resolveMarkdownConverter(ctx)
-	convertOptions := markdownConvertOptions(baseURL)
-
-	markdown, err := conv.ConvertString(fragment, convertOptions...)
-	if err != nil {
-		return nil
-	}
-
-	markdown = strings.TrimSpace(markdown)
-	if markdown == "" {
-		return nil
-	}
-
-	return stringPtr(markdown)
 }
 
 func minInt(a int, b int) int {

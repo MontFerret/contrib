@@ -8,13 +8,14 @@ import (
 
 func BenchmarkExtractLargeCandidatePage(b *testing.B) {
 	fixture := buildLargeCandidateFixture(180)
-	ctx := WithMarkdownConverter(context.Background(), NewMarkdownConverter())
+	ctx := WithExtractor(context.Background(), NewExtractor())
+	extractor := ExtractorFromContext(ctx)
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		article := Extract(ctx, fixture)
+		article := extractor.Extract(fixture)
 		if article.Text == nil {
 			b.Fatal("expected article text")
 		}
@@ -36,14 +37,15 @@ func BenchmarkRenderMarkdown(b *testing.B) {
 		b.Fatalf("unexpected base url parse error: %v", err)
 	}
 
-	ctx := WithMarkdownConverter(context.Background(), NewMarkdownConverter())
+	ctx := WithExtractor(context.Background(), NewExtractor())
+	extractor := ExtractorFromContext(ctx)
 
 	b.Run("no_base", func(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 
 		for i := 0; i < b.N; i++ {
-			markdown := renderMarkdown(ctx, fragment, nil)
+			markdown := extractor.renderMarkdown(fragment, nil)
 			if markdown == nil {
 				b.Fatal("expected markdown without base")
 			}
@@ -55,7 +57,7 @@ func BenchmarkRenderMarkdown(b *testing.B) {
 		b.ResetTimer()
 
 		for i := 0; i < b.N; i++ {
-			markdown := renderMarkdown(ctx, fragment, baseURL)
+			markdown := extractor.renderMarkdown(fragment, baseURL)
 			if markdown == nil {
 				b.Fatal("expected markdown with base")
 			}

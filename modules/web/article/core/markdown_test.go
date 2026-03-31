@@ -7,26 +7,26 @@ import (
 	"testing"
 )
 
-func TestMarkdownConverterFromContextReturnsInjectedConverter(t *testing.T) {
-	conv := NewMarkdownConverter()
-	ctx := WithMarkdownConverter(context.Background(), conv)
+func TestExtractorFromContextReturnsInjectedExtractor(t *testing.T) {
+	extractor := NewExtractor()
+	ctx := WithExtractor(context.Background(), extractor)
 
-	got := MarkdownConverterFromContext(ctx)
+	got := ExtractorFromContext(ctx)
 	if got == nil {
-		t.Fatal("expected markdown converter from context")
+		t.Fatal("expected extractor from context")
 	}
 
-	if got != conv {
-		t.Fatal("expected injected markdown converter instance")
+	if got != extractor {
+		t.Fatal("expected injected extractor instance")
 	}
 }
 
-func TestResolveMarkdownConverterReturnsFreshInstanceWithoutContext(t *testing.T) {
-	first := resolveMarkdownConverter(context.Background())
-	second := resolveMarkdownConverter(context.Background())
+func TestExtractorFallbackUsesNewConverterWhenMissing(t *testing.T) {
+	first := (*Extractor)(nil).markdownConverterOrNew()
+	second := (*Extractor)(nil).markdownConverterOrNew()
 
 	if first == nil || second == nil {
-		t.Fatal("expected markdown converter instances")
+		t.Fatal("expected markdown converters")
 	}
 
 	if first == second {
@@ -46,9 +46,9 @@ func TestRenderMarkdownUsesPerCallDomainWithoutLeakage(t *testing.T) {
 	}
 
 	fragment := `<p><a href="/story">Story</a> <img src="/hero.jpg" alt="Lead" /></p>`
-	ctx := WithMarkdownConverter(context.Background(), NewMarkdownConverter())
+	extractor := NewExtractor()
 
-	first := renderMarkdown(ctx, fragment, firstBaseURL)
+	first := extractor.renderMarkdown(fragment, firstBaseURL)
 	if first == nil {
 		t.Fatal("expected markdown for first conversion")
 	}
@@ -57,7 +57,7 @@ func TestRenderMarkdownUsesPerCallDomainWithoutLeakage(t *testing.T) {
 		t.Fatalf("unexpected first markdown %q", *first)
 	}
 
-	second := renderMarkdown(ctx, fragment, secondBaseURL)
+	second := extractor.renderMarkdown(fragment, secondBaseURL)
 	if second == nil {
 		t.Fatal("expected markdown for second conversion")
 	}
@@ -70,7 +70,7 @@ func TestRenderMarkdownUsesPerCallDomainWithoutLeakage(t *testing.T) {
 		t.Fatalf("expected second markdown to avoid leaked first domain, got %q", *second)
 	}
 
-	withoutBase := renderMarkdown(ctx, fragment, nil)
+	withoutBase := extractor.renderMarkdown(fragment, nil)
 	if withoutBase == nil {
 		t.Fatal("expected markdown without base url")
 	}

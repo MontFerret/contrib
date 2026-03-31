@@ -12,7 +12,7 @@ import (
 
 type markdownConverterKey struct{}
 
-func NewMarkdownConverter() *converter.Converter {
+func newMarkdownConverter() *converter.Converter {
 	return converter.NewConverter(
 		converter.WithPlugins(
 			base.NewBasePlugin(),
@@ -24,20 +24,20 @@ func NewMarkdownConverter() *converter.Converter {
 	)
 }
 
-func WithMarkdownConverter(ctx context.Context, conv *converter.Converter) context.Context {
+func WithExtractor(ctx context.Context, extractor *Extractor) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	return context.WithValue(ctx, markdownConverterKey{}, conv)
+	return context.WithValue(ctx, markdownConverterKey{}, extractor)
 }
 
-func MarkdownConverterFromContext(ctx context.Context) *converter.Converter {
+func ExtractorFromContext(ctx context.Context) *Extractor {
 	if ctx == nil {
 		return nil
 	}
 
-	value, ok := ctx.Value(markdownConverterKey{}).(*converter.Converter)
+	value, ok := ctx.Value(markdownConverterKey{}).(*Extractor)
 	if !ok {
 		return nil
 	}
@@ -45,13 +45,12 @@ func MarkdownConverterFromContext(ctx context.Context) *converter.Converter {
 	return value
 }
 
-func resolveMarkdownConverter(ctx context.Context) *converter.Converter {
-	conv := MarkdownConverterFromContext(ctx)
-	if conv != nil {
-		return conv
+func (e *Extractor) markdownConverterOrNew() *converter.Converter {
+	if e != nil && e.markdownConverter != nil {
+		return e.markdownConverter
 	}
 
-	return NewMarkdownConverter()
+	return newMarkdownConverter()
 }
 
 func markdownConvertOptions(baseURL *url.URL) []converter.ConvertOptionFunc {

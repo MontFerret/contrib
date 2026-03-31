@@ -1,14 +1,13 @@
 package core
 
 import (
-	"context"
 	"net/url"
 	"strings"
 	"testing"
 )
 
 func TestExtractStructuredArticle(t *testing.T) {
-	article := Extract(context.Background(), `
+	article := NewExtractor().Extract(`
 		<html lang="en" dir="ltr">
 		  <head>
 		    <base href="https://example.com/posts/" />
@@ -124,7 +123,7 @@ func TestExtractStructuredArticle(t *testing.T) {
 }
 
 func TestExtractDocsLikePage(t *testing.T) {
-	article := Extract(context.Background(), `
+	article := NewExtractor().Extract(`
 		<html lang="en">
 		  <head>
 		    <title>API Guide | Example Docs</title>
@@ -171,7 +170,7 @@ Authorization: Bearer token</code></pre>
 }
 
 func TestExtractMetadataOnlyPage(t *testing.T) {
-	article := Extract(context.Background(), `
+	article := NewExtractor().Extract(`
 		<html>
 		  <head>
 		    <meta property="og:title" content="Portal Home" />
@@ -211,7 +210,7 @@ func TestExtractMetadataOnlyPage(t *testing.T) {
 }
 
 func TestExtractMalformedHTML(t *testing.T) {
-	article := Extract(context.Background(), `
+	article := NewExtractor().Extract(`
 		<html>
 		  <head><title>Broken Example | Example Site</title></head>
 		  <body>
@@ -239,7 +238,7 @@ func TestExtractSourceUsesSourceURLFallback(t *testing.T) {
 		t.Fatalf("unexpected url parse error: %v", err)
 	}
 
-	article := ExtractSource(context.Background(), Source{
+	article := NewExtractor().ExtractSource(Source{
 		HTML: `
 			<html>
 			  <head>
@@ -267,7 +266,7 @@ func TestExtractSourceUsesSourceURLFallback(t *testing.T) {
 }
 
 func TestExtractSourceUsesTitleHintAsFallback(t *testing.T) {
-	article := ExtractSource(context.Background(), Source{
+	article := NewExtractor().ExtractSource(Source{
 		HTML: `
 			<html>
 			  <body>

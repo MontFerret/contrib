@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -158,5 +159,27 @@ func TestRejectsInvalidArgs(t *testing.T) {
 
 	if _, err := Text(t.Context(), runtime.NewString("a"), runtime.NewString("b")); err == nil {
 		t.Fatal("expected arity error")
+	}
+}
+
+func TestExtractCreatesDefaultExtractorWhenContextMissing(t *testing.T) {
+	html := runtime.NewString(`
+		<html>
+		  <body>
+		    <article class="story">
+		      <p>This article should still extract correctly when lib code receives a plain background context without a session-scoped extractor attached.</p>
+		      <p>The fallback path creates a default extractor on demand instead of requiring module registration for direct function tests.</p>
+		    </article>
+		  </body>
+		</html>
+	`)
+
+	value, err := Markdown(context.Background(), html)
+	if err != nil {
+		t.Fatalf("unexpected markdown error: %v", err)
+	}
+
+	if value == runtime.None {
+		t.Fatal("expected markdown output with default extractor fallback")
 	}
 }
