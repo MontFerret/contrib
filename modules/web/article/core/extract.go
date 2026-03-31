@@ -137,6 +137,14 @@ func (e *Extractor) renderMarkdown(fragment string, baseURL *url.URL) *string {
 	return stringPtr(markdown)
 }
 
+func (e *Extractor) markdownConverterOrNew() *converter.Converter {
+	if e != nil && e.markdownConverter != nil {
+		return e.markdownConverter
+	}
+
+	return newMarkdownConverter()
+}
+
 func selectBestCandidate(doc *goquery.Document, title *string) *scoredCandidate {
 	var best *scoredCandidate
 	titleValue := valueOrEmpty(title)
