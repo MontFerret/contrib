@@ -33,7 +33,7 @@ type (
 	}
 
 	scoredCandidate struct {
-		Selection  *goquery.Selection
+		Node       *html.Node
 		Score      float64
 		Words      int
 		TextLength int
@@ -93,7 +93,7 @@ func extractBody(doc *goquery.Document, title *string, baseURL *url.URL) extract
 		return extractedBody{}
 	}
 
-	body := cleanCandidate(candidate.Selection, title, baseURL)
+	body := cleanCandidate(selectionFromNode(candidate.Node), title, baseURL)
 	if body.Text == nil || !isMeaningfulBody(*body.Text, candidate.Score) {
 		return extractedBody{}
 	}
@@ -115,95 +115,26 @@ func extractBody(doc *goquery.Document, title *string, baseURL *url.URL) extract
 
 func selectBestCandidate(doc *goquery.Document, title *string) *scoredCandidate {
 	var best *scoredCandidate
-	seen := make(map[*html.Node]struct{})
 	titleValue := valueOrEmpty(title)
+	index := buildCandidateStatsIndex(doc, titleValue)
 
-	doc.Find("article,main,[role='main'],section,div,body").Each(func(_ int, sel *goquery.Selection) {
-		if len(sel.Nodes) == 0 {
-			return
+	for _, node := range index.candidates {
+		stats, ok := index.stats[node]
+		if !ok {
+			continue
 		}
 
-		if _, ok := seen[sel.Nodes[0]]; ok {
-			return
-		}
-
-		seen[sel.Nodes[0]] = struct{}{}
-
-		candidate := scoreCandidate(sel, titleValue)
+		candidate := scoreCandidate(node, stats)
 		if candidate == nil {
-			return
+			continue
 		}
 
 		if best == nil || candidate.Score > best.Score {
 			best = candidate
 		}
-	})
+	}
 
 	return best
-}
-
-func scoreCandidate(sel *goquery.Selection, title string) *scoredCandidate {
-	text := normalizeWhitespace(sel.Text())
-	if text == "" {
-		return nil
-	}
-
-	words := countWords(text)
-	textLength := len(text)
-	if textLength < 80 {
-		return nil
-	}
-
-	tag := strings.ToLower(goquery.NodeName(sel))
-	score := tagBonus(tag)
-
-	score += float64(minInt(words, 700)) * 0.18
-	score += float64(minInt(sel.Find("p").Length(), 24)) * 6
-	score += float64(minInt(sel.Find("li").Length(), 20)) * 1.5
-	score += float64(minInt(sel.Find("pre, code").Length(), 10)) * 4
-	score += float64(minInt(sel.Find("table").Length(), 6)) * 5
-	score += float64(minInt(sel.Find("h2, h3, h4").Length(), 8)) * 2
-
-	rootSignals := classID(sel)
-	if hasKeyword(rootSignals, positiveKeywords) {
-		score += 18
-	}
-
-	if hasKeyword(rootSignals, negativeKeywords) {
-		score -= 28
-	}
-
-	linkDensity := measureLinkDensity(sel, textLength)
-	score -= linkDensity * 95
-
-	formPenalty := sel.Find("form,input,button,select,textarea").Length()
-	score -= float64(formPenalty * 10)
-
-	negativeDescendants := countNegativeDescendants(sel)
-	score -= float64(minInt(negativeDescendants, 12) * 4)
-
-	if words < 35 {
-		score -= 30
-	}
-
-	if title != "" && selectionMentionsTitle(sel, title) {
-		score += 22
-	}
-
-	if sel.Find("time,[rel='author'],[itemprop='author'],.byline,[class*='author']").Length() > 0 {
-		score += 8
-	}
-
-	if sel.Find("p,pre,table,ul,ol").Length() < 2 {
-		score -= 14
-	}
-
-	return &scoredCandidate{
-		Selection:  sel,
-		Score:      score,
-		Words:      words,
-		TextLength: textLength,
-	}
 }
 
 func tagBonus(tag string) float64 {
@@ -234,34 +165,6 @@ func measureLinkDensity(sel *goquery.Selection, textLength int) float64 {
 	})
 
 	return float64(linkLength) / float64(textLength)
-}
-
-func countNegativeDescendants(sel *goquery.Selection) int {
-	count := 0
-
-	sel.Find("*").Each(func(_ int, node *goquery.Selection) {
-		if hasKeyword(classID(node), negativeKeywords) {
-			count++
-		}
-	})
-
-	return count
-}
-
-func selectionMentionsTitle(sel *goquery.Selection, title string) bool {
-	found := false
-
-	sel.Find("h1,h2,h3").EachWithBreak(func(_ int, node *goquery.Selection) bool {
-		if titleMatches(node.Text(), title) {
-			found = true
-
-			return false
-		}
-
-		return true
-	})
-
-	return found
 }
 
 func cleanCandidate(sel *goquery.Selection, title *string, baseURL *url.URL) extractedBody {

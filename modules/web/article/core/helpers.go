@@ -263,10 +263,48 @@ func classID(sel *goquery.Selection) string {
 	}, " "))
 }
 
+func firstAttrFromNode(node *xhtml.Node, name string) string {
+	if node == nil || node.Type != xhtml.ElementNode {
+		return ""
+	}
+
+	for _, attr := range node.Attr {
+		if strings.EqualFold(attr.Key, name) {
+			return normalizeWhitespace(attr.Val)
+		}
+	}
+
+	return ""
+}
+
+func classIDFromNode(node *xhtml.Node) string {
+	return strings.ToLower(strings.Join([]string{
+		firstAttrFromNode(node, "id"),
+		firstAttrFromNode(node, "class"),
+		firstAttrFromNode(node, "role"),
+		firstAttrFromNode(node, "itemprop"),
+	}, " "))
+}
+
 func hasKeyword(input string, keywords []string) bool {
 	input = strings.ToLower(input)
 	for _, keyword := range keywords {
 		if strings.Contains(input, keyword) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func hasClassToken(input string, token string) bool {
+	token = strings.ToLower(strings.TrimSpace(token))
+	if token == "" {
+		return false
+	}
+
+	for _, className := range strings.Fields(strings.ToLower(normalizeWhitespace(input))) {
+		if className == token {
 			return true
 		}
 	}
