@@ -116,6 +116,6 @@ RETURN {
 - `EXTRACT` may still return metadata when no meaningful article body is found.
 - `TEXT` and `MARKDOWN` return `null` when the page is parseable but not article-like enough.
 - For `HTMLPage` and `HTMLDocument` inputs, the page URL is used as the fallback base URL when the DOM does not contain `<base href>`.
-- URL metadata preserves relative values unless a `<base href>` allows safe resolution.
+- URL metadata is resolved to absolute URLs whenever a base URL is available (from `<base href>` or the page URL for `HTMLPage`/`HTMLDocument`); for raw HTML or `HTMLElement` inputs without a base URL, relative URL values are preserved.
 - Timestamps are normalized to RFC3339 UTC when parseable; otherwise the original trimmed value is preserved.
 - `text`, `html`, and `markdown` contain the cleaned body only and do not prepend the title.
