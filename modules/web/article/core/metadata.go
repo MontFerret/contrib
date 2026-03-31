@@ -388,15 +388,20 @@ func extractDOMFallbackMetadata(doc *goquery.Document, baseURL *url.URL) types.A
 				"[id*='byline']",
 			}, 3, 120)),
 		),
-		Excerpt:     firstParagraphExcerpt(doc.Selection),
-		PublishedAt: findPublishedTime(doc),
-		UpdatedAt:   findUpdatedTime(doc),
+		Excerpt: firstParagraphExcerpt(doc.Selection),
 		LeadImage: firstImageURL(
 			doc.Find("article, main, [role='main'], body").First(),
 			baseURL,
 		),
 		Tags:       findTagLinks(doc),
 		Categories: findCategoryLinks(doc),
+	}
+}
+
+func extractDOMFallbackTimes(doc *goquery.Document, preferredRoot *goquery.Selection) types.Article {
+	return types.Article{
+		PublishedAt: findPublishedTime(doc, preferredRoot),
+		UpdatedAt:   findUpdatedTime(doc, preferredRoot),
 	}
 }
 
@@ -496,20 +501,24 @@ func splitDocumentTitleAgainstKnownTitle(raw string, known string) (string, stri
 	return known, ""
 }
 
-func findPublishedTime(doc *goquery.Document) *string {
-	return findScopedTime(doc, false)
+func findPublishedTime(doc *goquery.Document, preferredRoot *goquery.Selection) *string {
+	return findScopedTime(doc, preferredRoot, false)
 }
 
-func findUpdatedTime(doc *goquery.Document) *string {
-	return findScopedTime(doc, true)
+func findUpdatedTime(doc *goquery.Document, preferredRoot *goquery.Selection) *string {
+	return findScopedTime(doc, preferredRoot, true)
 }
 
-func findScopedTime(doc *goquery.Document, requireUpdated bool) *string {
+func findScopedTime(doc *goquery.Document, preferredRoot *goquery.Selection, requireUpdated bool) *string {
 	if doc == nil {
 		return nil
 	}
 
-	for _, selector := range []string{"article", "main", "[role='main']", "body"} {
+	if found := findTimeInRoot(preferredRoot, requireUpdated); found != nil {
+		return found
+	}
+
+	for _, selector := range []string{"article", "main", "[role='main']"} {
 		var found *string
 		doc.Find(selector).EachWithBreak(func(_ int, root *goquery.Selection) bool {
 			found = findTimeInRoot(root, requireUpdated)

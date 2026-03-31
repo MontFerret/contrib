@@ -61,7 +61,9 @@ func (e *Extractor) ExtractSource(source Source) types.Article {
 	}
 
 	article := extractMetadata(doc, baseURL, source.TitleHint)
-	body := e.extractBody(doc, article.Title, baseURL)
+	candidate := selectBestCandidate(doc, article.Title)
+	mergeArticle(&article, extractDOMFallbackTimes(doc, selectionFromCandidate(candidate)))
+	body := e.extractBodyFromCandidate(candidate, article.Title, baseURL)
 
 	article.Text = body.Text
 	article.HTML = body.HTML
@@ -81,7 +83,10 @@ func (e *Extractor) ExtractSource(source Source) types.Article {
 }
 
 func (e *Extractor) extractBody(doc *goquery.Document, title *string, baseURL *url.URL) extractedBody {
-	candidate := selectBestCandidate(doc, title)
+	return e.extractBodyFromCandidate(selectBestCandidate(doc, title), title, baseURL)
+}
+
+func (e *Extractor) extractBodyFromCandidate(candidate *scoredCandidate, title *string, baseURL *url.URL) extractedBody {
 	if candidate == nil {
 		return extractedBody{}
 	}
@@ -104,6 +109,14 @@ func (e *Extractor) extractBody(doc *goquery.Document, title *string, baseURL *u
 	}
 
 	return body
+}
+
+func selectionFromCandidate(candidate *scoredCandidate) *goquery.Selection {
+	if candidate == nil {
+		return nil
+	}
+
+	return selectionFromNode(candidate.Node)
 }
 
 func (e *Extractor) renderMarkdown(fragment string, baseURL *url.URL) *string {

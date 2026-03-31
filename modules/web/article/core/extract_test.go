@@ -414,6 +414,47 @@ func TestExtractPrefersArticleScopedStrictTimes(t *testing.T) {
 	}
 }
 
+func TestExtractPrefersSelectedCandidateTimesForGenericContainers(t *testing.T) {
+	article := NewExtractor().Extract(`
+		<html>
+		  <body>
+		    <header>
+		      <time datetime="2026-03-01T09:00:00Z">March 1</time>
+		    </header>
+		    <div class="content story">
+		      <time datetime="2026-03-30T10:00:00Z">March 30</time>
+		      <p>This generic story container still has enough readable prose to qualify as the extracted article body even though it does not use article or main semantics.</p>
+		      <p>The timestamp fallback should therefore prefer the selected content root instead of inheriting the earlier header time from page chrome.</p>
+		    </div>
+		  </body>
+		</html>
+	`)
+
+	if article.PublishedAt == nil || *article.PublishedAt != "2026-03-30T10:00:00Z" {
+		t.Fatalf("unexpected publishedAt %+v", article.PublishedAt)
+	}
+}
+
+func TestExtractFallsBackToWholeDocumentTimeWhenNoArticleRootMatches(t *testing.T) {
+	article := NewExtractor().Extract(`
+		<html>
+		  <body>
+		    <section class="hero">
+		      <time datetime="2026-03-30T10:00:00Z">March 30</time>
+		    </section>
+		    <nav>
+		      <a href="/news">News</a>
+		      <a href="/sports">Sports</a>
+		    </nav>
+		  </body>
+		</html>
+	`)
+
+	if article.PublishedAt == nil || *article.PublishedAt != "2026-03-30T10:00:00Z" {
+		t.Fatalf("unexpected publishedAt %+v", article.PublishedAt)
+	}
+}
+
 func TestExtractPreservesApproximateMetaDates(t *testing.T) {
 	article := NewExtractor().Extract(`
 		<html>
