@@ -317,6 +317,121 @@ func TestExtractSourceUsesSourceURLFallback(t *testing.T) {
 	}
 }
 
+func TestExtractSourceResolvesRelativeBaseAgainstSourceURL(t *testing.T) {
+	sourceURL, err := url.Parse("https://example.com/posts/2026/story")
+	if err != nil {
+		t.Fatalf("unexpected url parse error: %v", err)
+	}
+
+	article := NewExtractor().ExtractSource(Source{
+		SourceURL: sourceURL,
+		HTML: `
+			<html>
+			  <head>
+			    <base href="/assets/" />
+			    <link rel="canonical" href="item.html" />
+			  </head>
+			  <body>
+			    <article class="story">
+			      <p>This rendered article should resolve relative metadata and body URLs against the declared base element instead of the source page path.</p>
+			      <p>This second paragraph keeps the candidate comfortably above the meaningful-text threshold while still exercising a relative <a href="story-link">Story link</a> inside the extracted body fragment.</p>
+			      <img src="hero.jpg" alt="Hero" />
+			    </article>
+			  </body>
+			</html>
+		`,
+	})
+
+	if article.CanonicalURL == nil || *article.CanonicalURL != "https://example.com/assets/item.html" {
+		t.Fatalf("unexpected canonicalUrl %+v", article.CanonicalURL)
+	}
+
+	if article.LeadImage == nil || *article.LeadImage != "https://example.com/assets/hero.jpg" {
+		t.Fatalf("unexpected leadImage %+v", article.LeadImage)
+	}
+
+	if article.HTML == nil || !strings.Contains(*article.HTML, `href="https://example.com/assets/story-link"`) || !strings.Contains(*article.HTML, `src="https://example.com/assets/hero.jpg"`) {
+		t.Fatalf("expected base-resolved html urls, got %+v", article.HTML)
+	}
+
+	if article.Markdown == nil || !strings.Contains(*article.Markdown, "https://example.com/assets/story-link") || !strings.Contains(*article.Markdown, "https://example.com/assets/hero.jpg") {
+		t.Fatalf("expected base-resolved markdown urls, got %+v", article.Markdown)
+	}
+}
+
+func TestExtractSourceMatchesCanonicalRelTokens(t *testing.T) {
+	sourceURL, err := url.Parse("https://example.com/posts/2026/story")
+	if err != nil {
+		t.Fatalf("unexpected url parse error: %v", err)
+	}
+
+	article := NewExtractor().ExtractSource(Source{
+		SourceURL: sourceURL,
+		HTML: `
+			<html>
+			  <head>
+			    <link rel="alternate canonical" href="/posts/canonical-story" />
+			  </head>
+			  <body>
+			    <article class="story">
+			      <p>This article includes enough readable prose for extraction while its canonical link uses multiple rel tokens that should still be detected.</p>
+			      <p>The fallback should treat rel as a token list instead of an exact string match.</p>
+			    </article>
+			  </body>
+			</html>
+		`,
+	})
+
+	if article.CanonicalURL == nil || *article.CanonicalURL != "https://example.com/posts/canonical-story" {
+		t.Fatalf("unexpected canonicalUrl %+v", article.CanonicalURL)
+	}
+}
+
+func TestExtractPrefersArticleScopedStrictTimes(t *testing.T) {
+	article := NewExtractor().Extract(`
+		<html>
+		  <body>
+		    <header>
+		      <time>9:00 AM</time>
+		    </header>
+		    <article class="story">
+		      <h1>Story Title</h1>
+		      <time datetime="2026-03-30T10:00:00Z">March 30, 2026</time>
+		      <time class="modified" datetime="2026-03-30T12:00:00Z">Updated</time>
+		      <p>This article contains enough readable prose to remain above the meaningful-text threshold while ensuring the timestamp fallback prefers the article body over unrelated page chrome.</p>
+		      <p>The updated timestamp is marked with a modified signal so it should populate updatedAt without affecting publishedAt.</p>
+		    </article>
+		  </body>
+		</html>
+	`)
+
+	if article.PublishedAt == nil || *article.PublishedAt != "2026-03-30T10:00:00Z" {
+		t.Fatalf("unexpected publishedAt %+v", article.PublishedAt)
+	}
+
+	if article.UpdatedAt == nil || *article.UpdatedAt != "2026-03-30T12:00:00Z" {
+		t.Fatalf("unexpected updatedAt %+v", article.UpdatedAt)
+	}
+}
+
+func TestExtractPreservesApproximateMetaDates(t *testing.T) {
+	article := NewExtractor().Extract(`
+		<html>
+		  <head>
+		    <meta property="og:title" content="Approximate Dates" />
+		    <meta property="article:published_time" content="Spring 2026" />
+		  </head>
+		  <body>
+		    <nav><a href="/archive">Archive</a></nav>
+		  </body>
+		</html>
+	`)
+
+	if article.PublishedAt == nil || *article.PublishedAt != "Spring 2026" {
+		t.Fatalf("unexpected publishedAt %+v", article.PublishedAt)
+	}
+}
+
 func TestExtractSourceUsesTitleHintAsFallback(t *testing.T) {
 	article := NewExtractor().ExtractSource(Source{
 		HTML: `

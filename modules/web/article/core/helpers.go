@@ -109,15 +109,23 @@ func firstAttr(sel *goquery.Selection, name string) string {
 	return normalizeWhitespace(sel.AttrOr(name, ""))
 }
 
-func parseBaseURL(doc *goquery.Document) *url.URL {
+func parseBaseURL(doc *goquery.Document, sourceURL *url.URL) *url.URL {
 	raw := firstAttr(doc.Find("base[href]").First(), "href")
 	if raw == "" {
 		return nil
 	}
 
 	parsed, err := url.Parse(raw)
-	if err != nil || !parsed.IsAbs() {
+	if err != nil {
 		return nil
+	}
+
+	if !parsed.IsAbs() {
+		if sourceURL == nil {
+			return nil
+		}
+
+		return sourceURL.ResolveReference(parsed)
 	}
 
 	return parsed
@@ -207,18 +215,42 @@ func normalizeTimestamp(raw string) *string {
 		return nil
 	}
 
-	for _, layout := range timestampLayouts {
-		parsed, err := time.Parse(layout, raw)
-		if err == nil {
-			out := parsed.UTC().Format(time.RFC3339)
+	if parsed, ok := parseTimestamp(raw); ok {
+		out := parsed.UTC().Format(time.RFC3339)
 
-			return &out
-		}
+		return &out
 	}
 
 	out := raw
 
 	return &out
+}
+
+func normalizeTimestampStrict(raw string) *string {
+	parsed, ok := parseTimestamp(raw)
+	if !ok {
+		return nil
+	}
+
+	out := parsed.UTC().Format(time.RFC3339)
+
+	return &out
+}
+
+func parseTimestamp(raw string) (time.Time, bool) {
+	raw = normalizeWhitespace(raw)
+	if raw == "" {
+		return time.Time{}, false
+	}
+
+	for _, layout := range timestampLayouts {
+		parsed, err := time.Parse(layout, raw)
+		if err == nil {
+			return parsed, true
+		}
+	}
+
+	return time.Time{}, false
 }
 
 func countWords(input string) int {
@@ -305,6 +337,21 @@ func hasClassToken(input string, token string) bool {
 
 	for _, className := range strings.Fields(strings.ToLower(normalizeWhitespace(input))) {
 		if className == token {
+			return true
+		}
+	}
+
+	return false
+}
+
+func hasSpaceSeparatedToken(input string, token string) bool {
+	token = strings.ToLower(strings.TrimSpace(token))
+	if token == "" {
+		return false
+	}
+
+	for _, field := range strings.Fields(strings.ToLower(normalizeWhitespace(input))) {
+		if field == token {
 			return true
 		}
 	}

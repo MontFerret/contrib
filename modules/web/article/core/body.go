@@ -2,6 +2,7 @@ package core
 
 import (
 	"net/url"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
@@ -18,12 +19,20 @@ var (
 	}
 )
 
-type scoredCandidate struct {
-	Node       *html.Node
-	Score      float64
-	Words      int
-	TextLength int
-}
+type (
+	scoredCandidate struct {
+		Node       *html.Node
+		Score      float64
+		Words      int
+		TextLength int
+	}
+
+	cleanupMetrics struct {
+		text           textSummary
+		linkTextLength int
+		hasKeepContent bool
+	}
+)
 
 func selectBestCandidate(doc *goquery.Document, title *string) *scoredCandidate {
 	var best *scoredCandidate
@@ -112,21 +121,15 @@ func (e *Extractor) cleanCandidate(sel *goquery.Selection, title *string, baseUR
 func removeBoilerplate(root *goquery.Selection) {
 	root.Find("script,style,noscript,nav,aside,footer,form,button,iframe,svg,canvas,template,dialog,menu").Remove()
 
-	root.Find("*").Each(func(_ int, node *goquery.Selection) {
-		signals := classID(node)
-		if signals == "" {
-			return
-		}
+	if root == nil || len(root.Nodes) == 0 {
+		return
+	}
 
-		if hasKeyword(signals, negativeKeywords) && !hasKeyword(signals, positiveKeywords) {
-			node.Remove()
-			return
-		}
-
-		if node.Is("section,div,ul,ol") && measureLinkDensity(node, len(normalizeWhitespace(node.Text()))) > 0.72 {
-			node.Remove()
-		}
-	})
+	for child := root.Nodes[0].FirstChild; child != nil; {
+		next := child.NextSibling
+		walkBoilerplateCleanup(child)
+		child = next
+	}
 }
 
 func removeDuplicateTitle(root *goquery.Selection, title *string) {
@@ -176,16 +179,15 @@ func rewriteBodyURLs(root *goquery.Selection, baseURL *url.URL) {
 }
 
 func pruneEmptyContainers(root *goquery.Selection) {
-	root.Find("div,section,span,header").Each(func(_ int, node *goquery.Selection) {
-		if node.Find("img,pre,code,table,ul,ol,blockquote").Length() > 0 {
-			return
-		}
+	if root == nil || len(root.Nodes) == 0 {
+		return
+	}
 
-		text := normalizeWhitespace(node.Text())
-		if text == "" {
-			node.Remove()
-		}
-	})
+	for child := root.Nodes[0].FirstChild; child != nil; {
+		next := child.NextSibling
+		walkEmptyContainerPrune(child)
+		child = next
+	}
 }
 
 func isMeaningfulBody(text string, score float64) bool {
@@ -211,4 +213,145 @@ func maxInt(a int, b int) int {
 	}
 
 	return b
+}
+
+func mergeCleanupMetrics(left cleanupMetrics, right cleanupMetrics) cleanupMetrics {
+	return cleanupMetrics{
+		text:           combineTextSummary(left.text, right.text),
+		linkTextLength: left.linkTextLength + right.linkTextLength,
+		hasKeepContent: left.hasKeepContent || right.hasKeepContent,
+	}
+}
+
+func walkBoilerplateCleanup(node *html.Node) cleanupMetrics {
+	if node == nil {
+		return cleanupMetrics{}
+	}
+
+	if node.Type == html.TextNode {
+		return cleanupMetrics{text: summarizeTextNode(node.Data)}
+	}
+
+	metrics := cleanupMetrics{}
+	for child := node.FirstChild; child != nil; {
+		next := child.NextSibling
+		childMetrics := walkBoilerplateCleanup(child)
+		if child.Parent == node {
+			metrics = mergeCleanupMetrics(metrics, childMetrics)
+		}
+		child = next
+	}
+
+	if node.Type != html.ElementNode {
+		return metrics
+	}
+
+	tag := strings.ToLower(node.Data)
+	if tag == "a" {
+		metrics.linkTextLength += metrics.text.normalizedLength()
+	}
+
+	if isKeepContentTag(tag) {
+		metrics.hasKeepContent = true
+	}
+
+	signals := classIDFromNode(node)
+	if signals == "" {
+		return metrics
+	}
+
+	if hasKeyword(signals, negativeKeywords) && !hasKeyword(signals, positiveKeywords) {
+		removeNode(node)
+
+		return cleanupMetrics{}
+	}
+
+	if isLinkDensityContainerTag(tag) && measureCleanupLinkDensity(metrics) > 0.72 {
+		removeNode(node)
+
+		return cleanupMetrics{}
+	}
+
+	return metrics
+}
+
+func walkEmptyContainerPrune(node *html.Node) cleanupMetrics {
+	if node == nil {
+		return cleanupMetrics{}
+	}
+
+	if node.Type == html.TextNode {
+		return cleanupMetrics{text: summarizeTextNode(node.Data)}
+	}
+
+	metrics := cleanupMetrics{}
+	for child := node.FirstChild; child != nil; {
+		next := child.NextSibling
+		childMetrics := walkEmptyContainerPrune(child)
+		if child.Parent == node {
+			metrics = mergeCleanupMetrics(metrics, childMetrics)
+		}
+		child = next
+	}
+
+	if node.Type != html.ElementNode {
+		return metrics
+	}
+
+	tag := strings.ToLower(node.Data)
+	if isKeepContentTag(tag) {
+		metrics.hasKeepContent = true
+	}
+
+	if isPrunableContainerTag(tag) && !metrics.hasKeepContent && metrics.text.normalizedLength() == 0 {
+		removeNode(node)
+
+		return cleanupMetrics{}
+	}
+
+	return metrics
+}
+
+func measureCleanupLinkDensity(metrics cleanupMetrics) float64 {
+	textLength := metrics.text.normalizedLength()
+	if textLength == 0 {
+		return 0
+	}
+
+	return float64(metrics.linkTextLength) / float64(textLength)
+}
+
+func isKeepContentTag(tag string) bool {
+	switch tag {
+	case "img", "pre", "code", "table", "ul", "ol", "blockquote":
+		return true
+	default:
+		return false
+	}
+}
+
+func isLinkDensityContainerTag(tag string) bool {
+	switch tag {
+	case "section", "div", "ul", "ol":
+		return true
+	default:
+		return false
+	}
+}
+
+func isPrunableContainerTag(tag string) bool {
+	switch tag {
+	case "div", "section", "span", "header":
+		return true
+	default:
+		return false
+	}
+}
+
+func removeNode(node *html.Node) {
+	if node == nil || node.Parent == nil {
+		return
+	}
+
+	node.Parent.RemoveChild(node)
 }

@@ -372,7 +372,7 @@ func extractDOMFallbackMetadata(doc *goquery.Document, baseURL *url.URL) types.A
 	return types.Article{
 		Lang:         stringPtr(firstAttr(doc.Find("html").First(), "lang")),
 		Dir:          stringPtr(firstAttr(doc.Find("html").First(), "dir")),
-		CanonicalURL: resolveURLPtr(firstAttr(doc.Find("link[rel='canonical']").First(), "href"), baseURL),
+		CanonicalURL: resolveURLPtr(firstLinkHrefByRelToken(doc, "canonical"), baseURL),
 		Title:        firstTextBySelectors(doc.Selection, []string{"h1"}, 8, 240),
 		Byline: cleanByline(
 			valueOrEmpty(firstTextBySelectors(doc.Selection, []string{
@@ -398,6 +398,25 @@ func extractDOMFallbackMetadata(doc *goquery.Document, baseURL *url.URL) types.A
 		Tags:       findTagLinks(doc),
 		Categories: findCategoryLinks(doc),
 	}
+}
+
+func firstLinkHrefByRelToken(doc *goquery.Document, token string) string {
+	if doc == nil {
+		return ""
+	}
+
+	found := ""
+	doc.Find("link[rel]").EachWithBreak(func(_ int, sel *goquery.Selection) bool {
+		if !hasSpaceSeparatedToken(firstAttr(sel, "rel"), token) {
+			return true
+		}
+
+		found = firstAttr(sel, "href")
+
+		return found == ""
+	})
+
+	return found
 }
 
 func fillTitleAndSiteFromText(titleText string, article *types.Article) {
@@ -478,50 +497,59 @@ func splitDocumentTitleAgainstKnownTitle(raw string, known string) (string, stri
 }
 
 func findPublishedTime(doc *goquery.Document) *string {
-	var found *string
-
-	doc.Find("time").EachWithBreak(func(_ int, sel *goquery.Selection) bool {
-		text := firstAttr(sel, "datetime")
-		if text == "" {
-			text = normalizeWhitespace(sel.Text())
-		}
-
-		if text == "" {
-			return true
-		}
-
-		if hasKeyword(classID(sel), []string{"update", "modified"}) {
-			return true
-		}
-
-		found = normalizeTimestamp(text)
-
-		return false
-	})
-
-	return found
+	return findScopedTime(doc, false)
 }
 
 func findUpdatedTime(doc *goquery.Document) *string {
+	return findScopedTime(doc, true)
+}
+
+func findScopedTime(doc *goquery.Document, requireUpdated bool) *string {
+	if doc == nil {
+		return nil
+	}
+
+	for _, selector := range []string{"article", "main", "[role='main']", "body"} {
+		var found *string
+		doc.Find(selector).EachWithBreak(func(_ int, root *goquery.Selection) bool {
+			found = findTimeInRoot(root, requireUpdated)
+
+			return found == nil
+		})
+
+		if found != nil {
+			return found
+		}
+	}
+
+	return findTimeInRoot(doc.Selection, requireUpdated)
+}
+
+func findTimeInRoot(root *goquery.Selection, requireUpdated bool) *string {
+	if root == nil || root.Length() == 0 {
+		return nil
+	}
+
 	var found *string
-
-	doc.Find("time").EachWithBreak(func(_ int, sel *goquery.Selection) bool {
-		text := firstAttr(sel, "datetime")
-		if text == "" {
-			text = normalizeWhitespace(sel.Text())
-		}
-
-		if text == "" {
+	root.Find("time").EachWithBreak(func(_ int, sel *goquery.Selection) bool {
+		isUpdated := hasKeyword(classID(sel), []string{"update", "modified"})
+		if requireUpdated != isUpdated {
 			return true
 		}
 
-		if !hasKeyword(classID(sel), []string{"update", "modified"}) {
-			return true
+		if timestamp := normalizeTimestampStrict(firstAttr(sel, "datetime")); timestamp != nil {
+			found = timestamp
+
+			return false
 		}
 
-		found = normalizeTimestamp(text)
+		if timestamp := normalizeTimestampStrict(sel.Text()); timestamp != nil {
+			found = timestamp
 
-		return false
+			return false
+		}
+
+		return true
 	})
 
 	return found

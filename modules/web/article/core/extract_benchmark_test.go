@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"testing"
 )
@@ -63,4 +64,25 @@ func BenchmarkRenderMarkdown(b *testing.B) {
 			}
 		}
 	})
+}
+
+func BenchmarkExtractCleanupScaling(b *testing.B) {
+	ctx := WithExtractor(context.Background(), NewExtractor())
+	extractor := ExtractorFromContext(ctx)
+
+	for _, blocks := range []int{120, 240, 480} {
+		fixture := buildLargeCandidateFixture(blocks)
+
+		b.Run(fmt.Sprintf("noise_%d", blocks), func(b *testing.B) {
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			for i := 0; i < b.N; i++ {
+				article := extractor.Extract(fixture)
+				if article.Text == nil {
+					b.Fatal("expected article text")
+				}
+			}
+		})
+	}
 }

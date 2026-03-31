@@ -55,7 +55,7 @@ func (e *Extractor) ExtractSource(source Source) types.Article {
 		return types.Article{}
 	}
 
-	baseURL := parseBaseURL(doc)
+	baseURL := parseBaseURL(doc, source.SourceURL)
 	if baseURL == nil {
 		baseURL = source.SourceURL
 	}
