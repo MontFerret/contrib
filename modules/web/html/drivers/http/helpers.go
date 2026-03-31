@@ -3,9 +3,10 @@ package http
 import (
 	HTTP "net/http"
 
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )

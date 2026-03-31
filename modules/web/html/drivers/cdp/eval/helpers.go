@@ -3,9 +3,10 @@ package eval
 import (
 	"strings"
 
+	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
 )
 
 func parseRuntimeException(details *cdpruntime.ExceptionDetails) error {

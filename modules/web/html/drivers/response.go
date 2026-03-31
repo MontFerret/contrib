@@ -3,8 +3,9 @@ package drivers
 import (
 	"context"
 
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/goccy/go-json"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 // HTTPResponse HTTP response object.

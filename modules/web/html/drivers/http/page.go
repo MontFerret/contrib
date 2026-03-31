@@ -4,10 +4,11 @@ import (
 	"context"
 	"hash/fnv"
 
+	"github.com/PuerkitoBio/goquery"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/PuerkitoBio/goquery"
 )
 
 type HTMLPage struct {

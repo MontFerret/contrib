@@ -6,11 +6,12 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/html"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common/cssx"
 	cssxc "github.com/MontFerret/cssx"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/PuerkitoBio/goquery"
-	"golang.org/x/net/html"
 )
 
 type cssxCompiledOpKind string

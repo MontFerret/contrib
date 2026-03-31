@@ -4,8 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	"github.com/MontFerret/ferret/v2/pkg/logging"
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/devtool"
 	"github.com/mafredri/cdp/protocol/browser"
@@ -13,6 +11,9 @@ import (
 	"github.com/mafredri/cdp/rpcc"
 	"github.com/mafredri/cdp/session"
 	"github.com/pkg/errors"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers"
+	"github.com/MontFerret/ferret/v2/pkg/logging"
 )
 
 const DriverName = "cdp"

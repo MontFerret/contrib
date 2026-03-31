@@ -4,12 +4,13 @@ import (
 	"context"
 	"sync"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/gobwas/glob"
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/fetch"
 	"github.com/mafredri/cdp/protocol/network"
 	"github.com/rs/zerolog"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"

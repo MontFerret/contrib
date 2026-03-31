@@ -4,13 +4,14 @@ import (
 	"context"
 	"sync"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/goccy/go-json"
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/network"
 	"github.com/mafredri/cdp/protocol/page"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"

@@ -6,8 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/gorilla/css/scanner"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 func DeserializeStyles(ctx context.Context, input runtime.String) (*runtime.Object, error) {

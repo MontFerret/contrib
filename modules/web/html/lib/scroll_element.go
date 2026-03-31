@@ -3,8 +3,9 @@ package lib
 import (
 	"context"
 
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/pkg/errors"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )

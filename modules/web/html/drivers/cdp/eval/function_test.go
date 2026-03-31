@@ -3,11 +3,14 @@ package eval
 import (
 	"testing"
 
-	"github.com/mafredri/cdp/protocol/runtime"
+	"github.com/goccy/go-json"
+	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
 	. "github.com/smartystreets/goconvey/convey"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers"
+	jsonf "github.com/MontFerret/ferret/v2/pkg/encoding/json"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
 
 func TestFunction(t *testing.T) {
@@ -195,8 +198,8 @@ func TestFunction(t *testing.T) {
 
 		Convey(".CallOn", func() {
 			Convey("It should use a given ownerID over ContextID", func() {
-				ownerID := runtime.RemoteObjectID("foo")
-				contextID := runtime.ExecutionContextID(42)
+				ownerID := cdpruntime.RemoteObjectID("foo")
+				contextID := cdpruntime.ExecutionContextID(42)
 
 				f := F("return 'foo'").CallOn(ownerID)
 				call := f.eval(contextID)
@@ -207,8 +210,8 @@ func TestFunction(t *testing.T) {
 			})
 
 			Convey("It should use a given ContextID when ownerID is empty or nil", func() {
-				ownerID := runtime.RemoteObjectID("")
-				contextID := runtime.ExecutionContextID(42)
+				ownerID := cdpruntime.RemoteObjectID("")
+				contextID := cdpruntime.ExecutionContextID(42)
 
 				f := F("return 'foo'").CallOn(ownerID)
 				call := f.eval(contextID)
@@ -222,9 +225,9 @@ func TestFunction(t *testing.T) {
 		Convey(".WithArgRef", func() {
 			Convey("Should add argument with a given RemoteObjectID", func() {
 				f := F("return 'foo'")
-				id1 := runtime.RemoteObjectID("foo")
-				id2 := runtime.RemoteObjectID("bar")
-				id3 := runtime.RemoteObjectID("baz")
+				id1 := cdpruntime.RemoteObjectID("foo")
+				id2 := cdpruntime.RemoteObjectID("bar")
+				id3 := cdpruntime.RemoteObjectID("baz")
 
 				f.WithArgRef(id1).WithArgRef(id2).WithArgRef(id3)
 
@@ -264,15 +267,15 @@ func TestFunction(t *testing.T) {
 				arg3 := f.args[2]
 
 				So(arg1.ObjectID, ShouldBeNil)
-				So(arg1.Value, ShouldResemble, runtime.MustMarshal(val1))
+				So(arg1.Value, ShouldResemble, mustEncodeRuntimeValue(t, val1))
 				So(arg1.UnserializableValue, ShouldBeNil)
 
 				So(arg2.ObjectID, ShouldBeNil)
-				So(arg2.Value, ShouldResemble, runtime.MustMarshal(val2))
+				So(arg2.Value, ShouldResemble, mustEncodeRuntimeValue(t, val2))
 				So(arg2.UnserializableValue, ShouldBeNil)
 
 				So(arg3.ObjectID, ShouldBeNil)
-				So(arg3.Value, ShouldResemble, runtime.MustMarshal(val3))
+				So(arg3.Value, ShouldResemble, mustEncodeRuntimeValue(t, val3))
 				So(arg3.UnserializableValue, ShouldBeNil)
 			})
 		})
@@ -293,15 +296,15 @@ func TestFunction(t *testing.T) {
 				arg3 := f.args[2]
 
 				So(arg1.ObjectID, ShouldBeNil)
-				So(arg1.Value, ShouldResemble, runtime.MustMarshalAny(val1))
+				So(arg1.Value, ShouldResemble, mustMarshalAny(t, val1))
 				So(arg1.UnserializableValue, ShouldBeNil)
 
 				So(arg2.ObjectID, ShouldBeNil)
-				So(arg2.Value, ShouldResemble, runtime.MustMarshalAny(val2))
+				So(arg2.Value, ShouldResemble, mustMarshalAny(t, val2))
 				So(arg2.UnserializableValue, ShouldBeNil)
 
 				So(arg3.ObjectID, ShouldBeNil)
-				So(arg3.Value, ShouldResemble, runtime.MustMarshalAny(val3))
+				So(arg3.Value, ShouldResemble, mustMarshalAny(t, val3))
 				So(arg3.UnserializableValue, ShouldBeNil)
 			})
 		})
@@ -322,15 +325,15 @@ func TestFunction(t *testing.T) {
 				arg3 := f.args[2]
 
 				So(arg1.ObjectID, ShouldBeNil)
-				So(arg1.Value, ShouldResemble, runtime.MustMarshalAny(val1.String()))
+				So(arg1.Value, ShouldResemble, mustMarshalAny(t, val1.String()))
 				So(arg1.UnserializableValue, ShouldBeNil)
 
 				So(arg2.ObjectID, ShouldBeNil)
-				So(arg2.Value, ShouldResemble, runtime.MustMarshalAny(val2.String()))
+				So(arg2.Value, ShouldResemble, mustMarshalAny(t, val2.String()))
 				So(arg2.UnserializableValue, ShouldBeNil)
 
 				So(arg3.ObjectID, ShouldBeNil)
-				So(arg3.Value, ShouldResemble, runtime.MustMarshalAny(val3.String()))
+				So(arg3.Value, ShouldResemble, mustMarshalAny(t, val3.String()))
 				So(arg3.UnserializableValue, ShouldBeNil)
 			})
 		})
@@ -461,4 +464,26 @@ func TestFunction(t *testing.T) {
 			})
 		})
 	})
+}
+
+func mustEncodeRuntimeValue(t *testing.T, value runtime.Value) json.RawMessage {
+	t.Helper()
+
+	raw, err := jsonf.Default.Encode(value)
+	if err != nil {
+		t.Fatalf("encode runtime value: %v", err)
+	}
+
+	return json.RawMessage(raw)
+}
+
+func mustMarshalAny(t *testing.T, value any) json.RawMessage {
+	t.Helper()
+
+	raw, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("marshal value: %v", err)
+	}
+
+	return json.RawMessage(raw)
 }

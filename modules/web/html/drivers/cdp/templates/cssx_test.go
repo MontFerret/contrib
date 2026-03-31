@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 func TestCSSXCompilesAllSupportedSelectors(t *testing.T) {
@@ -60,7 +62,7 @@ func TestCSSXCompilesAllSupportedSelectors(t *testing.T) {
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			fn, err := CSSX(cdpruntime.RemoteObjectID("obj"), tc.exp)
+			fn, err := CSSX(cdpruntime.RemoteObjectID("obj"), runtime.NewString(tc.exp))
 
 			if err != nil {
 				t.Fatalf("expected expression to compile, got %v", err)
@@ -79,7 +81,7 @@ func TestCSSXCompilesAllSupportedSelectors(t *testing.T) {
 }
 
 func TestCSSXUsesCallNameField(t *testing.T) {
-	fn, err := CSSX(cdpruntime.RemoteObjectID("obj"), `:first(div)`)
+	fn, err := CSSX(cdpruntime.RemoteObjectID("obj"), runtime.NewString(`:first(div)`))
 
 	if err != nil {
 		t.Fatalf("expected expression to compile, got %v", err)
@@ -102,7 +104,7 @@ func TestCSSXRejectsInvalidArgs(t *testing.T) {
 	for _, exp := range cases {
 		exp := exp
 		t.Run(exp, func(t *testing.T) {
-			_, err := CSSX(cdpruntime.RemoteObjectID("obj"), exp)
+			_, err := CSSX(cdpruntime.RemoteObjectID("obj"), runtime.NewString(exp))
 
 			if err == nil {
 				t.Fatalf("expected validation error for %s", exp)
@@ -112,7 +114,7 @@ func TestCSSXRejectsInvalidArgs(t *testing.T) {
 }
 
 func TestCSSXSliceOffsetLimitSemantics(t *testing.T) {
-	fn, err := CSSX(cdpruntime.RemoteObjectID("obj"), `:slice(10, 5, section)`)
+	fn, err := CSSX(cdpruntime.RemoteObjectID("obj"), runtime.NewString(`:slice(10, 5, section)`))
 
 	if err != nil {
 		t.Fatalf("expected expression to compile, got %v", err)
@@ -130,7 +132,7 @@ func TestCSSXSliceOffsetLimitSemantics(t *testing.T) {
 }
 
 func TestCSSXCompilesNestedMultiArity(t *testing.T) {
-	fn, err := CSSX(cdpruntime.RemoteObjectID("obj"), `:indexOf(.item, :first(.selected))`)
+	fn, err := CSSX(cdpruntime.RemoteObjectID("obj"), runtime.NewString(`:indexOf(.item, :first(.selected))`))
 
 	if err != nil {
 		t.Fatalf("expected nested expression to compile, got %v", err)

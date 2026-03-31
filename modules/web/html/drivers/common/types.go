@@ -1,8 +1,9 @@
 package common
 
 import (
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"golang.org/x/net/html"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 func FromHTMLType(nt html.NodeType) int {

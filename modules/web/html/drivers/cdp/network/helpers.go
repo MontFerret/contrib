@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/mafredri/cdp/protocol/network"
 	"github.com/mafredri/cdp/protocol/page"
 	"github.com/rs/zerolog/log"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )

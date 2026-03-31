@@ -5,9 +5,10 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/mafredri/cdp/protocol/dom"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
-	"github.com/mafredri/cdp/protocol/dom"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 

@@ -3,10 +3,11 @@ package dom
 import (
 	"context"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/mafredri/cdp/protocol/page"
 	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 type NodeLoader struct {
