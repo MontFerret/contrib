@@ -193,11 +193,6 @@ func parseDelimitedValues(values ...string) []string {
 			return char == ',' || char == ';' || char == '|'
 		})
 
-		if len(parts) == 0 {
-			result = append(result, value)
-			continue
-		}
-
 		for _, part := range parts {
 			part = normalizeWhitespace(part)
 			if part != "" {
