@@ -11,10 +11,7 @@ import (
 )
 
 func TestNewSmoke(t *testing.T) {
-	mod, err := New()
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	mod := New()
 
 	if mod == nil {
 		t.Fatal("expected module to be non-nil")
@@ -26,10 +23,7 @@ func TestNewSmoke(t *testing.T) {
 }
 
 func TestRegisterInstallsSessionExtractor(t *testing.T) {
-	mod, err := New()
-	if err != nil {
-		t.Fatalf("unexpected module error: %v", err)
-	}
+	mod := New()
 
 	seenExtractor := false
 	engine, err := ferret.New(

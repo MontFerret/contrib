@@ -5,10 +5,7 @@ import (
 )
 
 func TestNewSmoke(t *testing.T) {
-	mod, err := New()
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	mod := New()
 
 	if mod == nil {
 		t.Fatal("expected module to be non-nil")
