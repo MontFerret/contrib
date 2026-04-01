@@ -5,7 +5,7 @@ go 1.25.6
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.0
 	github.com/MontFerret/contrib/modules/web/html v0.0.0-20260330220155-415840fb6708
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.4
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.5
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	golang.org/x/net v0.52.0
@@ -24,9 +24,9 @@ require (
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/rs/zerolog v1.34.0 // indirect
+	github.com/rs/zerolog v1.35.0 // indirect
 	github.com/sethgrid/pester v1.2.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect

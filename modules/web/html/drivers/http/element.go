@@ -766,8 +766,8 @@ func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List
 	}
 }
 
-func (el *HTMLElement) Dispatch(_ context.Context, _ runtime.DispatchEvent) (runtime.Value, error) {
-	return runtime.None, runtime.ErrNotSupported
+func (el *HTMLElement) Dispatch(_ context.Context, _ runtime.DispatchEvent) error {
+	return runtime.ErrNotSupported
 }
 
 func (el *HTMLElement) ensureStyles(ctx context.Context) error {

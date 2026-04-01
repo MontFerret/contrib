@@ -640,7 +640,7 @@ func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List
 	}
 }
 
-func (el *HTMLElement) Dispatch(ctx context.Context, event runtime.DispatchEvent) (runtime.Value, error) {
+func (el *HTMLElement) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
 	//TODO implement me
 	panic("implement me")
 }

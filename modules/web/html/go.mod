@@ -4,7 +4,7 @@ go 1.25.6
 
 require (
 	github.com/MontFerret/cssx v0.2.0
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.4
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.5
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/antchfx/htmlquery v1.3.5
 	github.com/antchfx/xpath v1.3.6
@@ -15,7 +15,7 @@ require (
 	github.com/jarcoal/httpmock v1.4.1
 	github.com/mafredri/cdp v0.35.0
 	github.com/pkg/errors v0.9.1
-	github.com/rs/zerolog v1.34.0
+	github.com/rs/zerolog v1.35.0
 	github.com/sethgrid/pester v1.2.0
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/stretchr/testify v1.7.1
@@ -32,7 +32,7 @@ require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/smarty/assertions v1.16.0 // indirect

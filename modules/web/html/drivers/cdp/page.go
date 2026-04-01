@@ -606,7 +606,7 @@ func (p *HTMLPage) Subscribe(ctx context.Context, subscription runtime.Subscript
 	}
 }
 
-func (p *HTMLPage) Dispatch(ctx context.Context, event runtime.DispatchEvent) (runtime.Value, error) {
+func (p *HTMLPage) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
 	//TODO implement me
 	panic("implement me")
 }

@@ -229,7 +229,7 @@ func (p *HTMLPage) Subscribe(_ context.Context, _ runtime.Subscription) (runtime
 	return nil, runtime.ErrNotSupported
 }
 
-func (p *HTMLPage) Dispatch(ctx context.Context, event runtime.DispatchEvent) (runtime.Value, error) {
+func (p *HTMLPage) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
 	//TODO implement me
 	panic("implement me")
 }

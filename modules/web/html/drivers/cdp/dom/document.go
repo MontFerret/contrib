@@ -335,7 +335,7 @@ func (doc *HTMLDocument) Query(ctx context.Context, q runtime.Query) (runtime.Li
 	panic("implement me")
 }
 
-func (doc *HTMLDocument) Dispatch(ctx context.Context, event runtime.DispatchEvent) (runtime.Value, error) {
+func (doc *HTMLDocument) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
 	//TODO implement me
 	panic("implement me")
 }
