@@ -34,7 +34,7 @@ type Driver struct {
 	mu        sync.Mutex
 }
 
-func NewDriver(opts ...Option) *Driver {
+func New(opts ...Option) *Driver {
 	drv := new(Driver)
 	drv.options = NewOptions(opts)
 	drv.dev = devtool.New(drv.options.Address)

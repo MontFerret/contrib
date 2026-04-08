@@ -5,6 +5,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // Element finds an element by a given CSS selector.
@@ -23,9 +24,7 @@ func Element(ctx context.Context, args ...runtime.Value) (runtime.Value, error) 
 }
 
 func queryArgs(args []runtime.Value) (drivers.HTMLElement, drivers.QuerySelector, error) {
-	err := runtime.ValidateArgs(args, 2, 2)
-
-	if err != nil {
+	if err := runtime.ValidateArgs(args, 2, 2); err != nil {
 		return nil, drivers.QuerySelector{}, err
 	}
 
@@ -35,11 +34,17 @@ func queryArgs(args []runtime.Value) (drivers.HTMLElement, drivers.QuerySelector
 		return nil, drivers.QuerySelector{}, err
 	}
 
-	selector, err := drivers.ToQuerySelector(args[1])
+	switch v := args[1].(type) {
+	case *sdk.Proxy[drivers.QuerySelector]:
+		return el, v.Target(), nil
+	default:
+		selector, err := drivers.ToQuerySelector(args[1])
 
-	if err != nil {
-		return nil, drivers.QuerySelector{}, err
+		if err != nil {
+			return nil, drivers.QuerySelector{}, err
+		}
+
+		return el, selector, nil
+
 	}
-
-	return el, selector, nil
 }
