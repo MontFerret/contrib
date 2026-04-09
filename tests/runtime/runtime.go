@@ -75,7 +75,7 @@ func (p *Params) ToMap() (runtime.Params, error) {
 
 var (
 	conn = flag.String(
-		"cdp",
+		"browser-address",
 		"",
 		"set CDP address",
 	)

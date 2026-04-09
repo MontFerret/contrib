@@ -1,5 +1,5 @@
 LET url = @lab.static.static + '/value.html'
-LET page = DOCUMENT(url, true)
+LET page = DOCUMENT(url)
 
 LET element = ELEMENT(page, '.tablesorter')
 LET actual = XPATH(element, "//input[contains(@type, 'hidden')]")

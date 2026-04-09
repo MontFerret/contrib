@@ -14,7 +14,11 @@ import (
 )
 
 func EvalXPathToNode(doc *goquery.Document, selection *goquery.Selection, expression string) (drivers.HTMLNode, error) {
-	node := htmlquery.FindOne(fromSelectionToNode(selection), expression)
+	node, err := htmlquery.Query(fromSelectionToNode(selection), expression)
+
+	if err != nil {
+		return nil, err
+	}
 
 	if node == nil {
 		return nil, nil

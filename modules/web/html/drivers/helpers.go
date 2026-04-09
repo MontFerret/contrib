@@ -62,6 +62,10 @@ func ToQuerySelector(value runtime.Value) (QuerySelector, error) {
 		return qs, nil
 	case runtime.String:
 		return NewCSSSelector(v), nil
+	case *sdk.Proxy[QuerySelector]:
+		return v.Target(), nil
+	case *runtime.Box[QuerySelector]:
+		return v.Value, nil
 	default:
 		return qs, runtime.TypeErrorOf(value, runtime.TypeMap, runtime.TypeString)
 	}

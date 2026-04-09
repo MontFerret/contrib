@@ -82,7 +82,7 @@ main() {
         fi
 
         lab run \
-          --runtime=${DIR_BIN}/runtime \
+          --runtime=bin://${DIR_BIN}/runtime \
           --timeout=120 \
           --attempts=5 \
           --concurrency=1 \

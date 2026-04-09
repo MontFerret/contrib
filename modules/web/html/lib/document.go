@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
@@ -109,13 +108,6 @@ func newPageLoadParams(url runtime.String, arg runtime.Value) (PageLoadParams, e
 		}
 	case runtime.String:
 		res.Driver = arg.(runtime.String).String()
-	case runtime.Boolean:
-		b := arg.(runtime.Boolean)
-
-		// fallback
-		if b {
-			res.Driver = cdp.DriverName
-		}
 	}
 
 	return res, nil
