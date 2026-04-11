@@ -4,8 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 type (
@@ -18,12 +19,12 @@ type (
 	domEventSubscription func(ctx context.Context, bindingName string) error
 
 	domEventStream struct {
+		stream      cdpruntime.BindingCalledClient
+		closeErr    error
+		cleanup     func() error
 		bindingName string
 		contextID   cdpruntime.ExecutionContextID
-		stream      cdpruntime.BindingCalledClient
-		cleanup     func() error
 		closeOnce   sync.Once
-		closeErr    error
 	}
 )
 

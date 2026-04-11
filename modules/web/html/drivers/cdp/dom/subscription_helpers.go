@@ -9,11 +9,12 @@ import (
 	"strings"
 	"time"
 
+	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
+	"github.com/mafredri/cdp/rpcc"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	jsoncodec "github.com/MontFerret/ferret/v2/pkg/encoding/json"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
-	"github.com/mafredri/cdp/rpcc"
 )
 
 func closeDOMEventResources(

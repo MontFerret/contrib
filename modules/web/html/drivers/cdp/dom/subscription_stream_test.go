@@ -20,11 +20,11 @@ type (
 	}
 
 	fakeBindingCalledStream struct {
+		closeErr   error
 		ready      chan struct{}
 		results    chan bindingCalledResult
-		mu         sync.Mutex
-		closeErr   error
 		closeCalls int
+		mu         sync.Mutex
 		closed     bool
 	}
 )

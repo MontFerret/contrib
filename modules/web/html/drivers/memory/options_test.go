@@ -7,6 +7,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
+	"github.com/MontFerret/contrib/modules/web/html/drivers/memory"
+
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
 

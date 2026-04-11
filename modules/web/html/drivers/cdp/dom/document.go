@@ -336,22 +336,12 @@ func (doc *HTMLDocument) Query(ctx context.Context, q runtime.Query) (runtime.Li
 }
 
 func (doc *HTMLDocument) Subscribe(ctx context.Context, subscription runtime.Subscription) (runtime.Stream, error) {
-	return subscribeDOMEvents(
+	return subscribeDOMTargetEvents(
 		ctx,
 		doc.client.Runtime,
-		doc.eval.ContextID(),
-		func(ctx context.Context, bindingName string) error {
-			return doc.eval.Eval(
-				ctx,
-				templates.AddEventListener(doc.element.id, subscription.EventName, bindingName, subscription.Options),
-			)
-		},
-		func(ctx context.Context, bindingName string) error {
-			return doc.eval.Eval(
-				ctx,
-				templates.RemoveEventListener(doc.element.id, subscription.EventName, bindingName, subscription.Options),
-			)
-		},
+		doc.eval,
+		doc.element.id,
+		subscription,
 	)
 }
 

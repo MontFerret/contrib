@@ -7,11 +7,15 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-const addEventListener = `(target, eventName, bindingName, options) => {
+const addEventListener = `(rootTarget, eventName, bindingName, config) => {
 	const registryKey = '__ferretDomEventHandlers';
-	const maxDepth = 4;
-	const listenerOptions = options == null ? undefined : options;
 	const registry = globalThis[registryKey] || (globalThis[registryKey] = new WeakMap());
+	const settings = config == null ? {} : config;
+	const listenerOptions = settings.listener == null ? undefined : settings.listener;
+	const delegate = settings.delegate == null ? null : settings.delegate;
+	const targetSelector = settings.targetSelector == null ? null : settings.targetSelector;
+	const props = Array.isArray(settings.props) ? settings.props : null;
+	const maxDepth = Number.isInteger(settings.maxDepth) ? settings.maxDepth : 4;
 
 	const isHostObject = (value) => {
 		if (typeof Window !== 'undefined' && value instanceof Window) {
@@ -100,7 +104,29 @@ const addEventListener = `(target, eventName, bindingName, options) => {
 		return output;
 	};
 
+	const serializeSelectedEvent = (event) => {
+		const output = { type: event.type };
+
+		for (const key of props) {
+			if (key === 'type') {
+				continue;
+			}
+
+			try {
+				output[key] = serialize(event[key], 1, new Set([event]));
+			} catch (err) {
+				output[key] = null;
+			}
+		}
+
+		return output;
+	};
+
 	const serializeEvent = (event) => {
+		if (props != null) {
+			return serializeSelectedEvent(event);
+		}
+
 		const output = { type: event.type };
 		const keys = new Set(['type']);
 		let current = event;
@@ -130,66 +156,125 @@ const addEventListener = `(target, eventName, bindingName, options) => {
 		return output;
 	};
 
+	const matchesDelegate = (event) => {
+		if (delegate == null) {
+			return true;
+		}
+
+		const eventTarget = event.target;
+		let candidate = null;
+
+		if (typeof Element !== 'undefined' && eventTarget instanceof Element) {
+			candidate = eventTarget;
+		} else if (eventTarget != null && eventTarget.parentElement != null) {
+			candidate = eventTarget.parentElement;
+		}
+
+		if (candidate == null || typeof candidate.closest !== 'function') {
+			return false;
+		}
+
+		const match = candidate.closest(delegate);
+
+		if (match == null) {
+			return false;
+		}
+
+		if (typeof Document !== 'undefined' && rootTarget instanceof Document) {
+			return true;
+		}
+
+		if (match === rootTarget) {
+			return true;
+		}
+
+		return typeof rootTarget.contains === 'function' && rootTarget.contains(match);
+	};
+
+	if (delegate != null && typeof rootTarget.querySelector === 'function') {
+		rootTarget.querySelector(delegate);
+	}
+
+	let attachTarget = rootTarget;
+
+	if (targetSelector != null) {
+		if (typeof rootTarget.querySelector !== 'function') {
+			throw new Error('event target does not support querySelector');
+		}
+
+		attachTarget = rootTarget.querySelector(targetSelector);
+
+		if (attachTarget == null) {
+			throw new Error('failed to resolve event target by selector: ' + targetSelector);
+		}
+	}
+
 	const handler = (event) => {
+		if (!matchesDelegate(event)) {
+			return;
+		}
+
 		globalThis[bindingName](JSON.stringify(serializeEvent(event)));
 	};
 
-	let handlers = registry.get(target);
+	let handlers = registry.get(rootTarget);
 
 	if (handlers == null) {
 		handlers = {};
-		registry.set(target, handlers);
+		registry.set(rootTarget, handlers);
 	}
 
-	handlers[bindingName] = handler;
+	handlers[bindingName] = {
+		handler,
+		eventName,
+		listenerOptions,
+		target: attachTarget
+	};
 
-	target.addEventListener(eventName, handler, listenerOptions);
+	attachTarget.addEventListener(eventName, handler, listenerOptions);
 }`
 
-const removeEventListener = `(target, eventName, bindingName, options) => {
+const removeEventListener = `(rootTarget, bindingName) => {
 	const registryKey = '__ferretDomEventHandlers';
-	const listenerOptions = options == null ? undefined : options;
 	const registry = globalThis[registryKey];
 
 	if (registry == null) {
 		return;
 	}
 
-	const handlers = registry.get(target);
+	const handlers = registry.get(rootTarget);
 
 	if (handlers == null) {
 		return;
 	}
 
-	const handler = handlers[bindingName];
+	const entry = handlers[bindingName];
 
-	if (handler == null) {
+	if (entry == null) {
 		return;
 	}
 
-	target.removeEventListener(eventName, handler, listenerOptions);
+	entry.target.removeEventListener(entry.eventName, entry.handler, entry.listenerOptions);
 
 	delete handlers[bindingName];
 
 	if (Object.keys(handlers).length === 0) {
-		registry.delete(target);
+		registry.delete(rootTarget);
 	}
 }`
 
-func AddEventListener(id cdpruntime.RemoteObjectID, eventName runtime.String, bindingName string, options runtime.Map) *eval.Function {
+func AddEventListener(id cdpruntime.RemoteObjectID, eventName runtime.String, bindingName string, config runtime.Map) *eval.Function {
 	return eval.F(addEventListener).
 		WithArgRef(id).
 		WithArgValue(eventName).
 		WithArg(bindingName).
-		WithArgValue(orNone(options))
+		WithArgValue(orNone(config))
 }
 
-func RemoveEventListener(id cdpruntime.RemoteObjectID, eventName runtime.String, bindingName string, options runtime.Map) *eval.Function {
+func RemoveEventListener(id cdpruntime.RemoteObjectID, bindingName string) *eval.Function {
 	return eval.F(removeEventListener).
 		WithArgRef(id).
-		WithArgValue(eventName).
-		WithArg(bindingName).
-		WithArgValue(orNone(options))
+		WithArg(bindingName)
 }
 
 func orNone(options runtime.Map) runtime.Value {

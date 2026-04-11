@@ -1,0 +1,16 @@
+LET url = @lab.static.dynamic + "/#/events"
+LET page = DOCUMENT(url, { driver: "cdp" })
+LET target = ELEMENT(page, "#observable-element-target")
+
+CLICK(page, "#observable-depth-btn")
+
+LET evt = WAITFOR EVENT "ferret:depth" IN target OPTIONS { props: ["detail"], maxDepth: 2 }
+
+RETURN T::EQ(evt, {
+    type: "ferret:depth",
+    detail: {
+        level1: {
+            level2: NONE
+        }
+    }
+})

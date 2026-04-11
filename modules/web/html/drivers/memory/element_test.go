@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/memory"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
 	"github.com/PuerkitoBio/goquery"

@@ -4,6 +4,6 @@ LET target = ELEMENT(page, "#observable-element-target")
 
 CLICK(page, "#observable-sequence-btn")
 
-LET status = WAITFOR EVENT "ferret:sequence" IN target OPTIONS { once: true } WHEN .detail.index == 2 TIMEOUT 500ms ON TIMEOUT RETURN "timeout"
+LET status = WAITFOR EVENT "ferret:sequence" IN target OPTIONS { listener: { once: true } } WHEN .detail.index == 2 TIMEOUT 500ms ON TIMEOUT RETURN "timeout"
 
 RETURN T::EQ(status, "timeout")

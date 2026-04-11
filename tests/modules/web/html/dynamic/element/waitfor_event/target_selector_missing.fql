@@ -1,0 +1,7 @@
+LET url = @lab.static.dynamic + "/#/events"
+LET page = DOCUMENT(url, { driver: "cdp" })
+LET root = ELEMENT(page, "#observable-target-selector-root")
+
+LET status = WAITFOR EVENT "ferret:target-selector" IN root OPTIONS { targetSelector: ".observable-target-selector-missing" } TIMEOUT 200ms ON TIMEOUT RETURN "timeout" ON ERROR RETURN "error"
+
+RETURN T::EQ(status, "error")

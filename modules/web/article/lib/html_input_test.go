@@ -7,7 +7,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 
 	htmldrivers "github.com/MontFerret/contrib/modules/web/html/drivers"
-	htmlhttp "github.com/MontFerret/contrib/modules/web/html/drivers/http"
+	htmlhttp "github.com/MontFerret/contrib/modules/web/html/drivers/memory"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
