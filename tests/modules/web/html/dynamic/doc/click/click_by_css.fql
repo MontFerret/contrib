@@ -1,5 +1,7 @@
 LET url = @lab.static.dynamic + "/#/events"
-LET page = DOCUMENT(url, true)
+LET page = DOCUMENT(url, {
+  driver: "cdp"
+})
 
 T::TRUE(CLICK(page, "#wait-class-random button"))
 

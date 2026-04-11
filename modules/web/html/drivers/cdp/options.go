@@ -1,7 +1,10 @@
 package cdp
 
 import (
+	"net"
 	"net/textproto"
+	"net/url"
+	"strings"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
@@ -23,7 +26,7 @@ type (
 )
 
 const (
-	DefaultAddress    = "http://127.0.0.1:9222"
+	DefaultAddress    = "http://localhost:9222"
 	DefaultBufferSize = 1048562
 )
 
@@ -47,7 +50,7 @@ func NewOptions(setters []Option) *Options {
 func WithAddress(address string) Option {
 	return func(opts *Options) {
 		if address != "" {
-			opts.Address = address
+			opts.Address = normalizeAddress(address)
 		}
 	}
 }
@@ -116,4 +119,36 @@ func WithNoCompression() Option {
 	return func(opts *Options) {
 		opts.Connection.Compression = false
 	}
+}
+
+func normalizeAddress(address string) string {
+	parsed, err := url.Parse(address)
+	if err != nil || parsed.Host == "" {
+		return address
+	}
+
+	host := parsed.Hostname()
+	if host == "" {
+		return address
+	}
+
+	ip := net.ParseIP(host)
+	if ip == nil || !ip.IsLoopback() {
+		return address
+	}
+
+	port := parsed.Port()
+	if port == "" {
+		parsed.Host = "localhost"
+		return parsed.String()
+	}
+
+	parsed.Host = "localhost:" + port
+
+	// url.URL.String may canonicalize an empty path to "", keep explicit slash form.
+	if parsed.Path == "" && strings.HasSuffix(address, "/") {
+		parsed.Path = "/"
+	}
+
+	return parsed.String()
 }

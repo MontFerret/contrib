@@ -45,7 +45,6 @@ func (m *module) Name() string {
 func (m *module) Register(registry ferret.Bootstrap) error {
 	if !m.noLib {
 		lib.RegisterLib(registry.Host().Library())
-		println("Registered functions:", registry.Host().Library().Size())
 	}
 
 	registry.Hooks().Session().BeforeRun(func(ctx context.Context) (context.Context, error) {
