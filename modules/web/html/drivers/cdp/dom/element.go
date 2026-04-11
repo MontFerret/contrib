@@ -640,6 +640,26 @@ func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List
 	}
 }
 
+func (el *HTMLElement) Subscribe(ctx context.Context, subscription runtime.Subscription) (runtime.Stream, error) {
+	return subscribeDOMEvents(
+		ctx,
+		el.client.Runtime,
+		el.eval.ContextID(),
+		func(ctx context.Context, bindingName string) error {
+			return el.eval.Eval(
+				ctx,
+				templates.AddEventListener(el.id, subscription.EventName, bindingName, subscription.Options),
+			)
+		},
+		func(ctx context.Context, bindingName string) error {
+			return el.eval.Eval(
+				ctx,
+				templates.RemoveEventListener(el.id, subscription.EventName, bindingName, subscription.Options),
+			)
+		},
+	)
+}
+
 func (el *HTMLElement) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
 	//TODO implement me
 	panic("implement me")

@@ -335,6 +335,26 @@ func (doc *HTMLDocument) Query(ctx context.Context, q runtime.Query) (runtime.Li
 	panic("implement me")
 }
 
+func (doc *HTMLDocument) Subscribe(ctx context.Context, subscription runtime.Subscription) (runtime.Stream, error) {
+	return subscribeDOMEvents(
+		ctx,
+		doc.client.Runtime,
+		doc.eval.ContextID(),
+		func(ctx context.Context, bindingName string) error {
+			return doc.eval.Eval(
+				ctx,
+				templates.AddEventListener(doc.element.id, subscription.EventName, bindingName, subscription.Options),
+			)
+		},
+		func(ctx context.Context, bindingName string) error {
+			return doc.eval.Eval(
+				ctx,
+				templates.RemoveEventListener(doc.element.id, subscription.EventName, bindingName, subscription.Options),
+			)
+		},
+	)
+}
+
 func (doc *HTMLDocument) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
 	//TODO implement me
 	panic("implement me")

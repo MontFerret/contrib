@@ -1,0 +1,15 @@
+LET url = @lab.static.dynamic + "/#/events"
+LET page = DOCUMENT(url, { driver: "cdp" })
+LET doc = page.frames[0]
+
+CLICK(page, "#observable-document-btn")
+
+LET evt = WAITFOR EVENT "ferret:document" IN doc
+
+RETURN T::EQ({
+    type: evt.type,
+    scope: evt.detail.scope
+}, {
+    type: "ferret:document",
+    scope: "document"
+})

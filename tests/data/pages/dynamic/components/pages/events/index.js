@@ -4,6 +4,7 @@ import Appearable from "./appearable.js";
 import Focusable from "./focusable.js";
 import Pressable from "./pressable.js";
 import Ajax from "./ajax.js";
+import Observable from "./observable.js";
 
 const e = React.createElement;
 
@@ -99,6 +100,13 @@ export default class EventsPage extends React.Component {
                         id: "ajax",
                         appear: false,
                         title: "Requests"
+                    })
+                ]),
+            ]),
+            e("div", { className: "row" }, [
+                e("div", { className: "col-lg-4" }, [
+                    e(Observable, {
+                        id: "observable"
                     })
                 ]),
             ]),
