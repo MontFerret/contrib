@@ -1,5 +1,5 @@
 LET url = @lab.static.dynamic + "?redirect=/events"
-LET doc = DOCUMENT(url, true)
+LET doc =  DOCUMENT(url, { driver: "cdp" })
 LET pageSelector = "#page-events"
 LET elemSelector = X("//*[@id='wait-no-element-content']")
 LET btnSelector = "#wait-no-element-btn"

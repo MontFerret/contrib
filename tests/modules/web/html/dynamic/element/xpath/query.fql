@@ -1,5 +1,5 @@
 LET url = @lab.static.dynamic + "?redirect=/forms"
-LET page = DOCUMENT(url, true)
+LET page =  DOCUMENT(url, { driver: "cdp" })
 
 LET element = ELEMENT(page, '#page-form')
 LET actual = XPATH(element, "//div[contains(@class, 'form-group')]")

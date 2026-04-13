@@ -12,9 +12,7 @@ import (
 // @param {String | Int} [cssSelectorOrClicks] - CSS selector or count of clicks.
 // @param {Int} [clicks=1] - Count of clicks.
 func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	err := runtime.ValidateArgs(args, 1, 3)
-
-	if err != nil {
+	if err := runtime.ValidateArgs(args, 1, 3); err != nil {
 		return runtime.False, err
 	}
 
@@ -30,14 +28,16 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	}
 
 	if len(args) == 2 {
-		err := runtime.ValidateType(args[1], runtime.TypeString, runtime.TypeInt, runtime.TypeObject)
+		err := runtime.ValidateArgType(args[1], 1, runtime.TypeString, runtime.TypeInt, runtime.TypeObject, drivers.TypeQuerySelector)
 
 		if err != nil {
 			return runtime.False, err
 		}
 
-		switch args[1].(type) {
-		case runtime.String, runtime.Map:
+		switch arg2 := args[1].(type) {
+		case runtime.Int:
+			return runtime.True, el.Click(ctx, arg2)
+		default:
 			selector, err := drivers.ToQuerySelector(args[1])
 
 			if err != nil {
@@ -56,14 +56,6 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 
 			return exists, el.ClickBySelector(ctx, selector, 1)
 		}
-
-		times, err := runtime.CastInt(args[1])
-
-		if err != nil {
-			return runtime.False, err
-		}
-
-		return runtime.True, el.Click(ctx, times)
 	}
 
 	err = runtime.ValidateType(args[2], runtime.TypeInt)

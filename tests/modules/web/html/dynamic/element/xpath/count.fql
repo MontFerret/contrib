@@ -1,5 +1,5 @@
 LET url = @lab.static.dynamic
-LET page = DOCUMENT(url, true)
+LET page =  DOCUMENT(url, { driver: "cdp" })
 
 LET el = ELEMENT(page, 'main')
 LET actual = XPATH(el, "count(//p)")

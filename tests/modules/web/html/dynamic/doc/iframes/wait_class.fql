@@ -1,5 +1,5 @@
 LET url = @lab.static.dynamic + "?redirect=/iframe&src=/events"
-LET page = DOCUMENT(url, true)
+LET page =  DOCUMENT(url, { driver: "cdp" })
 LET frames = (
     FOR f IN page.frames
         FILTER f.name == "nested"

@@ -1,5 +1,5 @@
 LET url = @lab.static.dynamic + "/#/events"
-LET page = DOCUMENT(url, true)
+LET page =  DOCUMENT(url, { driver: "cdp" })
 
 FOCUS(page, X('//*[@id="focus-input"]'))
 

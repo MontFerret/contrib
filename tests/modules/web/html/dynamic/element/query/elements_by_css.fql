@@ -1,5 +1,5 @@
 LET url = @lab.static.dynamic + "?redirect=/forms"
-LET doc = DOCUMENT(url, true)
+LET doc =  DOCUMENT(url, { driver: "cdp" })
 
 LET els = ELEMENTS(doc, ".form-control")
 

@@ -1,6 +1,9 @@
 package drivers
 
 import (
+	"reflect"
+
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 	"github.com/goccy/go-json"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -13,6 +16,17 @@ type (
 		Value runtime.String    `json:"Value"`
 		Kind  QuerySelectorKind `json:"Kind"`
 	}
+)
+
+var (
+	TypeQuerySelector = runtime.NewType(reflect.TypeOf(QuerySelector{}).PkgPath(), reflect.TypeOf(QuerySelector{}).Name(), func(value runtime.Value) bool {
+		switch value.(type) {
+		case *runtime.Box[QuerySelector], *sdk.Proxy[QuerySelector]:
+			return true
+		default:
+			return false
+		}
+	})
 )
 
 const (

@@ -1,5 +1,5 @@
 LET url = @lab.static.dynamic + "/#/forms"
-LET page = DOCUMENT(url, true)
+LET page =  DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(page, "form")
 

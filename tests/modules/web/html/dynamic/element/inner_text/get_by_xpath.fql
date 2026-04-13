@@ -1,6 +1,6 @@
 
 LET url = @lab.static.dynamic + "/#/lists"
-LET doc = DOCUMENT(url, true)
+LET doc =  DOCUMENT(url, { driver: "cdp" })
 
 LET expected = [
     {"artist":"Lil Tecca","track":"Ransom"},

@@ -284,6 +284,7 @@ func (m *Manager) getFrameInternal(ctx context.Context, frameID page.FrameID) (*
 	}
 
 	frame.node = doc
+	m.frames.Set(frameID, frame)
 
 	return doc, nil
 }
