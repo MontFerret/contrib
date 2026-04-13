@@ -20,7 +20,7 @@ const selectFragment = `
 	found.value = undefined;
 
 	for (var option of options) {
-		option.selected = runtime.includes(option.value);
+		option.selected = values.includes(option.value);
 	
 		if (option.selected && !found.multiple) {
 			break;
