@@ -2,6 +2,8 @@ LET url = @lab.static.dynamic + "?redirect=/iframe&src=/forms"
 LET page = DOCUMENT(url, { driver: 'cdp' })
 LET doc = page.frames[1]
 
+T::NOT::NONE(doc)
+
 WAIT_ELEMENT(doc, "form")
 
 LET input = ELEMENT(doc, "#select_input")

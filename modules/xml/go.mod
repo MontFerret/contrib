@@ -2,7 +2,7 @@ module github.com/MontFerret/contrib/modules/xml
 
 go 1.25.6
 
-require github.com/MontFerret/ferret/v2 v2.0.0-alpha.10
+require github.com/MontFerret/ferret/v2 v2.0.0-alpha.11
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
