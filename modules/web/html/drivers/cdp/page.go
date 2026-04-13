@@ -348,7 +348,7 @@ func (p *HTMLPage) GetCookies(ctx context.Context) (*drivers.HTTPCookies, error)
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	return p.network.GetCookies(ctx)
+	return p.network.GetCookies(ctx, p.getCurrentDocument().GetURL().String())
 }
 
 func (p *HTMLPage) SetCookies(ctx context.Context, cookies *drivers.HTTPCookies) error {

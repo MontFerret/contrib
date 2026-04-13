@@ -66,12 +66,14 @@ func CookieDel(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 				return runtime.None, runtime.TypeErrorOf(found, drivers.HTTPCookieType)
 			}
 		default:
-			parsed, err := parseCookie(ctx, c)
+			parsed, err := parseCookiesValue(ctx, c)
 			if err != nil {
 				return runtime.None, err
 			}
 
-			cookies.SetCookie(parsed)
+			for _, cookie := range parsed.Data {
+				cookies.SetCookie(cookie)
+			}
 		}
 	}
 

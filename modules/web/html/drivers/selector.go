@@ -3,8 +3,9 @@ package drivers
 import (
 	"reflect"
 
-	"github.com/MontFerret/ferret/v2/pkg/sdk"
 	"github.com/goccy/go-json"
+
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )

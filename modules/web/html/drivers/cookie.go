@@ -21,13 +21,13 @@ type (
 	HTTPCookie struct {
 		Expires  time.Time `json:"expires"`
 		Name     string    `json:"name"`
-		Value    string    `json:"Value"`
+		Value    string    `json:"value"`
 		Path     string    `json:"path"`
 		Domain   string    `json:"domain"`
 		MaxAge   int       `json:"maxAge"`
 		SameSite SameSite  `json:"sameSite"`
 		Secure   bool      `json:"secure"`
-		HTTPOnly bool      `json:"HTTPOnly"`
+		HTTPOnly bool      `json:"httpOnly"`
 	}
 )
 
@@ -137,15 +137,15 @@ func (c HTTPCookie) Copy() runtime.Value {
 
 func (c HTTPCookie) MarshalJSON() ([]byte, error) {
 	v := map[string]any{
-		"name":      c.Name,
-		"Value":     c.Value,
-		"path":      c.Path,
-		"domain":    c.Domain,
-		"expires":   c.Expires,
-		"max_age":   c.MaxAge,
-		"secure":    c.Secure,
-		"http_only": c.HTTPOnly,
-		"same_site": c.SameSite.String(),
+		"name":     c.Name,
+		"value":    c.Value,
+		"path":     c.Path,
+		"domain":   c.Domain,
+		"expires":  c.Expires,
+		"maxAge":   c.MaxAge,
+		"secure":   c.Secure,
+		"httpOnly": c.HTTPOnly,
+		"sameSite": c.SameSite.String(),
 	}
 
 	out, err := json.Marshal(v)
@@ -161,7 +161,7 @@ func (c HTTPCookie) Get(_ context.Context, key runtime.Value) (runtime.Value, er
 	switch key.String() {
 	case "name":
 		return runtime.NewString(c.Name), nil
-	case "Value":
+	case "value":
 		return runtime.NewString(c.Value), nil
 	case "path":
 		return runtime.NewString(c.Path), nil

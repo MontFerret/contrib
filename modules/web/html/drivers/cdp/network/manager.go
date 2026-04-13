@@ -8,7 +8,6 @@ import (
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/network"
 	"github.com/mafredri/cdp/protocol/page"
-	"github.com/mafredri/cdp/protocol/storage"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 
@@ -115,10 +114,16 @@ func (m *Manager) Close() error {
 	return nil
 }
 
-func (m *Manager) GetCookies(ctx context.Context) (*drivers.HTTPCookies, error) {
-	m.logger.Trace().Msg("starting to get cookies")
+func (m *Manager) GetCookies(ctx context.Context, url string) (*drivers.HTTPCookies, error) {
+	m.logger.Trace().Str("url", url).Msg("starting to get cookies")
 
-	repl, err := m.client.Storage.GetCookies(ctx, storage.NewGetCookiesArgs())
+	args := network.NewGetCookiesArgs()
+
+	if normalizedURL, ok := normalizeCookieLookupURL(url); ok {
+		args.SetURLs([]string{normalizedURL})
+	}
+
+	repl, err := m.client.Network.GetCookies(ctx, args)
 
 	if err != nil {
 		m.logger.Trace().Err(err).Msg("failed to get cookies")
@@ -139,7 +144,7 @@ func (m *Manager) GetCookies(ctx context.Context) (*drivers.HTTPCookies, error) 
 		_ = cookies.Set(ctx, runtime.String(cookie.Name), cookie)
 	}
 
-	m.logger.Trace().Err(err).Msg("succeeded to get cookies")
+	m.logger.Trace().Msg("succeeded to get cookies")
 
 	return cookies, nil
 }

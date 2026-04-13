@@ -16,8 +16,6 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
 
-var emptyExpires = time.Time{}
-
 func toDriverBody(body *string) []byte {
 	if body == nil {
 		return nil
@@ -106,34 +104,60 @@ func fromDriverCookie(url string, cookie drivers.HTTPCookie) network.CookieParam
 		sameSite = network.CookieSameSiteStrict
 	}
 
-	if cookie.Expires == emptyExpires {
-		cookie.Expires = time.Now().Add(time.Duration(24) + time.Hour)
-	}
-
 	normalizedURL := normalizeCookieURL(url)
-
-	return network.CookieParam{
-		URL:      &normalizedURL,
-		Name:     cookie.Name,
-		Value:    cookie.Value,
-		Secure:   &cookie.Secure,
-		Path:     &cookie.Path,
-		Domain:   &cookie.Domain,
-		HTTPOnly: &cookie.HTTPOnly,
-		SameSite: sameSite,
-		Expires:  network.TimeSinceEpoch(cookie.Expires.Unix()),
+	param := network.CookieParam{
+		URL:   &normalizedURL,
+		Name:  cookie.Name,
+		Value: cookie.Value,
 	}
+
+	if cookie.Path != "" {
+		path := cookie.Path
+		param.Path = &path
+	}
+
+	if cookie.Domain != "" {
+		domain := cookie.Domain
+		param.Domain = &domain
+	}
+
+	if cookie.Secure {
+		secure := true
+		param.Secure = &secure
+	}
+
+	if cookie.HTTPOnly {
+		httpOnly := true
+		param.HTTPOnly = &httpOnly
+	}
+
+	if sameSite != network.CookieSameSiteNotSet {
+		param.SameSite = sameSite
+	}
+
+	switch {
+	case !cookie.Expires.IsZero():
+		param.Expires = network.TimeSinceEpoch(cookie.Expires.Unix())
+	case cookie.MaxAge > 0:
+		param.Expires = network.TimeSinceEpoch(time.Now().Add(time.Duration(cookie.MaxAge) * time.Second).Unix())
+	}
+
+	return param
 }
 
 func fromDriverCookieDelete(url string, cookie drivers.HTTPCookie) *network.DeleteCookiesArgs {
 	normalizedURL := normalizeCookieURL(url)
+	args := network.NewDeleteCookiesArgs(cookie.Name).SetURL(normalizedURL)
 
-	return &network.DeleteCookiesArgs{
-		URL:    &normalizedURL,
-		Name:   cookie.Name,
-		Path:   &cookie.Path,
-		Domain: &cookie.Domain,
+	if cookie.Path != "" {
+		args.SetPath(cookie.Path)
 	}
+
+	if cookie.Domain != "" {
+		args.SetDomain(cookie.Domain)
+	}
+
+	return args
 }
 
 func toDriverCookie(c network.Cookie) drivers.HTTPCookie {
@@ -167,6 +191,14 @@ func normalizeCookieURL(url string) string {
 	}
 
 	return httpPrefix + url
+}
+
+func normalizeCookieLookupURL(url string) (string, bool) {
+	if url == "" || url == BlankPageURL {
+		return "", false
+	}
+
+	return normalizeCookieURL(url), true
 }
 
 func isURLMatched(url string, pattern *regexp.Regexp) bool {

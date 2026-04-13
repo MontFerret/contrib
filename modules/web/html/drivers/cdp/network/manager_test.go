@@ -10,7 +10,6 @@ import (
 	"github.com/mafredri/cdp/protocol/fetch"
 	network2 "github.com/mafredri/cdp/protocol/network"
 	"github.com/mafredri/cdp/protocol/page"
-	storage2 "github.com/mafredri/cdp/protocol/storage"
 	"github.com/rs/zerolog"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/mock"
@@ -29,6 +28,7 @@ type (
 	NetworkAPI struct {
 		cdp.Network
 		responseReceived    func(ctx context.Context) (network2.ResponseReceivedClient, error)
+		getCookies          func(ctx context.Context, args *network2.GetCookiesArgs) (*network2.GetCookiesReply, error)
 		setExtraHTTPHeaders func(ctx context.Context, args *network2.SetExtraHTTPHeadersArgs) error
 		mock.Mock
 	}
@@ -38,12 +38,6 @@ type (
 		enable        func(context.Context, *fetch.EnableArgs) error
 		disable       func(context.Context) error
 		requestPaused func(context.Context) (fetch.RequestPausedClient, error)
-		mock.Mock
-	}
-
-	StorageAPI struct {
-		cdp.Storage
-		getCookies func(context.Context, *storage2.GetCookiesArgs) (*storage2.GetCookiesReply, error)
 		mock.Mock
 	}
 
@@ -74,6 +68,10 @@ func (api *NetworkAPI) ResponseReceived(ctx context.Context) (network2.ResponseR
 	return api.responseReceived(ctx)
 }
 
+func (api *NetworkAPI) GetCookies(ctx context.Context, args *network2.GetCookiesArgs) (*network2.GetCookiesReply, error) {
+	return api.getCookies(ctx, args)
+}
+
 func (api *NetworkAPI) SetExtraHTTPHeaders(ctx context.Context, args *network2.SetExtraHTTPHeadersArgs) error {
 	return api.setExtraHTTPHeaders(ctx, args)
 }
@@ -96,10 +94,6 @@ func (api *FetchAPI) Disable(ctx context.Context) error {
 
 func (api *FetchAPI) RequestPaused(ctx context.Context) (fetch.RequestPausedClient, error) {
 	return api.requestPaused(ctx)
-}
-
-func (api *StorageAPI) GetCookies(ctx context.Context, args *storage2.GetCookiesArgs) (*storage2.GetCookiesReply, error) {
-	return api.getCookies(ctx, args)
 }
 
 func NewTestEventStream() *TestEventStream {
@@ -251,7 +245,7 @@ func TestManager(t *testing.T) {
 		})
 
 		Convey("GetCookies", func() {
-			Convey("Should read cookies via the Storage domain", func() {
+			Convey("Should read cookies via the Network domain for the current page URL", func() {
 				responseReceivedClient := NewResponseReceivedClient()
 				responseReceivedClient.On("Close").Maybe().Return(nil)
 
@@ -259,10 +253,11 @@ func TestManager(t *testing.T) {
 				networkAPI.responseReceived = func(ctx context.Context) (network2.ResponseReceivedClient, error) {
 					return responseReceivedClient, nil
 				}
+				networkAPI.getCookies = func(ctx context.Context, args *network2.GetCookiesArgs) (*network2.GetCookiesReply, error) {
+					So(args, ShouldNotBeNil)
+					So(args.URLs, ShouldResemble, []string{"http://example.com/app"})
 
-				storageAPI := new(StorageAPI)
-				storageAPI.getCookies = func(ctx context.Context, args *storage2.GetCookiesArgs) (*storage2.GetCookiesReply, error) {
-					return &storage2.GetCookiesReply{
+					return &network2.GetCookiesReply{
 						Cookies: []network2.Cookie{
 							{
 								Name:   "Session",
@@ -276,7 +271,6 @@ func TestManager(t *testing.T) {
 
 				client := &cdp.Client{
 					Network: networkAPI,
-					Storage: storageAPI,
 				}
 
 				mgr, err := network.New(
@@ -286,7 +280,7 @@ func TestManager(t *testing.T) {
 				)
 				So(err, ShouldBeNil)
 
-				cookies, err := mgr.GetCookies(context.Background())
+				cookies, err := mgr.GetCookies(context.Background(), "example.com/app")
 				So(err, ShouldBeNil)
 				So(cookies, ShouldNotBeNil)
 				So(len(cookies.Data), ShouldEqual, 1)

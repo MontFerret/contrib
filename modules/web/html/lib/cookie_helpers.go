@@ -112,6 +112,72 @@ func parseCookie(ctx context.Context, value runtime.Value) (drivers.HTTPCookie, 
 	return cookie, nil
 }
 
+func parseCookiesValue(ctx context.Context, value runtime.Value) (*drivers.HTTPCookies, error) {
+	if value == nil || value == runtime.None {
+		return nil, fmt.Errorf("cookies are required")
+	}
+
+	switch v := value.(type) {
+	case *drivers.HTTPCookies:
+		if v == nil {
+			return nil, fmt.Errorf("cookies are required")
+		}
+
+		cookies := drivers.NewHTTPCookies()
+
+		for _, cookie := range v.Data {
+			cookies.SetCookie(cookie)
+		}
+
+		return cookies, nil
+	}
+
+	if cookies, ok := runtime.UnwrapAs[*drivers.HTTPCookies](value); ok {
+		if cookies == nil {
+			return nil, fmt.Errorf("cookies are required")
+		}
+
+		res := drivers.NewHTTPCookies()
+
+		for _, cookie := range cookies.Data {
+			res.SetCookie(cookie)
+		}
+
+		return res, nil
+	}
+
+	if list, err := runtime.CastList(value); err == nil {
+		cookies := drivers.NewHTTPCookies()
+
+		err = list.ForEach(ctx, func(ctx context.Context, value runtime.Value, _ runtime.Int) (runtime.Boolean, error) {
+			cookie, err := parseCookie(ctx, value)
+			if err != nil {
+				return false, err
+			}
+
+			cookies.SetCookie(cookie)
+
+			return true, nil
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return cookies, nil
+	}
+
+	cookie, err := parseCookie(ctx, value)
+	if err != nil {
+		return nil, err
+	}
+
+	cookies := drivers.NewHTTPCookies()
+	cookies.SetCookie(cookie)
+
+	return cookies, nil
+}
+
 func getRequiredString(ctx context.Context, m runtime.Map, key string) (string, error) {
 	val, ok, err := sdk.TryGetByKey[runtime.Value](ctx, m, runtime.String(key))
 	if err != nil {
