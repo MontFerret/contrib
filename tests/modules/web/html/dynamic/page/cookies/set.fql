@@ -9,6 +9,8 @@ COOKIE_SET(doc, {
 })
 
 LET cookie = COOKIE_GET(doc, "x-e2e")
+T::NOT::NONE(cookie)
+
 LET expected = "test"
 
 RETURN T::EQ(cookie.value, expected)
