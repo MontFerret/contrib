@@ -20,7 +20,7 @@ func AttributeSet(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	el, err := runtime.CastArgAt[drivers.HTMLElement](args, 0)
 
 	if err != nil {
 		return runtime.None, err
@@ -38,7 +38,7 @@ func AttributeSet(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		switch arg2 := args[2].(type) {
 		case runtime.String:
 			return runtime.None, el.SetAttribute(ctx, arg1, arg2)
-		case *runtime.Object:
+		case runtime.Map:
 			if arg1 == common.AttrNameStyle {
 				styles, err := common.SerializeStyles(ctx, arg2)
 
@@ -53,7 +53,7 @@ func AttributeSet(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		default:
 			return runtime.None, runtime.TypeErrorOf(arg1, runtime.TypeString, runtime.TypeMap)
 		}
-	case *runtime.Object:
+	case runtime.Map:
 		// ATTR_SET(el, values)
 		return runtime.None, el.SetAttributes(ctx, arg1)
 	default:
