@@ -19,7 +19,7 @@ func Select(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	el, err := runtime.CastArgAt[drivers.HTMLElement](args, 0)
 
 	if err != nil {
 		return runtime.None, err
