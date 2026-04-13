@@ -13,7 +13,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-var NavigationEventType = runtime.NewTypeFor[*NavigationEvent]("html.drivers.cdp.network", "NavigationEvent")
+var NavigationEventType = runtime.NewTypeFor[*NavigationEvent]()
 
 type (
 	NavigationEvent struct {

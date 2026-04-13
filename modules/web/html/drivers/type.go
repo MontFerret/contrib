@@ -4,17 +4,15 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-const pkg = "html.drivers"
-
 var (
-	HTTPRequestType  = runtime.NewTypeFor[*HTTPRequest](pkg, "HTTPRequest")
-	HTTPResponseType = runtime.NewTypeFor[*HTTPResponse](pkg, "HTTPResponse")
-	HTTPHeadersType  = runtime.NewTypeFor[*HTTPHeaders](pkg, "HTTPHeaders")
-	HTTPCookieType   = runtime.NewTypeFor[*HTTPCookie](pkg, "HTTPCookie")
-	HTTPCookiesType  = runtime.NewTypeFor[*HTTPCookies](pkg, "HTTPCookies")
-	HTMLElementType  = runtime.NewTypeFor[HTMLElement](pkg, "HTMLElement")
-	HTMLDocumentType = runtime.NewTypeFor[HTMLDocument](pkg, "HTMLDocument")
-	HTMLPageType     = runtime.NewTypeFor[HTMLPage](pkg, "HTMLPage")
+	HTTPRequestType  = runtime.NewTypeFor[*HTTPRequest]()
+	HTTPResponseType = runtime.NewTypeFor[*HTTPResponse]()
+	HTTPHeadersType  = runtime.NewTypeFor[*HTTPHeaders]()
+	HTTPCookieType   = runtime.NewTypeFor[*HTTPCookie]()
+	HTTPCookiesType  = runtime.NewTypeFor[*HTTPCookies]()
+	HTMLElementType  = runtime.NewTypeFor[HTMLElement]()
+	HTMLDocumentType = runtime.NewTypeFor[HTMLDocument]()
+	HTMLPageType     = runtime.NewTypeFor[HTMLPage]()
 )
 
 // Comparison table of builtin types

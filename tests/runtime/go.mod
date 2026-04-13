@@ -3,7 +3,7 @@ module github.com/MontFerret/contrib/tests/runner
 go 1.26.1
 
 require (
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.7
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.10
 	github.com/rs/zerolog v1.35.0
 )
 

@@ -9,7 +9,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-var FrameIDType = runtime.NewTypeFor[FrameID]("html.drivers.cdp.dom", "FrameID")
+var FrameIDType = runtime.NewTypeFor[FrameID]()
 
 type FrameID page.FrameID
 
