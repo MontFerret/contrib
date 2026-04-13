@@ -73,7 +73,7 @@ func Open(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		params = p
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, params.Timeout)
+	ctx, cancel := context.WithTimeout(ctx, params.Timeout*time.Millisecond)
 	defer cancel()
 
 	drv, err := drivers.FromContext(ctx, params.Driver)
