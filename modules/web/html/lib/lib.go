@@ -18,6 +18,9 @@ func RegisterLib(ns runtime.Namespace) {
 	ns.Function().A2().
 		Add("XPATH", XPath)
 
+	ns.Function().A3().
+		Add("FRAMES", Frames)
+
 	ns.Function().Var().
 		Add("ATTR_GET", AttributeGet).
 		Add("ATTR_QUERY", AttributeQuery).
@@ -36,7 +39,6 @@ func RegisterLib(ns runtime.Namespace) {
 		Add("ELEMENT_EXISTS", ElementExists).
 		Add("ELEMENTS", Elements).
 		Add("ELEMENTS_COUNT", ElementsCount).
-		Add("FRAMES", Frames).
 		Add("FOCUS", Focus).
 		Add("HOVER", Hover).
 		Add("INNER_HTML", GetInnerHTML).
