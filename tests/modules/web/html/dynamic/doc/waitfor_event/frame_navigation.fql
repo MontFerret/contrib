@@ -1,12 +1,13 @@
+LET target = @lab.static.static + "/"
 LET url = @lab.static.dynamic + "?redirect=/iframe&src=/iframe"
 LET page = DOCUMENT(url, { driver: 'cdp' })
 LET original = FIRST(FRAMES(page, "name", "nested"))
 
-INPUT(original, "#url_input", "https://getbootstrap.com/")
+INPUT(original, "#url_input", target)
 CLICK(original, "#submit")
 
 WAITFOR EVENT "navigation" IN page OPTIONS { frame: original }
 
 LET current = FIRST(FRAMES(page, "name", "nested"))
 
-RETURN T::EQ(current.URL, "https://getbootstrap.com/")
+RETURN T::EQ(current.URL, target)

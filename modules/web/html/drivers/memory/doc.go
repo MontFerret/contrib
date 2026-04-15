@@ -1,2 +1,2 @@
-// Package http implements the HTTP-backed HTML driver.
+// Package memory implements the in-memory HTML driver.
 package memory

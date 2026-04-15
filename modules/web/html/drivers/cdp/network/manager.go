@@ -11,10 +11,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
-
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"
+	cdpsession "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/session"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -24,20 +23,24 @@ type (
 	FrameLoadedListener = func(ctx context.Context, frame page.Frame)
 
 	Manager struct {
-		logger      zerolog.Logger
-		client      *cdp.Client
-		headers     *drivers.HTTPHeaders
-		loop        *events.Loop
-		interceptor *Interceptor
-		stop        context.CancelFunc
-		response    *sync.Map
-		mu          sync.RWMutex
+		logger           zerolog.Logger
+		client           *cdp.Client
+		sessions         *cdpsession.Manager
+		headers          *drivers.HTTPHeaders
+		interceptor      *Interceptor
+		stop             context.CancelFunc
+		response         *sync.Map
+		responseWatchers map[string]network.ResponseReceivedClient
+		responseListener cdpsession.ListenerID
+		mu               sync.RWMutex
+		responseMu       sync.Mutex
 	}
 )
 
 func New(
 	logger zerolog.Logger,
 	client *cdp.Client,
+	sessions *cdpsession.Manager,
 	options Options,
 ) (*Manager, error) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -45,9 +48,11 @@ func New(
 	m := new(Manager)
 	m.logger = common.LoggerWithName(logger.With(), "network_manager").Logger()
 	m.client = client
+	m.sessions = sessions
 	m.headers = drivers.NewHTTPHeaders()
 	m.stop = cancel
 	m.response = new(sync.Map)
+	m.responseWatchers = make(map[string]network.ResponseReceivedClient)
 
 	var err error
 
@@ -56,12 +61,6 @@ func New(
 			m.stop()
 		}
 	}()
-
-	m.loop = events.NewLoop(
-		createResponseReceivedStreamFactory(client),
-	)
-
-	m.loop.AddListener(responseReceivedEvent, m.handleResponse)
 
 	if options.Filter != nil && len(options.Filter.Patterns) > 0 {
 		m.interceptor = NewInterceptor(logger, client)
@@ -93,7 +92,7 @@ func New(
 		}
 	}
 
-	if err = m.loop.Run(ctx); err != nil {
+	if err = m.startResponseWatcher(ctx); err != nil {
 		return nil, err
 	}
 
@@ -110,6 +109,12 @@ func (m *Manager) Close() error {
 		m.stop()
 		m.stop = nil
 	}
+
+	if m.sessions != nil {
+		m.sessions.RemoveListener(m.responseListener)
+	}
+
+	m.closeResponseWatchers()
 
 	return nil
 }
@@ -505,12 +510,8 @@ func (m *Manager) WaitForNavigation(ctx context.Context, opts WaitEventOptions) 
 	defer cancel()
 
 	for evt := range stream.Read(ctx) {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-
 		if err := evt.Err(); err != nil {
-			return nil
+			return err
 		}
 
 		nav := evt.Value().(*NavigationEvent)
@@ -522,69 +523,23 @@ func (m *Manager) WaitForNavigation(ctx context.Context, opts WaitEventOptions) 
 		return nil
 	}
 
-	return nil
+	return ctx.Err()
 }
 
 func (m *Manager) OnNavigation(ctx context.Context) (runtime.Stream, error) {
-	m.logger.Trace().Msg("starting to wait for frame navigation event")
-
-	stream1, err := m.client.Page.FrameNavigated(ctx)
-
-	if err != nil {
-		m.logger.Trace().Err(err).Msg("failed to open frame navigation event stream")
-
-		return nil, err
-	}
-
-	stream2, err := m.client.Page.NavigatedWithinDocument(ctx)
-
-	if err != nil {
-		_ = stream1.Close()
-		m.logger.Trace().Err(err).Msg("failed to open within document navigation event streams")
-
-		return nil, err
-	}
-
-	return newNavigationEventStream(ctx, m.logger, m.client, stream1, stream2), nil
+	return newNavigationEventStream(m.logger, m.sessions), nil
 }
 
 func (m *Manager) OnRequest(ctx context.Context) (runtime.Stream, error) {
-	m.logger.Trace().Msg("starting to receive request event")
-
-	stream, err := m.client.Network.RequestWillBeSent(ctx)
-
-	if err != nil {
-		m.logger.Trace().Err(err).Msg("failed to open request event stream")
-
-		return nil, err
-	}
-
-	m.logger.Trace().Msg("succeeded to receive request event")
-
-	return newRequestWillBeSentStream(m.logger, stream), nil
+	return newRequestEventStream(m.logger, m.sessions), nil
 }
 
 func (m *Manager) OnResponse(ctx context.Context) (runtime.Stream, error) {
-	m.logger.Trace().Msg("starting to receive response events")
-
-	stream, err := m.client.Network.ResponseReceived(ctx)
-
-	if err != nil {
-		m.logger.Trace().Err(err).Msg("failed to open response event stream")
-
-		return nil, err
-	}
-
-	m.logger.Trace().Msg("succeeded to receive response events")
-
-	return newResponseReceivedReader(m.logger, m.client, stream), nil
+	return newResponseEventStream(m.logger, m.sessions), nil
 }
 
-func (m *Manager) handleResponse(_ context.Context, message any) (out bool) {
-	out = true
-	msg, ok := message.(*network.ResponseReceivedReply)
-
-	if !ok {
+func (m *Manager) handleResponse(msg *network.ResponseReceivedReply) {
+	if msg == nil {
 		return
 	}
 
@@ -612,6 +567,120 @@ func (m *Manager) handleResponse(_ context.Context, message any) (out bool) {
 	m.response.Store(*msg.FrameID, toDriverResponse(msg.Response, nil))
 
 	log.Trace().Msg("updated frame response information")
+}
 
-	return
+func (m *Manager) startResponseWatcher(ctx context.Context) error {
+	if m.sessions == nil {
+		return m.watchResponseClient(ctx, "root", m.client)
+	}
+
+	for _, client := range m.sessions.Snapshot() {
+		if err := m.watchResponseStream(ctx, client); err != nil {
+			return err
+		}
+	}
+
+	m.responseListener = m.sessions.AddListener(func(event cdpsession.Event) {
+		switch event.Kind {
+		case cdpsession.EventAttached:
+			if err := m.watchResponseStream(ctx, event.Client); err != nil {
+				m.logger.Warn().Err(err).Msg("failed to watch response stream for attached session")
+			}
+		case cdpsession.EventDetached:
+			m.closeResponseStream(event.Client)
+		}
+	})
+
+	return nil
+}
+
+func (m *Manager) watchResponseStream(ctx context.Context, client *cdpsession.Client) error {
+	if client == nil || client.CDP == nil {
+		return nil
+	}
+
+	return m.watchResponseClient(ctx, string(client.ID), client.CDP)
+}
+
+func (m *Manager) watchResponseClient(ctx context.Context, key string, client *cdp.Client) error {
+	if client == nil {
+		return nil
+	}
+
+	m.responseMu.Lock()
+	if _, exists := m.responseWatchers[key]; exists {
+		m.responseMu.Unlock()
+		return nil
+	}
+	m.responseMu.Unlock()
+
+	stream, err := client.Network.ResponseReceived(ctx)
+	if err != nil {
+		return err
+	}
+
+	m.responseMu.Lock()
+	m.responseWatchers[key] = stream
+	m.responseMu.Unlock()
+
+	go func() {
+		defer m.closeResponseWatcher(key)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-stream.Ready():
+				reply, err := stream.Recv()
+				if err != nil {
+					if ctx.Err() != nil {
+						return
+					}
+
+					m.logger.Trace().Err(err).Msg("failed to receive response event")
+
+					return
+				}
+
+				m.handleResponse(reply)
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (m *Manager) closeResponseStream(client *cdpsession.Client) {
+	if client == nil {
+		return
+	}
+
+	m.closeResponseWatcher(string(client.ID))
+}
+
+func (m *Manager) closeResponseWatcher(key string) {
+	m.responseMu.Lock()
+	stream, exists := m.responseWatchers[key]
+	if exists {
+		delete(m.responseWatchers, key)
+	}
+	m.responseMu.Unlock()
+
+	if exists {
+		_ = stream.Close()
+	}
+}
+
+func (m *Manager) closeResponseWatchers() {
+	m.responseMu.Lock()
+	streams := make([]network.ResponseReceivedClient, 0, len(m.responseWatchers))
+	for key, stream := range m.responseWatchers {
+		streams = append(streams, stream)
+		delete(m.responseWatchers, key)
+	}
+	m.responseMu.Unlock()
+
+	for _, stream := range streams {
+		_ = stream.Close()
+	}
 }

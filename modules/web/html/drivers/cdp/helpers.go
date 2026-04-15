@@ -2,15 +2,18 @@ package cdp
 
 import (
 	"context"
+	"errors"
 
 	"golang.org/x/sync/errgroup"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
 	"github.com/mafredri/cdp/protocol/dom"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
+	cdpdom "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/dom"
+	cdpnet "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/network"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
-
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/emulation"
@@ -18,32 +21,7 @@ import (
 	"github.com/mafredri/cdp/protocol/page"
 )
 
-type (
-	batchFunc = func() error
-
-	closer func() error
-
-	pageNavigationEventStream struct {
-		stream runtime.Stream
-		closer closer
-	}
-)
-
-func newPageNavigationEventStream(stream runtime.Stream, closer closer) runtime.Stream {
-	return &pageNavigationEventStream{stream, closer}
-}
-
-func (p *pageNavigationEventStream) Close() error {
-	if err := p.stream.Close(); err != nil {
-		return err
-	}
-
-	return p.closer()
-}
-
-func (p *pageNavigationEventStream) Read(ctx context.Context) <-chan runtime.Message {
-	return p.stream.Read(ctx)
-}
+type batchFunc = func() error
 
 func runBatch(funcs ...batchFunc) error {
 	eg := errgroup.Group{}
@@ -132,4 +110,46 @@ func enableFeatures(ctx context.Context, client *cdp.Client, params drivers.Para
 			)
 		},
 	)
+}
+
+func navigationFrameID(value runtime.Value) (page.FrameID, error) {
+	switch doc := value.(type) {
+	case *HTMLPage:
+		current := doc.getCurrentDocument()
+		if current == nil {
+			return "", runtime.Error(runtime.ErrNotFound, "frame")
+		}
+
+		return current.Frame().Frame.ID, nil
+	case *cdpdom.HTMLDocument:
+		return doc.Frame().Frame.ID, nil
+	default:
+		node, err := drivers.ToDocument(value)
+		if err != nil {
+			return "", err
+		}
+
+		cdpDoc, ok := node.(*cdpdom.HTMLDocument)
+		if !ok {
+			return "", errors.New("invalid frame type")
+		}
+
+		return cdpDoc.Frame().Frame.ID, nil
+	}
+}
+
+func matchNavigationEvent(evt *cdpnet.NavigationEvent, opts cdpnet.WaitEventOptions) bool {
+	if evt == nil {
+		return false
+	}
+
+	if opts.FrameID != "" && evt.FrameID != opts.FrameID {
+		return false
+	}
+
+	if opts.URL != nil && !opts.URL.MatchString(evt.URL) {
+		return false
+	}
+
+	return true
 }

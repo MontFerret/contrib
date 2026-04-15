@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/goccy/go-json"
+	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/page"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
@@ -17,9 +18,10 @@ var NavigationEventType = runtime.NewTypeFor[*NavigationEvent]()
 
 type (
 	NavigationEvent struct {
-		URL      string
-		FrameID  page.FrameID
-		MimeType string
+		sourceClient *cdp.Client
+		URL          string
+		FrameID      page.FrameID
+		MimeType     string
 	}
 
 	navigationEventJSON struct {
@@ -75,9 +77,10 @@ func (evt *NavigationEvent) Hash() uint64 {
 
 func (evt *NavigationEvent) Copy() runtime.Value {
 	return &NavigationEvent{
-		URL:      evt.URL,
-		FrameID:  evt.FrameID,
-		MimeType: evt.MimeType,
+		URL:          evt.URL,
+		FrameID:      evt.FrameID,
+		MimeType:     evt.MimeType,
+		sourceClient: evt.sourceClient,
 	}
 }
 
@@ -90,4 +93,12 @@ func (evt *NavigationEvent) Get(_ context.Context, key runtime.Value) (runtime.V
 	default:
 		return runtime.None, nil
 	}
+}
+
+func (evt *NavigationEvent) SourceClient() *cdp.Client {
+	if evt == nil {
+		return nil
+	}
+
+	return evt.sourceClient
 }

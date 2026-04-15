@@ -18,13 +18,14 @@ import (
 )
 
 type Manager struct {
-	logger    zerolog.Logger
-	client    *cdp.Client
-	mouse     *input.Mouse
-	keyboard  *input.Keyboard
-	mainFrame *AtomicFrameID
-	frames    *AtomicFrameCollection
-	mu        sync.RWMutex
+	logger     zerolog.Logger
+	rootClient *cdp.Client
+	mouse      *input.Mouse
+	keyboard   *input.Keyboard
+	mainFrame  *AtomicFrameID
+	frames     *AtomicFrameCollection
+	owners     *AtomicFrameClientCollection
+	mu         sync.RWMutex
 }
 
 func New(
@@ -36,11 +37,12 @@ func New(
 
 	manager = new(Manager)
 	manager.logger = common.LoggerWithName(logger.With(), "dom_manager").Logger()
-	manager.client = client
+	manager.rootClient = client
 	manager.mouse = mouse
 	manager.keyboard = keyboard
 	manager.mainFrame = NewAtomicFrameID()
 	manager.frames = NewAtomicFrameCollection()
+	manager.owners = NewAtomicFrameClientCollection()
 
 	return manager, nil
 }
@@ -67,23 +69,27 @@ func (m *Manager) Close() error {
 }
 
 func (m *Manager) LoadRootDocument(ctx context.Context) (*HTMLDocument, error) {
-	ftRepl, err := m.client.Page.GetFrameTree(ctx)
+	ftRepl, err := m.rootClient.Page.GetFrameTree(ctx)
 
 	if err != nil {
 		return nil, err
 	}
+
+	m.RecordFrameClient(ftRepl.FrameTree.Frame.ID, m.rootClient)
 
 	return m.LoadDocument(ctx, ftRepl.FrameTree)
 }
 
 func (m *Manager) LoadDocument(ctx context.Context, frame page.FrameTree) (*HTMLDocument, error) {
-	exec, err := eval.Create(ctx, m.logger, m.client, frame.Frame.ID)
+	client := m.clientForFrame(frame.Frame.ID)
+
+	exec, err := eval.Create(ctx, m.logger, client, frame.Frame.ID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	inputs := input.New(m.logger, m.client, exec, m.keyboard, m.mouse)
+	inputs := input.New(m.logger, client, exec, m.keyboard, m.mouse)
 
 	ref, err := exec.EvalRef(ctx, templates.GetDocument())
 
@@ -95,7 +101,7 @@ func (m *Manager) LoadDocument(ctx context.Context, frame page.FrameTree) (*HTML
 
 	rootElement := NewHTMLElement(
 		m.logger,
-		m.client,
+		client,
 		m,
 		inputs,
 		exec,
@@ -104,7 +110,7 @@ func (m *Manager) LoadDocument(ctx context.Context, frame page.FrameTree) (*HTML
 
 	return NewHTMLDocument(
 		m.logger,
-		m.client,
+		client,
 		m,
 		inputs,
 		exec,
@@ -122,7 +128,7 @@ func (m *Manager) ResolveElement(ctx context.Context, frameID page.FrameID, id c
 
 	return NewHTMLElement(
 		m.logger,
-		m.client,
+		doc.client,
 		m,
 		doc.input,
 		doc.eval,
@@ -208,6 +214,34 @@ func (m *Manager) RemoveFramesByParentID(parentFrameID page.FrameID) error {
 
 func (m *Manager) GetFrameNode(ctx context.Context, frameID page.FrameID) (*HTMLDocument, error) {
 	return m.getFrameInternal(ctx, frameID)
+}
+
+func (m *Manager) RecordFrameClient(frameID page.FrameID, client *cdp.Client) {
+	if client == nil || frameID == "" {
+		return
+	}
+
+	m.owners.Set(frameID, client)
+}
+
+func (m *Manager) ReloadRoot(ctx context.Context) error {
+	ftRepl, err := m.rootClient.Page.GetFrameTree(ctx)
+	if err != nil {
+		return err
+	}
+
+	ids := collectFrameIDs(ftRepl.FrameTree)
+	m.owners.Set(ftRepl.FrameTree.Frame.ID, m.rootClient)
+	m.owners.Retain(ids)
+
+	doc, err := m.LoadDocument(ctx, ftRepl.FrameTree)
+	if err != nil {
+		return err
+	}
+
+	m.SetMainFrame(doc)
+
+	return nil
 }
 
 func (m *Manager) GetFrameTree(_ context.Context, frameID page.FrameID) (page.FrameTree, error) {
@@ -297,6 +331,7 @@ func (m *Manager) removeFrameInternal(frameID page.FrameID) error {
 	}
 
 	m.frames.Remove(frameID)
+	m.owners.Remove(frameID)
 
 	mainFrameID := m.mainFrame.Get()
 
@@ -325,4 +360,27 @@ func (m *Manager) removeFrameRecursivelyInternal(frameID page.FrameID) error {
 	}
 
 	return m.removeFrameInternal(frameID)
+}
+
+func (m *Manager) clientForFrame(frameID page.FrameID) *cdp.Client {
+	client, ok := m.owners.Get(frameID)
+	if ok && client != nil {
+		return client
+	}
+
+	return m.rootClient
+}
+
+func collectFrameIDs(root page.FrameTree) map[page.FrameID]struct{} {
+	out := map[page.FrameID]struct{}{
+		root.Frame.ID: {},
+	}
+
+	for _, child := range root.ChildFrames {
+		for id := range collectFrameIDs(child) {
+			out[id] = struct{}{}
+		}
+	}
+
+	return out
 }

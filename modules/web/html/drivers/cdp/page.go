@@ -10,13 +10,15 @@ import (
 
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/page"
-	"github.com/mafredri/cdp/rpcc"
 	"github.com/rs/zerolog"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/dom"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/input"
-	net "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/network"
+	cdpnet "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/network"
+	cdpsession "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/session"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/utils"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
@@ -28,28 +30,33 @@ type (
 	HTMLPageEvent string
 
 	HTMLPage struct {
-		logger  zerolog.Logger
-		conn    *rpcc.Conn
-		client  *cdp.Client
-		network *net.Manager
-		dom     *dom.Manager
-		mu      sync.Mutex
-		closed  runtime.Boolean
+		logger   zerolog.Logger
+		client   *cdp.Client
+		sessions *cdpsession.Manager
+		network  *cdpnet.Manager
+		dom      *dom.Manager
+		mu       sync.Mutex
+		closed   runtime.Boolean
 	}
 )
 
 func LoadHTMLPage(
 	ctx context.Context,
-	conn *rpcc.Conn,
+	sessions *cdpsession.Manager,
 	params drivers.Params,
 ) (p *HTMLPage, err error) {
 	logger := logging.From(ctx)
 
-	if conn == nil {
-		return nil, runtime.Error(runtime.ErrMissedArgument, "connection")
+	if sessions == nil {
+		return nil, runtime.Error(runtime.ErrMissedArgument, "sessions")
 	}
 
-	client := cdp.NewClient(conn)
+	root := sessions.Root()
+	if root == nil || root.CDP == nil {
+		return nil, runtime.Error(runtime.ErrMissedArgument, "root session")
+	}
+
+	client := root.CDP
 	if err := enableFeatures(ctx, client, params); err != nil {
 		return nil, err
 	}
@@ -62,7 +69,7 @@ func LoadHTMLPage(
 				logger.Error().Err(err)
 			}
 
-			if err := conn.Close(); err != nil {
+			if err := sessions.Close(); err != nil {
 				logger.Error().Err(err)
 			}
 
@@ -70,7 +77,7 @@ func LoadHTMLPage(
 		}
 	}()
 
-	netOpts := net.Options{
+	netOpts := cdpnet.Options{
 		Headers: params.Headers,
 	}
 
@@ -80,14 +87,15 @@ func LoadHTMLPage(
 	}
 
 	if params.Ignore != nil && len(params.Ignore.Resources) > 0 {
-		netOpts.Filter = &net.Filter{
+		netOpts.Filter = &cdpnet.Filter{
 			Patterns: params.Ignore.Resources,
 		}
 	}
 
-	netManager, err := net.New(
+	netManager, err := cdpnet.New(
 		logger,
 		client,
+		sessions,
 		netOpts,
 	)
 
@@ -111,8 +119,8 @@ func LoadHTMLPage(
 
 	p = NewHTMLPage(
 		logger,
-		conn,
 		client,
+		sessions,
 		netManager,
 		domManager,
 	)
@@ -132,12 +140,12 @@ func LoadHTMLPage(
 
 func LoadHTMLPageWithContent(
 	ctx context.Context,
-	conn *rpcc.Conn,
+	sessions *cdpsession.Manager,
 	params drivers.Params,
 	content []byte,
 ) (p *HTMLPage, err error) {
 	logger := logging.From(ctx)
-	p, err = LoadHTMLPage(ctx, conn, params)
+	p, err = LoadHTMLPage(ctx, sessions, params)
 
 	if err != nil {
 		return nil, err
@@ -177,16 +185,16 @@ func LoadHTMLPageWithContent(
 
 func NewHTMLPage(
 	logger zerolog.Logger,
-	conn *rpcc.Conn,
 	client *cdp.Client,
-	netManager *net.Manager,
+	sessions *cdpsession.Manager,
+	netManager *cdpnet.Manager,
 	domManager *dom.Manager,
 ) *HTMLPage {
 	p := new(HTMLPage)
 	p.closed = runtime.False
 	p.logger = common.LoggerWithName(logger.With(), "cdp_page").Logger()
-	p.conn = conn
 	p.client = client
+	p.sessions = sessions
 	p.network = netManager
 	p.dom = domManager
 
@@ -293,8 +301,12 @@ func (p *HTMLPage) Close() error {
 			Msg("failed to close browser page")
 	}
 
-	// Ignore errors from the connection object
-	p.conn.Close()
+	if err := p.sessions.Close(); err != nil {
+		p.logger.Warn().
+			Str("url", url).
+			Err(err).
+			Msg("failed to close session manager")
+	}
 
 	return nil
 }
@@ -500,7 +512,7 @@ func (p *HTMLPage) Navigate(ctx context.Context, url runtime.String) error {
 		return err
 	}
 
-	return p.reloadMainFrame(ctx)
+	return p.dom.ReloadRoot(ctx)
 }
 
 func (p *HTMLPage) NavigateBack(ctx context.Context, skip runtime.Int) (runtime.Boolean, error) {
@@ -513,7 +525,7 @@ func (p *HTMLPage) NavigateBack(ctx context.Context, skip runtime.Int) (runtime.
 		return runtime.False, err
 	}
 
-	return ret, p.reloadMainFrame(ctx)
+	return ret, p.dom.ReloadRoot(ctx)
 }
 
 func (p *HTMLPage) NavigateForward(ctx context.Context, skip runtime.Int) (runtime.Boolean, error) {
@@ -526,7 +538,7 @@ func (p *HTMLPage) NavigateForward(ctx context.Context, skip runtime.Int) (runti
 		return runtime.False, err
 	}
 
-	return ret, p.reloadMainFrame(ctx)
+	return ret, p.dom.ReloadRoot(ctx)
 }
 
 func (p *HTMLPage) WaitForNavigation(ctx context.Context, targetURL runtime.String) error {
@@ -539,11 +551,7 @@ func (p *HTMLPage) WaitForNavigation(ctx context.Context, targetURL runtime.Stri
 		return err
 	}
 
-	if err := p.network.WaitForNavigation(ctx, net.WaitEventOptions{URL: pattern}); err != nil {
-		return err
-	}
-
-	return p.reloadMainFrame(ctx)
+	return p.waitForNavigation(ctx, cdpnet.WaitEventOptions{URL: pattern})
 }
 
 func (p *HTMLPage) WaitForFrameNavigation(ctx context.Context, frame drivers.HTMLDocument, targetURL runtime.String) error {
@@ -566,7 +574,7 @@ func (p *HTMLPage) WaitForFrameNavigation(ctx context.Context, frame drivers.HTM
 	frameID := doc.Frame().Frame.ID
 	isMain := current.Frame().Frame.ID == frameID
 
-	opts := net.WaitEventOptions{
+	opts := cdpnet.WaitEventOptions{
 		URL: pattern,
 	}
 
@@ -575,11 +583,7 @@ func (p *HTMLPage) WaitForFrameNavigation(ctx context.Context, frame drivers.HTM
 		opts.FrameID = frameID
 	}
 
-	if err = p.network.WaitForNavigation(ctx, opts); err != nil {
-		return err
-	}
-
-	return p.reloadMainFrame(ctx)
+	return p.waitForNavigation(ctx, opts)
 }
 
 func (p *HTMLPage) Subscribe(ctx context.Context, subscription runtime.Subscription) (runtime.Stream, error) {
@@ -588,14 +592,24 @@ func (p *HTMLPage) Subscribe(ctx context.Context, subscription runtime.Subscript
 		p.mu.Lock()
 		defer p.mu.Unlock()
 
-		stream, err := p.network.OnNavigation(ctx)
+		stream, err := p.navigationStream(ctx)
 
 		if err != nil {
 			return nil, err
 		}
 
-		return newPageNavigationEventStream(stream, func() error {
-			return p.reloadMainFrame(ctx)
+		opts, err := p.parseNavigationSubscriptionOptions(ctx, subscription.Options)
+		if err != nil {
+			_ = stream.Close()
+			return nil, err
+		}
+
+		if opts.FrameID == "" && opts.URL == nil {
+			return stream, nil
+		}
+
+		return newFilteredNavigationEventStream(stream, func(evt *cdpnet.NavigationEvent) bool {
+			return matchNavigationEvent(evt, opts)
 		}), nil
 	case drivers.RequestEvent:
 		return p.network.OnRequest(ctx)
@@ -625,40 +639,101 @@ func (p *HTMLPage) urlToRegexp(targetURL runtime.String) (*regexp.Regexp, error)
 	return r, nil
 }
 
-func (p *HTMLPage) reloadMainFrame(ctx context.Context) error {
-	prev := p.dom.GetMainFrame()
-
-	if prev != nil {
-		if err := p.dom.RemoveFrameRecursively(prev.Frame().Frame.ID); err != nil {
-			p.logger.Error().Err(err).Msg("failed to remove main frame")
-		}
-	}
-
-	next, err := p.dom.LoadRootDocument(ctx)
-
-	if err != nil {
-		p.logger.Error().Err(err).Msg("failed to load a new root document")
-
-		return err
-	}
-
-	p.dom.SetMainFrame(next)
-
-	return nil
-}
-
 func (p *HTMLPage) loadMainFrame(ctx context.Context) error {
-	next, err := p.dom.LoadRootDocument(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	p.dom.SetMainFrame(next)
-
-	return nil
+	return p.dom.ReloadRoot(ctx)
 }
 
 func (p *HTMLPage) getCurrentDocument() *dom.HTMLDocument {
 	return p.dom.GetMainFrame()
+}
+
+func (p *HTMLPage) navigationStream(ctx context.Context) (runtime.Stream, error) {
+	stream, err := p.network.OnNavigation(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return newPreparedNavigationEventStream(stream, p.prepareNavigationEvent), nil
+}
+
+func (p *HTMLPage) prepareNavigationEvent(ctx context.Context, evt *cdpnet.NavigationEvent) error {
+	if evt == nil {
+		return nil
+	}
+
+	client := evt.SourceClient()
+	if client == nil {
+		client = p.client
+	}
+
+	p.dom.RecordFrameClient(evt.FrameID, client)
+
+	exec, err := eval.Create(ctx, p.logger, client, evt.FrameID)
+	if err != nil {
+		return err
+	}
+
+	if _, err := events.NewEvalWaitTask(exec, templates.DOMReady(), events.DefaultPolling).Run(ctx); err != nil {
+		return err
+	}
+
+	return p.dom.ReloadRoot(ctx)
+}
+
+func (p *HTMLPage) waitForNavigation(ctx context.Context, opts cdpnet.WaitEventOptions) error {
+	stream, err := p.navigationStream(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer stream.Close()
+
+	for evt := range stream.Read(ctx) {
+		if err := evt.Err(); err != nil {
+			return err
+		}
+
+		nav, ok := evt.Value().(*cdpnet.NavigationEvent)
+		if !ok || !matchNavigationEvent(nav, opts) {
+			continue
+		}
+
+		return nil
+	}
+
+	return ctx.Err()
+}
+
+func (p *HTMLPage) parseNavigationSubscriptionOptions(ctx context.Context, value runtime.Map) (cdpnet.WaitEventOptions, error) {
+	opts := cdpnet.WaitEventOptions{}
+	if value == nil {
+		return opts, nil
+	}
+
+	frame, err := value.Get(ctx, runtime.NewString("frame"))
+	if err == nil && frame != runtime.None {
+		frameID, err := navigationFrameID(frame)
+		if err != nil {
+			return opts, err
+		}
+
+		opts.FrameID = frameID
+	}
+
+	target, err := value.Get(ctx, runtime.NewString("target"))
+	if err == nil && target != runtime.None {
+		targetURL, err := runtime.CastString(target)
+		if err != nil {
+			return opts, err
+		}
+
+		pattern, err := p.urlToRegexp(targetURL)
+		if err != nil {
+			return opts, err
+		}
+
+		opts.URL = pattern
+	}
+
+	return opts, nil
 }

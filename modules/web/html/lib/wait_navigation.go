@@ -9,9 +9,9 @@ import (
 )
 
 type WaitNavigationParams struct {
-	Frame     drivers.HTMLDocument
-	TargetURL runtime.String
-	Timeout   runtime.Int
+	Frame     drivers.HTMLDocument `json:"frame"`
+	TargetURL runtime.String       `json:"target"`
+	Timeout   runtime.Int          `json:"timeout"`
 }
 
 // WaitNavigation waits for a given page to navigate to a new URL.

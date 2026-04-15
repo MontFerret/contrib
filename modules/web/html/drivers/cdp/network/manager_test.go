@@ -221,6 +221,7 @@ func TestManager(t *testing.T) {
 				mgr, err := network.New(
 					zerolog.New(os.Stdout).Level(zerolog.Disabled),
 					client,
+					nil,
 					network.Options{
 						Headers: drivers.NewHTTPHeadersWith(map[string][]string{"x-correlation-id": {"foo"}}),
 						Filter: &network.Filter{
@@ -276,6 +277,7 @@ func TestManager(t *testing.T) {
 				mgr, err := network.New(
 					zerolog.New(os.Stdout).Level(zerolog.Disabled),
 					client,
+					nil,
 					network.Options{},
 				)
 				So(err, ShouldBeNil)

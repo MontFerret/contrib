@@ -62,15 +62,18 @@ main() {
     done
   fi
 
+  local root_dir
+  root_dir="$(pwd)"
+
   for module in "$@"; do
     case "$command" in
       build)
         echo "Building module '$module'"
-        go build "$DIR_MODULES/$module/..."
+        ( cd "$DIR_MODULES/$module" && go build ./... )
         ;;
       test-unit)
         echo "Testing module '$module'"
-        go test "$DIR_MODULES/$module/..."
+        ( cd "$DIR_MODULES/$module" && go test ./... )
         ;;
       test-integration)
         echo "Running integration tests for module '$module'"
@@ -93,17 +96,20 @@ main() {
         ;;
       lint)
         echo "Linting module '$module'"
-        staticcheck -tests=false -checks=all,-U1000 "$DIR_MODULES/$module/..."
-        revive -config revive.toml -formatter stylish \
-          -exclude ./vendor/... \
-          -exclude ./*_test.go \
-          "$DIR_MODULES/$module/..."
+        ( cd "$DIR_MODULES/$module" && \
+          staticcheck -tests=false -checks=all,-U1000 ./... && \
+          revive -config "$root_dir/revive.toml" -formatter stylish \
+            -exclude './*_test.go' \
+            ./...
+        )
         ;;
       fmt)
         echo "Formatting module '$module'"
-        fieldalignment --fix "$DIR_MODULES/$module/..."
-        go fmt "$DIR_MODULES/$module/..."
-        goimports -w -local github.com/MontFerret "$DIR_MODULES/$module"
+        ( cd "$DIR_MODULES/$module" && \
+          fieldalignment --fix ./... && \
+          go fmt ./... && \
+          goimports -w -local github.com/MontFerret .
+        )
         ;;
       *)
         echo "Unknown command: $command" >&2

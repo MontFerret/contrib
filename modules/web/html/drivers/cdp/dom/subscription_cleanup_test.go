@@ -47,7 +47,7 @@ func TestDOMEventStreamClose(t *testing.T) {
 						runtimeAPI,
 						"match",
 						func(_ context.Context, _ string) error {
-							return errors.New("Execution context was destroyed.")
+							return errors.New("execution context was destroyed")
 						},
 						stream,
 						nil,
