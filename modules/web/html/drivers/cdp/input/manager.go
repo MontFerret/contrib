@@ -412,9 +412,7 @@ func (m *Manager) Click(ctx context.Context, objectID cdpruntime.RemoteObjectID,
 		return err
 	}
 
-	m.logger.Trace().
-		Err(err).
-		Msg("clicked on an element")
+	m.logger.Trace().Msg("clicked on an element")
 
 	return nil
 }
@@ -468,7 +466,7 @@ func (m *Manager) ClickBySelector(ctx context.Context, id cdpruntime.RemoteObjec
 
 	if err := m.mouse.ClickWithCount(ctx, points.X, points.Y, delay, int(count)); err != nil {
 		m.logger.Trace().Err(err).Msg("failed to click on an element")
-		return nil
+		return err
 	}
 
 	m.logger.Trace().Msg("clicked on an element")

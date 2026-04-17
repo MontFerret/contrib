@@ -651,8 +651,7 @@ func (el *HTMLElement) Subscribe(ctx context.Context, subscription runtime.Subsc
 }
 
 func (el *HTMLElement) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
-	//TODO implement me
-	panic("implement me")
+	return runtime.Error(runtime.ErrNotImplemented, "HTMLElement.Dispatch")
 }
 
 func (el *HTMLElement) logError(err error) *zerolog.Event {

@@ -1,5 +1,8 @@
 LET url = @lab.static.dynamic + "?redirect=/iframe&src=/events"
 LET page = DOCUMENT(url, { driver: 'cdp' })
+
+WAIT_ELEMENT(page, "iframe[name='nested']")
+
 LET doc = page.frames[1]
 
 WAIT_ELEMENT(doc, "#page-events", 5000)

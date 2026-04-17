@@ -68,8 +68,8 @@ func (loop *Loop) Listeners(eventID ID) int {
 }
 
 func (loop *Loop) AddListener(eventID ID, handler Handler) ListenerID {
-	loop.mu.RLock()
-	defer loop.mu.RUnlock()
+	loop.mu.Lock()
+	defer loop.mu.Unlock()
 
 	listener := Listener{
 		ID:      ListenerID(rand.Int()),
@@ -90,8 +90,8 @@ func (loop *Loop) AddListener(eventID ID, handler Handler) ListenerID {
 }
 
 func (loop *Loop) RemoveListener(eventID ID, listenerID ListenerID) {
-	loop.mu.RLock()
-	defer loop.mu.RUnlock()
+	loop.mu.Lock()
+	defer loop.mu.Unlock()
 
 	bucket, exists := loop.listeners[eventID]
 

@@ -1,6 +1,8 @@
 LET url = @lab.static.dynamic + "?redirect=/iframe&src=/forms"
 LET page =  DOCUMENT(url, { driver: "cdp" })
 
+WAIT_ELEMENT(page, "iframe[name='nested']")
+
 LET frames = (
     FOR f IN page.frames
         FILTER f.name == "nested"

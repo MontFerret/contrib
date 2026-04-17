@@ -173,29 +173,29 @@ func (m *Manager) SetMainFrame(doc *HTMLDocument) {
 }
 
 func (m *Manager) AddFrame(frame page.FrameTree) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	m.addFrameInternal(frame)
 }
 
 func (m *Manager) RemoveFrame(frameID page.FrameID) error {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	return m.removeFrameInternal(frameID)
 }
 
 func (m *Manager) RemoveFrameRecursively(frameID page.FrameID) error {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	return m.removeFrameRecursivelyInternal(frameID)
 }
 
 func (m *Manager) RemoveFramesByParentID(parentFrameID page.FrameID) error {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	frame, found := m.frames.Get(parentFrameID)
 
@@ -258,8 +258,9 @@ func (m *Manager) GetFrameTree(_ context.Context, frameID page.FrameID) (page.Fr
 }
 
 func (m *Manager) GetFrameNodes(ctx context.Context) (runtime.List, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	// Write lock: getFrameInternal may lazy-load a frame and mutate m.frames.
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	arr := runtime.NewArray(m.frames.Length())
 

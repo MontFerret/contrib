@@ -1,6 +1,9 @@
 LET target = @lab.static.static + "/"
 LET url = @lab.static.dynamic + "?redirect=/iframe&src=/iframe"
 LET page = DOCUMENT(url, { driver: 'cdp' })
+
+WAIT_ELEMENT(page, "iframe[name='nested']")
+
 LET original = FIRST(FRAMES(page, "name", "nested"))
 
 INPUT(original, "#url_input", target)

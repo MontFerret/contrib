@@ -3,6 +3,7 @@ package cdp
 import (
 	"context"
 	"testing"
+	"time"
 
 	netdriver "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/network"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -57,6 +58,71 @@ func TestPreparedNavigationEventStream(t *testing.T) {
 
 	if prepareCalls != 1 {
 		t.Fatalf("expected prepare to run once, got %d", prepareCalls)
+	}
+}
+
+// blockingStubStream emits one event then blocks until ctx is cancelled,
+// mirroring how real upstream streams behave with a slow/idle source.
+type blockingStubStream struct {
+	first runtime.Message
+}
+
+func (b *blockingStubStream) Close() error { return nil }
+
+func (b *blockingStubStream) Read(ctx context.Context) <-chan runtime.Message {
+	out := make(chan runtime.Message)
+
+	go func() {
+		defer close(out)
+
+		select {
+		case <-ctx.Done():
+			return
+		case out <- b.first:
+		}
+
+		<-ctx.Done()
+	}()
+
+	return out
+}
+
+func TestPreparedNavigationEventStreamExitsOnCtxCancel(t *testing.T) {
+	raw := &blockingStubStream{
+		first: runtime.NewValueMessage((&netdriver.NavigationEvent{
+			URL:     "https://example.com",
+			FrameID: "frame-id",
+		}).Copy()),
+	}
+
+	stream := newPreparedNavigationEventStream(raw, func(context.Context, *netdriver.NavigationEvent) error {
+		return nil
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	ch := stream.Read(ctx)
+
+	// Receive the first message, then stop consuming and cancel.
+	select {
+	case <-ch:
+	case <-time.After(time.Second):
+		cancel()
+		t.Fatal("timed out waiting for first message")
+	}
+
+	cancel()
+
+	// After ctx is cancelled, the fan-out goroutine must exit and close the channel.
+	select {
+	case _, ok := <-ch:
+		if ok {
+			// Drain any straggler and re-check.
+			for range ch {
+				continue
+			}
+		}
+	case <-time.After(time.Second):
+		t.Fatal("fan-out goroutine did not exit after ctx cancel")
 	}
 }
 

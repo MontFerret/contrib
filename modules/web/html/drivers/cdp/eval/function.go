@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 )
 
 type Function struct {
+	err        error
 	exp        string
 	name       string
 	ownerID    cdpruntime.RemoteObjectID
@@ -78,10 +80,15 @@ func (fn *Function) WithArgRef(id cdpruntime.RemoteObjectID) *Function {
 }
 
 func (fn *Function) WithArgValue(value runtime.Value) *Function {
+	if fn.err != nil {
+		return fn
+	}
+
 	raw, err := jsonf.Default.Encode(value)
 
 	if err != nil {
-		panic(err)
+		fn.err = fmt.Errorf("encode arg value: %w", err)
+		return fn
 	}
 
 	return fn.withArg(cdpruntime.CallArgument{
@@ -94,15 +101,27 @@ func (fn *Function) WithArgSelector(selector drivers.QuerySelector) *Function {
 }
 
 func (fn *Function) WithArg(value any) *Function {
+	if fn.err != nil {
+		return fn
+	}
+
 	raw, err := json.Marshal(value)
 
 	if err != nil {
-		panic(err)
+		fn.err = fmt.Errorf("marshal arg: %w", err)
+		return fn
 	}
 
 	return fn.withArg(cdpruntime.CallArgument{
 		Value: raw,
 	})
+}
+
+// Err returns the first error encountered while building the function,
+// or nil if none. Callers that consume a Function (eval / compile paths)
+// should check this before making network calls.
+func (fn *Function) Err() error {
+	return fn.err
 }
 
 func (fn *Function) String() string {

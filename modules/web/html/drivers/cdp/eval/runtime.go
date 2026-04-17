@@ -132,6 +132,10 @@ func (rt *Runtime) EvalElements(ctx context.Context, fn *Function) (*runtime.Arr
 }
 
 func (rt *Runtime) Compile(ctx context.Context, fn *Function) (*CompiledFunction, error) {
+	if err := fn.Err(); err != nil {
+		return nil, err
+	}
+
 	log := rt.logger.With().
 		Str("expression", fn.String()).
 		Array("arguments", fn.args).
@@ -229,6 +233,10 @@ func (rt *Runtime) CallElements(ctx context.Context, fn *CompiledFunction) (runt
 }
 
 func (rt *Runtime) evalInternal(ctx context.Context, fn *Function) (cdpruntime.RemoteObject, error) {
+	if err := fn.Err(); err != nil {
+		return cdpruntime.RemoteObject{}, err
+	}
+
 	log := rt.logger.With().
 		Str("expression", fn.String()).
 		Str("returns", fn.returnType.String()).

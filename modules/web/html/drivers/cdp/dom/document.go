@@ -331,8 +331,7 @@ func (doc *HTMLDocument) Eval() *eval.Runtime {
 }
 
 func (doc *HTMLDocument) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
-	//TODO implement me
-	panic("implement me")
+	return nil, runtime.Error(runtime.ErrNotImplemented, "HTMLDocument.Query")
 }
 
 func (doc *HTMLDocument) Subscribe(ctx context.Context, subscription runtime.Subscription) (runtime.Stream, error) {
@@ -346,8 +345,7 @@ func (doc *HTMLDocument) Subscribe(ctx context.Context, subscription runtime.Sub
 }
 
 func (doc *HTMLDocument) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
-	//TODO implement me
-	panic("implement me")
+	return runtime.Error(runtime.ErrNotImplemented, "HTMLDocument.Dispatch")
 }
 
 func (doc *HTMLDocument) logError(err error) *zerolog.Event {

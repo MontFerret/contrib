@@ -77,7 +77,6 @@ func TestStreamReader(t *testing.T) {
 				stream.Emit(runtime.NewString("foo"))
 				stream.Emit(runtime.NewString("bar"))
 				stream.Emit(runtime.NewString("baz"))
-				cancel()
 			}()
 
 			data := make([]string, 0, 3)
@@ -86,11 +85,17 @@ func TestStreamReader(t *testing.T) {
 				return stream.(*TestStream).Recv()
 			})
 
+			// Cancel once the expected number of messages has been consumed so
+			// the reader goroutine exits and closes the downstream channel.
 			for evt := range es.Read(ctx) {
 				So(evt.Err(), ShouldBeNil)
 				So(evt.Value(), ShouldNotBeNil)
 
 				data = append(data, evt.Value().String())
+
+				if len(data) == 3 {
+					cancel()
+				}
 			}
 
 			So(data, ShouldResemble, []string{"foo", "bar", "baz"})

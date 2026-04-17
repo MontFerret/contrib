@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"hash/fnv"
-	"io"
 	"regexp"
 	"sync"
+	"time"
 
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/page"
@@ -40,6 +40,11 @@ type (
 	}
 )
 
+const (
+	frameRefreshInterval    = 25 * time.Millisecond
+	maxFrameRefreshAttempts = 20
+)
+
 func LoadHTMLPage(
 	ctx context.Context,
 	sessions *cdpsession.Manager,
@@ -61,19 +66,15 @@ func LoadHTMLPage(
 		return nil, err
 	}
 
-	closers := make([]io.Closer, 0, 4)
-
 	defer func() {
 		if err != nil {
 			if err := client.Page.Close(context.Background()); err != nil {
-				logger.Error().Err(err)
+				logger.Error().Err(err).Msg("failed to close page")
 			}
 
 			if err := sessions.Close(); err != nil {
-				logger.Error().Err(err)
+				logger.Error().Err(err).Msg("failed to close session manager")
 			}
-
-			common.CloseAll(logger, closers, "failed to close a Page resource")
 		}
 	}()
 
@@ -340,14 +341,14 @@ func (p *HTMLPage) GetFrames(ctx context.Context) (runtime.List, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	return p.dom.GetFrameNodes(ctx)
+	return p.loadFrames(ctx)
 }
 
 func (p *HTMLPage) GetFrame(ctx context.Context, idx runtime.Int) (runtime.Value, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	frames, err := p.dom.GetFrameNodes(ctx)
+	frames, err := p.loadFrames(ctx)
 
 	if err != nil {
 		return runtime.None, err
@@ -457,7 +458,7 @@ func (p *HTMLPage) CaptureScreenshot(ctx context.Context, params drivers.Screens
 		return runtime.NewBinary(nil), err
 	}
 
-	if params.Format == drivers.ScreenshotFormatJPEG && params.Quality < 0 && params.Quality > 100 {
+	if params.Format == drivers.ScreenshotFormatJPEG && (params.Quality < 0 || params.Quality > 100) {
 		params.Quality = 100
 	}
 
@@ -621,8 +622,7 @@ func (p *HTMLPage) Subscribe(ctx context.Context, subscription runtime.Subscript
 }
 
 func (p *HTMLPage) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
-	//TODO implement me
-	panic("implement me")
+	return runtime.Error(runtime.ErrNotImplemented, "HTMLPage.Dispatch")
 }
 
 func (p *HTMLPage) urlToRegexp(targetURL runtime.String) (*regexp.Regexp, error) {
@@ -645,6 +645,51 @@ func (p *HTMLPage) loadMainFrame(ctx context.Context) error {
 
 func (p *HTMLPage) getCurrentDocument() *dom.HTMLDocument {
 	return p.dom.GetMainFrame()
+}
+
+func (p *HTMLPage) loadFrames(ctx context.Context) (runtime.List, error) {
+	expectedFrames := 1
+
+	if doc := p.getCurrentDocument(); doc != nil {
+		iframeCount, err := doc.CountBySelector(ctx, drivers.NewCSSSelector("iframe"))
+		if err == nil && iframeCount >= 0 {
+			expectedFrames += int(iframeCount)
+		}
+	}
+
+	for attempt := 0; attempt < maxFrameRefreshAttempts; attempt++ {
+		if err := p.dom.ReloadRoot(ctx); err != nil {
+			return nil, err
+		}
+
+		frames, err := p.dom.GetFrameNodes(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		count, err := frames.Length(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if int(count) >= expectedFrames || attempt == maxFrameRefreshAttempts-1 {
+			return frames, nil
+		}
+
+		timer := time.NewTimer(frameRefreshInterval)
+
+		select {
+		case <-ctx.Done():
+			if !timer.Stop() {
+				<-timer.C
+			}
+
+			return nil, ctx.Err()
+		case <-timer.C:
+		}
+	}
+
+	return p.dom.GetFrameNodes(ctx)
 }
 
 func (p *HTMLPage) navigationStream(ctx context.Context) (runtime.Stream, error) {

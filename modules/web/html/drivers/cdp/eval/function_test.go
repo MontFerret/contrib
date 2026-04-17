@@ -338,6 +338,24 @@ func TestFunction(t *testing.T) {
 			})
 		})
 
+		Convey(".Err", func() {
+			Convey("Should return nil when no encoding error occurred", func() {
+				f := F("return 'foo'").WithArg("ok").WithArgValue(runtime.NewInt(1))
+
+				So(f.Err(), ShouldBeNil)
+			})
+
+			Convey("Should capture the first error from WithArg without panicking", func() {
+				// chan values cannot be JSON-marshaled.
+				f := F("return 'foo'").WithArg(make(chan int))
+
+				So(f.Err(), ShouldNotBeNil)
+				// Subsequent builder calls should short-circuit without panicking.
+				f.WithArg("ok").WithArgValue(runtime.NewInt(1))
+				So(f.Length(), ShouldEqual, 0)
+			})
+		})
+
 		Convey(".String", func() {
 			Convey("It should return a function expression", func() {
 				exp := "return 'foo'"

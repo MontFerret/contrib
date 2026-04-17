@@ -34,7 +34,10 @@ func (p *preparedNavigationEventStream) Read(ctx context.Context) <-chan runtime
 
 		for evt := range p.stream.Read(ctx) {
 			if err := evt.Err(); err != nil {
-				out <- runtime.NewErrorMessage(err)
+				select {
+				case <-ctx.Done():
+				case out <- runtime.NewErrorMessage(err):
+				}
 				return
 			}
 
@@ -44,11 +47,18 @@ func (p *preparedNavigationEventStream) Read(ctx context.Context) <-chan runtime
 			}
 
 			if err := p.prepare(ctx, nav); err != nil {
-				out <- runtime.NewErrorMessage(err)
+				select {
+				case <-ctx.Done():
+				case out <- runtime.NewErrorMessage(err):
+				}
 				return
 			}
 
-			out <- runtime.NewValueMessage(nav)
+			select {
+			case <-ctx.Done():
+				return
+			case out <- runtime.NewValueMessage(nav):
+			}
 		}
 	}()
 
