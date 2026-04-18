@@ -18,7 +18,7 @@ func SetInnerText(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := drivers.ToContentTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
@@ -31,7 +31,7 @@ func SetInnerText(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 			return runtime.None, err
 		}
 
-		return runtime.None, el.SetInnerText(ctx, runtime.ToString(args[1]))
+		return runtime.None, target.SetInnerText(ctx, runtime.ToString(args[1]))
 	}
 
 	err = runtime.ValidateType(args[2], runtime.TypeString)
@@ -48,5 +48,5 @@ func SetInnerText(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 
 	innerHTML := runtime.ToString(args[2])
 
-	return runtime.None, el.SetInnerTextBySelector(ctx, selector, innerHTML)
+	return runtime.None, target.SetInnerTextBySelector(ctx, selector, innerHTML)
 }

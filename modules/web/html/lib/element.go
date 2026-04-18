@@ -22,12 +22,12 @@ func Element(ctx context.Context, args ...runtime.Value) (runtime.Value, error) 
 	return el.QuerySelector(ctx, selector)
 }
 
-func queryArgs(args []runtime.Value) (drivers.HTMLElement, drivers.QuerySelector, error) {
+func queryArgs(args []runtime.Value) (drivers.QueryTarget, drivers.QuerySelector, error) {
 	if err := runtime.ValidateArgs(args, 2, 2); err != nil {
 		return nil, drivers.QuerySelector{}, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := drivers.ToQueryTarget(args[0])
 
 	if err != nil {
 		return nil, drivers.QuerySelector{}, err
@@ -39,5 +39,5 @@ func queryArgs(args []runtime.Value) (drivers.HTMLElement, drivers.QuerySelector
 		return nil, drivers.QuerySelector{}, err
 	}
 
-	return el, qs, nil
+	return target, qs, nil
 }

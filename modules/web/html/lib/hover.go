@@ -18,14 +18,14 @@ func Hover(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := drivers.ToInteractionTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
 	}
 
 	if len(args) == 1 {
-		return runtime.True, el.Hover(ctx)
+		return runtime.True, target.Hover(ctx)
 	}
 
 	selector, err := drivers.ToQuerySelector(args[1])
@@ -34,5 +34,5 @@ func Hover(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
-	return runtime.True, el.HoverBySelector(ctx, selector)
+	return runtime.True, target.HoverBySelector(ctx, selector)
 }

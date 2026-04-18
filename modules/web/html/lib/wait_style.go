@@ -68,7 +68,7 @@ func waitStyleWhen(ctx context.Context, args []runtime.Value, when drivers.WaitE
 			return runtime.None, err
 		}
 
-		el, err := drivers.ToElement(arg1)
+		target, err := drivers.ToWaitTarget(arg1)
 
 		if err != nil {
 			return runtime.None, err
@@ -90,9 +90,13 @@ func waitStyleWhen(ctx context.Context, args []runtime.Value, when drivers.WaitE
 		ctx, fn := waitTimeout(ctx, timeout)
 		defer fn()
 
-		return runtime.True, el.WaitForStyleBySelector(ctx, selector, name, value, when)
+		return runtime.True, target.WaitForStyleBySelector(ctx, selector, name, value, when)
 	default:
-		el := arg1.(drivers.HTMLElement)
+		target, err := drivers.ToWaitTarget(arg1)
+		if err != nil {
+			return runtime.None, err
+		}
+
 		name := args[1].(runtime.String)
 		value := args[2]
 
@@ -109,6 +113,6 @@ func waitStyleWhen(ctx context.Context, args []runtime.Value, when drivers.WaitE
 		ctx, fn := waitTimeout(ctx, timeout)
 		defer fn()
 
-		return runtime.True, el.WaitForStyle(ctx, name, value, when)
+		return runtime.True, target.WaitForStyle(ctx, name, value, when)
 	}
 }

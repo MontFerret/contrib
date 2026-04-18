@@ -17,7 +17,7 @@ func InputClear(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := drivers.ToInteractionTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
@@ -25,7 +25,7 @@ func InputClear(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 
 	// CLEAR(el)
 	if len(args) == 1 {
-		return runtime.None, el.Clear(ctx)
+		return runtime.None, target.Clear(ctx)
 	}
 
 	selector, err := drivers.ToQuerySelector(args[1])
@@ -34,5 +34,5 @@ func InputClear(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 		return runtime.None, err
 	}
 
-	return runtime.True, el.ClearBySelector(ctx, selector)
+	return runtime.True, target.ClearBySelector(ctx, selector)
 }

@@ -20,7 +20,7 @@ func Navigate(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 		return runtime.None, err
 	}
 
-	page, err := drivers.ToPage(args[0])
+	target, err := drivers.ToPageNavigationTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
@@ -47,5 +47,5 @@ func Navigate(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 	ctx, fn := waitTimeout(ctx, timeout)
 	defer fn()
 
-	return runtime.True, page.Navigate(ctx, args[1].(runtime.String))
+	return runtime.True, target.Navigate(ctx, args[1].(runtime.String))
 }

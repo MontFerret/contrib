@@ -19,7 +19,7 @@ func AttributeQuery(ctx context.Context, args ...runtime.Value) (runtime.Value, 
 		return runtime.None, err
 	}
 
-	parent, err := drivers.ToElement(args[0])
+	parent, err := drivers.ToQueryTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
@@ -37,7 +37,7 @@ func AttributeQuery(ctx context.Context, args ...runtime.Value) (runtime.Value, 
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(found)
+	target, err := drivers.ToAttributeTarget(found)
 
 	if err != nil {
 		return runtime.None, err
@@ -45,7 +45,7 @@ func AttributeQuery(ctx context.Context, args ...runtime.Value) (runtime.Value, 
 
 	names := args[2:]
 	result := runtime.NewObject()
-	attrs, err := el.GetAttributes(ctx)
+	attrs, err := target.GetAttributes(ctx)
 
 	if err != nil {
 		return runtime.None, err

@@ -16,15 +16,20 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.False, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := drivers.ToInteractionTarget(args[0])
 
+	if err != nil {
+		return runtime.False, err
+	}
+
+	queryTarget, err := drivers.ToQueryTarget(args[0])
 	if err != nil {
 		return runtime.False, err
 	}
 
 	// CLICK(elOrDoc)
 	if len(args) == 1 {
-		return runtime.True, el.Click(ctx, 1)
+		return runtime.True, target.Click(ctx, 1)
 	}
 
 	if len(args) == 2 {
@@ -36,7 +41,7 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 
 		switch arg2 := args[1].(type) {
 		case runtime.Int:
-			return runtime.True, el.Click(ctx, arg2)
+			return runtime.True, target.Click(ctx, arg2)
 		default:
 			selector, err := drivers.ToQuerySelector(args[1])
 
@@ -44,7 +49,7 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 				return runtime.None, err
 			}
 
-			exists, err := el.ExistsBySelector(ctx, selector)
+			exists, err := queryTarget.ExistsBySelector(ctx, selector)
 
 			if err != nil {
 				return runtime.False, err
@@ -54,7 +59,7 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 				return exists, nil
 			}
 
-			return exists, el.ClickBySelector(ctx, selector, 1)
+			return exists, target.ClickBySelector(ctx, selector, 1)
 		}
 	}
 
@@ -71,7 +76,7 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
-	exists, err := el.ExistsBySelector(ctx, selector)
+	exists, err := queryTarget.ExistsBySelector(ctx, selector)
 
 	if err != nil {
 		return runtime.False, err
@@ -87,5 +92,5 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.False, err
 	}
 
-	return exists, el.ClickBySelector(ctx, selector, times)
+	return exists, target.ClickBySelector(ctx, selector, times)
 }

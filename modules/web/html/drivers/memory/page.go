@@ -189,51 +189,6 @@ func (p *HTMLPage) GetResponse(_ context.Context) (drivers.HTTPResponse, error) 
 	return p.response, nil
 }
 
-func (p *HTMLPage) SetCookies(_ context.Context, _ *drivers.HTTPCookies) error {
-	return runtime.ErrNotSupported
-}
-
-func (p *HTMLPage) DeleteCookies(_ context.Context, _ *drivers.HTTPCookies) error {
-	return runtime.ErrNotSupported
-}
-
-func (p *HTMLPage) PrintToPDF(_ context.Context, _ drivers.PDFParams) (runtime.Binary, error) {
-	return nil, runtime.ErrNotSupported
-}
-
-func (p *HTMLPage) CaptureScreenshot(_ context.Context, _ drivers.ScreenshotParams) (runtime.Binary, error) {
-	return nil, runtime.ErrNotSupported
-}
-
-func (p *HTMLPage) WaitForNavigation(_ context.Context, _ runtime.String) error {
-	return runtime.ErrNotSupported
-}
-
-func (p *HTMLPage) WaitForFrameNavigation(_ context.Context, _ drivers.HTMLDocument, _ runtime.String) error {
-	return runtime.ErrNotSupported
-}
-
-func (p *HTMLPage) Navigate(_ context.Context, _ runtime.String) error {
-	return runtime.ErrNotSupported
-}
-
-func (p *HTMLPage) NavigateBack(_ context.Context, _ runtime.Int) (runtime.Boolean, error) {
-	return false, runtime.ErrNotSupported
-}
-
-func (p *HTMLPage) NavigateForward(_ context.Context, _ runtime.Int) (runtime.Boolean, error) {
-	return false, runtime.ErrNotSupported
-}
-
-func (p *HTMLPage) Subscribe(_ context.Context, _ runtime.Subscription) (runtime.Stream, error) {
-	return nil, runtime.ErrNotSupported
-}
-
-func (p *HTMLPage) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (p *HTMLPage) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
 	return p.document.Query(ctx, q)
 }

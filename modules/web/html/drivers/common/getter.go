@@ -14,27 +14,31 @@ func GetInPage(ctx context.Context, key runtime.Value, page drivers.HTMLPage) (r
 
 	switch key.String() {
 	case "response":
-		resp, err := page.GetResponse(ctx)
+		target, ok := page.(drivers.PageResponseTarget)
+		if !ok {
+			return runtime.None, runtime.Errorf(runtime.ErrNotSupported, "page response capability")
+		}
+
+		resp, err := target.GetResponse(ctx)
 
 		if err != nil {
 			return nil, err
 		}
 
-		out, err := resp.Get(ctx, key)
-
-		if err != nil {
-			return runtime.None, err
-		}
-
-		return out, nil
+		return &resp, nil
 	case "mainFrame", "document":
-		return GetInDocument(ctx, key, page.GetMainFrame())
+		return page.GetMainFrame(), nil
 	case "frames":
 		return page.GetFrames(ctx)
 	case "url", "URL":
 		return page.GetURL(), nil
 	case "cookies":
-		cookies, err := page.GetCookies(ctx)
+		target, ok := page.(drivers.PageCookieReader)
+		if !ok {
+			return runtime.None, runtime.Errorf(runtime.ErrNotSupported, "page cookies capability")
+		}
+
+		cookies, err := target.GetCookies(ctx)
 
 		if err != nil {
 			return nil, err

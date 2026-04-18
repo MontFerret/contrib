@@ -19,8 +19,13 @@ func ClickAll(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 		return runtime.False, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := drivers.ToInteractionTarget(args[0])
 
+	if err != nil {
+		return runtime.False, err
+	}
+
+	queryTarget, err := drivers.ToQueryTarget(args[0])
 	if err != nil {
 		return runtime.False, err
 	}
@@ -31,7 +36,7 @@ func ClickAll(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 		return runtime.None, err
 	}
 
-	exists, err := el.ExistsBySelector(ctx, selector)
+	exists, err := queryTarget.ExistsBySelector(ctx, selector)
 
 	if err != nil {
 		return runtime.False, err
@@ -57,5 +62,5 @@ func ClickAll(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 		}
 	}
 
-	return runtime.True, el.ClickBySelectorAll(ctx, selector, times)
+	return runtime.True, target.ClickBySelectorAll(ctx, selector, times)
 }

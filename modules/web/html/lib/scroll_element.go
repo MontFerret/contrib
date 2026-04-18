@@ -24,8 +24,8 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 		return runtime.None, err
 	}
 
-	var doc drivers.HTMLDocument
-	var el drivers.HTMLElement
+	var doc drivers.DocumentViewportTarget
+	var target drivers.InteractionTarget
 	var selector drivers.QuerySelector
 	var opts drivers.ScrollOptions
 
@@ -38,7 +38,7 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 			return runtime.None, errors.Wrap(err, "options")
 		}
 
-		doc, err = drivers.ToDocument(args[0])
+		doc, err = drivers.ToDocumentViewportTarget(args[0])
 
 		if err != nil {
 			return runtime.None, errors.Wrap(err, "document")
@@ -64,7 +64,7 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 
 		switch argv := args[1].(type) {
 		case runtime.String:
-			doc, err = drivers.ToDocument(args[0])
+			doc, err = drivers.ToDocumentViewportTarget(args[0])
 
 			if err != nil {
 				return runtime.None, errors.Wrap(err, "document")
@@ -76,7 +76,7 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 				return runtime.None, err
 			}
 		default:
-			el, err = drivers.ToElement(args[0])
+			target, err = drivers.ToInteractionTarget(args[0])
 			if err != nil {
 				return runtime.None, errors.Wrap(err, "element")
 			}
@@ -91,7 +91,7 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 
 		}
 	} else {
-		el, err = drivers.ToElement(args[0])
+		target, err = drivers.ToInteractionTarget(args[0])
 
 		if err != nil {
 			return runtime.None, errors.Wrap(err, "element")
@@ -103,11 +103,16 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 			return runtime.True, doc.ScrollBySelector(ctx, selector, opts)
 		}
 
-		return runtime.True, doc.GetElement().ScrollIntoView(ctx, opts)
+		target, err = drivers.ToInteractionTarget(args[0])
+		if err != nil {
+			return runtime.None, errors.Wrap(err, "element")
+		}
+
+		return runtime.True, target.ScrollIntoView(ctx, opts)
 	}
 
-	if el != nil {
-		return runtime.True, el.ScrollIntoView(ctx, opts)
+	if target != nil {
+		return runtime.True, target.ScrollIntoView(ctx, opts)
 	}
 
 	return runtime.None, runtime.TypeError(

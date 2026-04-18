@@ -19,7 +19,7 @@ func AttributeGet(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := drivers.ToAttributeTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
@@ -27,7 +27,7 @@ func AttributeGet(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 
 	names := args[1:]
 	result := runtime.NewObject()
-	attrs, err := el.GetAttributes(ctx)
+	attrs, err := target.GetAttributes(ctx)
 
 	if err != nil {
 		return runtime.None, err

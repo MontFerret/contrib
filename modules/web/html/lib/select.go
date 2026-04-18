@@ -25,6 +25,11 @@ func Select(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
+	target, err := drivers.ToInteractionTarget(el)
+	if err != nil {
+		return runtime.None, err
+	}
+
 	if len(args) == 2 {
 		arr, err := runtime.ToList(ctx, args[1])
 
@@ -32,7 +37,7 @@ func Select(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 			return runtime.None, err
 		}
 
-		return el.Select(ctx, arr)
+		return target.Select(ctx, arr)
 	}
 
 	selector, err := drivers.ToQuerySelector(args[1])
@@ -47,5 +52,5 @@ func Select(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
-	return el.SelectBySelector(ctx, selector, arr)
+	return target.SelectBySelector(ctx, selector, arr)
 }

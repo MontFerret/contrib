@@ -627,122 +627,6 @@ func (el *HTMLElement) GetNextElementSibling(_ context.Context) (runtime.Value, 
 	return NewHTMLElement(el.doc, sibling)
 }
 
-func (el *HTMLElement) Click(_ context.Context, _ runtime.Int) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) ClickBySelector(_ context.Context, _ drivers.QuerySelector, _ runtime.Int) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) ClickBySelectorAll(_ context.Context, _ drivers.QuerySelector, _ runtime.Int) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) Clear(_ context.Context) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) ClearBySelector(_ context.Context, _ drivers.QuerySelector) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) Input(_ context.Context, _ runtime.Value, _ runtime.Int) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) InputBySelector(_ context.Context, _ drivers.QuerySelector, _ runtime.Value, _ runtime.Int) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) Press(_ context.Context, _ []runtime.String, _ runtime.Int) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) PressBySelector(_ context.Context, _ drivers.QuerySelector, _ []runtime.String, _ runtime.Int) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) Select(_ context.Context, _ runtime.List) (runtime.List, error) {
-	return nil, runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) SelectBySelector(_ context.Context, _ drivers.QuerySelector, _ runtime.List) (runtime.List, error) {
-	return nil, runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) ScrollIntoView(_ context.Context, _ drivers.ScrollOptions) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) Focus(_ context.Context) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) FocusBySelector(_ context.Context, _ drivers.QuerySelector) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) Blur(_ context.Context) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) BlurBySelector(_ context.Context, _ drivers.QuerySelector) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) Hover(_ context.Context) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) HoverBySelector(_ context.Context, _ drivers.QuerySelector) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) WaitForClass(_ context.Context, _ runtime.String, _ drivers.WaitEvent) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) WaitForElement(_ context.Context, _ drivers.QuerySelector, _ drivers.WaitEvent) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) WaitForElementAll(_ context.Context, _ drivers.QuerySelector, _ drivers.WaitEvent) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) WaitForAttribute(_ context.Context, _ runtime.String, _ runtime.Value, _ drivers.WaitEvent) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) WaitForAttributeBySelector(_ context.Context, _ drivers.QuerySelector, _ runtime.String, _ runtime.Value, _ drivers.WaitEvent) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) WaitForAttributeBySelectorAll(_ context.Context, _ drivers.QuerySelector, _ runtime.String, _ runtime.Value, _ drivers.WaitEvent) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) WaitForStyle(_ context.Context, _ runtime.String, _ runtime.Value, _ drivers.WaitEvent) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) WaitForStyleBySelector(_ context.Context, _ drivers.QuerySelector, _ runtime.String, _ runtime.Value, _ drivers.WaitEvent) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) WaitForStyleBySelectorAll(_ context.Context, _ drivers.QuerySelector, _ runtime.String, _ runtime.Value, _ drivers.WaitEvent) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) WaitForClassBySelector(_ context.Context, _ drivers.QuerySelector, _ runtime.String, _ drivers.WaitEvent) error {
-	return runtime.ErrNotSupported
-}
-
-func (el *HTMLElement) WaitForClassBySelectorAll(_ context.Context, _ drivers.QuerySelector, _ runtime.String, _ drivers.WaitEvent) error {
-	return runtime.ErrNotSupported
-}
-
 func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
 	switch common.ToQueryKind(string(q.Kind)) {
 	case common.CSSQuery:
@@ -764,10 +648,6 @@ func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List
 	default:
 		return nil, runtime.Error(runtime.ErrInvalidArgument, "unsupported query kind")
 	}
-}
-
-func (el *HTMLElement) Dispatch(_ context.Context, _ runtime.DispatchEvent) error {
-	return runtime.ErrNotSupported
 }
 
 func (el *HTMLElement) ensureStyles(ctx context.Context) error {

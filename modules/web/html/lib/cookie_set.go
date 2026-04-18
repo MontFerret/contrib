@@ -15,7 +15,7 @@ func CookieSet(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 		return runtime.None, err
 	}
 
-	page, err := runtime.CastArgAt[drivers.HTMLPage](args, 0)
+	target, err := drivers.ToPageCookieTarget(args[0])
 	if err != nil {
 		return runtime.None, err
 	}
@@ -33,5 +33,5 @@ func CookieSet(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 		}
 	}
 
-	return runtime.None, page.SetCookies(ctx, cookies)
+	return runtime.None, target.SetCookies(ctx, cookies)
 }

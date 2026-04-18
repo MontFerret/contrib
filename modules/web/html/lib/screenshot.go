@@ -66,7 +66,12 @@ func Screenshot(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 		screenshotParams = defaultScreenshotParams()
 	}
 
-	scr, err := page.CaptureScreenshot(ctx, screenshotParams)
+	target, err := drivers.ToPageSnapshotTarget(page)
+	if err != nil {
+		return runtime.None, err
+	}
+
+	scr, err := target.CaptureScreenshot(ctx, screenshotParams)
 
 	if err != nil {
 		return runtime.None, err

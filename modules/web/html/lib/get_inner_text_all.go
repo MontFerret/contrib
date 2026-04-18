@@ -18,7 +18,7 @@ func GetInnerTextAll(ctx context.Context, args ...runtime.Value) (runtime.Value,
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := drivers.ToContentTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
@@ -30,5 +30,5 @@ func GetInnerTextAll(ctx context.Context, args ...runtime.Value) (runtime.Value,
 		return runtime.None, err
 	}
 
-	return el.GetInnerTextBySelectorAll(ctx, selector)
+	return target.GetInnerTextBySelectorAll(ctx, selector)
 }

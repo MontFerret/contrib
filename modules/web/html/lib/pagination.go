@@ -75,7 +75,8 @@ func (i *PagingIterator) Next(ctx context.Context) (runtime.Value, runtime.Value
 	}
 
 	i.logger.Trace().Msg("checking if an element exists...")
-	exists, err := i.page.GetMainFrame().ExistsBySelector(ctx, i.selector)
+	frame := i.page.GetMainFrame()
+	exists, err := frame.ExistsBySelector(ctx, i.selector)
 
 	if err != nil {
 		i.logger.Trace().Err(err).Msg("failed to check")
@@ -91,7 +92,14 @@ func (i *PagingIterator) Next(ctx context.Context) (runtime.Value, runtime.Value
 
 	i.logger.Trace().Bool("exists", bool(exists)).Msg("element exists. clicking...")
 
-	err = i.page.GetMainFrame().GetElement().ClickBySelector(ctx, i.selector, 1)
+	target, err := drivers.ToInteractionTarget(frame)
+	if err != nil {
+		i.logger.Trace().Err(err).Msg("interaction capability is not supported. exit")
+
+		return runtime.None, runtime.None, err
+	}
+
+	err = target.ClickBySelector(ctx, i.selector, 1)
 
 	if err != nil {
 		i.logger.Trace().Err(err).Msg("failed to click. exit")

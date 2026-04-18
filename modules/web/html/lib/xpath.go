@@ -12,7 +12,7 @@ import (
 // @param {String} expression - XPath expression.
 // @return {Any} - Returns result of a given XPath expression.
 func XPath(ctx context.Context, arg1, arg2 runtime.Value) (runtime.Value, error) {
-	element, err := drivers.ToElement(arg1)
+	target, err := drivers.ToQueryTarget(arg1)
 
 	if err != nil {
 		return runtime.None, err
@@ -20,5 +20,5 @@ func XPath(ctx context.Context, arg1, arg2 runtime.Value) (runtime.Value, error)
 
 	expr := runtime.ToString(arg2)
 
-	return element.XPath(ctx, expr)
+	return target.XPath(ctx, expr)
 }

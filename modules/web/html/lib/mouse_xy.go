@@ -18,7 +18,7 @@ func MouseMoveXY(ctx context.Context, args ...runtime.Value) (runtime.Value, err
 		return runtime.None, err
 	}
 
-	doc, err := drivers.ToDocument(args[0])
+	doc, err := drivers.ToDocumentViewportTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err

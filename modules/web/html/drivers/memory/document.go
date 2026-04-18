@@ -219,35 +219,10 @@ func (doc *HTMLDocument) GetParentDocument(_ context.Context) (drivers.HTMLDocum
 	return doc.parent, nil
 }
 
-func (doc *HTMLDocument) ScrollTop(_ context.Context, _ drivers.ScrollOptions) error {
-	return runtime.ErrNotSupported
-}
-
-func (doc *HTMLDocument) ScrollBottom(_ context.Context, _ drivers.ScrollOptions) error {
-	return runtime.ErrNotSupported
-}
-
-func (doc *HTMLDocument) ScrollBySelector(_ context.Context, _ drivers.QuerySelector, _ drivers.ScrollOptions) error {
-	return runtime.ErrNotSupported
-}
-
-func (doc *HTMLDocument) Scroll(_ context.Context, _ drivers.ScrollOptions) error {
-	return runtime.ErrNotSupported
-}
-
-func (doc *HTMLDocument) MoveMouseByXY(_ context.Context, _, _ runtime.Float) error {
-	return runtime.ErrNotSupported
-}
-
 func (doc *HTMLDocument) Close() error {
 	return nil
 }
 
 func (doc *HTMLDocument) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
 	return doc.element.Query(ctx, q)
-}
-
-func (doc *HTMLDocument) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
-	//TODO implement me
-	panic("implement me")
 }
