@@ -68,7 +68,7 @@ func waitStyleWhen(ctx context.Context, args []runtime.Value, when drivers.WaitE
 			return runtime.None, err
 		}
 
-		target, err := drivers.ToWaitTarget(arg1)
+		target, err := toRootWaitTarget(arg1)
 
 		if err != nil {
 			return runtime.None, err
@@ -92,7 +92,7 @@ func waitStyleWhen(ctx context.Context, args []runtime.Value, when drivers.WaitE
 
 		return runtime.True, target.WaitForStyleBySelector(ctx, selector, name, value, when)
 	default:
-		target, err := drivers.ToWaitTarget(arg1)
+		target, err := toRootWaitTarget(arg1)
 		if err != nil {
 			return runtime.None, err
 		}

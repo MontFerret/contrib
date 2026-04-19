@@ -49,31 +49,31 @@ func ToQueryTarget(value runtime.Value) (QueryTarget, error) {
 }
 
 func ToContentTarget(value runtime.Value) (ContentTarget, error) {
-	return toElementCapability[ContentTarget](value, "content")
+	return toHTMLCapability[ContentTarget](value, "content")
 }
 
 func ToAttributeTarget(value runtime.Value) (AttributeTarget, error) {
-	return toElementCapability[AttributeTarget](value, "attribute")
+	return toHTMLCapability[AttributeTarget](value, "attribute")
 }
 
 func ToStyleTarget(value runtime.Value) (StyleTarget, error) {
-	return toElementCapability[StyleTarget](value, "style")
+	return toHTMLCapability[StyleTarget](value, "style")
 }
 
 func ToValueTarget(value runtime.Value) (ValueTarget, error) {
-	return toElementCapability[ValueTarget](value, "value")
+	return toHTMLCapability[ValueTarget](value, "value")
 }
 
 func ToRelationTarget(value runtime.Value) (RelationTarget, error) {
-	return toElementCapability[RelationTarget](value, "relation")
+	return toHTMLCapability[RelationTarget](value, "relation")
 }
 
 func ToInteractionTarget(value runtime.Value) (InteractionTarget, error) {
-	return toElementCapability[InteractionTarget](value, "interaction")
+	return toHTMLCapability[InteractionTarget](value, "interaction")
 }
 
 func ToWaitTarget(value runtime.Value) (WaitTarget, error) {
-	return toElementCapability[WaitTarget](value, "wait")
+	return toHTMLCapability[WaitTarget](value, "wait")
 }
 
 func ToDocumentViewportTarget(value runtime.Value) (DocumentViewportTarget, error) {
@@ -162,16 +162,12 @@ func SetDefaultParams(opts *Options, params Params) Params {
 	return params
 }
 
-func toElementCapability[T any](value runtime.Value, capability string) (T, error) {
+func toHTMLCapability[T any](value runtime.Value, capability string) (T, error) {
 	var zero T
 
-	switch v := value.(type) {
-	case HTMLPage:
-		return asCapability[T](v.GetMainFrame().GetElement(), capability)
-	case HTMLDocument:
-		return asCapability[T](v.GetElement(), capability)
-	case HTMLElement:
-		return asCapability[T](v, capability)
+	switch value.(type) {
+	case HTMLPage, HTMLDocument, HTMLElement:
+		return asCapability[T](value, capability)
 	default:
 		return zero, runtime.TypeErrorOf(value, HTMLPageType, HTMLDocumentType, HTMLElementType)
 	}

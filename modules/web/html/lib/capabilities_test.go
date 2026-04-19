@@ -65,6 +65,25 @@ func TestWaitElementUsesWaitCapabilityFromPage(t *testing.T) {
 	}
 }
 
+func TestScrollIntoUsesRootInteractionCapabilityFromDocument(t *testing.T) {
+	t.Parallel()
+
+	doc := newTestDocument(t, `<html><body><div id="layout">viewport</div></body></html>`)
+
+	value, err := ScrollInto(context.Background(), doc)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if value != runtime.True {
+		t.Fatalf("expected scroll into view to report success, got %v", value)
+	}
+
+	if !doc.element.scrolledIntoView {
+		t.Fatal("expected scroll into view to be delegated to the document root element")
+	}
+}
+
 func TestScrollTopUsesViewportCapabilityFromPage(t *testing.T) {
 	t.Parallel()
 
@@ -147,6 +166,26 @@ func TestCookieGetUsesPageCookieCapability(t *testing.T) {
 	}
 }
 
+func TestAttributeSetRemainsElementOnly(t *testing.T) {
+	t.Parallel()
+
+	page := newTestPage(t, `<html><body><div id="message"></div></body></html>`)
+
+	if _, err := AttributeSet(context.Background(), page, runtime.NewString("data-test"), runtime.NewString("true")); err == nil {
+		t.Fatal("expected page input to remain invalid for ATTR_SET")
+	}
+}
+
+func TestPaginationRemainsPageOnly(t *testing.T) {
+	t.Parallel()
+
+	doc := newTestDocument(t, `<html><body><div id="message"></div></body></html>`)
+
+	if _, err := Pagination(context.Background(), doc, runtime.NewString(".next")); err == nil {
+		t.Fatal("expected document input to remain invalid for PAGINATION")
+	}
+}
+
 type testPage struct {
 	*memory.HTMLPage
 	frame       *testDocument
@@ -221,8 +260,9 @@ func (doc *testDocument) MoveMouseByXY(_ context.Context, _, _ runtime.Float) er
 
 type testElement struct {
 	*memory.HTMLElement
-	clickedSelector string
-	waitSelector    string
+	clickedSelector  string
+	waitSelector     string
+	scrolledIntoView bool
 }
 
 func (el *testElement) Click(_ context.Context, _ runtime.Int) error {
@@ -272,6 +312,7 @@ func (el *testElement) SelectBySelector(_ context.Context, _ drivers.QuerySelect
 }
 
 func (el *testElement) ScrollIntoView(_ context.Context, _ drivers.ScrollOptions) error {
+	el.scrolledIntoView = true
 	return nil
 }
 

@@ -3,7 +3,6 @@ package lib
 import (
 	"context"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -17,7 +16,7 @@ func AttributeRemove(ctx context.Context, args ...runtime.Value) (runtime.Value,
 		return runtime.None, err
 	}
 
-	target, err := drivers.ToAttributeTarget(args[0])
+	target, err := toRootAttributeTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err

@@ -66,7 +66,7 @@ func waitClassWhen(ctx context.Context, args []runtime.Value, when drivers.WaitE
 			return runtime.None, err
 		}
 
-		target, err := drivers.ToWaitTarget(arg1)
+		target, err := toRootWaitTarget(arg1)
 
 		if err != nil {
 			return runtime.None, err
@@ -89,7 +89,7 @@ func waitClassWhen(ctx context.Context, args []runtime.Value, when drivers.WaitE
 
 		return runtime.True, target.WaitForClassBySelector(ctx, selector, class, when)
 	default:
-		target, err := drivers.ToWaitTarget(arg1)
+		target, err := toRootWaitTarget(arg1)
 		if err != nil {
 			return runtime.None, err
 		}

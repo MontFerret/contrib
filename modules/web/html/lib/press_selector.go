@@ -21,7 +21,7 @@ func PressSelector(ctx context.Context, args ...runtime.Value) (runtime.Value, e
 		return runtime.False, err
 	}
 
-	target, err := drivers.ToInteractionTarget(args[0])
+	target, err := toRootInteractionTarget(args[0])
 
 	if err != nil {
 		return runtime.False, err

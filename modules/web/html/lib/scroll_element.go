@@ -76,7 +76,7 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 				return runtime.None, err
 			}
 		default:
-			target, err = drivers.ToInteractionTarget(args[0])
+			target, err = toRootInteractionTarget(args[0])
 			if err != nil {
 				return runtime.None, errors.Wrap(err, "element")
 			}
@@ -91,7 +91,7 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 
 		}
 	} else {
-		target, err = drivers.ToInteractionTarget(args[0])
+		target, err = toRootInteractionTarget(args[0])
 
 		if err != nil {
 			return runtime.None, errors.Wrap(err, "element")
@@ -103,7 +103,7 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 			return runtime.True, doc.ScrollBySelector(ctx, selector, opts)
 		}
 
-		target, err = drivers.ToInteractionTarget(args[0])
+		target, err = toRootInteractionTarget(args[0])
 		if err != nil {
 			return runtime.None, errors.Wrap(err, "element")
 		}

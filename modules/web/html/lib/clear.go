@@ -17,7 +17,7 @@ func InputClear(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 		return runtime.None, err
 	}
 
-	target, err := drivers.ToInteractionTarget(args[0])
+	target, err := toRootInteractionTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err

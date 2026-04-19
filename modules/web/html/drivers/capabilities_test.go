@@ -77,39 +77,52 @@ func TestRoleResolversAreExact(t *testing.T) {
 	}
 }
 
-func TestCapabilityResolversCoercePageAndDocumentLocally(t *testing.T) {
+func TestElementCapabilityResolversAreExact(t *testing.T) {
+	t.Parallel()
+
+	doc := newCapabilityDocument(t, `<html><body><button id="cta">go</button></body></html>`)
+	page := newCapabilityPage(t, doc)
+	element := doc.GetElement()
+
+	if _, err := drivers.ToInteractionTarget(page); !errors.Is(err, runtime.ErrNotSupported) {
+		t.Fatalf("expected page interaction capability to stay exact, got %v", err)
+	}
+
+	if _, err := drivers.ToWaitTarget(doc); !errors.Is(err, runtime.ErrNotSupported) {
+		t.Fatalf("expected document wait capability to stay exact, got %v", err)
+	}
+
+	if _, err := drivers.ToContentTarget(page); !errors.Is(err, runtime.ErrNotSupported) {
+		t.Fatalf("expected page content capability to stay exact, got %v", err)
+	}
+
+	if _, err := drivers.ToAttributeTarget(doc); !errors.Is(err, runtime.ErrNotSupported) {
+		t.Fatalf("expected document attribute capability to stay exact, got %v", err)
+	}
+
+	if _, err := drivers.ToInteractionTarget(element); err != nil {
+		t.Fatalf("expected element interaction capability: %v", err)
+	}
+
+	if _, err := drivers.ToWaitTarget(element); err != nil {
+		t.Fatalf("expected element wait capability: %v", err)
+	}
+
+	if _, err := drivers.ToContentTarget(element); err != nil {
+		t.Fatalf("expected element content capability: %v", err)
+	}
+
+	if _, err := drivers.ToAttributeTarget(element); err != nil {
+		t.Fatalf("expected element attribute capability: %v", err)
+	}
+}
+
+func TestDocumentCapabilityResolversStillCoerceFromPage(t *testing.T) {
 	t.Parallel()
 
 	doc := newCapabilityDocument(t, `<html><body><button id="cta">go</button></body></html>`)
 	page := newCapabilityPage(t, doc)
 	ctx := context.Background()
-
-	interaction, err := drivers.ToInteractionTarget(page)
-	if err != nil {
-		t.Fatalf("expected page interaction capability: %v", err)
-	}
-
-	if err := interaction.Click(ctx, 2); err != nil {
-		t.Fatalf("unexpected click error: %v", err)
-	}
-
-	if doc.element.clickCount != 2 {
-		t.Fatalf("expected click count to be recorded on root element, got %d", doc.element.clickCount)
-	}
-
-	waitTarget, err := drivers.ToWaitTarget(doc)
-	if err != nil {
-		t.Fatalf("expected document wait capability: %v", err)
-	}
-
-	selector := drivers.NewCSSSelector(runtime.NewString("#cta"))
-	if err := waitTarget.WaitForElement(ctx, selector, drivers.WaitEventPresence); err != nil {
-		t.Fatalf("unexpected wait error: %v", err)
-	}
-
-	if got := doc.element.waitSelector; got != "#cta" {
-		t.Fatalf("expected wait selector to be delegated to root element, got %q", got)
-	}
 
 	viewport, err := drivers.ToDocumentViewportTarget(page)
 	if err != nil {
@@ -136,6 +149,10 @@ func TestCapabilityResolversRejectUnsupportedBackends(t *testing.T) {
 
 	if _, err := drivers.ToWaitTarget(page); !errors.Is(err, runtime.ErrNotSupported) {
 		t.Fatalf("expected unsupported wait capability error, got %v", err)
+	}
+
+	if _, err := drivers.ToContentTarget(page); !errors.Is(err, runtime.ErrNotSupported) {
+		t.Fatalf("expected unsupported content capability error, got %v", err)
 	}
 
 	if _, err := drivers.ToDocumentViewportTarget(page); !errors.Is(err, runtime.ErrNotSupported) {

@@ -19,7 +19,7 @@ func AttributeGet(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		return runtime.None, err
 	}
 
-	target, err := drivers.ToAttributeTarget(args[0])
+	target, err := toRootAttributeTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err

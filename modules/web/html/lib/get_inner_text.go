@@ -18,7 +18,7 @@ func GetInnerText(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		return runtime.EmptyString, err
 	}
 
-	target, err := drivers.ToContentTarget(args[0])
+	target, err := toRootContentTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err

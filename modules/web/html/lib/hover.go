@@ -18,7 +18,7 @@ func Hover(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
-	target, err := drivers.ToInteractionTarget(args[0])
+	target, err := toRootInteractionTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err

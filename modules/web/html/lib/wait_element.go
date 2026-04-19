@@ -32,7 +32,7 @@ func waitElementWhen(ctx context.Context, args []runtime.Value, when drivers.Wai
 		return runtime.None, err
 	}
 
-	target, err := drivers.ToWaitTarget(args[0])
+	target, err := toRootWaitTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err

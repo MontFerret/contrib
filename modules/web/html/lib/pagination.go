@@ -17,7 +17,7 @@ import (
 // Pagination creates an iterator that goes through pages using a CSS selector.
 // The iterator starts from the current page i.e. it does not change the page on 1st iteration.
 // That allows you to keep scraping logic inside FOR loop.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
+// @param {HTMLPage} page - Target html page.
 // @param {String} selector - CSS selector for a pagination on the page.
 func Pagination(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, 2)
@@ -92,7 +92,7 @@ func (i *PagingIterator) Next(ctx context.Context) (runtime.Value, runtime.Value
 
 	i.logger.Trace().Bool("exists", bool(exists)).Msg("element exists. clicking...")
 
-	target, err := drivers.ToInteractionTarget(frame)
+	target, err := toRootInteractionTarget(frame)
 	if err != nil {
 		i.logger.Trace().Err(err).Msg("interaction capability is not supported. exit")
 
