@@ -318,7 +318,7 @@ func (el *HTMLElement) QuerySelector(_ context.Context, selector drivers.QuerySe
 		selection := el.selection.Find(selector.String())
 
 		if selection.Length() == 0 {
-			return runtime.None, drivers.ErrNotFound
+			return runtime.None, nil
 		}
 
 		res, err := NewHTMLElement(el.doc, selection)
@@ -337,7 +337,7 @@ func (el *HTMLElement) QuerySelector(_ context.Context, selector drivers.QuerySe
 	}
 
 	if found == nil {
-		return runtime.None, drivers.ErrNotFound
+		return runtime.None, nil
 	}
 
 	return found, nil
@@ -665,7 +665,9 @@ func (el *HTMLElement) ensureStyles(ctx context.Context) error {
 }
 
 func (el *HTMLElement) parseStyles(ctx context.Context) (*runtime.Object, error) {
-	str, err := el.GetAttribute(ctx, "style")
+	el.ensureAttrs()
+
+	str, err := el.attrs.Get(ctx, runtime.NewString(common.AttrNameStyle))
 
 	if err != nil {
 		return runtime.NewObject(), err

@@ -3,6 +3,7 @@ package drivers_test
 import (
 	"context"
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -17,14 +18,18 @@ import (
 
 var (
 	_ drivers.HTMLPage           = (*memory.HTMLPage)(nil)
+	_ drivers.PageStateTarget    = (*memory.HTMLPage)(nil)
+	_ drivers.PageFrameTarget    = (*memory.HTMLPage)(nil)
 	_ drivers.PageCookieReader   = (*memory.HTMLPage)(nil)
 	_ drivers.PageResponseTarget = (*memory.HTMLPage)(nil)
 
 	_ drivers.HTMLDocument           = (*memory.HTMLDocument)(nil)
+	_ drivers.NodeInspector          = (*memory.HTMLDocument)(nil)
 	_ drivers.QueryTarget            = (*memory.HTMLDocument)(nil)
 	_ drivers.DocumentMetadataTarget = (*memory.HTMLDocument)(nil)
 
 	_ drivers.HTMLElement     = (*memory.HTMLElement)(nil)
+	_ drivers.NodeInspector   = (*memory.HTMLElement)(nil)
 	_ drivers.QueryTarget     = (*memory.HTMLElement)(nil)
 	_ drivers.ContentTarget   = (*memory.HTMLElement)(nil)
 	_ drivers.AttributeTarget = (*memory.HTMLElement)(nil)
@@ -33,17 +38,22 @@ var (
 	_ drivers.RelationTarget  = (*memory.HTMLElement)(nil)
 
 	_ drivers.HTMLPage             = (*cdp.HTMLPage)(nil)
+	_ drivers.PageStateTarget      = (*cdp.HTMLPage)(nil)
+	_ drivers.PageFrameTarget      = (*cdp.HTMLPage)(nil)
+	_ drivers.PageCookieReader     = (*cdp.HTMLPage)(nil)
 	_ drivers.PageCookieTarget     = (*cdp.HTMLPage)(nil)
 	_ drivers.PageResponseTarget   = (*cdp.HTMLPage)(nil)
 	_ drivers.PageSnapshotTarget   = (*cdp.HTMLPage)(nil)
 	_ drivers.PageNavigationTarget = (*cdp.HTMLPage)(nil)
 
 	_ drivers.HTMLDocument           = (*cdpdom.HTMLDocument)(nil)
+	_ drivers.NodeInspector          = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.QueryTarget            = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.DocumentMetadataTarget = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.DocumentViewportTarget = (*cdpdom.HTMLDocument)(nil)
 
 	_ drivers.HTMLElement       = (*cdpdom.HTMLElement)(nil)
+	_ drivers.NodeInspector     = (*cdpdom.HTMLElement)(nil)
 	_ drivers.QueryTarget       = (*cdpdom.HTMLElement)(nil)
 	_ drivers.ContentTarget     = (*cdpdom.HTMLElement)(nil)
 	_ drivers.AttributeTarget   = (*cdpdom.HTMLElement)(nil)
@@ -53,6 +63,136 @@ var (
 	_ drivers.InteractionTarget = (*cdpdom.HTMLElement)(nil)
 	_ drivers.WaitTarget        = (*cdpdom.HTMLElement)(nil)
 )
+
+func TestBackendCapabilityMatrix(t *testing.T) {
+	t.Parallel()
+
+	type capability struct {
+		name string
+		typ  reflect.Type
+	}
+
+	type backend struct {
+		name      string
+		typ       reflect.Type
+		supported map[string]bool
+	}
+
+	capabilities := []capability{
+		{name: "NodeInspector", typ: reflect.TypeOf((*drivers.NodeInspector)(nil)).Elem()},
+		{name: "QueryTarget", typ: reflect.TypeOf((*drivers.QueryTarget)(nil)).Elem()},
+		{name: "ContentTarget", typ: reflect.TypeOf((*drivers.ContentTarget)(nil)).Elem()},
+		{name: "AttributeTarget", typ: reflect.TypeOf((*drivers.AttributeTarget)(nil)).Elem()},
+		{name: "StyleTarget", typ: reflect.TypeOf((*drivers.StyleTarget)(nil)).Elem()},
+		{name: "ValueTarget", typ: reflect.TypeOf((*drivers.ValueTarget)(nil)).Elem()},
+		{name: "RelationTarget", typ: reflect.TypeOf((*drivers.RelationTarget)(nil)).Elem()},
+		{name: "InteractionTarget", typ: reflect.TypeOf((*drivers.InteractionTarget)(nil)).Elem()},
+		{name: "WaitTarget", typ: reflect.TypeOf((*drivers.WaitTarget)(nil)).Elem()},
+		{name: "DocumentMetadataTarget", typ: reflect.TypeOf((*drivers.DocumentMetadataTarget)(nil)).Elem()},
+		{name: "DocumentViewportTarget", typ: reflect.TypeOf((*drivers.DocumentViewportTarget)(nil)).Elem()},
+		{name: "PageStateTarget", typ: reflect.TypeOf((*drivers.PageStateTarget)(nil)).Elem()},
+		{name: "PageFrameTarget", typ: reflect.TypeOf((*drivers.PageFrameTarget)(nil)).Elem()},
+		{name: "PageCookieReader", typ: reflect.TypeOf((*drivers.PageCookieReader)(nil)).Elem()},
+		{name: "PageCookieTarget", typ: reflect.TypeOf((*drivers.PageCookieTarget)(nil)).Elem()},
+		{name: "PageResponseTarget", typ: reflect.TypeOf((*drivers.PageResponseTarget)(nil)).Elem()},
+		{name: "PageSnapshotTarget", typ: reflect.TypeOf((*drivers.PageSnapshotTarget)(nil)).Elem()},
+		{name: "PageNavigationTarget", typ: reflect.TypeOf((*drivers.PageNavigationTarget)(nil)).Elem()},
+	}
+
+	backends := []backend{
+		{
+			name: "memory page",
+			typ:  reflect.TypeOf((*memory.HTMLPage)(nil)),
+			supported: map[string]bool{
+				"PageStateTarget":    true,
+				"PageFrameTarget":    true,
+				"PageCookieReader":   true,
+				"PageResponseTarget": true,
+			},
+		},
+		{
+			name: "memory document",
+			typ:  reflect.TypeOf((*memory.HTMLDocument)(nil)),
+			supported: map[string]bool{
+				"NodeInspector":          true,
+				"QueryTarget":            true,
+				"DocumentMetadataTarget": true,
+			},
+		},
+		{
+			name: "memory element",
+			typ:  reflect.TypeOf((*memory.HTMLElement)(nil)),
+			supported: map[string]bool{
+				"NodeInspector":   true,
+				"QueryTarget":     true,
+				"ContentTarget":   true,
+				"AttributeTarget": true,
+				"StyleTarget":     true,
+				"ValueTarget":     true,
+				"RelationTarget":  true,
+			},
+		},
+		{
+			name: "cdp page",
+			typ:  reflect.TypeOf((*cdp.HTMLPage)(nil)),
+			supported: map[string]bool{
+				"PageStateTarget":      true,
+				"PageFrameTarget":      true,
+				"PageCookieReader":     true,
+				"PageCookieTarget":     true,
+				"PageResponseTarget":   true,
+				"PageSnapshotTarget":   true,
+				"PageNavigationTarget": true,
+			},
+		},
+		{
+			name: "cdp document",
+			typ:  reflect.TypeOf((*cdpdom.HTMLDocument)(nil)),
+			supported: map[string]bool{
+				"NodeInspector":          true,
+				"QueryTarget":            true,
+				"DocumentMetadataTarget": true,
+				"DocumentViewportTarget": true,
+			},
+		},
+		{
+			name: "cdp element",
+			typ:  reflect.TypeOf((*cdpdom.HTMLElement)(nil)),
+			supported: map[string]bool{
+				"NodeInspector":     true,
+				"QueryTarget":       true,
+				"ContentTarget":     true,
+				"AttributeTarget":   true,
+				"StyleTarget":       true,
+				"ValueTarget":       true,
+				"RelationTarget":    true,
+				"InteractionTarget": true,
+				"WaitTarget":        true,
+			},
+		},
+	}
+
+	for _, backend := range backends {
+		backend := backend
+		t.Run(backend.name, func(t *testing.T) {
+			t.Parallel()
+
+			for _, capability := range capabilities {
+				capability := capability
+				t.Run(capability.name, func(t *testing.T) {
+					t.Parallel()
+
+					got := backend.typ.Implements(capability.typ)
+					want := backend.supported[capability.name]
+
+					if got != want {
+						t.Fatalf("expected %s support=%t, got %t", capability.name, want, got)
+					}
+				})
+			}
+		})
+	}
+}
 
 func TestRoleResolversAreExact(t *testing.T) {
 	t.Parallel()
