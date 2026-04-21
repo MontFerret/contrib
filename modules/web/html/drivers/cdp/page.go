@@ -513,7 +513,7 @@ func (p *HTMLPage) Navigate(ctx context.Context, url runtime.String) error {
 		return err
 	}
 
-	return p.dom.ReloadRoot(ctx)
+	return p.loadMainFrame(ctx)
 }
 
 func (p *HTMLPage) NavigateBack(ctx context.Context, skip runtime.Int) (runtime.Boolean, error) {
@@ -526,7 +526,7 @@ func (p *HTMLPage) NavigateBack(ctx context.Context, skip runtime.Int) (runtime.
 		return runtime.False, err
 	}
 
-	return ret, p.dom.ReloadRoot(ctx)
+	return ret, p.loadMainFrame(ctx)
 }
 
 func (p *HTMLPage) NavigateForward(ctx context.Context, skip runtime.Int) (runtime.Boolean, error) {
@@ -539,7 +539,7 @@ func (p *HTMLPage) NavigateForward(ctx context.Context, skip runtime.Int) (runti
 		return runtime.False, err
 	}
 
-	return ret, p.dom.ReloadRoot(ctx)
+	return ret, p.loadMainFrame(ctx)
 }
 
 func (p *HTMLPage) WaitForNavigation(ctx context.Context, targetURL runtime.String) error {
@@ -640,6 +640,10 @@ func (p *HTMLPage) urlToRegexp(targetURL runtime.String) (*regexp.Regexp, error)
 }
 
 func (p *HTMLPage) loadMainFrame(ctx context.Context) error {
+	if err := p.waitForMainFrameReady(ctx); err != nil {
+		return err
+	}
+
 	return p.dom.ReloadRoot(ctx)
 }
 
@@ -713,16 +717,31 @@ func (p *HTMLPage) prepareNavigationEvent(ctx context.Context, evt *cdpnet.Navig
 
 	p.dom.RecordFrameClient(evt.FrameID, client)
 
-	exec, err := eval.Create(ctx, p.logger, client, evt.FrameID)
-	if err != nil {
-		return err
-	}
-
-	if _, err := events.NewEvalWaitTask(exec, templates.DOMReady(), events.DefaultPolling).Run(ctx); err != nil {
+	if err := p.waitForDocumentReady(ctx, client, evt.FrameID); err != nil {
 		return err
 	}
 
 	return p.dom.ReloadRoot(ctx)
+}
+
+func (p *HTMLPage) waitForMainFrameReady(ctx context.Context) error {
+	ftRepl, err := p.client.Page.GetFrameTree(ctx)
+	if err != nil {
+		return err
+	}
+
+	return p.waitForDocumentReady(ctx, p.client, ftRepl.FrameTree.Frame.ID)
+}
+
+func (p *HTMLPage) waitForDocumentReady(ctx context.Context, client *cdp.Client, frameID page.FrameID) error {
+	exec, err := eval.Create(ctx, p.logger, client, frameID)
+	if err != nil {
+		return err
+	}
+
+	_, err = events.NewEvalWaitTask(exec, templates.DOMReady(), events.DefaultPolling).Run(ctx)
+
+	return err
 }
 
 func (p *HTMLPage) waitForNavigation(ctx context.Context, opts cdpnet.WaitEventOptions) error {
