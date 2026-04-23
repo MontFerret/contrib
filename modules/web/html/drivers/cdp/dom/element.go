@@ -17,7 +17,10 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/input"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/access"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/lazy"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/queryutil"
+	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
@@ -28,8 +31,8 @@ type HTMLElement struct {
 	dom      *Manager
 	input    *input.Manager
 	eval     *eval.Runtime
-	nodeType *common.LazyValue
-	nodeName *common.LazyValue
+	nodeType *lazy.Value
+	nodeName *lazy.Value
 	id       cdpruntime.RemoteObjectID
 }
 
@@ -42,7 +45,7 @@ func NewHTMLElement(
 	id cdpruntime.RemoteObjectID,
 ) *HTMLElement {
 	el := new(HTMLElement)
-	el.logger = common.LoggerWithName(logger.With(), "dom_element").
+	el.logger = logutil.WithComponent(logger.With(), "dom_element").
 		Str("object_id", string(id)).
 		Logger()
 	el.client = client
@@ -50,10 +53,10 @@ func NewHTMLElement(
 	el.input = input
 	el.eval = exec
 	el.id = id
-	el.nodeType = common.NewLazyValue(func(ctx context.Context) (runtime.Value, error) {
+	el.nodeType = lazy.New(func(ctx context.Context) (runtime.Value, error) {
 		return el.eval.EvalValue(ctx, templates.GetNodeType(el.id))
 	})
-	el.nodeName = common.NewLazyValue(func(ctx context.Context) (runtime.Value, error) {
+	el.nodeName = lazy.New(func(ctx context.Context) (runtime.Value, error) {
 		return el.eval.EvalValue(ctx, templates.GetNodeName(el.id))
 	})
 
@@ -126,15 +129,11 @@ func (el *HTMLElement) Copy() runtime.Value {
 }
 
 func (el *HTMLElement) Iterate(_ context.Context) (runtime.Iterator, error) {
-	return common.NewIterator(el)
+	return access.NewIterator(el)
 }
 
 func (el *HTMLElement) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
-	return common.GetInElement(ctx, key, el)
-}
-
-func (el *HTMLElement) Set(ctx context.Context, key, value runtime.Value) error {
-	return common.SetInElement(ctx, key, el, value)
+	return access.GetInElement(ctx, key, el)
 }
 
 func (el *HTMLElement) GetValue(ctx context.Context) (runtime.Value, error) {
@@ -606,8 +605,8 @@ func (el *HTMLElement) HoverBySelector(ctx context.Context, selector drivers.Que
 }
 
 func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
-	switch common.ToQueryKind(string(q.Kind)) {
-	case common.CSSQuery:
+	switch queryutil.Parse(string(q.Kind)) {
+	case queryutil.CSS:
 		fn, err := templates.CSSX(el.id, q.Payload)
 
 		if err != nil {
@@ -621,7 +620,7 @@ func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List
 		}
 
 		return runtime.ToList(ctx, val)
-	case common.XPathQuery:
+	case queryutil.XPath:
 		out, err := el.XPath(ctx, q.Payload)
 
 		if err != nil {

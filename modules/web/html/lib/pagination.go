@@ -6,12 +6,12 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/MontFerret/ferret/v2/pkg/logging"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
+	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
 )
 
 // Pagination creates an iterator that goes through pages using a CSS selector.
@@ -38,7 +38,7 @@ func Pagination(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 		return runtime.None, err
 	}
 
-	logger := common.LoggerWithName(logging.From(ctx).With(), "stdlib_html_pagination").
+	logger := logutil.WithComponent(logging.From(ctx).With(), "stdlib_html_pagination").
 		Str("selector", selector.String()).
 		Logger()
 

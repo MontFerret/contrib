@@ -15,7 +15,7 @@ func TestCompileCSSXOpsUsesCallName(t *testing.T) {
 		t.Fatalf("compile cssx: %v", err)
 	}
 
-	ops, err := compileCSSXOps(pipeline)
+	ops, err := cssxcommon.CompilePipeline(pipeline)
 	if err != nil {
 		t.Fatalf("compile ops: %v", err)
 	}
@@ -24,11 +24,11 @@ func TestCompileCSSXOpsUsesCallName(t *testing.T) {
 		t.Fatalf("expected 2 ops, got %d", len(ops))
 	}
 
-	if ops[1].Kind != cssxCallOp {
+	if ops[1].Kind != cssxcommon.OpCall {
 		t.Fatalf("expected call op, got %s", ops[1].Kind)
 	}
 
-	if ops[1].Name != cssxcommon.ExpressionFirst {
+	if ops[1].Name != string(cssxcommon.ExpressionFirst) {
 		t.Fatalf("expected %s, got %s", cssxcommon.ExpressionFirst, ops[1].Name)
 	}
 }

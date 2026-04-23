@@ -68,14 +68,14 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 	t.Parallel()
 
 	type capability struct {
-		name string
 		typ  reflect.Type
+		name string
 	}
 
 	type backend struct {
-		name      string
 		typ       reflect.Type
 		supported map[string]bool
+		name      string
 	}
 
 	capabilities := []capability{

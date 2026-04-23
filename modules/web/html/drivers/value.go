@@ -164,7 +164,6 @@ type (
 		runtime.Value
 		runtime.Iterable
 		runtime.KeyReadable
-		runtime.KeyWritable
 		runtime.Measurable
 		runtime.Queryable
 		io.Closer
@@ -197,7 +196,6 @@ type (
 		runtime.Value
 		runtime.Iterable
 		runtime.KeyReadable
-		runtime.KeyWritable
 		runtime.Measurable
 		io.Closer
 

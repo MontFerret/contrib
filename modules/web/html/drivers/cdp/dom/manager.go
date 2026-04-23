@@ -13,7 +13,7 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/input"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
+	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -36,7 +36,7 @@ func New(
 ) (manager *Manager, err error) {
 
 	manager = new(Manager)
-	manager.logger = common.LoggerWithName(logger.With(), "dom_manager").Logger()
+	manager.logger = logutil.WithComponent(logger.With(), "dom_manager").Logger()
 	manager.rootClient = client
 	manager.mouse = mouse
 	manager.keyboard = keyboard

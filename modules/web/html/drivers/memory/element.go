@@ -11,7 +11,10 @@ import (
 	"github.com/goccy/go-json"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/access"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/nodeutil"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/queryutil"
+	"github.com/MontFerret/contrib/modules/web/html/internal/styleutil"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -98,7 +101,7 @@ func (el *HTMLElement) GetNodeType(_ context.Context) (runtime.Int, error) {
 		return 0, nil
 	}
 
-	return runtime.NewInt(common.FromHTMLType(nodes[0].Type)), nil
+	return runtime.NewInt(nodeutil.FromHTMLType(nodes[0].Type)), nil
 }
 
 func (el *HTMLElement) Close() error {
@@ -182,7 +185,7 @@ func (el *HTMLElement) SetStyle(ctx context.Context, name, value runtime.String)
 
 	_ = el.styles.Set(ctx, name, value)
 
-	str, err := common.SerializeStyles(ctx, el.styles)
+	str, err := styleutil.Serialize(ctx, el.styles)
 
 	if err != nil {
 		return err
@@ -206,7 +209,7 @@ func (el *HTMLElement) SetStyles(ctx context.Context, newStyles runtime.Map) err
 		return true, nil
 	})
 
-	str, err := common.SerializeStyles(ctx, el.styles)
+	str, err := styleutil.Serialize(ctx, el.styles)
 
 	if err != nil {
 		return err
@@ -228,7 +231,7 @@ func (el *HTMLElement) RemoveStyle(ctx context.Context, name ...runtime.String) 
 		_ = el.styles.Remove(ctx, s)
 	}
 
-	str, err := common.SerializeStyles(ctx, el.styles)
+	str, err := styleutil.Serialize(ctx, el.styles)
 
 	if err != nil {
 		return err
@@ -260,7 +263,7 @@ func (el *HTMLElement) GetAttributes(ctx context.Context) (runtime.Map, error) {
 func (el *HTMLElement) GetAttribute(ctx context.Context, name runtime.String) (runtime.Value, error) {
 	el.ensureAttrs()
 
-	if name == common.AttrNameStyle {
+	if name == styleutil.AttributeNameStyle {
 		return el.GetStyles(ctx)
 	}
 
@@ -276,7 +279,7 @@ func (el *HTMLElement) GetAttribute(ctx context.Context, name runtime.String) (r
 func (el *HTMLElement) SetAttribute(ctx context.Context, name, value runtime.String) error {
 	el.ensureAttrs()
 
-	if name == common.AttrNameStyle {
+	if name == styleutil.AttributeNameStyle {
 		el.styles = nil
 	}
 
@@ -586,15 +589,11 @@ func (el *HTMLElement) ExistsBySelector(_ context.Context, selector drivers.Quer
 }
 
 func (el *HTMLElement) Get(ctx context.Context, path runtime.Value) (runtime.Value, error) {
-	return common.GetInElement(ctx, path, el)
-}
-
-func (el *HTMLElement) Set(ctx context.Context, path, value runtime.Value) error {
-	return common.SetInElement(ctx, path, el, value)
+	return access.GetInElement(ctx, path, el)
 }
 
 func (el *HTMLElement) Iterate(_ context.Context) (runtime.Iterator, error) {
-	return common.NewIterator(el)
+	return access.NewIterator(el)
 }
 
 func (el *HTMLElement) GetParentElement(_ context.Context) (runtime.Value, error) {
@@ -628,10 +627,10 @@ func (el *HTMLElement) GetNextElementSibling(_ context.Context) (runtime.Value, 
 }
 
 func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
-	switch common.ToQueryKind(string(q.Kind)) {
-	case common.CSSQuery:
+	switch queryutil.Parse(string(q.Kind)) {
+	case queryutil.CSS:
 		return EvalCSSX(ctx, el, q.Payload)
-	case common.XPathQuery:
+	case queryutil.XPath:
 		res, err := el.XPath(ctx, q.Payload)
 
 		if err != nil {
@@ -667,7 +666,7 @@ func (el *HTMLElement) ensureStyles(ctx context.Context) error {
 func (el *HTMLElement) parseStyles(ctx context.Context) (*runtime.Object, error) {
 	el.ensureAttrs()
 
-	str, err := el.attrs.Get(ctx, runtime.NewString(common.AttrNameStyle))
+	str, err := el.attrs.Get(ctx, runtime.NewString(styleutil.AttributeNameStyle))
 
 	if err != nil {
 		return runtime.NewObject(), err
@@ -677,7 +676,7 @@ func (el *HTMLElement) parseStyles(ctx context.Context) (*runtime.Object, error)
 		return runtime.NewObject(), nil
 	}
 
-	styles, err := common.DeserializeStyles(ctx, runtime.NewString(str.String()))
+	styles, err := styleutil.Deserialize(ctx, runtime.NewString(str.String()))
 
 	if err != nil {
 		return nil, err

@@ -10,7 +10,7 @@ import (
 	"github.com/gobwas/glob"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
+	"github.com/MontFerret/contrib/modules/web/html/internal/useragent"
 	"github.com/MontFerret/ferret/v2/pkg/logging"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
@@ -244,7 +244,7 @@ func (drv *Driver) makeRequest(ctx context.Context, req *http.Request, params dr
 		}
 	}
 
-	ua := common.GetUserAgent(params.UserAgent)
+	ua := useragent.Resolve(params.UserAgent)
 	logger.
 		Debug().
 		Timestamp().

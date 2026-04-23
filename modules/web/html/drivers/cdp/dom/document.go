@@ -14,7 +14,8 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/input"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/access"
+	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -38,7 +39,7 @@ func NewHTMLDocument(
 	frames page.FrameTree,
 ) *HTMLDocument {
 	doc := new(HTMLDocument)
-	doc.logger = common.LoggerWithName(logger.With(), "html_document").Logger()
+	doc.logger = logutil.WithComponent(logger.With(), "html_document").Logger()
 	doc.client = client
 	doc.dom = domManager
 	doc.input = input
@@ -101,11 +102,7 @@ func (doc *HTMLDocument) Iterate(ctx context.Context) (runtime.Iterator, error) 
 }
 
 func (doc *HTMLDocument) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
-	return common.GetInDocument(ctx, key, doc)
-}
-
-func (doc *HTMLDocument) Set(ctx context.Context, key runtime.Value, value runtime.Value) error {
-	return common.SetInDocument(ctx, key, doc, value)
+	return access.GetInDocument(ctx, key, doc)
 }
 
 func (doc *HTMLDocument) Close() error {

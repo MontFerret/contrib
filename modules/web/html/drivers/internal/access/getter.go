@@ -1,4 +1,4 @@
-package common
+package access
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 )
 
 func GetInPage(ctx context.Context, key runtime.Value, page drivers.HTMLPage) (runtime.Value, error) {
-	if IsEmptyValue(key) {
+	if isEmptyValue(key) {
 		return runtime.None, nil
 	}
 
@@ -20,7 +20,6 @@ func GetInPage(ctx context.Context, key runtime.Value, page drivers.HTMLPage) (r
 		}
 
 		resp, err := target.GetResponse(ctx)
-
 		if err != nil {
 			return nil, err
 		}
@@ -39,7 +38,6 @@ func GetInPage(ctx context.Context, key runtime.Value, page drivers.HTMLPage) (r
 		}
 
 		cookies, err := target.GetCookies(ctx)
-
 		if err != nil {
 			return nil, err
 		}
@@ -55,7 +53,7 @@ func GetInPage(ctx context.Context, key runtime.Value, page drivers.HTMLPage) (r
 }
 
 func GetInDocument(ctx context.Context, key runtime.Value, doc drivers.HTMLDocument) (runtime.Value, error) {
-	if IsEmptyValue(key) {
+	if isEmptyValue(key) {
 		return runtime.None, nil
 	}
 
@@ -70,7 +68,6 @@ func GetInDocument(ctx context.Context, key runtime.Value, doc drivers.HTMLDocum
 		return doc.GetParentDocument(ctx)
 	case "body", "head":
 		return doc.QuerySelector(ctx, drivers.NewCSSSelector(runtime.String(key.String())))
-
 	case "innerHTML":
 		return doc.GetElement().GetInnerHTML(ctx)
 	case "innerText":
@@ -81,7 +78,7 @@ func GetInDocument(ctx context.Context, key runtime.Value, doc drivers.HTMLDocum
 }
 
 func GetInElement(ctx context.Context, key runtime.Value, el drivers.HTMLElement) (runtime.Value, error) {
-	if IsEmptyValue(key) {
+	if isEmptyValue(key) {
 		return runtime.None, nil
 	}
 
@@ -108,14 +105,13 @@ func GetInElement(ctx context.Context, key runtime.Value, el drivers.HTMLElement
 }
 
 func GetInNode(ctx context.Context, key runtime.Value, node drivers.HTMLNode) (runtime.Value, error) {
-	if IsEmptyValue(key) {
+	if isEmptyValue(key) {
 		return runtime.None, nil
 	}
 
 	switch keyVal := key.(type) {
 	case runtime.Int:
 		return node.GetChildNode(ctx, keyVal)
-
 	case runtime.String:
 		switch keyVal {
 		case "nodeType":
@@ -132,4 +128,12 @@ func GetInNode(ctx context.Context, key runtime.Value, node drivers.HTMLNode) (r
 	default:
 		return runtime.None, nil
 	}
+}
+
+func isEmptyValue(value runtime.Value) bool {
+	if value == nil {
+		return true
+	}
+
+	return value == runtime.None
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
+	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -48,7 +48,7 @@ func New(
 	contextID cdpruntime.ExecutionContextID,
 ) *Runtime {
 	rt := new(Runtime)
-	rt.logger = common.LoggerWithName(logger.With(), "js-eval").
+	rt.logger = logutil.WithComponent(logger.With(), "js-eval").
 		Str("frame_id", string(frameID)).
 		Int("context_id", int(contextID)).
 		Logger()

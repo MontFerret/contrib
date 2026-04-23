@@ -1,4 +1,4 @@
-package common
+package styleutil
 
 import (
 	"bytes"
@@ -11,7 +11,9 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-func DeserializeStyles(ctx context.Context, input runtime.String) (*runtime.Object, error) {
+const AttributeNameStyle = "style"
+
+func Deserialize(ctx context.Context, input runtime.String) (*runtime.Object, error) {
 	styles := runtime.NewObject()
 
 	if input == runtime.EmptyString {
@@ -22,7 +24,7 @@ func DeserializeStyles(ctx context.Context, input runtime.String) (*runtime.Obje
 
 	var name string
 	var value bytes.Buffer
-	var setValue = func() {
+	setValue := func() {
 		_ = styles.Set(ctx, runtime.NewString(strings.TrimSpace(name)), runtime.NewString(strings.TrimSpace(value.String())))
 		name = ""
 		value.Reset()
@@ -31,18 +33,13 @@ func DeserializeStyles(ctx context.Context, input runtime.String) (*runtime.Obje
 	for {
 		token := s.Next()
 
-		if token == nil {
-			break
-		}
-
-		if token.Type == scanner.TokenEOF {
+		if token == nil || token.Type == scanner.TokenEOF {
 			break
 		}
 
 		if name == "" && token.Type == scanner.TokenIdent {
 			name = token.Value
 
-			// skip : and white spaces
 			for {
 				token = s.Next()
 
@@ -54,7 +51,6 @@ func DeserializeStyles(ctx context.Context, input runtime.String) (*runtime.Obje
 
 		switch token.Type {
 		case scanner.TokenChar:
-			// end of style declaration
 			if token.Value == ";" {
 				if name != "" {
 					setValue()
@@ -67,7 +63,6 @@ func DeserializeStyles(ctx context.Context, input runtime.String) (*runtime.Obje
 
 			if err == nil {
 				_ = styles.Set(ctx, runtime.NewString(name), runtime.NewFloat(num))
-				// reset prop
 				name = ""
 				value.Reset()
 			}
@@ -83,7 +78,7 @@ func DeserializeStyles(ctx context.Context, input runtime.String) (*runtime.Obje
 	return styles, nil
 }
 
-func SerializeStyles(ctx context.Context, styles runtime.Map) (runtime.String, error) {
+func Serialize(ctx context.Context, styles runtime.Map) (runtime.String, error) {
 	if styles == nil {
 		return runtime.EmptyString, nil
 	}

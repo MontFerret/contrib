@@ -13,7 +13,7 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	cdpdom "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/dom"
 	cdpnet "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/network"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
+	"github.com/MontFerret/contrib/modules/web/html/internal/useragent"
 
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/emulation"
@@ -55,7 +55,7 @@ func enableFeatures(ctx context.Context, client *cdp.Client, params drivers.Para
 		},
 
 		func() error {
-			ua := common.GetUserAgent(params.UserAgent)
+			ua := useragent.Resolve(params.UserAgent)
 
 			// do not use custom user agent
 			if ua == "" {

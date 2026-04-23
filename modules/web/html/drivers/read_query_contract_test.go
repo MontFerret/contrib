@@ -14,8 +14,8 @@ func TestReadQueryContractForDocumentAndElement(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		name   string
 		target func(*testing.T) drivers.QueryTarget
+		name   string
 	}{
 		{
 			name: "document",

@@ -1,4 +1,4 @@
-package common
+package access
 
 import (
 	"context"
@@ -13,19 +13,16 @@ type Iterator struct {
 	pos  runtime.Int
 }
 
-func NewIterator(
-	node drivers.HTMLElement,
-) (runtime.Iterator, error) {
+func NewIterator(node drivers.HTMLElement) (runtime.Iterator, error) {
 	if node == nil {
 		return nil, runtime.Error(runtime.ErrMissedArgument, "result")
 	}
 
-	return &Iterator{node, 0}, nil
+	return &Iterator{node: node}, nil
 }
 
 func (iter *Iterator) HasNext(ctx context.Context) (bool, error) {
 	size, err := iter.node.Length(ctx)
-
 	if err != nil {
 		return false, fmt.Errorf("failed to get length of the node: %w", err)
 	}
@@ -36,7 +33,6 @@ func (iter *Iterator) HasNext(ctx context.Context) (bool, error) {
 func (iter *Iterator) Next(ctx context.Context) (runtime.Value, runtime.Value, error) {
 	idx := iter.pos
 	val, err := iter.node.GetChildNode(ctx, idx)
-
 	if err != nil {
 		return runtime.None, runtime.None, err
 	}

@@ -10,10 +10,9 @@ import (
 	"github.com/mafredri/cdp/protocol/network"
 	"github.com/rs/zerolog"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
-
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"
+	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
 )
 
 type (
@@ -87,7 +86,7 @@ func (f *InterceptorFilter) Filter(rt network.ResourceType, req network.Request)
 
 func NewInterceptor(logger zerolog.Logger, client *cdp.Client) *Interceptor {
 	i := new(Interceptor)
-	i.logger = common.LoggerWithName(logger.With(), "network_interceptor").Logger()
+	i.logger = logutil.WithComponent(logger.With(), "network_interceptor").Logger()
 	i.client = client
 	i.filters = make(map[string]*InterceptorFilter)
 	i.loop = events.NewLoop(createRequestPausedStreamFactory(client))

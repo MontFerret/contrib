@@ -3,10 +3,10 @@ package lib
 import (
 	"context"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
+	"github.com/MontFerret/contrib/modules/web/html/internal/styleutil"
 )
 
 // AttributeSet sets or updates a single or more attribute(s) of a given element.
@@ -39,8 +39,8 @@ func AttributeSet(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		case runtime.String:
 			return runtime.None, el.SetAttribute(ctx, arg1, arg2)
 		case runtime.Map:
-			if arg1 == common.AttrNameStyle {
-				styles, err := common.SerializeStyles(ctx, arg2)
+			if arg1 == styleutil.AttributeNameStyle {
+				styles, err := styleutil.Serialize(ctx, arg2)
 
 				if err != nil {
 					return runtime.None, err

@@ -7,7 +7,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/access"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/frameutil"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -114,11 +115,7 @@ func (p *HTMLPage) Iterate(ctx context.Context) (runtime.Iterator, error) {
 }
 
 func (p *HTMLPage) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
-	return common.GetInPage(ctx, key, p)
-}
-
-func (p *HTMLPage) Set(ctx context.Context, key, value runtime.Value) error {
-	return common.SetInPage(ctx, key, p, value)
+	return access.GetInPage(ctx, key, p)
 }
 
 func (p *HTMLPage) Length(ctx context.Context) (runtime.Int, error) {
@@ -145,7 +142,7 @@ func (p *HTMLPage) GetFrames(ctx context.Context) (runtime.List, error) {
 	if p.frames == nil {
 		arr := runtime.NewArray(10)
 
-		err := common.CollectFrames(ctx, arr, p.document)
+		err := frameutil.Collect(ctx, arr, p.document)
 
 		if err != nil {
 			return runtime.NewArray(0), err
@@ -161,7 +158,7 @@ func (p *HTMLPage) GetFrame(ctx context.Context, idx runtime.Int) (runtime.Value
 	if p.frames == nil {
 		arr := runtime.NewArray(10)
 
-		err := common.CollectFrames(ctx, arr, p.document)
+		err := frameutil.Collect(ctx, arr, p.document)
 
 		if err != nil {
 			return runtime.None, err

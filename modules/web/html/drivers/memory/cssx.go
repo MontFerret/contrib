@@ -4,45 +4,20 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers/common/cssx"
-	cssxc "github.com/MontFerret/cssx"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
-
-type cssxCompiledOpKind string
-
-const (
-	cssxSelectOp cssxCompiledOpKind = "select"
-	cssxCallOp   cssxCompiledOpKind = "call"
-)
-
-type cssxCompiledOp struct {
-	Kind     cssxCompiledOpKind
-	Selector string
-	Name     cssx.Expression
-	Args     []any
-	Arity    int
-	Index    int
-}
 
 func EvalCSSX(ctx context.Context, el *HTMLElement, expression runtime.String) (runtime.List, error) {
 	if el == nil || el.selection == nil {
 		return runtime.NewArray(0), runtime.Error(runtime.ErrMissedArgument, "element")
 	}
 
-	pipeline, err := cssx.Compile(string(expression))
-
-	if err != nil {
-		return nil, err
-	}
-
-	ops, err := compileCSSXOps(pipeline)
-
+	ops, err := cssx.CompileOps(string(expression))
 	if err != nil {
 		return nil, err
 	}
@@ -52,9 +27,9 @@ func EvalCSSX(ctx context.Context, el *HTMLElement, expression runtime.String) (
 
 	for _, op := range ops {
 		switch op.Kind {
-		case cssxSelectOp:
+		case cssx.OpSelect:
 			stack = append(stack, cssxQueryAll(el.selection, op.Selector))
-		case cssxCallOp:
+		case cssx.OpCall:
 			consume := op.Arity
 
 			if consume == 0 && len(stack) > 0 {
@@ -73,7 +48,7 @@ func EvalCSSX(ctx context.Context, el *HTMLElement, expression runtime.String) (
 				stack = stack[:len(stack)-consume]
 			}
 
-			stack = append(stack, cssxApplyCall(op.Name, op.Args, values, baseURL))
+			stack = append(stack, cssxApplyCall(cssx.Expression(op.Name), op.Args, values, baseURL))
 		default:
 			return nil, fmt.Errorf("unknown operation %q", op.Kind)
 		}
@@ -84,55 +59,6 @@ func EvalCSSX(ctx context.Context, el *HTMLElement, expression runtime.String) (
 	}
 
 	return cssxResultToList(ctx, el, stack[len(stack)-1])
-}
-
-func compileCSSXOps(pipeline cssxc.Pipeline) ([]cssxCompiledOp, error) {
-	ops := make([]cssxCompiledOp, 0, len(pipeline.Ops))
-
-	for idx, step := range pipeline.Ops {
-		switch step.Kind {
-		case cssxc.OpSelect:
-			selector := strings.TrimSpace(step.Selector)
-
-			if selector == "" {
-				return nil, fmt.Errorf("invalid select operation at %d: selector is empty", idx)
-			}
-
-			ops = append(ops, cssxCompiledOp{
-				Kind:     cssxSelectOp,
-				Selector: selector,
-				Index:    idx,
-			})
-		case cssxc.OpCall:
-			resolved, err := cssx.ResolveSelector(step.Name)
-
-			if err != nil {
-				return nil, fmt.Errorf("invalid call operation at %d: %w", idx, err)
-			}
-
-			if err := cssx.ValidateCallArgs(resolved, step); err != nil {
-				return nil, fmt.Errorf("invalid %s call at %d: %w", resolved, idx, err)
-			}
-
-			args, err := cssx.CollectCallArgs(step)
-
-			if err != nil {
-				return nil, fmt.Errorf("collect call args at %d: %w", idx, err)
-			}
-
-			ops = append(ops, cssxCompiledOp{
-				Kind:  cssxCallOp,
-				Name:  resolved,
-				Arity: step.Arity,
-				Args:  args,
-				Index: idx,
-			})
-		default:
-			return nil, fmt.Errorf("unexpected pipeline operation at %d: %d", idx, step.Kind)
-		}
-	}
-
-	return ops, nil
 }
 
 func cssxResultToList(ctx context.Context, el *HTMLElement, input any) (runtime.List, error) {
