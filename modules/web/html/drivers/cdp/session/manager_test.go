@@ -111,6 +111,52 @@ func (c *receivedMessageClient) Recv() (*target.ReceivedMessageFromTargetReply, 
 	return reply, nil
 }
 
+type closeOnlyStream struct {
+	closeFn func() error
+	ready   chan struct{}
+}
+
+func newCloseOnlyStream(closeFn func() error) *closeOnlyStream {
+	return &closeOnlyStream{
+		closeFn: closeFn,
+		ready:   make(chan struct{}),
+	}
+}
+
+func (s *closeOnlyStream) Ready() <-chan struct{} {
+	return s.ready
+}
+
+func (s *closeOnlyStream) RecvMsg(any) error {
+	return errors.New("unexpected RecvMsg call")
+}
+
+func (s *closeOnlyStream) Close() error {
+	if s.closeFn == nil {
+		return nil
+	}
+
+	return s.closeFn()
+}
+
+type attachedCloseClient struct{ *closeOnlyStream }
+
+func (c *attachedCloseClient) Recv() (*target.AttachedToTargetReply, error) {
+	return nil, errors.New("unexpected attached Recv call")
+}
+
+type detachedCloseClient struct{ *closeOnlyStream }
+
+func (c *detachedCloseClient) Recv() (*target.DetachedFromTargetReply, error) {
+	return nil, errors.New("unexpected detached Recv call")
+}
+
+type receivedMessageCloseClient struct{ *closeOnlyStream }
+
+func (c *receivedMessageCloseClient) Recv() (*target.ReceivedMessageFromTargetReply, error) {
+	return nil, errors.New("unexpected received-message Recv call")
+}
+
 func TestManager(t *testing.T) {
 	Convey("session manager bookkeeping", t, func() {
 		oldAttachRoot := attachRootSessionClient
@@ -248,6 +294,80 @@ func TestClientCloseIgnoresMissingSession(t *testing.T) {
 
 	if err := sessionClient.Close(); err != nil {
 		t.Fatalf("Close returned error: %v", err)
+	}
+}
+
+func TestManagerCloseIgnoresAlreadyClosedTargetStreams(t *testing.T) {
+	streamErr := errors.New(errRPCCStreamAlreadyClosed)
+	cancelled := atomic.Bool{}
+	rootClosed := atomic.Int32{}
+	attachedClosed := atomic.Int32{}
+	detachedClosed := atomic.Int32{}
+	messageClosed := atomic.Int32{}
+
+	closeStream := func(counter *atomic.Int32) func() error {
+		return func() error {
+			if !cancelled.Load() {
+				t.Fatalf("stream close ran before manager cancel")
+			}
+
+			counter.Add(1)
+
+			return streamErr
+		}
+	}
+
+	manager := &Manager{
+		cancel: func() {
+			cancelled.Store(true)
+		},
+		attached: &attachedCloseClient{
+			closeOnlyStream: newCloseOnlyStream(closeStream(&attachedClosed)),
+		},
+		detached: &detachedCloseClient{
+			closeOnlyStream: newCloseOnlyStream(closeStream(&detachedClosed)),
+		},
+		message: &receivedMessageCloseClient{
+			closeOnlyStream: newCloseOnlyStream(closeStream(&messageClosed)),
+		},
+		clientsBySession: map[target.SessionID]*Client{
+			"root-session": {
+				ID: "root-session",
+				closeFn: func() error {
+					if !cancelled.Load() {
+						t.Fatalf("client close ran before manager cancel")
+					}
+
+					rootClosed.Add(1)
+
+					return nil
+				},
+			},
+		},
+	}
+
+	if err := manager.Close(); err != nil {
+		t.Fatalf("Close returned error: %v", err)
+	}
+
+	if !cancelled.Load() {
+		t.Fatal("expected manager cancel to run")
+	}
+
+	if rootClosed.Load() != 1 {
+		t.Fatalf("expected root client to close once, got %d", rootClosed.Load())
+	}
+
+	if attachedClosed.Load() != 1 {
+		t.Fatalf("expected attached stream to close once, got %d", attachedClosed.Load())
+	}
+
+	if detachedClosed.Load() != 1 {
+		t.Fatalf("expected detached stream to close once, got %d", detachedClosed.Load())
+	}
+
+	if messageClosed.Load() != 1 {
+		t.Fatalf("expected message stream to close once, got %d", messageClosed.Load())
 	}
 }
 

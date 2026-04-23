@@ -190,19 +190,19 @@ func (m *Manager) Close() error {
 		}
 
 		if m.attached != nil {
-			if err := m.attached.Close(); err != nil {
+			if err := m.attached.Close(); err != nil && !isIgnorableManagerStreamCloseError(err) {
 				errs = append(errs, err)
 			}
 		}
 
 		if m.detached != nil {
-			if err := m.detached.Close(); err != nil {
+			if err := m.detached.Close(); err != nil && !isIgnorableManagerStreamCloseError(err) {
 				errs = append(errs, err)
 			}
 		}
 
 		if m.message != nil {
-			if err := m.message.Close(); err != nil {
+			if err := m.message.Close(); err != nil && !isIgnorableManagerStreamCloseError(err) {
 				errs = append(errs, err)
 			}
 		}
