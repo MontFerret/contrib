@@ -46,6 +46,26 @@ func TestClickUsesInteractionCapabilityFromPage(t *testing.T) {
 	}
 }
 
+func TestSelectUsesInteractionCapabilityFromPage(t *testing.T) {
+	t.Parallel()
+
+	page := newTestPage(t, `<html><body><select id="choices" multiple><option value="1">one</option><option value="2">two</option></select></body></html>`)
+	expected := runtime.NewArrayWith(runtime.NewString("1"), runtime.NewString("2"))
+
+	value, err := Select(context.Background(), page, runtime.NewString("#choices"), expected)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if runtime.CompareValues(value, expected) != 0 {
+		t.Fatalf("expected select to return the chosen values, got %v", value)
+	}
+
+	if got := page.frame.element.selectedSelector; got != "#choices" {
+		t.Fatalf("expected select selector to be delegated to the root element, got %q", got)
+	}
+}
+
 func TestWaitElementUsesWaitCapabilityFromPage(t *testing.T) {
 	t.Parallel()
 
@@ -261,6 +281,7 @@ func (doc *testDocument) MoveMouseByXY(_ context.Context, _, _ runtime.Float) er
 type testElement struct {
 	*memory.HTMLElement
 	clickedSelector  string
+	selectedSelector string
 	waitSelector     string
 	scrolledIntoView bool
 }
@@ -307,7 +328,8 @@ func (el *testElement) Select(_ context.Context, value runtime.List) (runtime.Li
 	return value, nil
 }
 
-func (el *testElement) SelectBySelector(_ context.Context, _ drivers.QuerySelector, value runtime.List) (runtime.List, error) {
+func (el *testElement) SelectBySelector(_ context.Context, selector drivers.QuerySelector, value runtime.List) (runtime.List, error) {
+	el.selectedSelector = selector.String()
 	return value, nil
 }
 

@@ -8,10 +8,10 @@ import (
 )
 
 // Select selects a value from an underlying select element.
-// @param {HTMLElement} element - Target html element.
+// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String | String[]} valueOrSelector - Selector or a an array of strings as a value.
 // @param {String[]} value - Target value. Optional.
-// @return {String[]} - Array of selected runtime.
+// @return {String[]} - Array of selected values.
 func Select(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, 4)
 
@@ -19,13 +19,7 @@ func Select(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
-	el, err := runtime.CastArgAt[drivers.HTMLElement](args, 0)
-
-	if err != nil {
-		return runtime.None, err
-	}
-
-	target, err := drivers.ToInteractionTarget(el)
+	target, err := toRootInteractionTarget(args[0])
 	if err != nil {
 		return runtime.None, err
 	}
