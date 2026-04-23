@@ -1,0 +1,22 @@
+LET url = @lab.static.static + "/article.html"
+LET doc = DOCUMENT(url)
+LET text = WEB::ARTICLE::TEXT(doc)
+LET markdown = WEB::ARTICLE::MARKDOWN(doc)
+
+T::NOT::NONE(text)
+T::NOT::NONE(markdown)
+
+T::NOT::EQ(REGEX_REPLACE(text, "same runtime path that users call from FQL queries", ""), text)
+T::NOT::EQ(REGEX_REPLACE(markdown, "same runtime path that users call from FQL queries", ""), markdown)
+T::NOT::EQ(REGEX_REPLACE(markdown, "/story-link", ""), markdown)
+T::NOT::EQ(REGEX_REPLACE(markdown, "/assets/article-inline.jpg", ""), markdown)
+
+T::EQ(REGEX_REPLACE(text, "Share this story", ""), text)
+T::EQ(REGEX_REPLACE(text, "Related story that should not appear", ""), text)
+T::EQ(REGEX_REPLACE(text, "Comment thread should not appear", ""), text)
+T::EQ(REGEX_REPLACE(markdown, "javascript:", ""), markdown)
+T::EQ(REGEX_REPLACE(markdown, "onclick", ""), markdown)
+T::EQ(REGEX_REPLACE(markdown, "onerror", ""), markdown)
+T::EQ(REGEX_REPLACE(markdown, "data:text/html", ""), markdown)
+
+RETURN NONE
