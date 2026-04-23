@@ -55,7 +55,7 @@ jobs:
         run: make build ${{ matrix.module }}
 
   test:
-    name: Test (${{ matrix.module }})
+    name: Unit Test (${{ matrix.module }})
     runs-on: ubuntu-latest
     needs: discover-modules
 
@@ -74,8 +74,8 @@ jobs:
           go-version-file: go.work
           cache: true
 
-      - name: Test module
-        run: make test ${{ matrix.module }}
+      - name: Unit test module
+        run: make test-unit ${{ matrix.module }}
 
   lint:
     name: Lint (${{ matrix.module }})
