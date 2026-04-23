@@ -17,7 +17,7 @@ LET expected = `<head>
                         <script src="https://unpkg.com/history@4.9.0/umd/history.min.js"></script>
                         <script src="https://unpkg.com/react-router@4.3.1/umd/react-router.js"></script>
                         <script src="https://unpkg.com/react-router-dom@4.3.1/umd/react-router-dom.js"></script>
-                        <script src="https://unpkg.com/react-bootstrap@next/dist/react-bootstrap.min.js" crossorigin=""> </script>
+                        <script src="https://unpkg.com/react-bootstrap@2.10.10/dist/react-bootstrap.min.js" crossorigin=""> </script>
                         <script src="index.js" type="module"></script>
                 </body>`
 LET actual = INNER_HTML(doc)
