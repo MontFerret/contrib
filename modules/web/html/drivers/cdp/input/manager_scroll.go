@@ -85,8 +85,8 @@ func (m *Manager) ScrollIntoViewBySelector(ctx context.Context, id cdpruntime.Re
 
 func (m *Manager) ScrollByXY(ctx context.Context, options drivers.ScrollOptions) error {
 	m.logger.Trace().
-		Float64("x", float64(options.Top)).
-		Float64("y", float64(options.Left)).
+		Float64("x", float64(options.Left)).
+		Float64("y", float64(options.Top)).
 		Str("behavior", options.Behavior.String()).
 		Str("block", options.Block.String()).
 		Str("inline", options.Inline.String()).
