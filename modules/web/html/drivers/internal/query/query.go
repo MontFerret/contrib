@@ -1,4 +1,4 @@
-package queryutil
+package query
 
 import "strings"
 

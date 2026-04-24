@@ -8,7 +8,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/access"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/data"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -64,7 +64,7 @@ func (doc *HTMLDocument) Iterate(ctx context.Context) (runtime.Iterator, error) 
 }
 
 func (doc *HTMLDocument) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
-	return access.GetInDocument(ctx, key, doc)
+	return data.GetInDocument(ctx, key, doc)
 }
 
 func (doc *HTMLDocument) GetNodeType(_ context.Context) (runtime.Int, error) {

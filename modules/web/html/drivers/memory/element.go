@@ -11,9 +11,9 @@ import (
 	"github.com/goccy/go-json"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/access"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/data"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/nodeutil"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/queryutil"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/query"
 	"github.com/MontFerret/contrib/modules/web/html/internal/styleutil"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
@@ -589,11 +589,11 @@ func (el *HTMLElement) ExistsBySelector(_ context.Context, selector drivers.Quer
 }
 
 func (el *HTMLElement) Get(ctx context.Context, path runtime.Value) (runtime.Value, error) {
-	return access.GetInElement(ctx, path, el)
+	return data.GetInElement(ctx, path, el)
 }
 
 func (el *HTMLElement) Iterate(_ context.Context) (runtime.Iterator, error) {
-	return access.NewIterator(el)
+	return data.NewIterator(el)
 }
 
 func (el *HTMLElement) GetParentElement(_ context.Context) (runtime.Value, error) {
@@ -627,10 +627,10 @@ func (el *HTMLElement) GetNextElementSibling(_ context.Context) (runtime.Value, 
 }
 
 func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
-	switch queryutil.Parse(string(q.Kind)) {
-	case queryutil.CSS:
+	switch query.Parse(string(q.Kind)) {
+	case query.CSS:
 		return EvalCSSX(ctx, el, q.Payload)
-	case queryutil.XPath:
+	case query.XPath:
 		res, err := el.XPath(ctx, q.Payload)
 
 		if err != nil {

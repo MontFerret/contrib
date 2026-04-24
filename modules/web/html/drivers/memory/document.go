@@ -9,7 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/access"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/data"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
@@ -140,11 +140,11 @@ func (doc *HTMLDocument) Length(_ context.Context) (runtime.Int, error) {
 }
 
 func (doc *HTMLDocument) Iterate(_ context.Context) (runtime.Iterator, error) {
-	return access.NewIterator(doc.element)
+	return data.NewIterator(doc.element)
 }
 
 func (doc *HTMLDocument) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
-	return access.GetInDocument(ctx, key, doc)
+	return data.GetInDocument(ctx, key, doc)
 }
 
 func (doc *HTMLDocument) GetNodeType(_ context.Context) (runtime.Int, error) {

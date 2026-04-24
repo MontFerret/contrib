@@ -5,7 +5,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/queryutil"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/query"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -60,8 +60,8 @@ func (el *HTMLElement) ExistsBySelector(ctx context.Context, selector drivers.Qu
 }
 
 func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
-	switch queryutil.Parse(string(q.Kind)) {
-	case queryutil.CSS:
+	switch query.Parse(string(q.Kind)) {
+	case query.CSS:
 		fn, err := templates.CSSX(el.id, q.Payload)
 		if err != nil {
 			return runtime.NewArray(0), err
@@ -73,7 +73,7 @@ func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List
 		}
 
 		return runtime.ToList(ctx, val)
-	case queryutil.XPath:
+	case query.XPath:
 		out, err := el.XPath(ctx, q.Payload)
 		if err != nil {
 			return runtime.NewArray(0), err

@@ -11,7 +11,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/access"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/data"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -70,11 +70,11 @@ func (el *HTMLElement) Copy() runtime.Value {
 }
 
 func (el *HTMLElement) Iterate(_ context.Context) (runtime.Iterator, error) {
-	return access.NewIterator(el)
+	return data.NewIterator(el)
 }
 
 func (el *HTMLElement) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
-	return access.GetInElement(ctx, key, el)
+	return data.GetInElement(ctx, key, el)
 }
 
 func (el *HTMLElement) GetValue(ctx context.Context) (runtime.Value, error) {
