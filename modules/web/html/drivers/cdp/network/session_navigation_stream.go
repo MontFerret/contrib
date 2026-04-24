@@ -56,7 +56,10 @@ func (s *sessionNavigationEventStream) Read(ctx context.Context) <-chan runtime.
 
 				repl, err := s.onDoc.Recv()
 				if err != nil {
-					ch <- runtime.NewErrorMessage(err)
+					select {
+					case <-ctx.Done():
+					case ch <- runtime.NewErrorMessage(err):
+					}
 					s.logger.Trace().Err(err).Msg("failed to read data from within document navigation event stream")
 					return
 				}
@@ -71,9 +74,13 @@ func (s *sessionNavigationEventStream) Read(ctx context.Context) <-chan runtime.
 					Str("url", evt.URL).
 					Str("frame_id", string(evt.FrameID)).
 					Str("type", evt.MimeType).
-					Msg("received withing document navigation event")
+					Msg("received within document navigation event")
 
-				ch <- runtime.NewValueMessage(&evt)
+				select {
+				case <-ctx.Done():
+					return
+				case ch <- runtime.NewValueMessage(&evt):
+				}
 			case <-s.onFrame.Ready():
 				if ctx.Err() != nil {
 					return
@@ -81,7 +88,10 @@ func (s *sessionNavigationEventStream) Read(ctx context.Context) <-chan runtime.
 
 				repl, err := s.onFrame.Recv()
 				if err != nil {
-					ch <- runtime.NewErrorMessage(err)
+					select {
+					case <-ctx.Done():
+					case ch <- runtime.NewErrorMessage(err):
+					}
 					s.logger.Trace().Err(err).Msg("failed to read data from frame navigation event stream")
 					return
 				}
@@ -99,7 +109,11 @@ func (s *sessionNavigationEventStream) Read(ctx context.Context) <-chan runtime.
 					Str("type", evt.MimeType).
 					Msg("received frame navigation event")
 
-				ch <- runtime.NewValueMessage(&evt)
+				select {
+				case <-ctx.Done():
+					return
+				case ch <- runtime.NewValueMessage(&evt):
+				}
 			}
 		}
 	}()

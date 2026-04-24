@@ -159,23 +159,23 @@ func (c HTTPCookie) MarshalJSON() ([]byte, error) {
 
 func (c HTTPCookie) Get(_ context.Context, key runtime.Value) (runtime.Value, error) {
 	switch key.String() {
-	case "name":
+	case "name", "Name":
 		return runtime.NewString(c.Name), nil
-	case "value":
+	case "value", "Value":
 		return runtime.NewString(c.Value), nil
-	case "path":
+	case "path", "Path":
 		return runtime.NewString(c.Path), nil
-	case "domain":
+	case "domain", "Domain":
 		return runtime.NewString(c.Domain), nil
-	case "expires":
+	case "expires", "Expires":
 		return runtime.NewDateTime(c.Expires), nil
-	case "maxAge":
+	case "maxAge", "MaxAge":
 		return runtime.NewInt(c.MaxAge), nil
-	case "secure":
+	case "secure", "Secure":
 		return runtime.NewBoolean(c.Secure), nil
-	case "httpOnly":
+	case "httpOnly", "HTTPOnly":
 		return runtime.NewBoolean(c.HTTPOnly), nil
-	case "sameSite":
+	case "sameSite", "SameSite":
 		return runtime.NewString(c.SameSite.String()), nil
 	default:
 		return runtime.None, nil

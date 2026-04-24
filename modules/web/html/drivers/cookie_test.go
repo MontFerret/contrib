@@ -33,7 +33,7 @@ func TestHTTPCookie(t *testing.T) {
 		})
 
 		Convey(".Get", func() {
-			Convey("Should expose lowercase runtime fields", func() {
+			Convey("Should expose lowercase runtime fields and legacy aliases", func() {
 				cookie := drivers.HTTPCookie{
 					Name:     "test_cookie",
 					Value:    "test_value",
@@ -50,7 +50,11 @@ func TestHTTPCookie(t *testing.T) {
 
 				legacy, err := cookie.Get(context.Background(), runtime.NewString("Value"))
 				So(err, ShouldBeNil)
-				So(legacy, ShouldEqual, runtime.None)
+				So(legacy, ShouldEqual, runtime.NewString("test_value"))
+
+				legacyHTTPOnly, err := cookie.Get(context.Background(), runtime.NewString("HTTPOnly"))
+				So(err, ShouldBeNil)
+				So(legacyHTTPOnly, ShouldEqual, runtime.True)
 			})
 		})
 	})

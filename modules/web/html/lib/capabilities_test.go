@@ -186,13 +186,38 @@ func TestCookieGetUsesPageCookieCapability(t *testing.T) {
 	}
 }
 
-func TestAttributeSetRemainsElementOnly(t *testing.T) {
+func TestAttributeSetUsesRootAttributeTarget(t *testing.T) {
 	t.Parallel()
 
-	page := newTestPage(t, `<html><body><div id="message"></div></body></html>`)
+	ctx := context.Background()
 
-	if _, err := AttributeSet(context.Background(), page, runtime.NewString("data-test"), runtime.NewString("true")); err == nil {
-		t.Fatal("expected page input to remain invalid for ATTR_SET")
+	page := newTestPage(t, `<html><body><div id="message"></div></body></html>`)
+	doc := newTestDocument(t, `<html><body><div id="message"></div></body></html>`)
+
+	cases := []struct {
+		target runtime.Value
+		attrs  drivers.AttributeTarget
+		name   string
+	}{
+		{name: "page", target: page, attrs: page.frame.element},
+		{name: "document", target: doc, attrs: doc.element},
+		{name: "element", target: doc.element, attrs: doc.element},
+	}
+
+	for _, tc := range cases {
+		_, err := AttributeSet(ctx, tc.target, runtime.NewString("data-test"), runtime.NewString(tc.name))
+		if err != nil {
+			t.Fatalf("unexpected error setting attribute through %s target: %v", tc.name, err)
+		}
+
+		value, err := tc.attrs.GetAttribute(ctx, runtime.NewString("data-test"))
+		if err != nil {
+			t.Fatalf("unexpected error reading attribute for %s target: %v", tc.name, err)
+		}
+
+		if value != runtime.NewString(tc.name) {
+			t.Fatalf("expected %s target to set root attribute, got %v", tc.name, value)
+		}
 	}
 }
 

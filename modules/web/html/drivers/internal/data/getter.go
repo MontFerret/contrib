@@ -20,15 +20,11 @@ func GetInPage(ctx context.Context, key runtime.Value, page drivers.HTMLPage) (r
 		}
 
 		resp, err := target.GetResponse(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		return &resp, nil
+		return valueOrNone(&resp, err)
 	case "mainFrame", "document":
 		return page.GetMainFrame(), nil
 	case "frames":
-		return page.GetFrames(ctx)
+		return valueOrNone(page.GetFrames(ctx))
 	case "url", "URL":
 		return page.GetURL(), nil
 	case "cookies":
@@ -39,7 +35,7 @@ func GetInPage(ctx context.Context, key runtime.Value, page drivers.HTMLPage) (r
 
 		cookies, err := target.GetCookies(ctx)
 		if err != nil {
-			return nil, err
+			return runtime.None, err
 		}
 
 		return drivers.NewHTTPCookiesFrom(cookies), nil
@@ -65,13 +61,13 @@ func GetInDocument(ctx context.Context, key runtime.Value, doc drivers.HTMLDocum
 	case "title":
 		return doc.GetTitle(), nil
 	case "parent":
-		return doc.GetParentDocument(ctx)
+		return valueOrNone(doc.GetParentDocument(ctx))
 	case "body", "head":
-		return doc.QuerySelector(ctx, drivers.NewCSSSelector(runtime.String(key.String())))
+		return valueOrNone(doc.QuerySelector(ctx, drivers.NewCSSSelector(runtime.String(key.String()))))
 	case "innerHTML":
-		return doc.GetElement().GetInnerHTML(ctx)
+		return valueOrNone(doc.GetElement().GetInnerHTML(ctx))
 	case "innerText":
-		return doc.GetElement().GetInnerText(ctx)
+		return valueOrNone(doc.GetElement().GetInnerText(ctx))
 	default:
 		return GetInNode(ctx, key, doc.GetElement())
 	}
@@ -84,21 +80,21 @@ func GetInElement(ctx context.Context, key runtime.Value, el drivers.HTMLElement
 
 	switch key.String() {
 	case "innerText":
-		return el.GetInnerText(ctx)
+		return valueOrNone(el.GetInnerText(ctx))
 	case "innerHTML":
-		return el.GetInnerHTML(ctx)
+		return valueOrNone(el.GetInnerHTML(ctx))
 	case "value":
-		return el.GetValue(ctx)
+		return valueOrNone(el.GetValue(ctx))
 	case "attributes":
-		return el.GetAttributes(ctx)
+		return valueOrNone(el.GetAttributes(ctx))
 	case "style":
-		return el.GetStyles(ctx)
+		return valueOrNone(el.GetStyles(ctx))
 	case "previousElementSibling":
-		return el.GetPreviousElementSibling(ctx)
+		return valueOrNone(el.GetPreviousElementSibling(ctx))
 	case "nextElementSibling":
-		return el.GetNextElementSibling(ctx)
+		return valueOrNone(el.GetNextElementSibling(ctx))
 	case "parentElement":
-		return el.GetParentElement(ctx)
+		return valueOrNone(el.GetParentElement(ctx))
 	default:
 		return GetInNode(ctx, key, el)
 	}
@@ -111,17 +107,17 @@ func GetInNode(ctx context.Context, key runtime.Value, node drivers.HTMLNode) (r
 
 	switch keyVal := key.(type) {
 	case runtime.Int:
-		return node.GetChildNode(ctx, keyVal)
+		return valueOrNone(node.GetChildNode(ctx, keyVal))
 	case runtime.String:
 		switch keyVal {
 		case "nodeType":
-			return node.GetNodeType(ctx)
+			return valueOrNone(node.GetNodeType(ctx))
 		case "nodeName":
-			return node.GetNodeName(ctx)
+			return valueOrNone(node.GetNodeName(ctx))
 		case "children":
-			return node.GetChildNodes(ctx)
+			return valueOrNone(node.GetChildNodes(ctx))
 		case "length":
-			return node.Length(ctx)
+			return valueOrNone(node.Length(ctx))
 		default:
 			return runtime.None, nil
 		}
@@ -136,4 +132,12 @@ func isEmptyValue(value runtime.Value) bool {
 	}
 
 	return value == runtime.None
+}
+
+func valueOrNone(value runtime.Value, err error) (runtime.Value, error) {
+	if err != nil {
+		return runtime.None, err
+	}
+
+	return value, nil
 }

@@ -15,10 +15,10 @@ import (
 // @param {String} exp - Regular expression to match property value.
 // @return {HTMLDocument[]} - Returns an array of found HTML frames.
 func Frames(ctx context.Context, arg1, arg2, arg3 runtime.Value) (runtime.Value, error) {
-	page, err := runtime.CastArg[drivers.HTMLPage](arg1, 0)
+	page, err := drivers.ToPage(arg1)
 
 	if err != nil {
-		return runtime.None, err
+		return runtime.None, runtime.ArgError(err, 0)
 	}
 
 	frames, err := page.GetFrames(ctx)

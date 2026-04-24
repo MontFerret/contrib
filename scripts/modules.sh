@@ -121,7 +121,8 @@ main() {
 
   if [ "$command" = "build" ]; then
     echo "Building runtime..."
- 	  go build -v -o ${DIR_BIN}/runtime ${DIR_RUNTIME}/runtime.go
+    mkdir -p "$DIR_BIN"
+    go build -v -o "$DIR_BIN/runtime" "$DIR_RUNTIME/runtime.go"
   fi
 }
 

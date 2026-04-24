@@ -87,7 +87,10 @@ func (s *domEventStream) Read(ctx context.Context) <-chan runtime.Message {
 				reply, err := s.stream.Recv()
 
 				if err != nil {
-					ch <- runtime.NewErrorMessage(err)
+					select {
+					case <-ctx.Done():
+					case ch <- runtime.NewErrorMessage(err):
+					}
 
 					return
 				}
@@ -99,13 +102,20 @@ func (s *domEventStream) Read(ctx context.Context) <-chan runtime.Message {
 				val, err := decodeDOMEventPayload(reply.Payload)
 
 				if err != nil {
-					ch <- runtime.NewErrorMessage(err)
+					select {
+					case <-ctx.Done():
+					case ch <- runtime.NewErrorMessage(err):
+					}
 
 					return
 				}
 
 				if val != nil && val != runtime.None {
-					ch <- runtime.NewValueMessage(val)
+					select {
+					case <-ctx.Done():
+						return
+					case ch <- runtime.NewValueMessage(val):
+					}
 				}
 			}
 		}

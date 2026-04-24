@@ -67,7 +67,9 @@ jobs:
 
       - name: Install Ferret Lab
         run: |
-          curl https://raw.githubusercontent.com/MontFerret/lab/master/install.sh -o install.sh
+          curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/MontFerret/lab/master/install.sh \
+            -o install.sh
           chmod +x ./install.sh
           LOCATION=$PWD ./install.sh
 

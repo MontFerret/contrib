@@ -44,7 +44,7 @@ export default class FocusableComponent extends React.PureComponent {
 
         return e("div", {id: this.props.id, className: "card focusable"}, [
             e("div", { className: "card-header"}, [
-                e("div", { classNames: "form-group" }, [
+                e("div", { className: "form-group" }, [
                     e("input", {
                         id: btnId,
                         className: "form-control",

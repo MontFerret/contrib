@@ -6,7 +6,6 @@ WAIT_ELEMENT(doc, "#page-events")
 // with fixed timeout
 CLICK(doc, "#wait-no-class-btn")
 WAIT(1000)
-PRINT(ATTR_GET(ELEMENT(doc, "#wait-no-class-content"), "class"))
 WAIT_NO_ATTR(doc, "#wait-no-class-content", "class", "alert alert-success")
 
 // with random timeout
