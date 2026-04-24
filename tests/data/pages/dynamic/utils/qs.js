@@ -31,7 +31,7 @@ export function parse(query) {
             , value = decode(part[2]);
 
         //
-        // Prevent overriding of existing properties. This ensures that build-in
+        // Prevent overriding of existing properties. This ensures that built-in
         // methods like `toString` or __proto__ are not overridden by malicious
         // querystrings.
         //
