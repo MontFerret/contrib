@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	cssxcommon "github.com/MontFerret/contrib/modules/web/html/drivers/common/cssx"
+	cssxcommon "github.com/MontFerret/contrib/modules/web/html/drivers/internal/cssx"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 

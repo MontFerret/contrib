@@ -13,7 +13,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common/cssx"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/cssx"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 
-	cssxcommon "github.com/MontFerret/contrib/modules/web/html/drivers/common/cssx"
+	cssxcommon "github.com/MontFerret/contrib/modules/web/html/drivers/internal/cssx"
 )
 
 func TestCSSXTraversalOps(t *testing.T) {
