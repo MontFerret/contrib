@@ -32,7 +32,7 @@ export function parse(query) {
 
         //
         // Prevent overriding of existing properties. This ensures that build-in
-        // methods like `toString` or __proto__ are not overriden by malicious
+        // methods like `toString` or __proto__ are not overridden by malicious
         // querystrings.
         //
         if (key in result) continue;
