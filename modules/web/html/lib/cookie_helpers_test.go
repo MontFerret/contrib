@@ -2,7 +2,7 @@ package lib
 
 import (
 	"context"
-	"strings"
+	"errors"
 	"testing"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
@@ -71,7 +71,7 @@ func TestParseCookiesValueFromProxiedCookieCollection(t *testing.T) {
 func TestParseCookiesValueRejectsInvalidInputs(t *testing.T) {
 	t.Parallel()
 
-	if _, err := parseCookiesValue(context.Background(), runtime.None); err == nil || !strings.Contains(err.Error(), "cookies are required") {
+	if _, err := parseCookiesValue(context.Background(), runtime.None); !errors.Is(err, runtime.ErrMissedArgument) {
 		t.Fatalf("expected missing cookies error, got %v", err)
 	}
 
@@ -79,7 +79,7 @@ func TestParseCookiesValueRejectsInvalidInputs(t *testing.T) {
 		t.Fatal("expected invalid cookie type error")
 	}
 
-	if _, err := parseCookiesValue(context.Background(), runtime.NewObject()); err == nil || !strings.Contains(err.Error(), "cookie name is required") {
+	if _, err := parseCookiesValue(context.Background(), runtime.NewObject()); !errors.Is(err, runtime.ErrMissedArgument) {
 		t.Fatalf("expected missing cookie name error, got %v", err)
 	}
 }

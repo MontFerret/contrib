@@ -2,7 +2,6 @@ package lib
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -13,7 +12,7 @@ import (
 
 func parseCookie(ctx context.Context, value runtime.Value) (drivers.HTTPCookie, error) {
 	if value == nil {
-		return drivers.HTTPCookie{}, fmt.Errorf("cookie is required")
+		return drivers.HTTPCookie{}, runtime.Error(runtime.ErrMissedArgument, "cookie")
 	}
 
 	switch v := value.(type) {
@@ -21,7 +20,7 @@ func parseCookie(ctx context.Context, value runtime.Value) (drivers.HTTPCookie, 
 		return v, nil
 	case *drivers.HTTPCookie:
 		if v == nil {
-			return drivers.HTTPCookie{}, fmt.Errorf("cookie is required")
+			return drivers.HTTPCookie{}, runtime.Error(runtime.ErrMissedArgument, "cookie")
 		}
 
 		return *v, nil
@@ -33,7 +32,7 @@ func parseCookie(ctx context.Context, value runtime.Value) (drivers.HTTPCookie, 
 
 	if cookie, ok := runtime.UnwrapAs[*drivers.HTTPCookie](value); ok {
 		if cookie == nil {
-			return drivers.HTTPCookie{}, fmt.Errorf("cookie is required")
+			return drivers.HTTPCookie{}, runtime.Error(runtime.ErrMissedArgument, "cookie")
 		}
 
 		return *cookie, nil
@@ -114,13 +113,13 @@ func parseCookie(ctx context.Context, value runtime.Value) (drivers.HTTPCookie, 
 
 func parseCookiesValue(ctx context.Context, value runtime.Value) (*drivers.HTTPCookies, error) {
 	if value == nil || value == runtime.None {
-		return nil, fmt.Errorf("cookies are required")
+		return nil, runtime.Error(runtime.ErrMissedArgument, "cookies")
 	}
 
 	switch v := value.(type) {
 	case *drivers.HTTPCookies:
 		if v == nil {
-			return nil, fmt.Errorf("cookies are required")
+			return nil, runtime.Error(runtime.ErrMissedArgument, "cookies")
 		}
 
 		cookies := drivers.NewHTTPCookies()
@@ -134,7 +133,7 @@ func parseCookiesValue(ctx context.Context, value runtime.Value) (*drivers.HTTPC
 
 	if cookies, ok := runtime.UnwrapAs[*drivers.HTTPCookies](value); ok {
 		if cookies == nil {
-			return nil, fmt.Errorf("cookies are required")
+			return nil, runtime.Error(runtime.ErrMissedArgument, "cookies")
 		}
 
 		res := drivers.NewHTTPCookies()
@@ -185,7 +184,7 @@ func getRequiredString(ctx context.Context, m runtime.Map, key string) (string, 
 	}
 
 	if !ok {
-		return "", fmt.Errorf("cookie %s is required", key)
+		return "", runtime.Errorf(runtime.ErrMissedArgument, "cookie %s", key)
 	}
 
 	if err := runtime.ValidateType(val, runtime.TypeString); err != nil {
