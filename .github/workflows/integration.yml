@@ -67,11 +67,8 @@ jobs:
 
       - name: Install Ferret Lab
         run: |
-          curl --fail --silent --show-error --location \
-            https://raw.githubusercontent.com/MontFerret/lab/master/install.sh \
-            -o install.sh
-          chmod +x ./install.sh
-          LOCATION=$PWD ./install.sh
+          GOBIN="$GITHUB_WORKSPACE" go install github.com/MontFerret/lab/v2@v2.0.0-alpha.7
+          "$GITHUB_WORKSPACE/lab" version
 
       - name: Add Ferret Lab to PATH
         run: echo "$GITHUB_WORKSPACE" >> "$GITHUB_PATH"
