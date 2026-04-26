@@ -15,7 +15,7 @@ type Iterator struct {
 
 func NewIterator(node drivers.HTMLElement) (runtime.Iterator, error) {
 	if node == nil {
-		return nil, runtime.Error(runtime.ErrMissedArgument, "result")
+		return nil, runtime.Error(runtime.ErrMissedArgument, "node")
 	}
 
 	return &Iterator{node: node}, nil

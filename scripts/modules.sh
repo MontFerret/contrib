@@ -78,21 +78,26 @@ main() {
       test-integration)
         echo "Running integration tests for module '$module'"
 
+        local runtime_uri="bin://$root_dir/${DIR_BIN#./}/runtime"
+        local module_test_files="$root_dir/${DIR_MODULE_TESTS#./}/$module"
+        local serve_dynamic="$root_dir/${DIR_TESTDATA#./}/pages/dynamic"
+        local serve_static="$root_dir/${DIR_TESTDATA#./}/pages/static"
+
         # If the module test folder doesn't exist, skip it
-        if [ ! -d "$DIR_MODULE_TESTS/$module" ]; then
+        if [ ! -d "$module_test_files" ]; then
           echo "No integration tests found for module '$module', skipping."
           continue
         fi
 
         lab run \
-          --runtime=bin://${DIR_BIN}/runtime \
+          --runtime="$runtime_uri" \
           --timeout=120 \
           --attempts=5 \
           --concurrency=1 \
           --wait=http://127.0.0.1:9222/json/version \
-          --files="$DIR_MODULE_TESTS/$module" \
-          --serve=${DIR_TESTDATA}/pages/dynamic \
-          --serve=${DIR_TESTDATA}/pages/static
+          --files="$module_test_files" \
+          --serve="$serve_dynamic" \
+          --serve="$serve_static"
         ;;
       lint)
         echo "Linting module '$module'"

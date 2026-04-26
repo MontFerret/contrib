@@ -22,10 +22,10 @@ export default class AjaxComponent extends React.PureComponent {
 
     handleSeq(e) {
         [
-            'https://www.montferret.dev/try/',
-            'https://www.montferret.dev/docs/',
-            'https://www.montferret.dev/blog/',
-            'https://www.montferret.dev/cookbook/'
+            'index.html',
+            'index.css',
+            'components/pages/index.js',
+            'components/pages/forms/index.js'
         ].forEach((url) => {
             setTimeout(() => {
                 request(url)

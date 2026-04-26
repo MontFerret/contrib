@@ -68,6 +68,48 @@ func TestParseCookiesValueFromProxiedCookieCollection(t *testing.T) {
 	assertParsedCookie(t, cookies, "session", "abc123")
 }
 
+func TestParseCookiesValueAcceptsLegacyCookieMapFields(t *testing.T) {
+	t.Parallel()
+
+	input := runtime.NewObjectWith(map[string]runtime.Value{
+		"Name":      runtime.NewString("session"),
+		"Value":     runtime.NewString("abc123"),
+		"Path":      runtime.NewString("/"),
+		"max_age":   runtime.NewInt(60),
+		"same_site": runtime.NewString("strict"),
+		"http_only": runtime.True,
+		"Secure":    runtime.True,
+	})
+
+	cookies, err := parseCookiesValue(context.Background(), input)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	assertParsedCookie(t, cookies, "session", "abc123")
+
+	cookie := cookies.Data["session"]
+	if cookie.Path != "/" {
+		t.Fatalf("expected legacy path alias to be parsed, got %q", cookie.Path)
+	}
+
+	if cookie.MaxAge != 60 {
+		t.Fatalf("expected legacy max_age alias to be parsed, got %d", cookie.MaxAge)
+	}
+
+	if cookie.SameSite != drivers.SameSiteStrictMode {
+		t.Fatalf("expected legacy same_site alias to be parsed, got %v", cookie.SameSite)
+	}
+
+	if !cookie.HTTPOnly {
+		t.Fatal("expected legacy http_only alias to be parsed")
+	}
+
+	if !cookie.Secure {
+		t.Fatal("expected legacy secure alias to be parsed")
+	}
+}
+
 func TestParseCookiesValueRejectsInvalidInputs(t *testing.T) {
 	t.Parallel()
 

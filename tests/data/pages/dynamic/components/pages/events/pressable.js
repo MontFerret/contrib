@@ -10,13 +10,13 @@ export default class PressableComponent extends React.PureComponent {
     }
 
     handleKeyDown(e) {
-        if (e.key == 'Unidentified') {
+        if (e.key === 'Unidentified') {
             return;
         }
 
-        this.setState({
-            key: this.state.key ? this.state.key + ' + ' + e.key : e.key
-        })
+        this.setState((prevState) => ({
+            key: prevState.key ? prevState.key + ' + ' + e.key : e.key
+        }))
     }
 
     handleReset() {

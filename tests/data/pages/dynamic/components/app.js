@@ -19,14 +19,15 @@ export default React.memo(function AppComponent(params = {}) {
     let redirectTo;
 
     if (params.redirect) {
-        let search = '';
+        const searchParams = new URLSearchParams();
 
         Object.keys(params).forEach((key) => {
             if (key !== 'redirect') {
-                search += `${key}=${params[key]}`;
+                searchParams.append(key, params[key]);
             }
         });
 
+        const search = searchParams.toString();
         const to = {
             pathname: params.redirect,
             search: search ? `?${search}` : '',

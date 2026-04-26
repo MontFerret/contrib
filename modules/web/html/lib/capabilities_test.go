@@ -2,6 +2,7 @@ package lib
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -183,6 +184,53 @@ func TestCookieGetUsesPageCookieCapability(t *testing.T) {
 
 	if cookie.Value != "abc123" {
 		t.Fatalf("expected cookie value to round-trip, got %q", cookie.Value)
+	}
+}
+
+func TestRootElementHelpersResolveRootElement(t *testing.T) {
+	t.Parallel()
+
+	page := newTestPage(t, `<html><body><div id="message"></div></body></html>`)
+	doc := newTestDocument(t, `<html><body><div id="message"></div></body></html>`)
+
+	cases := []struct {
+		target runtime.Value
+		want   drivers.HTMLElement
+		name   string
+	}{
+		{name: "page", target: page, want: page.frame.element},
+		{name: "document", target: doc, want: doc.element},
+		{name: "element", target: doc.element, want: doc.element},
+	}
+
+	for _, tc := range cases {
+		got, err := toRootElement(tc.target)
+		if err != nil {
+			t.Fatalf("unexpected error resolving %s root element: %v", tc.name, err)
+		}
+
+		if got != tc.want {
+			t.Fatalf("expected %s root element %T, got %T", tc.name, tc.want, got)
+		}
+
+		attrs, err := toRootAttributeTarget(tc.target)
+		if err != nil {
+			t.Fatalf("unexpected error resolving %s root attribute target: %v", tc.name, err)
+		}
+
+		if attrs != tc.want {
+			t.Fatalf("expected %s root attribute target %T, got %T", tc.name, tc.want, attrs)
+		}
+	}
+}
+
+func TestRootElementCapabilityReportsUnsupportedCapability(t *testing.T) {
+	t.Parallel()
+
+	page := newMemoryPage(t, `<html><body><div id="message"></div></body></html>`, drivers.NewHTTPCookies())
+
+	if _, err := toRootInteractionTarget(page); !errors.Is(err, runtime.ErrNotSupported) {
+		t.Fatalf("expected unsupported interaction capability error, got %v", err)
 	}
 }
 

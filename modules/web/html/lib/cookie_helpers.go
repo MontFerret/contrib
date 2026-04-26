@@ -43,12 +43,12 @@ func parseCookie(ctx context.Context, value runtime.Value) (drivers.HTTPCookie, 
 		return drivers.HTTPCookie{}, err
 	}
 
-	name, err := getRequiredString(ctx, m, "name")
+	name, err := getRequiredString(ctx, m, "name", "Name")
 	if err != nil {
 		return drivers.HTTPCookie{}, err
 	}
 
-	val, err := getRequiredString(ctx, m, "value")
+	val, err := getRequiredString(ctx, m, "value", "Value")
 	if err != nil {
 		return drivers.HTTPCookie{}, err
 	}
@@ -59,31 +59,31 @@ func parseCookie(ctx context.Context, value runtime.Value) (drivers.HTTPCookie, 
 		SameSite: drivers.SameSiteDefaultMode,
 	}
 
-	if path, ok, err := getOptionalString(ctx, m, "path"); err != nil {
+	if path, ok, err := getOptionalString(ctx, m, "path", "Path"); err != nil {
 		return drivers.HTTPCookie{}, err
 	} else if ok {
 		cookie.Path = path
 	}
 
-	if domain, ok, err := getOptionalString(ctx, m, "domain"); err != nil {
+	if domain, ok, err := getOptionalString(ctx, m, "domain", "Domain"); err != nil {
 		return drivers.HTTPCookie{}, err
 	} else if ok {
 		cookie.Domain = domain
 	}
 
-	if maxAge, ok, err := getOptionalInt(ctx, m, "maxAge"); err != nil {
+	if maxAge, ok, err := getOptionalInt(ctx, m, "maxAge", "MaxAge", "max_age"); err != nil {
 		return drivers.HTTPCookie{}, err
 	} else if ok {
 		cookie.MaxAge = int(maxAge)
 	}
 
-	if expires, ok, err := getOptionalDateTime(ctx, m, "expires"); err != nil {
+	if expires, ok, err := getOptionalDateTime(ctx, m, "expires", "Expires"); err != nil {
 		return drivers.HTTPCookie{}, err
 	} else if ok {
 		cookie.Expires = expires
 	}
 
-	if sameSite, ok, err := getOptionalString(ctx, m, "sameSite"); err != nil {
+	if sameSite, ok, err := getOptionalString(ctx, m, "sameSite", "SameSite", "same_site"); err != nil {
 		return drivers.HTTPCookie{}, err
 	} else if ok {
 		switch strings.ToLower(sameSite) {
@@ -96,13 +96,13 @@ func parseCookie(ctx context.Context, value runtime.Value) (drivers.HTTPCookie, 
 		}
 	}
 
-	if httpOnly, ok, err := getOptionalBool(ctx, m, "httpOnly"); err != nil {
+	if httpOnly, ok, err := getOptionalBool(ctx, m, "httpOnly", "HTTPOnly", "http_only"); err != nil {
 		return drivers.HTTPCookie{}, err
 	} else if ok {
 		cookie.HTTPOnly = httpOnly
 	}
 
-	if secure, ok, err := getOptionalBool(ctx, m, "secure"); err != nil {
+	if secure, ok, err := getOptionalBool(ctx, m, "secure", "Secure"); err != nil {
 		return drivers.HTTPCookie{}, err
 	} else if ok {
 		cookie.Secure = secure
@@ -177,8 +177,8 @@ func parseCookiesValue(ctx context.Context, value runtime.Value) (*drivers.HTTPC
 	return cookies, nil
 }
 
-func getRequiredString(ctx context.Context, m runtime.Map, key string) (string, error) {
-	val, ok, err := sdk.TryGetByKey[runtime.Value](ctx, m, runtime.String(key))
+func getRequiredString(ctx context.Context, m runtime.Map, key string, aliases ...string) (string, error) {
+	val, ok, err := getCookieField(ctx, m, key, aliases...)
 	if err != nil {
 		return "", err
 	}
@@ -194,8 +194,8 @@ func getRequiredString(ctx context.Context, m runtime.Map, key string) (string, 
 	return val.String(), nil
 }
 
-func getOptionalString(ctx context.Context, m runtime.Map, key string) (string, bool, error) {
-	val, ok, err := sdk.TryGetByKey[runtime.Value](ctx, m, runtime.String(key))
+func getOptionalString(ctx context.Context, m runtime.Map, key string, aliases ...string) (string, bool, error) {
+	val, ok, err := getCookieField(ctx, m, key, aliases...)
 	if err != nil {
 		return "", false, err
 	}
@@ -211,8 +211,8 @@ func getOptionalString(ctx context.Context, m runtime.Map, key string) (string, 
 	return val.String(), true, nil
 }
 
-func getOptionalInt(ctx context.Context, m runtime.Map, key string) (runtime.Int, bool, error) {
-	val, ok, err := sdk.TryGetByKey[runtime.Value](ctx, m, runtime.String(key))
+func getOptionalInt(ctx context.Context, m runtime.Map, key string, aliases ...string) (runtime.Int, bool, error) {
+	val, ok, err := getCookieField(ctx, m, key, aliases...)
 	if err != nil {
 		return 0, false, err
 	}
@@ -228,8 +228,8 @@ func getOptionalInt(ctx context.Context, m runtime.Map, key string) (runtime.Int
 	return val.(runtime.Int), true, nil
 }
 
-func getOptionalBool(ctx context.Context, m runtime.Map, key string) (bool, bool, error) {
-	val, ok, err := sdk.TryGetByKey[runtime.Value](ctx, m, runtime.String(key))
+func getOptionalBool(ctx context.Context, m runtime.Map, key string, aliases ...string) (bool, bool, error) {
+	val, ok, err := getCookieField(ctx, m, key, aliases...)
 	if err != nil {
 		return false, false, err
 	}
@@ -245,8 +245,8 @@ func getOptionalBool(ctx context.Context, m runtime.Map, key string) (bool, bool
 	return bool(val.(runtime.Boolean)), true, nil
 }
 
-func getOptionalDateTime(ctx context.Context, m runtime.Map, key string) (time.Time, bool, error) {
-	val, ok, err := sdk.TryGetByKey[runtime.Value](ctx, m, runtime.String(key))
+func getOptionalDateTime(ctx context.Context, m runtime.Map, key string, aliases ...string) (time.Time, bool, error) {
+	val, ok, err := getCookieField(ctx, m, key, aliases...)
 	if err != nil {
 		return time.Time{}, false, err
 	}
@@ -269,4 +269,21 @@ func getOptionalDateTime(ctx context.Context, m runtime.Map, key string) (time.T
 	}
 
 	return parsed, true, nil
+}
+
+func getCookieField(ctx context.Context, m runtime.Map, key string, aliases ...string) (runtime.Value, bool, error) {
+	keys := append([]string{key}, aliases...)
+
+	for _, k := range keys {
+		val, ok, err := sdk.TryGetByKey[runtime.Value](ctx, m, runtime.String(k))
+		if err != nil {
+			return runtime.None, false, err
+		}
+
+		if ok {
+			return val, true, nil
+		}
+	}
+
+	return runtime.None, false, nil
 }
