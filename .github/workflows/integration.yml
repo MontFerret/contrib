@@ -51,7 +51,7 @@ jobs:
 
     services:
       chromium:
-        image: ghcr.io/montferret/chromium@sha256:31d9e393986785359f5df1f3bb1548db5be50a66131b3ecafde821cd921f0cbc
+        image: ghcr.io/montferret/chromium:latest
         ports:
           - 9222:9222
 
