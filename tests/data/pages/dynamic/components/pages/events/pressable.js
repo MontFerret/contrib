@@ -4,9 +4,25 @@ export default class PressableComponent extends React.PureComponent {
     constructor(props) {
         super(props);
 
+        this.inputRef = React.createRef();
+        this.handleKeyDown = this.handleKeyDown.bind(this);
+        this.handleReset = this.handleReset.bind(this);
+
         this.state = {
             key: ''
         };
+    }
+
+    componentDidMount() {
+        if (this.inputRef.current) {
+            this.inputRef.current.addEventListener('keydown', this.handleKeyDown);
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.inputRef.current) {
+            this.inputRef.current.removeEventListener('keydown', this.handleKeyDown);
+        }
     }
 
     handleKeyDown(e) {
@@ -36,12 +52,12 @@ export default class PressableComponent extends React.PureComponent {
                         id: inputId,
                         type: "text",
                         className: "form-control",
-                        onKeyDown: this.handleKeyDown.bind(this)
+                        ref: this.inputRef
                     }),
                     e("input", {
                         type: "button",
                         className: "btn btn-primary",
-                        onClick: this.handleReset.bind(this),
+                        onClick: this.handleReset,
                         value: "Reset"
                     },
                     )

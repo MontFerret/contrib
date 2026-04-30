@@ -46,16 +46,14 @@ func NewKeyboard(client *cdp.Client) *Keyboard {
 func (k *Keyboard) Down(ctx context.Context, char string) error {
 	return k.client.Input.DispatchKeyEvent(
 		ctx,
-		input.NewDispatchKeyEventArgs("keyDown").
-			SetText(char),
+		k.createTextEvent("keyDown", char),
 	)
 }
 
 func (k *Keyboard) Up(ctx context.Context, char string) error {
 	return k.client.Input.DispatchKeyEvent(
 		ctx,
-		input.NewDispatchKeyEventArgs("keyUp").
-			SetText(char),
+		k.createPressEvent("keyUp", char),
 	)
 }
 
@@ -133,8 +131,57 @@ func (k *Keyboard) createPressEvent(event string, chars string) *input.DispatchK
 			SetCode(key.Code).
 			SetKey(key.Key).
 			SetModifiers(int(key.Modifier)).
-			SetWindowsVirtualKeyCode(key.KeyCode)
+			SetWindowsVirtualKeyCode(key.KeyCode).
+			SetNativeVirtualKeyCode(key.KeyCode).
+			SetLocation(int(key.Location))
+
+		if k.shouldSendText(event) {
+			if text := k.textForPressKey(chars, key); text != "" {
+				args.
+					SetText(text).
+					SetUnmodifiedText(text)
+			}
+		}
 	}
 
 	return args
+}
+
+func (k *Keyboard) createTextEvent(event string, chars string) *input.DispatchKeyEventArgs {
+	args := k.createPressEvent(event, chars)
+
+	if k.shouldSendText(event) && args.Text == nil && chars != "" {
+		args.
+			SetText(chars).
+			SetUnmodifiedText(chars)
+	}
+
+	return args
+}
+
+func (k *Keyboard) shouldSendText(event string) bool {
+	return event == "keyDown" || event == "char"
+}
+
+func (k *Keyboard) textForPressKey(chars string, key KeyboardKey) string {
+	switch chars {
+	case "Enter", "NumpadEnter", "\r", "\n":
+		return "\r"
+	case "Tab":
+		return "\t"
+	}
+
+	if key.Key == "" || key.Key == "\u0000" {
+		return ""
+	}
+
+	if key.Modifier&(KeyboardModifierAlt|KeyboardModifierCtrl|KeyboardModifierCmd) != 0 {
+		return ""
+	}
+
+	if len([]rune(key.Key)) != 1 {
+		return ""
+	}
+
+	return key.Key
 }
