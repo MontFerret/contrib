@@ -52,6 +52,7 @@ jobs:
     services:
       chromium:
         image: ghcr.io/montferret/chromium:latest
+        options: --add-host=host.docker.internal:host-gateway
         ports:
           - 9222:9222
 
@@ -73,8 +74,14 @@ jobs:
       - name: Add Ferret Lab to PATH
         run: echo "$GITHUB_WORKSPACE" >> "$GITHUB_PATH"
 
+      - name: Resolve Lab static host on runner
+        run: echo "127.0.0.1 host.docker.internal" | sudo tee -a /etc/hosts
+
       - name: Build runtime
         run: make build ${{ matrix.module }}
 
       - name: Run integration tests
+        env:
+          LAB_SERVE_HOST: host.docker.internal
+          LAB_SERVE_BIND: 0.0.0.0
         run: make test-integration ${{ matrix.module }}
