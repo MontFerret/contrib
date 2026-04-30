@@ -122,6 +122,10 @@ func (m *Manager) watchResponseClient(ctx context.Context, key string, client *c
 			case <-ctx.Done():
 				return
 			case <-stream.Ready():
+				if ctx.Err() != nil {
+					return
+				}
+
 				reply, err := stream.Recv()
 				if err != nil {
 					if ctx.Err() != nil {

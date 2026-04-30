@@ -2,7 +2,10 @@ package network_test
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -42,8 +45,10 @@ type (
 	}
 
 	TestEventStream struct {
-		ready   chan struct{}
-		message chan any
+		ready     chan struct{}
+		message   chan any
+		closeOnce sync.Once
+		closeErr  error
 		mock.Mock
 	}
 
@@ -115,15 +120,27 @@ func (stream *TestEventStream) RecvMsg(i any) error {
 	return nil
 }
 
-func (stream *TestEventStream) Message() any {
-	return <-stream.message
+func (stream *TestEventStream) Message() (any, error) {
+	msg, ok := <-stream.message
+	if !ok {
+		return nil, io.EOF
+	}
+
+	return msg, nil
 }
 
 func (stream *TestEventStream) Close() error {
-	stream.Called()
-	close(stream.message)
-	close(stream.ready)
-	return nil
+	stream.closeOnce.Do(func() {
+		args := stream.MethodCalled("Close")
+		if len(args) > 0 {
+			stream.closeErr = args.Error(0)
+		}
+
+		close(stream.message)
+		close(stream.ready)
+	})
+
+	return stream.closeErr
 }
 
 func (stream *TestEventStream) Emit(msg any) {
@@ -138,13 +155,15 @@ func NewFrameNavigatedClient() *FrameNavigatedClient {
 }
 
 func (stream *FrameNavigatedClient) Recv() (*page.FrameNavigatedReply, error) {
-	<-stream.Ready()
-	msg := stream.Message()
+	msg, err := stream.Message()
+	if err != nil {
+		return nil, err
+	}
 
 	repl, ok := msg.(*page.FrameNavigatedReply)
 
 	if !ok {
-		panic("Invalid message type")
+		return nil, fmt.Errorf("invalid frame navigated message type %T", msg)
 	}
 
 	return repl, nil
@@ -157,13 +176,15 @@ func NewResponseReceivedClient() *ResponseReceivedClient {
 }
 
 func (stream *ResponseReceivedClient) Recv() (*network2.ResponseReceivedReply, error) {
-	<-stream.Ready()
-	msg := stream.Message()
+	msg, err := stream.Message()
+	if err != nil {
+		return nil, err
+	}
 
 	repl, ok := msg.(*network2.ResponseReceivedReply)
 
 	if !ok {
-		panic("Invalid message type")
+		return nil, fmt.Errorf("invalid response received message type %T", msg)
 	}
 
 	return repl, nil
@@ -176,13 +197,15 @@ func NewRequestPausedClient() *RequestPausedClient {
 }
 
 func (stream *RequestPausedClient) Recv() (*fetch.RequestPausedReply, error) {
-	<-stream.Ready()
-	msg := stream.Message()
+	msg, err := stream.Message()
+	if err != nil {
+		return nil, err
+	}
 
 	repl, ok := msg.(*fetch.RequestPausedReply)
 
 	if !ok {
-		panic("Invalid message type")
+		return nil, fmt.Errorf("invalid request paused message type %T", msg)
 	}
 
 	return repl, nil
@@ -194,7 +217,7 @@ func TestManager(t *testing.T) {
 		Convey("New", func() {
 			Convey("Should close all resources on Close", func() {
 				responseReceivedClient := NewResponseReceivedClient()
-				responseReceivedClient.On("Close", mock.Anything).Once().Return(nil)
+				responseReceivedClient.On("Close").Once().Return(nil)
 				networkAPI := new(NetworkAPI)
 				networkAPI.responseReceived = func(ctx context.Context) (network2.ResponseReceivedClient, error) {
 					return responseReceivedClient, nil
@@ -204,7 +227,7 @@ func TestManager(t *testing.T) {
 				}
 
 				requestPausedClient := NewRequestPausedClient()
-				requestPausedClient.On("Close", mock.Anything).Once().Return(nil)
+				requestPausedClient.On("Close").Once().Return(nil)
 				fetchAPI := new(FetchAPI)
 				fetchAPI.enable = func(ctx context.Context, args *fetch.EnableArgs) error {
 					return nil
