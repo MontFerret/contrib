@@ -16,17 +16,17 @@ func CookieGet(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 		return runtime.None, err
 	}
 
-	page, err := drivers.ToPage(args[0])
+	target, err := drivers.ToPageCookieReader(args[0])
 	if err != nil {
 		return runtime.None, err
 	}
 
-	if err := runtime.ValidateType(args[1], runtime.TypeString); err != nil {
+	if err := runtime.ValidateArgTypeAt(args, 1, runtime.TypeString); err != nil {
 		return runtime.None, err
 	}
 
 	name := args[1].(runtime.String)
-	cookies, err := page.GetCookies(ctx)
+	cookies, err := target.GetCookies(ctx)
 	if err != nil {
 		return runtime.None, err
 	}

@@ -37,7 +37,7 @@ func TestHTTPCookies(t *testing.T) {
 				t, e := expires.MarshalJSON()
 				So(e, ShouldBeNil)
 
-				expected := fmt.Sprintf(`{"Session":{"Value":"asdfg","domain":"www.google.com","expires":%s,"http_only":true,"max_age":0,"name":"Session","path":"/","same_site":"Lax","secure":true}}`, string(t))
+				expected := fmt.Sprintf(`{"Session":{"domain":"www.google.com","expires":%s,"httpOnly":true,"maxAge":0,"name":"Session","path":"/","sameSite":"Lax","secure":true,"value":"asdfg"}}`, string(t))
 
 				So(err, ShouldBeNil)
 				So(string(out), ShouldEqual, expected)

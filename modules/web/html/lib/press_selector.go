@@ -21,7 +21,7 @@ func PressSelector(ctx context.Context, args ...runtime.Value) (runtime.Value, e
 		return runtime.False, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := toRootInteractionTarget(args[0])
 
 	if err != nil {
 		return runtime.False, err
@@ -51,7 +51,7 @@ func PressSelector(ctx context.Context, args ...runtime.Value) (runtime.Value, e
 
 	switch keys := keysArg.(type) {
 	case runtime.String:
-		return runtime.True, el.PressBySelector(ctx, selector, []runtime.String{keys}, count)
+		return runtime.True, target.PressBySelector(ctx, selector, []runtime.String{keys}, count)
 	case runtime.List:
 		keySlice, err := sdk.ToSlice(ctx, keys, func(ctx context.Context, value, key runtime.Value) (runtime.String, error) {
 			return runtime.ToString(value), nil
@@ -61,7 +61,7 @@ func PressSelector(ctx context.Context, args ...runtime.Value) (runtime.Value, e
 			return runtime.None, err
 		}
 
-		return runtime.True, el.PressBySelector(ctx, selector, keySlice, count)
+		return runtime.True, target.PressBySelector(ctx, selector, keySlice, count)
 	default:
 		return runtime.None, runtime.TypeErrorOf(keysArg, runtime.TypeString, runtime.TypeArray)
 	}

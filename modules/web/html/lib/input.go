@@ -20,8 +20,13 @@ func Input(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.False, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := toRootInteractionTarget(args[0])
 
+	if err != nil {
+		return runtime.False, err
+	}
+
+	queryTarget, err := drivers.ToQueryTarget(args[0])
 	if err != nil {
 		return runtime.False, err
 	}
@@ -30,7 +35,7 @@ func Input(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 
 	// INPUT(el, value)
 	if len(args) == 2 {
-		return runtime.True, el.Input(ctx, args[1], delay)
+		return runtime.True, target.Input(ctx, args[1], delay)
 	}
 
 	var selector drivers.QuerySelector
@@ -48,7 +53,7 @@ func Input(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 				return runtime.False, err
 			}
 
-			return runtime.True, el.Input(ctx, value, delay)
+			return runtime.True, target.Input(ctx, value, delay)
 		default:
 			// INPUT(el, selector, value)
 			selector, err = drivers.ToQuerySelector(args[1])
@@ -79,7 +84,7 @@ func Input(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		}
 	}
 
-	exists, err := el.ExistsBySelector(ctx, selector)
+	exists, err := queryTarget.ExistsBySelector(ctx, selector)
 
 	if err != nil {
 		return runtime.False, err
@@ -89,5 +94,5 @@ func Input(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.False, nil
 	}
 
-	return runtime.True, el.InputBySelector(ctx, selector, value, delay)
+	return runtime.True, target.InputBySelector(ctx, selector, value, delay)
 }

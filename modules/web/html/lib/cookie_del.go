@@ -15,7 +15,7 @@ func CookieDel(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 		return runtime.None, err
 	}
 
-	page, err := drivers.ToPage(args[0])
+	target, err := drivers.ToPageCookieTarget(args[0])
 	if err != nil {
 		return runtime.None, err
 	}
@@ -28,7 +28,7 @@ func CookieDel(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 		switch cookie := c.(type) {
 		case runtime.String:
 			if currentCookies == nil {
-				current, err := page.GetCookies(ctx)
+				current, err := target.GetCookies(ctx)
 				if err != nil {
 					return runtime.None, err
 				}
@@ -66,14 +66,16 @@ func CookieDel(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 				return runtime.None, runtime.TypeErrorOf(found, drivers.HTTPCookieType)
 			}
 		default:
-			parsed, err := parseCookie(ctx, c)
+			parsed, err := parseCookiesValue(ctx, c)
 			if err != nil {
 				return runtime.None, err
 			}
 
-			cookies.SetCookie(parsed)
+			for _, cookie := range parsed.Data {
+				cookies.SetCookie(cookie)
+			}
 		}
 	}
 
-	return runtime.None, page.DeleteCookies(ctx, cookies)
+	return runtime.None, target.DeleteCookies(ctx, cookies)
 }

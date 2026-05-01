@@ -3,7 +3,6 @@ package lib
 import (
 	"context"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
@@ -19,7 +18,7 @@ func Press(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.False, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := toRootInteractionTarget(args[0])
 
 	if err != nil {
 		return runtime.False, err
@@ -43,7 +42,7 @@ func Press(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 
 	switch keys := keysArg.(type) {
 	case runtime.String:
-		return runtime.True, el.Press(ctx, []runtime.String{keys}, count)
+		return runtime.True, target.Press(ctx, []runtime.String{keys}, count)
 	case runtime.List:
 		keySlice, err := sdk.ToSlice(ctx, keys, func(ctx context.Context, value, key runtime.Value) (runtime.String, error) {
 			return runtime.ToString(value), nil
@@ -53,7 +52,7 @@ func Press(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 			return runtime.None, err
 		}
 
-		return runtime.True, el.Press(ctx, keySlice, count)
+		return runtime.True, target.Press(ctx, keySlice, count)
 	default:
 		return runtime.None, runtime.TypeErrorOf(keysArg, runtime.TypeString, runtime.TypeArray)
 	}

@@ -34,7 +34,7 @@ func waitAttributeAllWhen(ctx context.Context, args []runtime.Value, when driver
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := toRootWaitTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
@@ -70,5 +70,5 @@ func waitAttributeAllWhen(ctx context.Context, args []runtime.Value, when driver
 	ctx, fn := waitTimeout(ctx, timeout)
 	defer fn()
 
-	return runtime.True, el.WaitForAttributeBySelectorAll(ctx, selector, name, value, when)
+	return runtime.True, target.WaitForAttributeBySelectorAll(ctx, selector, name, value, when)
 }

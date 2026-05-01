@@ -12,8 +12,13 @@ modules:
 build:
 	@./scripts/modules.sh build $(filter-out $@,$(MAKECMDGOALS))
 
-test:
-	@./scripts/modules.sh test $(filter-out $@,$(MAKECMDGOALS))
+test: test-unit test-integration
+
+test-unit:
+	@./scripts/modules.sh test-unit $(filter-out $@,$(MAKECMDGOALS))
+
+test-integration:
+	@./scripts/modules.sh test-integration $(filter-out $@,$(MAKECMDGOALS))
 
 lint:
 	@./scripts/modules.sh lint $(filter-out $@,$(MAKECMDGOALS))

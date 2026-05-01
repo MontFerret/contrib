@@ -17,14 +17,14 @@ func Blur(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := toRootInteractionTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
 	}
 
 	if len(args) == 1 {
-		return runtime.None, el.Blur(ctx)
+		return runtime.None, target.Blur(ctx)
 	}
 
 	selector, err := drivers.ToQuerySelector(args[1])
@@ -33,5 +33,5 @@ func Blur(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
-	return runtime.None, el.BlurBySelector(ctx, selector)
+	return runtime.None, target.BlurBySelector(ctx, selector)
 }

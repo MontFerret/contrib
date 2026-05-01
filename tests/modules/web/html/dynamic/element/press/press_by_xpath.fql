@@ -1,0 +1,10 @@
+LET url = @lab.static.dynamic + "/#/events"
+LET page =  DOCUMENT(url, { driver: "cdp" })
+
+PRESS_SELECTOR(page, X("//*[@id='press-input']"), "Enter")
+
+WAIT(100)
+
+T::EQ(INNER_TEXT(page, "#press-content"), "Enter")
+
+RETURN NONE

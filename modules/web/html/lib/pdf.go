@@ -75,7 +75,12 @@ func PDF(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		pdfParams = param
 	}
 
-	pdf, err := page.PrintToPDF(ctx, pdfParams)
+	target, err := drivers.ToPageSnapshotTarget(page)
+	if err != nil {
+		return runtime.None, err
+	}
+
+	pdf, err := target.PrintToPDF(ctx, pdfParams)
 
 	if err != nil {
 		return runtime.None, err

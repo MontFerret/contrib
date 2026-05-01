@@ -59,6 +59,8 @@ fabric.properties
 
 # Dependency directories (remove the comment below to include it)
 vendor/
+!tests/data/pages/dynamic/vendor/
+!tests/data/pages/dynamic/vendor/**
 
 # Go workspace file
 #go.work
@@ -120,4 +122,5 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
-
+bin/
+.ferret-browser/

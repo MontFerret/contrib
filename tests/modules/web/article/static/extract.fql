@@ -1,0 +1,23 @@
+LET url = @lab.static.static + "/article.html"
+LET doc = DOCUMENT(url)
+LET article = WEB::ARTICLE::EXTRACT(doc)
+
+T::EQ(article.title, "Ferret Lab Article Fixture")
+T::EQ(article.byline, "Avery Quinn")
+T::EQ(article.excerpt, "Stable article fixture for WEB::ARTICLE integration tests.")
+T::EQ(article.siteName, "Example Daily")
+T::EQ(article.publishedAt, "2026-04-22T13:15:00Z")
+T::EQ(article.updatedAt, "2026-04-22T15:30:00Z")
+T::EQ(article.lang, "en")
+T::EQ(article.dir, "ltr")
+T::EQ(article.canonicalUrl, @lab.static.static + "/article.html")
+T::EQ(article.leadImage, @lab.static.static + "/assets/article-hero.jpg")
+T::EQ(article.tags, ["ferret", "integration"])
+T::EQ(article.categories, ["Testing"])
+T::GT(article.wordCount, 40)
+T::EQ(article.readingTimeMinutes, 1)
+T::NOT::NONE(article.text)
+T::NOT::NONE(article.html)
+T::NOT::NONE(article.markdown)
+
+RETURN NONE

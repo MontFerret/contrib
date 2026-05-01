@@ -1,11 +1,13 @@
 package drivers_test
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 func TestHTTPCookie(t *testing.T) {
@@ -26,7 +28,33 @@ func TestHTTPCookie(t *testing.T) {
 				out, err := cookie.MarshalJSON()
 
 				So(err, ShouldBeNil)
-				So(string(out), ShouldEqual, `{"Value":"test_value","domain":"montferret.dev","expires":"0001-01-01T00:00:00Z","http_only":true,"max_age":320,"name":"test_cookie","path":"/","same_site":"Lax","secure":true}`)
+				So(string(out), ShouldEqual, `{"domain":"montferret.dev","expires":"0001-01-01T00:00:00Z","httpOnly":true,"maxAge":320,"name":"test_cookie","path":"/","sameSite":"Lax","secure":true,"value":"test_value"}`)
+			})
+		})
+
+		Convey(".Get", func() {
+			Convey("Should expose lowercase runtime fields and legacy aliases", func() {
+				cookie := drivers.HTTPCookie{
+					Name:     "test_cookie",
+					Value:    "test_value",
+					HTTPOnly: true,
+				}
+
+				value, err := cookie.Get(context.Background(), runtime.NewString("value"))
+				So(err, ShouldBeNil)
+				So(value, ShouldEqual, runtime.NewString("test_value"))
+
+				httpOnly, err := cookie.Get(context.Background(), runtime.NewString("httpOnly"))
+				So(err, ShouldBeNil)
+				So(httpOnly, ShouldEqual, runtime.True)
+
+				legacy, err := cookie.Get(context.Background(), runtime.NewString("Value"))
+				So(err, ShouldBeNil)
+				So(legacy, ShouldEqual, runtime.NewString("test_value"))
+
+				legacyHTTPOnly, err := cookie.Get(context.Background(), runtime.NewString("HTTPOnly"))
+				So(err, ShouldBeNil)
+				So(legacyHTTPOnly, ShouldEqual, runtime.True)
 			})
 		})
 	})

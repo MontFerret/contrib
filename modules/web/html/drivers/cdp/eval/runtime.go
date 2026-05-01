@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
+	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -48,7 +48,7 @@ func New(
 	contextID cdpruntime.ExecutionContextID,
 ) *Runtime {
 	rt := new(Runtime)
-	rt.logger = common.LoggerWithName(logger.With(), "js-eval").
+	rt.logger = logutil.WithComponent(logger.With(), "js-eval").
 		Str("frame_id", string(frameID)).
 		Int("context_id", int(contextID)).
 		Logger()
@@ -132,6 +132,10 @@ func (rt *Runtime) EvalElements(ctx context.Context, fn *Function) (*runtime.Arr
 }
 
 func (rt *Runtime) Compile(ctx context.Context, fn *Function) (*CompiledFunction, error) {
+	if err := fn.Err(); err != nil {
+		return nil, err
+	}
+
 	log := rt.logger.With().
 		Str("expression", fn.String()).
 		Array("arguments", fn.args).
@@ -229,6 +233,10 @@ func (rt *Runtime) CallElements(ctx context.Context, fn *CompiledFunction) (runt
 }
 
 func (rt *Runtime) evalInternal(ctx context.Context, fn *Function) (cdpruntime.RemoteObject, error) {
+	if err := fn.Err(); err != nil {
+		return cdpruntime.RemoteObject{}, err
+	}
+
 	log := rt.logger.With().
 		Str("expression", fn.String()).
 		Str("returns", fn.returnType.String()).

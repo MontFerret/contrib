@@ -3,10 +3,9 @@ package lib
 import (
 	"context"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers"
+	"github.com/MontFerret/contrib/modules/web/html/internal/styleutil"
 )
 
 // AttributeSet sets or updates a single or more attribute(s) of a given element.
@@ -20,10 +19,10 @@ func AttributeSet(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := toRootAttributeTarget(args[0])
 
 	if err != nil {
-		return runtime.None, err
+		return runtime.None, runtime.ArgError(err, 0)
 	}
 
 	switch arg1 := args[1].(type) {
@@ -37,25 +36,25 @@ func AttributeSet(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 
 		switch arg2 := args[2].(type) {
 		case runtime.String:
-			return runtime.None, el.SetAttribute(ctx, arg1, arg2)
-		case *runtime.Object:
-			if arg1 == common.AttrNameStyle {
-				styles, err := common.SerializeStyles(ctx, arg2)
+			return runtime.None, target.SetAttribute(ctx, arg1, arg2)
+		case runtime.Map:
+			if arg1 == styleutil.AttributeNameStyle {
+				styles, err := styleutil.Serialize(ctx, arg2)
 
 				if err != nil {
 					return runtime.None, err
 				}
 
-				return runtime.None, el.SetAttribute(ctx, arg1, styles)
+				return runtime.None, target.SetAttribute(ctx, arg1, styles)
 			}
 
-			return runtime.None, el.SetAttribute(ctx, arg1, runtime.NewString(arg2.String()))
+			return runtime.None, target.SetAttribute(ctx, arg1, runtime.NewString(arg2.String()))
 		default:
-			return runtime.None, runtime.TypeErrorOf(arg1, runtime.TypeString, runtime.TypeMap)
+			return runtime.None, runtime.ArgError(runtime.TypeErrorOf(arg2, runtime.TypeString, runtime.TypeMap), 2)
 		}
-	case *runtime.Object:
+	case runtime.Map:
 		// ATTR_SET(el, values)
-		return runtime.None, el.SetAttributes(ctx, arg1)
+		return runtime.None, target.SetAttributes(ctx, arg1)
 	default:
 		return runtime.None, runtime.TypeErrorOf(arg1, runtime.TypeString, runtime.TypeMap)
 	}

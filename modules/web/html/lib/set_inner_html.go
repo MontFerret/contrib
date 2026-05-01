@@ -18,7 +18,7 @@ func SetInnerHTML(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := toRootContentTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
@@ -31,7 +31,7 @@ func SetInnerHTML(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 			return runtime.None, err
 		}
 
-		return runtime.None, el.SetInnerHTML(ctx, runtime.ToString(args[1]))
+		return runtime.None, target.SetInnerHTML(ctx, runtime.ToString(args[1]))
 	}
 
 	selector, err := drivers.ToQuerySelector(args[1])
@@ -48,5 +48,5 @@ func SetInnerHTML(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 
 	innerHTML := runtime.ToString(args[2])
 
-	return runtime.None, el.SetInnerHTMLBySelector(ctx, selector, innerHTML)
+	return runtime.None, target.SetInnerHTMLBySelector(ctx, selector, innerHTML)
 }

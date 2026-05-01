@@ -1,0 +1,7 @@
+LET url = @lab.static.static + "/simple.html"
+LET doc = DOCUMENT(url)
+
+T::NONE(WEB::ARTICLE::TEXT(doc))
+T::NONE(WEB::ARTICLE::MARKDOWN(doc))
+
+RETURN NONE

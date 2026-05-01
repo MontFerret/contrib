@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -23,6 +24,10 @@ func TestDocument(t *testing.T) {
 							Name:   "session",
 							Value:  "abc123",
 							Domain: "example.com",
+						},
+						"theme": {
+							Name:  "theme",
+							Value: "dark",
 						},
 					}),
 					Headers: drivers.NewHTTPHeadersWith(map[string][]string{
@@ -49,12 +54,23 @@ func TestDocument(t *testing.T) {
 				Driver:  "cdp",
 				Timeout: 5000,
 			}
-			out, err := newPageLoadParams("https://example.com", runtime.NewObjectWith(map[string]runtime.Value{
+			out, err := newPageLoadParams(context.Background(), "https://example.com", runtime.NewObjectWith(map[string]runtime.Value{
 				"driver":      runtime.NewString(expected.Driver),
 				"userAgent":   runtime.NewString(expected.UserAgent),
 				"keepCookies": runtime.True,
 				"timeout":     runtime.NewInt(int(expected.Timeout)),
 				"charset":     runtime.NewString(expected.Charset),
+				"cookies": runtime.NewArrayWith(
+					runtime.NewObjectWith(map[string]runtime.Value{
+						"name":   runtime.NewString("session"),
+						"value":  runtime.NewString("abc123"),
+						"domain": runtime.NewString("example.com"),
+					}),
+					runtime.NewObjectWith(map[string]runtime.Value{
+						"name":  runtime.NewString("theme"),
+						"value": runtime.NewString("dark"),
+					}),
+				),
 				"ignore": runtime.NewObjectWith(map[string]runtime.Value{
 					"resources": runtime.NewArrayWith(
 						runtime.NewObjectWith(map[string]runtime.Value{
@@ -81,6 +97,18 @@ func TestDocument(t *testing.T) {
 
 			if out.Timeout != expected.Timeout {
 				t.Fatalf("expected timeout %v, got %v", defaultTimeout, out.Timeout)
+			}
+
+			if out.Cookies == nil {
+				t.Fatalf("expected cookies to be set, got nil")
+			}
+
+			if len(out.Cookies.Data) != len(expected.Cookies.Data) {
+				t.Fatalf("expected %d cookies, got %d", len(expected.Cookies.Data), len(out.Cookies.Data))
+			}
+
+			if out.Cookies.Data["session"].Value != "abc123" {
+				t.Fatalf("expected session cookie to be parsed, got %#v", out.Cookies.Data["session"])
 			}
 
 			if out.Ignore == nil {

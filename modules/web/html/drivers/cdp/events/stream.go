@@ -41,13 +41,20 @@ func (e *EventStream) Read(ctx context.Context) <-chan runtime.Message {
 				val, err := e.decoder(ctx, e.stream)
 
 				if err != nil {
-					ch <- runtime.NewErrorMessage(err)
+					select {
+					case <-ctx.Done():
+					case ch <- runtime.NewErrorMessage(err):
+					}
 
 					return
 				}
 
 				if val != nil && val != runtime.None {
-					ch <- runtime.NewValueMessage(val)
+					select {
+					case <-ctx.Done():
+						return
+					case ch <- runtime.NewValueMessage(val):
+					}
 				}
 			}
 		}

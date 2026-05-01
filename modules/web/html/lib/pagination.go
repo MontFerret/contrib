@@ -6,18 +6,18 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/MontFerret/contrib/modules/web/html/drivers/common"
 	"github.com/MontFerret/ferret/v2/pkg/logging"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
+	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
 )
 
 // Pagination creates an iterator that goes through pages using a CSS selector.
 // The iterator starts from the current page i.e. it does not change the page on 1st iteration.
 // That allows you to keep scraping logic inside FOR loop.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
+// @param {HTMLPage} page - Target html page.
 // @param {String} selector - CSS selector for a pagination on the page.
 func Pagination(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, 2)
@@ -38,7 +38,7 @@ func Pagination(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 		return runtime.None, err
 	}
 
-	logger := common.LoggerWithName(logging.From(ctx).With(), "stdlib_html_pagination").
+	logger := logutil.WithComponent(logging.From(ctx).With(), "stdlib_html_pagination").
 		Str("selector", selector.String()).
 		Logger()
 
@@ -75,7 +75,8 @@ func (i *PagingIterator) Next(ctx context.Context) (runtime.Value, runtime.Value
 	}
 
 	i.logger.Trace().Msg("checking if an element exists...")
-	exists, err := i.page.GetMainFrame().ExistsBySelector(ctx, i.selector)
+	frame := i.page.GetMainFrame()
+	exists, err := frame.ExistsBySelector(ctx, i.selector)
 
 	if err != nil {
 		i.logger.Trace().Err(err).Msg("failed to check")
@@ -91,7 +92,14 @@ func (i *PagingIterator) Next(ctx context.Context) (runtime.Value, runtime.Value
 
 	i.logger.Trace().Bool("exists", bool(exists)).Msg("element exists. clicking...")
 
-	err = i.page.GetMainFrame().GetElement().ClickBySelector(ctx, i.selector, 1)
+	target, err := toRootInteractionTarget(frame)
+	if err != nil {
+		i.logger.Trace().Err(err).Msg("interaction capability is not supported. exit")
+
+		return runtime.None, runtime.None, err
+	}
+
+	err = target.ClickBySelector(ctx, i.selector, 1)
 
 	if err != nil {
 		i.logger.Trace().Err(err).Msg("failed to click. exit")

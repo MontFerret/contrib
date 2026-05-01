@@ -1,0 +1,16 @@
+LET url = @lab.static.dynamic + "/#/forms"
+LET page =  DOCUMENT(url, { driver: "cdp" })
+
+WAIT_ELEMENT(page, "form")
+
+LET input = ELEMENT(page, "#text_input")
+
+INPUT(input, "Foo")
+
+T::TRUE(CLICK(page, "#text_input", 2))
+
+INPUT(input, "Bar")
+
+WAIT(100)
+
+RETURN T::EQ(input.value, "Bar")

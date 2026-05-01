@@ -1,0 +1,6 @@
+LET url = @lab.static.dynamic + "?redirect=/iframe"
+LET page = DOCUMENT(url, { driver: 'cdp' })
+
+WAIT_ELEMENT(page, "iframe[name='nested']")
+
+RETURN T::LEN(page.frames, 2)

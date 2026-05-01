@@ -33,13 +33,12 @@ func Parse(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
-	arg1 := args[0]
-
-	if err := runtime.ValidateType(arg1, runtime.TypeString, runtime.TypeBinary); err != nil {
+	if err := runtime.ValidateArgTypeAt(args, 0, runtime.TypeString, runtime.TypeBinary); err != nil {
 		return runtime.None, err
 	}
 
 	var content []byte
+	arg1 := args[0]
 
 	switch v := arg1.(type) {
 	case runtime.String:
@@ -51,7 +50,13 @@ func Parse(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	var params ParseParams
 
 	if len(args) > 1 {
-		p, err := parseParseParams(content, args[1].(*runtime.Object))
+		arg2, err := runtime.CastArgAt[runtime.Map](args, 1)
+
+		if err != nil {
+			return runtime.None, err
+		}
+
+		p, err := parseParseParams(content, arg2)
 
 		if err != nil {
 			return runtime.None, err

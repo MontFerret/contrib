@@ -66,7 +66,7 @@ func waitClassWhen(ctx context.Context, args []runtime.Value, when drivers.WaitE
 			return runtime.None, err
 		}
 
-		el, err := drivers.ToElement(arg1)
+		target, err := toRootWaitTarget(arg1)
 
 		if err != nil {
 			return runtime.None, err
@@ -87,9 +87,13 @@ func waitClassWhen(ctx context.Context, args []runtime.Value, when drivers.WaitE
 		ctx, fn := waitTimeout(ctx, timeout)
 		defer fn()
 
-		return runtime.True, el.WaitForClassBySelector(ctx, selector, class, when)
+		return runtime.True, target.WaitForClassBySelector(ctx, selector, class, when)
 	default:
-		el := arg1.(drivers.HTMLElement)
+		target, err := toRootWaitTarget(arg1)
+		if err != nil {
+			return runtime.None, err
+		}
+
 		class := args[1].(runtime.String)
 
 		if len(args) == 3 {
@@ -105,6 +109,6 @@ func waitClassWhen(ctx context.Context, args []runtime.Value, when drivers.WaitE
 		ctx, fn := waitTimeout(ctx, timeout)
 		defer fn()
 
-		return runtime.True, el.WaitForClass(ctx, class, when)
+		return runtime.True, target.WaitForClass(ctx, class, when)
 	}
 }

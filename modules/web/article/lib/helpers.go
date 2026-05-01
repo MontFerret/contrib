@@ -38,6 +38,11 @@ func normalizeSource(ctx context.Context, value runtime.Value) (core.Source, err
 			HTML: input.String(),
 		}, nil
 	default:
+		page, err := htmldrivers.ToPage(value)
+		if err == nil {
+			return sourceFromPage(ctx, page)
+		}
+
 		doc, err := htmldrivers.ToDocument(value)
 		if err == nil {
 			return sourceFromDocument(ctx, doc)
@@ -56,6 +61,10 @@ func normalizeSource(ctx context.Context, value runtime.Value) (core.Source, err
 			htmldrivers.HTMLElementType,
 		)
 	}
+}
+
+func sourceFromPage(ctx context.Context, page htmldrivers.HTMLPage) (core.Source, error) {
+	return sourceFromDocument(ctx, page.GetMainFrame())
 }
 
 func sourceFromDocument(ctx context.Context, doc htmldrivers.HTMLDocument) (core.Source, error) {

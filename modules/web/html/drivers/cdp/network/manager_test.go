@@ -2,7 +2,10 @@ package network_test
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -10,7 +13,6 @@ import (
 	"github.com/mafredri/cdp/protocol/fetch"
 	network2 "github.com/mafredri/cdp/protocol/network"
 	"github.com/mafredri/cdp/protocol/page"
-	storage2 "github.com/mafredri/cdp/protocol/storage"
 	"github.com/rs/zerolog"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/mock"
@@ -29,6 +31,7 @@ type (
 	NetworkAPI struct {
 		cdp.Network
 		responseReceived    func(ctx context.Context) (network2.ResponseReceivedClient, error)
+		getCookies          func(ctx context.Context, args *network2.GetCookiesArgs) (*network2.GetCookiesReply, error)
 		setExtraHTTPHeaders func(ctx context.Context, args *network2.SetExtraHTTPHeadersArgs) error
 		mock.Mock
 	}
@@ -41,15 +44,11 @@ type (
 		mock.Mock
 	}
 
-	StorageAPI struct {
-		cdp.Storage
-		getCookies func(context.Context, *storage2.GetCookiesArgs) (*storage2.GetCookiesReply, error)
-		mock.Mock
-	}
-
 	TestEventStream struct {
-		ready   chan struct{}
-		message chan any
+		ready     chan struct{}
+		message   chan any
+		closeOnce sync.Once
+		closeErr  error
 		mock.Mock
 	}
 
@@ -72,6 +71,10 @@ func (api *PageAPI) FrameNavigated(ctx context.Context) (page.FrameNavigatedClie
 
 func (api *NetworkAPI) ResponseReceived(ctx context.Context) (network2.ResponseReceivedClient, error) {
 	return api.responseReceived(ctx)
+}
+
+func (api *NetworkAPI) GetCookies(ctx context.Context, args *network2.GetCookiesArgs) (*network2.GetCookiesReply, error) {
+	return api.getCookies(ctx, args)
 }
 
 func (api *NetworkAPI) SetExtraHTTPHeaders(ctx context.Context, args *network2.SetExtraHTTPHeadersArgs) error {
@@ -98,10 +101,6 @@ func (api *FetchAPI) RequestPaused(ctx context.Context) (fetch.RequestPausedClie
 	return api.requestPaused(ctx)
 }
 
-func (api *StorageAPI) GetCookies(ctx context.Context, args *storage2.GetCookiesArgs) (*storage2.GetCookiesReply, error) {
-	return api.getCookies(ctx, args)
-}
-
 func NewTestEventStream() *TestEventStream {
 	return NewBufferedTestEventStream(0)
 }
@@ -121,15 +120,27 @@ func (stream *TestEventStream) RecvMsg(i any) error {
 	return nil
 }
 
-func (stream *TestEventStream) Message() any {
-	return <-stream.message
+func (stream *TestEventStream) Message() (any, error) {
+	msg, ok := <-stream.message
+	if !ok {
+		return nil, io.EOF
+	}
+
+	return msg, nil
 }
 
 func (stream *TestEventStream) Close() error {
-	stream.Called()
-	close(stream.message)
-	close(stream.ready)
-	return nil
+	stream.closeOnce.Do(func() {
+		args := stream.MethodCalled("Close")
+		if len(args) > 0 {
+			stream.closeErr = args.Error(0)
+		}
+
+		close(stream.message)
+		close(stream.ready)
+	})
+
+	return stream.closeErr
 }
 
 func (stream *TestEventStream) Emit(msg any) {
@@ -144,13 +155,15 @@ func NewFrameNavigatedClient() *FrameNavigatedClient {
 }
 
 func (stream *FrameNavigatedClient) Recv() (*page.FrameNavigatedReply, error) {
-	<-stream.Ready()
-	msg := stream.Message()
+	msg, err := stream.Message()
+	if err != nil {
+		return nil, err
+	}
 
 	repl, ok := msg.(*page.FrameNavigatedReply)
 
 	if !ok {
-		panic("Invalid message type")
+		return nil, fmt.Errorf("invalid frame navigated message type %T", msg)
 	}
 
 	return repl, nil
@@ -163,13 +176,15 @@ func NewResponseReceivedClient() *ResponseReceivedClient {
 }
 
 func (stream *ResponseReceivedClient) Recv() (*network2.ResponseReceivedReply, error) {
-	<-stream.Ready()
-	msg := stream.Message()
+	msg, err := stream.Message()
+	if err != nil {
+		return nil, err
+	}
 
 	repl, ok := msg.(*network2.ResponseReceivedReply)
 
 	if !ok {
-		panic("Invalid message type")
+		return nil, fmt.Errorf("invalid response received message type %T", msg)
 	}
 
 	return repl, nil
@@ -182,13 +197,15 @@ func NewRequestPausedClient() *RequestPausedClient {
 }
 
 func (stream *RequestPausedClient) Recv() (*fetch.RequestPausedReply, error) {
-	<-stream.Ready()
-	msg := stream.Message()
+	msg, err := stream.Message()
+	if err != nil {
+		return nil, err
+	}
 
 	repl, ok := msg.(*fetch.RequestPausedReply)
 
 	if !ok {
-		panic("Invalid message type")
+		return nil, fmt.Errorf("invalid request paused message type %T", msg)
 	}
 
 	return repl, nil
@@ -200,7 +217,7 @@ func TestManager(t *testing.T) {
 		Convey("New", func() {
 			Convey("Should close all resources on Close", func() {
 				responseReceivedClient := NewResponseReceivedClient()
-				responseReceivedClient.On("Close", mock.Anything).Once().Return(nil)
+				responseReceivedClient.On("Close").Once().Return(nil)
 				networkAPI := new(NetworkAPI)
 				networkAPI.responseReceived = func(ctx context.Context) (network2.ResponseReceivedClient, error) {
 					return responseReceivedClient, nil
@@ -210,7 +227,7 @@ func TestManager(t *testing.T) {
 				}
 
 				requestPausedClient := NewRequestPausedClient()
-				requestPausedClient.On("Close", mock.Anything).Once().Return(nil)
+				requestPausedClient.On("Close").Once().Return(nil)
 				fetchAPI := new(FetchAPI)
 				fetchAPI.enable = func(ctx context.Context, args *fetch.EnableArgs) error {
 					return nil
@@ -227,6 +244,7 @@ func TestManager(t *testing.T) {
 				mgr, err := network.New(
 					zerolog.New(os.Stdout).Level(zerolog.Disabled),
 					client,
+					nil,
 					network.Options{
 						Headers: drivers.NewHTTPHeadersWith(map[string][]string{"x-correlation-id": {"foo"}}),
 						Filter: &network.Filter{
@@ -251,7 +269,7 @@ func TestManager(t *testing.T) {
 		})
 
 		Convey("GetCookies", func() {
-			Convey("Should read cookies via the Storage domain", func() {
+			Convey("Should read cookies via the Network domain for the current page URL", func() {
 				responseReceivedClient := NewResponseReceivedClient()
 				responseReceivedClient.On("Close").Maybe().Return(nil)
 
@@ -259,10 +277,11 @@ func TestManager(t *testing.T) {
 				networkAPI.responseReceived = func(ctx context.Context) (network2.ResponseReceivedClient, error) {
 					return responseReceivedClient, nil
 				}
+				networkAPI.getCookies = func(ctx context.Context, args *network2.GetCookiesArgs) (*network2.GetCookiesReply, error) {
+					So(args, ShouldNotBeNil)
+					So(args.URLs, ShouldResemble, []string{"http://example.com/app"})
 
-				storageAPI := new(StorageAPI)
-				storageAPI.getCookies = func(ctx context.Context, args *storage2.GetCookiesArgs) (*storage2.GetCookiesReply, error) {
-					return &storage2.GetCookiesReply{
+					return &network2.GetCookiesReply{
 						Cookies: []network2.Cookie{
 							{
 								Name:   "Session",
@@ -276,17 +295,17 @@ func TestManager(t *testing.T) {
 
 				client := &cdp.Client{
 					Network: networkAPI,
-					Storage: storageAPI,
 				}
 
 				mgr, err := network.New(
 					zerolog.New(os.Stdout).Level(zerolog.Disabled),
 					client,
+					nil,
 					network.Options{},
 				)
 				So(err, ShouldBeNil)
 
-				cookies, err := mgr.GetCookies(context.Background())
+				cookies, err := mgr.GetCookies(context.Background(), "example.com/app")
 				So(err, ShouldBeNil)
 				So(cookies, ShouldNotBeNil)
 				So(len(cookies.Data), ShouldEqual, 1)

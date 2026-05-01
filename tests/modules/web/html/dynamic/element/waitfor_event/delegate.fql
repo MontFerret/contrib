@@ -1,0 +1,15 @@
+LET url = @lab.static.dynamic + "/#/events"
+LET page = DOCUMENT(url, { driver: "cdp" })
+LET root = ELEMENT(page, "#observable-delegate-root")
+
+CLICK(page, "#observable-delegate-btn")
+
+LET evt = WAITFOR EVENT "ferret:delegate" IN root OPTIONS { delegate: ".observable-delegate-item" }
+
+RETURN T::EQ({
+    type: evt.type,
+    scope: evt.detail.scope
+}, {
+    type: "ferret:delegate",
+    scope: "match"
+})

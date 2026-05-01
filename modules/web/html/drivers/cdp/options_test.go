@@ -68,4 +68,12 @@ func TestNewOptions(t *testing.T) {
 		So(len(opts.Cookies.Data), ShouldEqual, 2)
 		So(len(opts.Headers.Data), ShouldEqual, 2)
 	})
+
+	Convey("Should normalize loopback address to localhost", t, func() {
+		opts := cdp.NewOptions([]cdp.Option{
+			cdp.WithAddress("http://127.0.0.1:9222"),
+		})
+
+		So(opts.Address, ShouldEqual, "http://localhost:9222")
+	})
 }

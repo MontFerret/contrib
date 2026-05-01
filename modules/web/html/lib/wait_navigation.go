@@ -9,9 +9,9 @@ import (
 )
 
 type WaitNavigationParams struct {
-	Frame     drivers.HTMLDocument
-	TargetURL runtime.String
-	Timeout   runtime.Int
+	Frame     drivers.HTMLDocument `json:"frame"`
+	TargetURL runtime.String       `json:"target"`
+	Timeout   runtime.Int          `json:"timeout"`
 }
 
 // WaitNavigation waits for a given page to navigate to a new URL.
@@ -29,7 +29,7 @@ func WaitNavigation(ctx context.Context, args ...runtime.Value) (runtime.Value, 
 		return runtime.None, err
 	}
 
-	doc, err := drivers.ToPage(args[0])
+	target, err := drivers.ToPageNavigationTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
@@ -53,10 +53,10 @@ func WaitNavigation(ctx context.Context, args ...runtime.Value) (runtime.Value, 
 	defer fn()
 
 	if params.Frame == nil {
-		return runtime.True, doc.WaitForNavigation(ctx, params.TargetURL)
+		return runtime.True, target.WaitForNavigation(ctx, params.TargetURL)
 	}
 
-	return runtime.True, doc.WaitForFrameNavigation(ctx, params.Frame, params.TargetURL)
+	return runtime.True, target.WaitForFrameNavigation(ctx, params.Frame, params.TargetURL)
 }
 
 func parseWaitNavigationParams(arg runtime.Value) (WaitNavigationParams, error) {

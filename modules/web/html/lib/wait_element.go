@@ -32,7 +32,7 @@ func waitElementWhen(ctx context.Context, args []runtime.Value, when drivers.Wai
 		return runtime.None, err
 	}
 
-	el, err := drivers.ToElement(args[0])
+	target, err := toRootWaitTarget(args[0])
 
 	if err != nil {
 		return runtime.None, err
@@ -59,5 +59,5 @@ func waitElementWhen(ctx context.Context, args []runtime.Value, when drivers.Wai
 	ctx, fn := waitTimeout(ctx, timeout)
 	defer fn()
 
-	return runtime.True, el.WaitForElement(ctx, selector, when)
+	return runtime.True, target.WaitForElement(ctx, selector, when)
 }

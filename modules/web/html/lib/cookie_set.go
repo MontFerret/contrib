@@ -15,20 +15,23 @@ func CookieSet(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 		return runtime.None, err
 	}
 
-	page, err := drivers.ToPage(args[0])
+	target, err := drivers.ToPageCookieTarget(args[0])
 	if err != nil {
 		return runtime.None, err
 	}
 
 	cookies := drivers.NewHTTPCookies()
+
 	for _, c := range args[1:] {
-		cookie, err := parseCookie(ctx, c)
+		parsed, err := parseCookiesValue(ctx, c)
 		if err != nil {
 			return runtime.None, err
 		}
 
-		cookies.SetCookie(cookie)
+		for _, cookie := range parsed.Data {
+			cookies.SetCookie(cookie)
+		}
 	}
 
-	return runtime.None, page.SetCookies(ctx, cookies)
+	return runtime.None, target.SetCookies(ctx, cookies)
 }

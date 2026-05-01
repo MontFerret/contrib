@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ferret Lab Article Fixture | Example Daily</title>
+    <meta name="description" content="Stable article fixture for WEB::ARTICLE integration tests.">
+    <meta name="author" content="Avery Quinn">
+    <meta property="og:title" content="Ferret Lab Article Fixture">
+    <meta property="og:description" content="Stable article fixture for WEB::ARTICLE integration tests.">
+    <meta property="og:site_name" content="Example Daily">
+    <meta property="og:image" content="/assets/article-hero.jpg">
+    <meta property="article:published_time" content="2026-04-22T13:15:00Z">
+    <meta property="article:modified_time" content="2026-04-22T15:30:00Z">
+    <meta property="article:section" content="Testing">
+    <meta property="article:tag" content="ferret">
+    <meta property="article:tag" content="integration">
+    <link rel="canonical" href="/article.html">
+</head>
+<body>
+    <nav class="site-nav">
+        <a href="/overview.html">Overview</a>
+        <a href="/grid.html">Grid</a>
+    </nav>
+    <main>
+        <article class="story article-content" data-slot="feature">
+            <header>
+                <h1>Ferret Lab Article Fixture</h1>
+                <p class="byline">By Avery Quinn</p>
+                <time datetime="2026-04-22T13:15:00Z">April 22, 2026</time>
+            </header>
+            <p>Ferret Lab integration coverage should exercise article extraction through the same runtime path that users call from FQL queries.</p>
+            <p>The fixture keeps enough readable story prose to remain above the article threshold while still making cleanup remove navigation, sharing widgets, related links, and comments.</p>
+            <p>Article body links such as <a href="/story-link">the stable story link</a> should survive sanitization, and inline media such as <img src="/assets/article-inline.jpg" alt="Fixture hero"> should keep safe URL attributes.</p>
+            <p>Unsafe article markup includes <a href="javascript:alert(1)" onclick="alert(1)">unsafe javascript link</a> and <img src="data:text/html;base64,PGgxPkJhZDwvaDE+" onerror="alert(1)" alt="bad image"> so the returned HTML and Markdown stay safe.</p>
+            <aside class="share-tools">Share this story everywhere</aside>
+            <section class="related-posts">
+                <a href="/related.html">Related story that should not appear</a>
+            </section>
+            <section class="comments">Comment thread should not appear in extracted body.</section>
+        </article>
+    </main>
+</body>
+</html>
