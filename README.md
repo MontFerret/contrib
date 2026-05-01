@@ -28,3 +28,34 @@ make fmt [module ...]
 ```
 
 If no module names are provided, the commands run against all available modules.
+
+## Release Procedure
+
+Each module is released by creating and pushing a module-specific git tag in the format:
+
+`modules/<module>/v<version>`
+
+1. Validate the target module:
+
+```sh
+make test <module>
+make lint <module>
+```
+
+2. Create a tag using the `Makefile` release targets:
+
+```sh
+# Auto-bump from latest module tag
+make release-patch <module>
+make release-minor <module>
+make release-major <module>
+
+# Explicit semantic version (including pre-release)
+make release-pre 1.0.0-rc.1 <module>
+```
+
+3. Push the created tag:
+
+```sh
+git push origin modules/<module>/v<version>
+```
