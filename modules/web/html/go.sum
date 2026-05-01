@@ -1,10 +1,9 @@
 github.com/MontFerret/cssx v0.2.0 h1:De0C6Irbg+qgFPXgWmPpVnwD4RRYUBQSbIYFTUVCNWU=
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.11 h1:laBb0NcFVnOKKYYE4abwBIREXalGgKotjdPihH4/wUo=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.12 h1:blYdzvlvE6DnOHVDTYx0Il2ccll4Dp6HQGTHRePNLK0=
 github.com/PuerkitoBio/goquery v1.12.0 h1:pAcL4g3WRXekcB9AU/y1mbKez2dbY2AajVhtkO8RIBo=
 github.com/andybalholm/cascadia v1.3.3 h1:AG2YHrzJIm4BZ19iwJ/DAua6Btl3IwJX+VI4kktS1LM=
 github.com/antchfx/htmlquery v1.3.5 h1:aYthDDClnG2a2xePf6tys/UyyM/kRcsFRm+ifhFKoU0=
 github.com/antchfx/xpath v1.3.6 h1:s0y+ElRRtTQdfHP609qFu0+c6bglDv20pqOViQjjdPI=
-github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
 github.com/coder/websocket v1.8.12 h1:5bUXkEPPIbewrnkU8LTCLVaxi4N4J8ahufH2vlo4NAo=
 github.com/corpix/uarand v0.2.0 h1:U98xXwud/AVuCpkpgfPF7J5TQgr7R5tqT8VZP5KWbzE=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
@@ -26,7 +25,7 @@ github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd h1:TRLaZ9cD/w
 github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9Gz0M=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
-github.com/rs/zerolog v1.35.0 h1:VD0ykx7HMiMJytqINBsKcbLS+BJ4WYjz+05us+LRTdI=
+github.com/rs/zerolog v1.35.1 h1:m7xQeoiLIiV0BCEY4Hs+j2NG4Gp2o2KPKmhnnLiazKI=
 github.com/segmentio/asm v1.1.3 h1:WM03sfUOENvvKexOLp+pCqgb/WDjsi7EK8gIsICtzhc=
 github.com/segmentio/encoding v0.3.4 h1:WM4IBnxH8B9TakiM2QD5LyNl9JSndh88QbHqVC+Pauc=
 github.com/sethgrid/pester v1.2.0 h1:adC9RS29rRUef3rIKWPOuP1Jm3/MmB6ke+OhE5giENI=
@@ -37,7 +36,6 @@ github.com/stretchr/testify v1.7.1 h1:5TQK59W5E3v0r2duFAb7P95B6hEeOyEnHRa8MjYSMT
 github.com/vmihailenco/msgpack/v5 v5.4.1 h1:cQriyiUvjTwOHg8QZaPihLWeRAAVoCpE00IUPn0Bjt8=
 github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAhO7/IwNM9g=
 github.com/wI2L/jettison v0.7.4 h1:ptjriu75R/k5RAZO0DJzy2t55f7g+dPiBxBY38icaKg=
-golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 h1:vr/HnozRka3pE4EsMEg1lgkXJkTFJCVUX+S/ZT6wYzM=
 golang.org/x/net v0.52.0 h1:He/TN1l0e4mmR3QqHMT2Xab3Aj3L9qjbhRm78/6jrW0=
 golang.org/x/sync v0.20.0 h1:e0PTpb7pjO8GAtTs2dQ6jYa5BWYlMuX047Dco/pItO4=
 golang.org/x/sys v0.42.0 h1:omrd2nAlyT5ESRdCLYdm3+fMfNFE/+Rf4bDIQImRJeo=

@@ -2,23 +2,23 @@ package yaml
 
 import (
 	"github.com/MontFerret/contrib/modules/yaml/lib"
-	"github.com/MontFerret/ferret/v2"
+	"github.com/MontFerret/ferret/v2/pkg/module"
 )
 
-type module struct {
+type mod struct {
 }
 
 // New returns the YAML module, which registers the YAML namespace functions on
 // a Ferret host during bootstrap.
-func New() ferret.Module {
-	return &module{}
+func New() module.Module {
+	return &mod{}
 }
 
-func (m *module) Name() string {
+func (m *mod) Name() string {
 	return "yaml"
 }
 
-func (m *module) Register(bootstrap ferret.Bootstrap) error {
+func (m *mod) Register(bootstrap module.Bootstrap) error {
 	lib.RegisterLib(bootstrap.Host().Library().Namespace("YAML"))
 
 	return nil

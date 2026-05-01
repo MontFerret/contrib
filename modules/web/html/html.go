@@ -5,15 +5,15 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/lib"
-	"github.com/MontFerret/ferret/v2"
+	"github.com/MontFerret/ferret/v2/pkg/module"
 )
 
-type module struct {
+type mod struct {
 	drivers *drivers.Container
 	noLib   bool
 }
 
-func New(opts ...Option) (ferret.Module, error) {
+func New(opts ...Option) (module.Module, error) {
 	o, err := newOptions(opts)
 
 	if err != nil {
@@ -32,17 +32,17 @@ func New(opts ...Option) (ferret.Module, error) {
 		container.SetDefault(o.defaultDrv)
 	}
 
-	return &module{
+	return &mod{
 		drivers: container,
 		noLib:   o.noLib,
 	}, nil
 }
 
-func (m *module) Name() string {
+func (m *mod) Name() string {
 	return "html"
 }
 
-func (m *module) Register(registry ferret.Bootstrap) error {
+func (m *mod) Register(registry module.Bootstrap) error {
 	if !m.noLib {
 		lib.RegisterLib(registry.Host().Library())
 	}

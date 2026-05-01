@@ -45,11 +45,11 @@ type (
 	}
 
 	TestEventStream struct {
-		ready     chan struct{}
-		message   chan any
-		closeOnce sync.Once
-		closeErr  error
+		closeErr error
+		ready    chan struct{}
+		message  chan any
 		mock.Mock
+		closeOnce sync.Once
 	}
 
 	FrameNavigatedClient struct {

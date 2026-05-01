@@ -2,23 +2,23 @@ package toml
 
 import (
 	"github.com/MontFerret/contrib/modules/toml/lib"
-	"github.com/MontFerret/ferret/v2"
+	"github.com/MontFerret/ferret/v2/pkg/module"
 )
 
-type module struct {
+type mod struct {
 }
 
 // New returns the TOML module, which registers the TOML namespace functions on
 // a Ferret host during bootstrap.
-func New() ferret.Module {
-	return &module{}
+func New() module.Module {
+	return &mod{}
 }
 
-func (m *module) Name() string {
+func (m *mod) Name() string {
 	return "toml"
 }
 
-func (m *module) Register(bootstrap ferret.Bootstrap) error {
+func (m *mod) Register(bootstrap module.Bootstrap) error {
 	lib.RegisterLib(bootstrap.Host().Library().Namespace("TOML"))
 
 	return nil

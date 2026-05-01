@@ -2,23 +2,23 @@ package csv
 
 import (
 	"github.com/MontFerret/contrib/modules/csv/lib"
-	"github.com/MontFerret/ferret/v2"
+	"github.com/MontFerret/ferret/v2/pkg/module"
 )
 
-type module struct {
+type mod struct {
 }
 
 // New returns the CSV module, which registers the CSV namespace functions on a
 // Ferret host during bootstrap.
-func New() ferret.Module {
-	return &module{}
+func New() module.Module {
+	return &mod{}
 }
 
-func (m *module) Name() string {
+func (m *mod) Name() string {
 	return "csv"
 }
 
-func (m *module) Register(bootstrap ferret.Bootstrap) error {
+func (m *mod) Register(bootstrap module.Bootstrap) error {
 	lib.RegisterLib(bootstrap.Host().Library().Namespace("CSV"))
 
 	return nil
