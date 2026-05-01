@@ -2,6 +2,7 @@
 set -euo pipefail
 
 DIR_MODULES="./modules"
+TAG_MODULES="modules"
 
 usage() {
   echo "Usage: $0 <major|minor|patch|<semver>> <module>"
@@ -12,7 +13,7 @@ usage() {
 
 get_latest_tag() {
   local module="$1"
-  git tag --list "$DIR_MODULES/$module/v*" --sort=-version:refname | head -n 1
+  git tag --list "$TAG_MODULES/$module/v*" --sort=-version:refname | head -n 1
 }
 
 normalize_version() {
@@ -104,7 +105,7 @@ main() {
       ;;
   esac
 
-  new_tag="$DIR_MODULES/$module/v$new_version"
+  new_tag="$TAG_MODULES/$module/v$new_version"
 
   if git rev-parse -q --verify "refs/tags/$new_tag" >/dev/null; then
     echo "Tag already exists: $new_tag" >&2
