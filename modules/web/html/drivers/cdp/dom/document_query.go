@@ -61,5 +61,5 @@ func (doc *HTMLDocument) XPath(ctx context.Context, expression runtime.String) (
 }
 
 func (doc *HTMLDocument) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
-	return nil, runtime.Error(runtime.ErrNotImplemented, "HTMLDocument.Query")
+	return doc.element.Query(ctx, q)
 }

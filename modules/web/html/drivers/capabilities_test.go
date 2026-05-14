@@ -45,12 +45,15 @@ var (
 	_ drivers.PageResponseTarget   = (*cdp.HTMLPage)(nil)
 	_ drivers.PageSnapshotTarget   = (*cdp.HTMLPage)(nil)
 	_ drivers.PageNavigationTarget = (*cdp.HTMLPage)(nil)
+	_ runtime.Observable           = (*cdp.HTMLPage)(nil)
+	_ runtime.Queryable            = (*cdp.HTMLPage)(nil)
 
 	_ drivers.HTMLDocument           = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.NodeInspector          = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.QueryTarget            = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.DocumentMetadataTarget = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.DocumentViewportTarget = (*cdpdom.HTMLDocument)(nil)
+	_ runtime.Queryable              = (*cdpdom.HTMLDocument)(nil)
 
 	_ drivers.HTMLElement       = (*cdpdom.HTMLElement)(nil)
 	_ drivers.NodeInspector     = (*cdpdom.HTMLElement)(nil)
