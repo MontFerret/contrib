@@ -2,6 +2,7 @@ package network_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -30,9 +31,14 @@ type (
 
 	NetworkAPI struct {
 		cdp.Network
-		responseReceived    func(ctx context.Context) (network2.ResponseReceivedClient, error)
-		getCookies          func(ctx context.Context, args *network2.GetCookiesArgs) (*network2.GetCookiesReply, error)
-		setExtraHTTPHeaders func(ctx context.Context, args *network2.SetExtraHTTPHeadersArgs) error
+		requestWillBeSent      func(ctx context.Context) (network2.RequestWillBeSentClient, error)
+		responseReceived       func(ctx context.Context) (network2.ResponseReceivedClient, error)
+		loadingFinished        func(ctx context.Context) (network2.LoadingFinishedClient, error)
+		loadingFailed          func(ctx context.Context) (network2.LoadingFailedClient, error)
+		requestServedFromCache func(ctx context.Context) (network2.RequestServedFromCacheClient, error)
+		getResponseBody        func(ctx context.Context, args *network2.GetResponseBodyArgs) (*network2.GetResponseBodyReply, error)
+		getCookies             func(ctx context.Context, args *network2.GetCookiesArgs) (*network2.GetCookiesReply, error)
+		setExtraHTTPHeaders    func(ctx context.Context, args *network2.SetExtraHTTPHeadersArgs) error
 		mock.Mock
 	}
 
@@ -60,6 +66,22 @@ type (
 		*TestEventStream
 	}
 
+	RequestWillBeSentClient struct {
+		*TestEventStream
+	}
+
+	LoadingFinishedClient struct {
+		*TestEventStream
+	}
+
+	LoadingFailedClient struct {
+		*TestEventStream
+	}
+
+	RequestServedFromCacheClient struct {
+		*TestEventStream
+	}
+
 	RequestPausedClient struct {
 		*TestEventStream
 	}
@@ -70,7 +92,54 @@ func (api *PageAPI) FrameNavigated(ctx context.Context) (page.FrameNavigatedClie
 }
 
 func (api *NetworkAPI) ResponseReceived(ctx context.Context) (network2.ResponseReceivedClient, error) {
+	if api.responseReceived == nil {
+		return NewResponseReceivedClient(), nil
+	}
+
 	return api.responseReceived(ctx)
+}
+
+func (api *NetworkAPI) RequestWillBeSent(ctx context.Context) (network2.RequestWillBeSentClient, error) {
+	if api.requestWillBeSent == nil {
+		return NewRequestWillBeSentClient(), nil
+	}
+
+	return api.requestWillBeSent(ctx)
+}
+
+func (api *NetworkAPI) LoadingFinished(ctx context.Context) (network2.LoadingFinishedClient, error) {
+	if api.loadingFinished == nil {
+		return NewLoadingFinishedClient(), nil
+	}
+
+	return api.loadingFinished(ctx)
+}
+
+func (api *NetworkAPI) LoadingFailed(ctx context.Context) (network2.LoadingFailedClient, error) {
+	if api.loadingFailed == nil {
+		return NewLoadingFailedClient(), nil
+	}
+
+	return api.loadingFailed(ctx)
+}
+
+func (api *NetworkAPI) RequestServedFromCache(ctx context.Context) (network2.RequestServedFromCacheClient, error) {
+	if api.requestServedFromCache == nil {
+		return NewRequestServedFromCacheClient(), nil
+	}
+
+	return api.requestServedFromCache(ctx)
+}
+
+func (api *NetworkAPI) GetResponseBody(
+	ctx context.Context,
+	args *network2.GetResponseBodyArgs,
+) (*network2.GetResponseBodyReply, error) {
+	if api.getResponseBody == nil {
+		return nil, errors.New("response body is not available")
+	}
+
+	return api.getResponseBody(ctx, args)
 }
 
 func (api *NetworkAPI) GetCookies(ctx context.Context, args *network2.GetCookiesArgs) (*network2.GetCookiesReply, error) {
@@ -131,9 +200,11 @@ func (stream *TestEventStream) Message() (any, error) {
 
 func (stream *TestEventStream) Close() error {
 	stream.closeOnce.Do(func() {
-		args := stream.MethodCalled("Close")
-		if len(args) > 0 {
-			stream.closeErr = args.Error(0)
+		if len(stream.ExpectedCalls) > 0 {
+			args := stream.MethodCalled("Close")
+			if len(args) > 0 {
+				stream.closeErr = args.Error(0)
+			}
 		}
 
 		close(stream.message)
@@ -185,6 +256,90 @@ func (stream *ResponseReceivedClient) Recv() (*network2.ResponseReceivedReply, e
 
 	if !ok {
 		return nil, fmt.Errorf("invalid response received message type %T", msg)
+	}
+
+	return repl, nil
+}
+
+func NewRequestWillBeSentClient() *RequestWillBeSentClient {
+	return &RequestWillBeSentClient{
+		TestEventStream: NewTestEventStream(),
+	}
+}
+
+func (stream *RequestWillBeSentClient) Recv() (*network2.RequestWillBeSentReply, error) {
+	msg, err := stream.Message()
+	if err != nil {
+		return nil, err
+	}
+
+	repl, ok := msg.(*network2.RequestWillBeSentReply)
+
+	if !ok {
+		return nil, fmt.Errorf("invalid request will be sent message type %T", msg)
+	}
+
+	return repl, nil
+}
+
+func NewLoadingFinishedClient() *LoadingFinishedClient {
+	return &LoadingFinishedClient{
+		TestEventStream: NewTestEventStream(),
+	}
+}
+
+func (stream *LoadingFinishedClient) Recv() (*network2.LoadingFinishedReply, error) {
+	msg, err := stream.Message()
+	if err != nil {
+		return nil, err
+	}
+
+	repl, ok := msg.(*network2.LoadingFinishedReply)
+
+	if !ok {
+		return nil, fmt.Errorf("invalid loading finished message type %T", msg)
+	}
+
+	return repl, nil
+}
+
+func NewLoadingFailedClient() *LoadingFailedClient {
+	return &LoadingFailedClient{
+		TestEventStream: NewTestEventStream(),
+	}
+}
+
+func (stream *LoadingFailedClient) Recv() (*network2.LoadingFailedReply, error) {
+	msg, err := stream.Message()
+	if err != nil {
+		return nil, err
+	}
+
+	repl, ok := msg.(*network2.LoadingFailedReply)
+
+	if !ok {
+		return nil, fmt.Errorf("invalid loading failed message type %T", msg)
+	}
+
+	return repl, nil
+}
+
+func NewRequestServedFromCacheClient() *RequestServedFromCacheClient {
+	return &RequestServedFromCacheClient{
+		TestEventStream: NewTestEventStream(),
+	}
+}
+
+func (stream *RequestServedFromCacheClient) Recv() (*network2.RequestServedFromCacheReply, error) {
+	msg, err := stream.Message()
+	if err != nil {
+		return nil, err
+	}
+
+	repl, ok := msg.(*network2.RequestServedFromCacheReply)
+
+	if !ok {
+		return nil, fmt.Errorf("invalid request served from cache message type %T", msg)
 	}
 
 	return repl, nil

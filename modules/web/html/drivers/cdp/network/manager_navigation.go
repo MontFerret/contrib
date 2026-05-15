@@ -239,14 +239,22 @@ func (m *Manager) WaitForNavigation(ctx context.Context, opts WaitEventOptions) 
 	return ctx.Err()
 }
 
-func (m *Manager) OnNavigation(ctx context.Context) (runtime.Stream, error) {
+func (m *Manager) OnNavigation(_ context.Context) (runtime.Stream, error) {
 	return newNavigationEventStream(m.logger, m.sessions), nil
 }
 
-func (m *Manager) OnRequest(ctx context.Context) (runtime.Stream, error) {
+func (m *Manager) OnRequest(_ context.Context) (runtime.Stream, error) {
 	return newRequestEventStream(m.logger, m.sessions), nil
 }
 
-func (m *Manager) OnResponse(ctx context.Context) (runtime.Stream, error) {
+func (m *Manager) OnResponse(_ context.Context) (runtime.Stream, error) {
 	return newResponseEventStream(m.logger, m.sessions), nil
+}
+
+func (m *Manager) OnEvent(ctx context.Context, eventName runtime.String, options runtime.Map) (runtime.Stream, error) {
+	if m.observer == nil {
+		return nil, invalidNetworkEventNameError(eventName.String())
+	}
+
+	return m.observer.Subscribe(ctx, eventName.String(), options)
 }

@@ -37,6 +37,10 @@ func (p *HTMLPage) Subscribe(ctx context.Context, subscription runtime.Subscript
 	case drivers.ResponseEvent:
 		return p.network.OnResponse(ctx)
 	default:
+		if drivers.IsNetworkEvent(subscription.EventName.String()) {
+			return p.network.OnEvent(ctx, subscription.EventName, subscription.Options)
+		}
+
 		return nil, runtime.Errorf(runtime.ErrInvalidOperation, "unknown event name: %s", subscription.EventName)
 	}
 }
