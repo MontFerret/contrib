@@ -25,6 +25,7 @@ type (
 		sessions         *cdpsession.Manager
 		headers          *drivers.HTTPHeaders
 		interceptor      *Interceptor
+		observer         *networkObserver
 		stop             context.CancelFunc
 		response         *sync.Map
 		responseWatchers map[string]network.ResponseReceivedClient
@@ -50,19 +51,20 @@ func New(
 	m.stop = cancel
 	m.response = new(sync.Map)
 	m.responseWatchers = make(map[string]network.ResponseReceivedClient)
+	m.observer = newNetworkObserver(m.logger, client, sessions)
 
 	var err error
 
 	defer func() {
 		if err != nil {
-			m.stop()
+			_ = m.Close()
 		}
 	}()
 
 	if options.Filter != nil && len(options.Filter.Patterns) > 0 {
 		m.interceptor = NewInterceptor(logger, client)
 
-		if err := m.interceptor.AddFilter("resources", options.Filter); err != nil {
+		if err = m.interceptor.AddFilter("resources", options.Filter); err != nil {
 			return nil, err
 		}
 
@@ -90,6 +92,10 @@ func New(
 	}
 
 	if err = m.startResponseWatcher(ctx); err != nil {
+		return nil, err
+	}
+
+	if err = m.observer.Start(ctx); err != nil {
 		return nil, err
 	}
 

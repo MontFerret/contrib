@@ -24,6 +24,10 @@ func (m *Manager) Close() error {
 		m.sessions.RemoveListener(m.responseListener)
 	}
 
+	if m.observer != nil {
+		_ = m.observer.Close()
+	}
+
 	m.closeResponseWatchers()
 
 	return nil
@@ -155,10 +159,12 @@ func (m *Manager) closeResponseStream(client *cdpsession.Client) {
 
 func (m *Manager) closeResponseWatcher(key string) {
 	m.responseMu.Lock()
+
 	stream, exists := m.responseWatchers[key]
 	if exists {
 		delete(m.responseWatchers, key)
 	}
+
 	m.responseMu.Unlock()
 
 	if exists {
@@ -169,10 +175,12 @@ func (m *Manager) closeResponseWatcher(key string) {
 func (m *Manager) closeResponseWatchers() {
 	m.responseMu.Lock()
 	streams := make([]network.ResponseReceivedClient, 0, len(m.responseWatchers))
+
 	for key, stream := range m.responseWatchers {
 		streams = append(streams, stream)
 		delete(m.responseWatchers, key)
 	}
+
 	m.responseMu.Unlock()
 
 	for _, stream := range streams {
