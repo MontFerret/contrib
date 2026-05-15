@@ -1,0 +1,11 @@
+LET url = @lab.static.dynamic + "/#/events"
+LET page = DOCUMENT(url, { driver: "cdp" })
+LET input = ELEMENT(page, "#focus-input")
+
+DISPATCH "focus" IN input
+WAIT_CLASS(page, "#focus-content", "alert-success", 10000)
+
+DISPATCH "blur" IN input
+WAIT_NO_CLASS(page, "#focus-content", "alert-success", 10000)
+
+RETURN NONE

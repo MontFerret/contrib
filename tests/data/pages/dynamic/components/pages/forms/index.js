@@ -8,7 +8,16 @@ export default class FormsPage extends React.Component {
             textInput: "",
             select: "",
             multiSelect: "",
-            textarea: ""
+            textarea: "",
+            checkbox: "unchecked",
+            windowScroll: "0",
+            containerScroll: "0"
+        };
+
+        this.handleWindowScroll = () => {
+            this.setState({
+                windowScroll: String(Math.round(window.scrollY || window.pageYOffset || 0))
+            });
         };
 
         this.handleTextInput = (evt) => {
@@ -41,7 +50,27 @@ export default class FormsPage extends React.Component {
             this.setState({
                 textarea: evt.target.value
             });
-        }
+        };
+
+        this.handleCheckbox = (evt) => {
+            this.setState({
+                checkbox: evt.target.checked ? "checked" : "unchecked"
+            });
+        };
+
+        this.handleContainerScroll = (evt) => {
+            this.setState({
+                containerScroll: String(Math.round(evt.target.scrollTop))
+            });
+        };
+    }
+
+    componentDidMount() {
+        window.addEventListener("scroll", this.handleWindowScroll);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener("scroll", this.handleWindowScroll);
     }
 
     render() {
@@ -119,6 +148,53 @@ export default class FormsPage extends React.Component {
                     }, this.state.textarea
                 )
             ]),
+            e("div", { className: "form-group" }, [
+                e("label", null, [
+                    e("input", {
+                        id: "checkbox_input",
+                        type: "checkbox",
+                        onChange: this.handleCheckbox
+                    }),
+                    " Checkbox"
+                ]),
+                e("small", {
+                        id: "checkbox_output",
+                        className: "form-text text-muted"
+                    }, this.state.checkbox
+                )
+            ]),
+            e("div", { className: "form-group" }, [
+                e("small", {
+                    id: "scroll_output",
+                    className: "form-text text-muted"
+                }, this.state.windowScroll),
+                e("div", {
+                    id: "scroll_container",
+                    onScroll: this.handleContainerScroll,
+                    style: {
+                        height: "80px",
+                        overflowY: "auto",
+                        border: "1px solid #ddd"
+                    }
+                }, [
+                    e("div", {
+                        id: "scroll_container_inner",
+                        style: {
+                            height: "500px"
+                        }
+                    }, "Scrollable content")
+                ]),
+                e("small", {
+                    id: "scroll_container_output",
+                    className: "form-text text-muted"
+                }, this.state.containerScroll)
+            ]),
+            e("div", {
+                id: "scroll_spacer",
+                style: {
+                    height: "1800px"
+                }
+            })
         ])
     }
 }

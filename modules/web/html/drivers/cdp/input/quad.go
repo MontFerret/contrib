@@ -111,6 +111,64 @@ func getClickablePoint(ctx context.Context, client *cdp.Client, qargs *dom.GetCo
 	}, nil
 }
 
+func getElementPoint(ctx context.Context, client *cdp.Client, qargs *dom.GetContentQuadsArgs, xOffset, yOffset *float64) (Quad, error) {
+	contentQuadsReply, err := client.DOM.GetContentQuads(ctx, qargs)
+
+	if err != nil {
+		return Quad{}, err
+	}
+
+	if len(contentQuadsReply.Quads) == 0 {
+		return Quad{}, errors.New("node is either not visible or not an HTMLElement")
+	}
+
+	layoutMetricsReply, err := client.Page.GetLayoutMetrics(ctx)
+
+	if err != nil {
+		return Quad{}, err
+	}
+
+	clientWidth, clientHeight := utils.GetLayoutViewportWH(layoutMetricsReply)
+
+	for _, protocolQuad := range contentQuadsReply.Quads {
+		quad := intersectQuadWithViewport(fromProtocolQuad(protocolQuad), float64(clientWidth), float64(clientHeight))
+
+		if computeQuadArea(quad) <= 1 {
+			continue
+		}
+
+		var centerX, centerY float64
+		left := quad[0].X
+		top := quad[0].Y
+
+		for _, point := range quad {
+			centerX += point.X
+			centerY += point.Y
+			left = math.Min(left, point.X)
+			top = math.Min(top, point.Y)
+		}
+
+		x := centerX / 4
+		y := centerY / 4
+
+		if xOffset != nil {
+			x = left + *xOffset
+		}
+
+		if yOffset != nil {
+			y = top + *yOffset
+		}
+
+		return Quad{X: x, Y: y}, nil
+	}
+
+	return Quad{}, errors.New("node is either not visible or not an HTMLElement")
+}
+
 func GetClickablePointByObjectID(ctx context.Context, client *cdp.Client, objectID runtime.RemoteObjectID) (Quad, error) {
 	return getClickablePoint(ctx, client, dom.NewGetContentQuadsArgs().SetObjectID(objectID))
+}
+
+func GetElementPointByObjectID(ctx context.Context, client *cdp.Client, objectID runtime.RemoteObjectID, xOffset, yOffset *float64) (Quad, error) {
+	return getElementPoint(ctx, client, dom.NewGetContentQuadsArgs().SetObjectID(objectID), xOffset, yOffset)
 }

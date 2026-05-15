@@ -50,6 +50,13 @@ func (k *Keyboard) Down(ctx context.Context, char string) error {
 	)
 }
 
+func (k *Keyboard) Char(ctx context.Context, char string) error {
+	return k.client.Input.DispatchKeyEvent(
+		ctx,
+		k.createTextEvent("char", char),
+	)
+}
+
 func (k *Keyboard) Up(ctx context.Context, char string) error {
 	return k.client.Input.DispatchKeyEvent(
 		ctx,

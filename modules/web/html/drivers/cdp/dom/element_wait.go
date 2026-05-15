@@ -155,7 +155,3 @@ func (el *HTMLElement) Subscribe(ctx context.Context, subscription runtime.Subsc
 		subscription,
 	)
 }
-
-func (el *HTMLElement) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
-	return runtime.Error(runtime.ErrNotImplemented, "HTMLElement.Dispatch")
-}

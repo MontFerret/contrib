@@ -1,0 +1,17 @@
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET doc = DOCUMENT(url, { driver: "cdp" })
+
+WAIT_ELEMENT(doc, "form")
+
+DISPATCH "scroll" IN doc WITH { y: 300 }
+WAIT(100)
+T::NOT::EQ(INNER_TEXT(doc, "#scroll_output"), "0")
+
+LET container = ELEMENT(doc, "#scroll_container")
+DISPATCH "scroll" IN container WITH { by: { y: 120 } }
+WAIT(100)
+T::NOT::EQ(INNER_TEXT(doc, "#scroll_container_output"), "0")
+
+DISPATCH "scroll" IN container WITH { intoView: true }
+
+RETURN NONE

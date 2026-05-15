@@ -46,5 +46,5 @@ func (p *HTMLPage) Subscribe(ctx context.Context, subscription runtime.Subscript
 }
 
 func (p *HTMLPage) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
-	return runtime.Error(runtime.ErrNotImplemented, "HTMLPage.Dispatch")
+	return p.getCurrentDocument().Dispatch(ctx, event)
 }

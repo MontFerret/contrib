@@ -102,3 +102,21 @@ func (m *Manager) ScrollByXY(ctx context.Context, options drivers.ScrollOptions)
 
 	return nil
 }
+
+func (m *Manager) ScrollByDelta(ctx context.Context, options drivers.ScrollOptions) error {
+	m.logger.Trace().
+		Float64("x", float64(options.Left)).
+		Float64("y", float64(options.Top)).
+		Str("behavior", options.Behavior.String()).
+		Msg("scrolling by given coordinates")
+
+	if err := m.exec.Eval(ctx, templates.ScrollBy(options)); err != nil {
+		m.logger.Trace().Err(err).Msg("failed to scroll by coordinates")
+
+		return err
+	}
+
+	m.logger.Trace().Msg("scrolled by given coordinates")
+
+	return nil
+}

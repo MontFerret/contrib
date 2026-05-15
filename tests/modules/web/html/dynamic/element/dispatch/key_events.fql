@@ -1,0 +1,10 @@
+LET url = @lab.static.dynamic + "/#/events"
+LET page = DOCUMENT(url, { driver: "cdp" })
+LET input = ELEMENT(page, "#press-input")
+
+DISPATCH "keydown" IN input WITH { key: "Enter" }
+DISPATCH "keyup" IN input WITH { key: "Enter" }
+
+WAIT(100)
+
+RETURN T::EQ(INNER_TEXT(page, "#press-content"), "Enter")
