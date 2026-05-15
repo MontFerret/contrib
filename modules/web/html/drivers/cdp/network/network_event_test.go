@@ -301,6 +301,49 @@ func TestNetworkObserverPropagatesFromCacheState(t *testing.T) {
 	assertBoolField(t, payload, "fromCache", true)
 }
 
+func TestNetworkObserverSlowSubscriberDoesNotBlockDelivery(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	observer := newStartedTestNetworkObserver(ctx, nil)
+
+	blocked := observer.subscribe()
+	defer observer.unsubscribe(blocked.id)
+
+	receiver := observer.subscribe()
+	defer observer.unsubscribe(receiver.id)
+
+	for i := 0; i < cap(blocked.ch); i++ {
+		blocked.ch <- networkEvent{name: drivers.NetworkRequestStartedEvent}
+	}
+
+	event := networkEvent{
+		name:      drivers.NetworkRequestStartedEvent,
+		requestID: "request-1",
+	}
+
+	done := make(chan struct{})
+	go func() {
+		observer.emit(event)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("emit blocked on a full subscriber channel")
+	}
+
+	select {
+	case received := <-receiver.ch:
+		if received.requestID != event.requestID {
+			t.Fatalf("expected request ID %q, got %q", event.requestID, received.requestID)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("expected non-blocked subscriber to receive event")
+	}
+}
+
 func TestNetworkEventPayloadCapturesAndTruncatesBody(t *testing.T) {
 	client := &cdp.Client{Network: &networkEventTestAPI{
 		body: &cdpnetwork.GetResponseBodyReply{Body: "abcdef"},

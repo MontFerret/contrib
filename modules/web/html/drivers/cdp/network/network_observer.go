@@ -166,6 +166,12 @@ func (o *networkObserver) emit(event networkEvent) {
 			return
 		case <-subscriber.done:
 		case subscriber.ch <- event:
+		default:
+			o.logger.Trace().
+				Int64("subscriber_id", subscriber.id).
+				Str("event", event.name).
+				Err(event.err).
+				Msg("dropped network event for slow subscriber")
 		}
 	}
 }
