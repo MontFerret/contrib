@@ -1,0 +1,12 @@
+LET page = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver: "cdp" })
+
+LET first = WAITFOR VALUE (QUERY ONE ".track[data-index='0']" IN page USING css)
+    TIMEOUT 10s
+    EVERY 250ms
+    ON TIMEOUT RETURN NONE
+
+T::NOT::NONE(first)
+
+LET count = QUERY COUNT ".track" IN page USING css
+
+RETURN T::EQ(count, 20)

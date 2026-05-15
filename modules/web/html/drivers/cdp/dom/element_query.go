@@ -67,12 +67,12 @@ func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List
 			return runtime.NewArray(0), err
 		}
 
-		val, err := el.eval.EvalValue(ctx, fn)
+		val, err := el.eval.EvalList(ctx, fn)
 		if err != nil {
 			return runtime.NewArray(0), err
 		}
 
-		return runtime.ToList(ctx, val)
+		return val, nil
 	case query.XPath:
 		out, err := el.XPath(ctx, q.Payload)
 		if err != nil {
