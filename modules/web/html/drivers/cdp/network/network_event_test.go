@@ -80,6 +80,7 @@ func TestNetworkEventOptionParsing(t *testing.T) {
 			runtime.NewString("XHR"),
 			runtime.NewString("fetch"),
 			runtime.NewString("ajax"),
+			runtime.NewString("Prefetch"),
 		),
 	}))
 	if err != nil {
@@ -90,7 +91,7 @@ func TestNetworkEventOptionParsing(t *testing.T) {
 		t.Fatalf("unexpected idle timing options: %+v", idle)
 	}
 
-	if len(idle.types) != 2 {
+	if len(idle.types) != 3 {
 		t.Fatalf("expected deduplicated types, got %+v", idle.types)
 	}
 
@@ -100,6 +101,14 @@ func TestNetworkEventOptionParsing(t *testing.T) {
 
 	if _, exists := idle.types["fetch"]; !exists {
 		t.Fatal("expected fetch type")
+	}
+
+	if _, exists := idle.types["prefetch"]; !exists {
+		t.Fatal("expected prefetch type")
+	}
+
+	if len(idle.typeList) != 3 || idle.typeList[2] != "prefetch" {
+		t.Fatalf("expected prefetch in normalized type list, got %+v", idle.typeList)
 	}
 }
 

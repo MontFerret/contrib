@@ -20,6 +20,7 @@ var (
 		"xhr":                network.ResourceTypeXHR,
 		"ajax":               network.ResourceTypeXHR,
 		"fetch":              network.ResourceTypeFetch,
+		"prefetch":           network.ResourceTypePrefetch,
 		"eventsource":        network.ResourceTypeEventSource,
 		"websocket":          network.ResourceTypeWebSocket,
 		"manifest":           network.ResourceTypeManifest,
