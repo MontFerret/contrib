@@ -421,6 +421,35 @@ func TestManager(t *testing.T) {
 				responseReceivedClient.AssertExpectations(t)
 				requestPausedClient.AssertExpectations(t)
 			})
+
+			Convey("Should close response watcher when observer start fails", func() {
+				observerErr := errors.New("request stream failed")
+				responseReceivedClient := NewResponseReceivedClient()
+				responseReceivedClient.On("Close").Once().Return(nil)
+
+				networkAPI := new(NetworkAPI)
+				networkAPI.responseReceived = func(ctx context.Context) (network2.ResponseReceivedClient, error) {
+					return responseReceivedClient, nil
+				}
+				networkAPI.requestWillBeSent = func(ctx context.Context) (network2.RequestWillBeSentClient, error) {
+					return nil, observerErr
+				}
+
+				client := &cdp.Client{
+					Network: networkAPI,
+				}
+
+				mgr, err := network.New(
+					zerolog.New(os.Stdout).Level(zerolog.Disabled),
+					client,
+					nil,
+					network.Options{},
+				)
+
+				So(mgr, ShouldBeNil)
+				So(err, ShouldEqual, observerErr)
+				responseReceivedClient.AssertExpectations(t)
+			})
 		})
 
 		Convey("GetCookies", func() {

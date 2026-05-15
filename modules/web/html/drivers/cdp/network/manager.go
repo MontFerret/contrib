@@ -57,14 +57,14 @@ func New(
 
 	defer func() {
 		if err != nil {
-			m.stop()
+			_ = m.Close()
 		}
 	}()
 
 	if options.Filter != nil && len(options.Filter.Patterns) > 0 {
 		m.interceptor = NewInterceptor(logger, client)
 
-		if err := m.interceptor.AddFilter("resources", options.Filter); err != nil {
+		if err = m.interceptor.AddFilter("resources", options.Filter); err != nil {
 			return nil, err
 		}
 
