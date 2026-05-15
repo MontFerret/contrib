@@ -103,13 +103,7 @@ func (s *networkIdleStream) resetTimer(timer *time.Timer, inflight int) *time.Ti
 		return time.NewTimer(s.options.quiet)
 	}
 
-	if !timer.Stop() {
-		select {
-		case <-timer.C:
-		default:
-		}
-	}
-
+	stopIdleTimer(timer)
 	timer.Reset(s.options.quiet)
 
 	return timer
