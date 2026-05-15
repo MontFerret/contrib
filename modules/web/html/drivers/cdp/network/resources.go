@@ -24,6 +24,7 @@ var (
 		"eventsource":        network.ResourceTypeEventSource,
 		"websocket":          network.ResourceTypeWebSocket,
 		"manifest":           network.ResourceTypeManifest,
+		"signedexchange":     network.ResourceTypeSignedExchange,
 		"sxg":                network.ResourceTypeSignedExchange,
 		"ping":               network.ResourceTypePing,
 		"cspviolationreport": network.ResourceTypeCSPViolationReport,
@@ -71,7 +72,7 @@ func normalizeResourceType(rt network.ResourceType) string {
 	case network.ResourceTypeManifest:
 		return "manifest"
 	case network.ResourceTypeSignedExchange:
-		return "sxg"
+		return "signedexchange"
 	case network.ResourceTypePing:
 		return "ping"
 	case network.ResourceTypeCSPViolationReport:

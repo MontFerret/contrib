@@ -81,6 +81,8 @@ func TestNetworkEventOptionParsing(t *testing.T) {
 			runtime.NewString("fetch"),
 			runtime.NewString("ajax"),
 			runtime.NewString("Prefetch"),
+			runtime.NewString("SignedExchange"),
+			runtime.NewString("sxg"),
 		),
 	}))
 	if err != nil {
@@ -91,7 +93,7 @@ func TestNetworkEventOptionParsing(t *testing.T) {
 		t.Fatalf("unexpected idle timing options: %+v", idle)
 	}
 
-	if len(idle.types) != 3 {
+	if len(idle.types) != 4 {
 		t.Fatalf("expected deduplicated types, got %+v", idle.types)
 	}
 
@@ -107,8 +109,19 @@ func TestNetworkEventOptionParsing(t *testing.T) {
 		t.Fatal("expected prefetch type")
 	}
 
-	if len(idle.typeList) != 3 || idle.typeList[2] != "prefetch" {
-		t.Fatalf("expected prefetch in normalized type list, got %+v", idle.typeList)
+	if _, exists := idle.types["signedexchange"]; !exists {
+		t.Fatal("expected signedexchange type")
+	}
+
+	expectedTypeList := []string{"xhr", "fetch", "prefetch", "signedexchange"}
+	if len(idle.typeList) != len(expectedTypeList) {
+		t.Fatalf("expected normalized type list %+v, got %+v", expectedTypeList, idle.typeList)
+	}
+
+	for i, expected := range expectedTypeList {
+		if idle.typeList[i] != expected {
+			t.Fatalf("expected normalized type list %+v, got %+v", expectedTypeList, idle.typeList)
+		}
 	}
 }
 
@@ -221,6 +234,36 @@ func TestNetworkObserverEmitsResponseReceivedPayload(t *testing.T) {
 	assertStringField(t, payload, "type", "xhr")
 	assertIntField(t, payload, "status", 204)
 	assertStringField(t, payload, "statusText", "No Content")
+}
+
+func TestNetworkObserverEmitsSignedExchangeResourceType(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	client := &cdp.Client{Network: &networkEventTestAPI{}}
+	observer := newStartedTestNetworkObserver(ctx, client)
+
+	stream, err := observer.Subscribe(ctx, drivers.NetworkRequestStartedEvent, nil)
+	if err != nil {
+		t.Fatalf("unexpected subscribe error: %v", err)
+	}
+	defer stream.Close()
+
+	messages := stream.Read(ctx)
+	waitForNetworkSubscribers(t, observer, 1)
+
+	observer.handleRequestStarted(rootSessionKey, client, &cdpnetwork.RequestWillBeSentReply{
+		RequestID: "request-1",
+		Type:      cdpnetwork.ResourceTypeSignedExchange,
+		Request: cdpnetwork.Request{
+			URL:    "https://example.com/page.sxg",
+			Method: "GET",
+		},
+	})
+
+	payload := readNetworkObject(t, messages)
+	assertStringField(t, payload, "event", drivers.NetworkRequestStartedEvent)
+	assertStringField(t, payload, "type", "signedexchange")
 }
 
 func TestNetworkObserverEmitsRequestFailedPayload(t *testing.T) {

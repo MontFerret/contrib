@@ -34,8 +34,8 @@ func TestNormalizedResourceTypesAreAccepted(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			normalized := normalizeResourceType(tc.resourceType)
-			if normalized == "" {
-				t.Fatalf("expected normalized resource type for %s", tc.resourceType)
+			if normalized != tc.name {
+				t.Fatalf("expected normalized resource type %q, got %q", tc.name, normalized)
 			}
 
 			if got := toResourceType(normalized); got != tc.resourceType {
