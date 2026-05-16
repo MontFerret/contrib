@@ -23,17 +23,21 @@ func (m *Mouse) Click(ctx context.Context, x, y float64, delay time.Duration) er
 }
 
 func (m *Mouse) ClickWithCount(ctx context.Context, x, y float64, delay time.Duration, count int) error {
+	return m.ClickWithButton(ctx, x, y, delay, input.MouseButtonLeft, count)
+}
+
+func (m *Mouse) ClickWithButton(ctx context.Context, x, y float64, delay time.Duration, button input.MouseButton, count int) error {
 	if err := m.Move(ctx, x, y); err != nil {
 		return err
 	}
 
-	if err := m.DownWithCount(ctx, input.MouseButtonLeft, count); err != nil {
+	if err := m.DownWithCount(ctx, button, count); err != nil {
 		return err
 	}
 
 	time.Sleep(randomDuration(int(delay)))
 
-	return m.UpWithCount(ctx, input.MouseButtonLeft, count)
+	return m.UpWithCount(ctx, button, count)
 }
 
 func (m *Mouse) Down(ctx context.Context, button input.MouseButton) error {

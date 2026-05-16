@@ -1,0 +1,25 @@
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET doc = DOCUMENT(url, { driver: "cdp" })
+
+WAIT_ELEMENT(doc, "form")
+
+LET input = ELEMENT(doc, "#text_input")
+LET textOutput = ELEMENT(doc, "#text_output")
+DISPATCH "input" IN input WITH { value: "hello" }
+T::EQ(textOutput.innerText, "hello")
+
+LET select = ELEMENT(doc, "#select_input")
+LET selectOutput = ELEMENT(doc, "#select_output")
+DISPATCH "change" IN select WITH { value: "4" }
+T::EQ(selectOutput.innerText, "4")
+
+LET checkbox = ELEMENT(doc, "#checkbox_input")
+LET checkboxOutput = ELEMENT(doc, "#checkbox_output")
+DISPATCH "check" IN checkbox
+T::EQ(checkboxOutput.innerText, "checked")
+DISPATCH "uncheck" IN checkbox
+T::EQ(checkboxOutput.innerText, "unchecked")
+DISPATCH "toggle" IN checkbox
+T::EQ(checkboxOutput.innerText, "checked")
+
+RETURN NONE

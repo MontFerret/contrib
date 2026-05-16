@@ -46,6 +46,7 @@ var (
 	_ drivers.PageSnapshotTarget   = (*cdp.HTMLPage)(nil)
 	_ drivers.PageNavigationTarget = (*cdp.HTMLPage)(nil)
 	_ runtime.Observable           = (*cdp.HTMLPage)(nil)
+	_ runtime.Dispatchable         = (*cdp.HTMLPage)(nil)
 	_ runtime.Queryable            = (*cdp.HTMLPage)(nil)
 
 	_ drivers.HTMLDocument           = (*cdpdom.HTMLDocument)(nil)
@@ -53,6 +54,7 @@ var (
 	_ drivers.QueryTarget            = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.DocumentMetadataTarget = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.DocumentViewportTarget = (*cdpdom.HTMLDocument)(nil)
+	_ runtime.Dispatchable           = (*cdpdom.HTMLDocument)(nil)
 	_ runtime.Queryable              = (*cdpdom.HTMLDocument)(nil)
 
 	_ drivers.HTMLElement       = (*cdpdom.HTMLElement)(nil)
@@ -65,6 +67,7 @@ var (
 	_ drivers.RelationTarget    = (*cdpdom.HTMLElement)(nil)
 	_ drivers.InteractionTarget = (*cdpdom.HTMLElement)(nil)
 	_ drivers.WaitTarget        = (*cdpdom.HTMLElement)(nil)
+	_ runtime.Dispatchable      = (*cdpdom.HTMLElement)(nil)
 )
 
 func TestBackendCapabilityMatrix(t *testing.T) {

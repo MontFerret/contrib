@@ -109,7 +109,7 @@ func (stream *pageEventRequestServedFromCacheClient) Recv() (*cdpnetwork.Request
 	return nil, io.EOF
 }
 
-func TestHTMLPageSubscribeRoutesNetworkEvents(t *testing.T) {
+func TestHTMLPageSubscribeRoutesObservableEvents(t *testing.T) {
 	ctx := context.Background()
 	client := &cdp.Client{Network: &pageEventNetworkAPI{}}
 	manager, err := cdpnet.New(zerolog.Nop(), client, nil, cdpnet.Options{})
@@ -120,16 +120,7 @@ func TestHTMLPageSubscribeRoutesNetworkEvents(t *testing.T) {
 
 	page := NewHTMLPage(zerolog.Nop(), client, nil, manager, nil)
 
-	for _, eventName := range []string{
-		drivers.NetworkRequestStartedEvent,
-		drivers.NetworkResponseReceivedEvent,
-		drivers.NetworkRequestFinishedEvent,
-		drivers.NetworkRequestFailedEvent,
-		drivers.NetworkIdleEvent,
-		drivers.RequestEvent,
-		drivers.ResponseEvent,
-		drivers.NavigationEvent,
-	} {
+	for _, eventName := range drivers.SupportedObservableEvents() {
 		stream, err := page.Subscribe(ctx, runtime.Subscription{
 			EventName: runtime.NewString(eventName),
 		})
@@ -165,5 +156,10 @@ func TestHTMLPageSubscribeRejectsUnknownEventName(t *testing.T) {
 
 	if !strings.Contains(err.Error(), "unknown event name: network.unknown") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expectedEvents := strings.Join(drivers.SupportedObservableEvents(), ", ")
+	if !strings.Contains(err.Error(), "supported events: "+expectedEvents) {
+		t.Fatalf("expected supported event list in error, got %v", err)
 	}
 }

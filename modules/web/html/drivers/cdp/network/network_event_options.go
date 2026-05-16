@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	cdpnetwork "github.com/mafredri/cdp/protocol/network"
@@ -247,5 +248,10 @@ func optionTypeError(eventName, optionName, expected string) error {
 }
 
 func invalidNetworkEventNameError(eventName string) error {
-	return runtime.Errorf(runtime.ErrInvalidOperation, "unknown event name: %s", eventName)
+	return runtime.Errorf(
+		runtime.ErrInvalidOperation,
+		"unknown event name: %s; supported events: %s",
+		eventName,
+		strings.Join(drivers.SupportedNetworkEvents(), ", "),
+	)
 }

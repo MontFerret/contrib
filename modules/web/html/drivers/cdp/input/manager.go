@@ -17,6 +17,13 @@ type (
 		Delay time.Duration
 	}
 
+	MouseEventParams struct {
+		X      *float64
+		Y      *float64
+		Button string
+		Count  int
+	}
+
 	Manager struct {
 		logger   zerolog.Logger
 		client   *cdp.Client

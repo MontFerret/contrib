@@ -384,7 +384,28 @@ DISPATCH "click" IN target
 target <- "click"
 ```
 
-The built-in HTML `HTMLPage`, `HTMLDocument`, and `HTMLElement` values in this module currently use explicit interaction module functions such as `CLICK`, `INPUT`, `PRESS`, and `SELECT` for browser actions. Use dispatch syntax only for custom host values or future drivers that intentionally implement dispatching.
+With the CDP driver, `HTMLPage`, `HTMLDocument`, and `HTMLElement` values support browser-backed dispatch actions. `WITH { ... }` is the action payload, and dispatch `OPTIONS` are reserved.
+
+```fql
+DISPATCH "click" IN button
+DISPATCH "input" IN searchBox WITH { value: "macbook" }
+DISPATCH "keydown" IN input WITH { key: "Enter" }
+DISPATCH "type" IN input WITH { text: "macbook pro", delay: 50 }
+DISPATCH "scroll" IN doc WITH { y: 1200 }
+DISPATCH "scroll" IN container WITH { by: { y: 800 } }
+DISPATCH "scroll" IN item WITH { intoView: true }
+```
+
+Supported CDP dispatch event names are:
+
+| Category | Events |
+| --- | --- |
+| Mouse | `click`, `dblclick`, `mousedown`, `mouseup`, `mouseover`, `mouseout`, `mousemove` |
+| Keyboard | `keydown`, `keyup`, `keypress`, `press`, `type` |
+| Forms | `input`, `change`, `submit`, `reset`, `focus`, `blur`, `check`, `uncheck`, `toggle` |
+| Scroll | `scroll` |
+
+Mouse payloads may include `button`, `count`, `x`, and `y`. Keyboard `press` accepts `key` or `keys`; `type` accepts `text`, optional `delay`, and optional `clear`. Form `input` requires `value`; `change` may include `value`. Scroll accepts absolute coordinates via `x`/`y` or `to`, relative coordinates via `by`, or `intoView: true`.
 
 Navigation and scrolling module functions:
 

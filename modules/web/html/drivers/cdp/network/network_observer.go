@@ -101,27 +101,25 @@ func (o *networkObserver) Subscribe(
 	eventName string,
 	options runtime.Map,
 ) (runtime.Stream, error) {
-	switch eventName {
-	case drivers.NetworkRequestStartedEvent,
-		drivers.NetworkResponseReceivedEvent,
-		drivers.NetworkRequestFinishedEvent,
-		drivers.NetworkRequestFailedEvent:
-		eventOptions, err := parseNetworkEventOptions(ctx, eventName, options)
-		if err != nil {
-			return nil, err
-		}
+	if !drivers.IsNetworkEvent(eventName) {
+		return nil, invalidNetworkEventNameError(eventName)
+	}
 
-		return newNetworkEventStream(o, o.logger, eventName, eventOptions), nil
-	case drivers.NetworkIdleEvent:
+	if eventName == drivers.NetworkIdleEvent {
 		idleOptions, err := parseNetworkIdleOptions(ctx, eventName, options)
 		if err != nil {
 			return nil, err
 		}
 
 		return newNetworkIdleStream(o, idleOptions), nil
-	default:
-		return nil, invalidNetworkEventNameError(eventName)
 	}
+
+	eventOptions, err := parseNetworkEventOptions(ctx, eventName, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return newNetworkEventStream(o, o.logger, eventName, eventOptions), nil
 }
 
 func (o *networkObserver) subscribe() *networkEventSubscriber {

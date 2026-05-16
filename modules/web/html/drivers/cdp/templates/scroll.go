@@ -21,13 +21,21 @@ const (
 	);
 }`
 
-	scroll = `(opts) =>
+	scroll = `(opts) => {
 	window.scrollTo({
 		left: opts.left,
 		top: opts.top,
 		behavior: opts.behavior,
 		block: opts.block, 
 		inline: opts.inline
+	});
+}`
+
+	scrollBy = `(opts) => {
+	window.scrollBy({
+		left: opts.left,
+		top: opts.top,
+		behavior: opts.behavior
 	});
 }`
 
@@ -106,6 +114,10 @@ var (
 
 func Scroll(options drivers.ScrollOptions) *eval.Function {
 	return eval.F(scroll).WithArg(options)
+}
+
+func ScrollBy(options drivers.ScrollOptions) *eval.Function {
+	return eval.F(scrollBy).WithArg(options)
 }
 
 func ScrollTop(options drivers.ScrollOptions) *eval.Function {

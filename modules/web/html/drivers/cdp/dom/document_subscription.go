@@ -15,7 +15,3 @@ func (doc *HTMLDocument) Subscribe(ctx context.Context, subscription runtime.Sub
 		subscription,
 	)
 }
-
-func (doc *HTMLDocument) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {
-	return runtime.Error(runtime.ErrNotImplemented, "HTMLDocument.Dispatch")
-}

@@ -3,4 +3,4 @@ LET page = DOCUMENT(url, { driver: "cdp" })
 
 LET actual = XPATH(page, "//div[contains(@class, 'form-group')]")
 
-RETURN T::LEN(actual, 4)
+RETURN T::LEN(actual, 6)
