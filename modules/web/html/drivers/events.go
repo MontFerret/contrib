@@ -35,29 +35,55 @@ const (
 	DispatchScrollEvent      = "scroll"
 )
 
-var dispatchEvents = []string{
-	DispatchClickEvent,
-	DispatchDoubleClickEvent,
-	DispatchMouseDownEvent,
-	DispatchMouseUpEvent,
-	DispatchMouseOverEvent,
-	DispatchMouseOutEvent,
-	DispatchMouseMoveEvent,
-	DispatchKeyDownEvent,
-	DispatchKeyUpEvent,
-	DispatchKeyPressEvent,
-	DispatchPressEvent,
-	DispatchTypeEvent,
-	DispatchInputEvent,
-	DispatchChangeEvent,
-	DispatchSubmitEvent,
-	DispatchResetEvent,
-	DispatchFocusEvent,
-	DispatchBlurEvent,
-	DispatchCheckEvent,
-	DispatchUncheckEvent,
-	DispatchToggleEvent,
-	DispatchScrollEvent,
+var (
+	networkEvents = []string{
+		NetworkRequestStartedEvent,
+		NetworkResponseReceivedEvent,
+		NetworkRequestFinishedEvent,
+		NetworkRequestFailedEvent,
+		NetworkIdleEvent,
+	}
+
+	observableEvents = append([]string{
+		NavigationEvent,
+		RequestEvent,
+		ResponseEvent,
+	}, networkEvents...)
+
+	dispatchEvents = []string{
+		DispatchClickEvent,
+		DispatchDoubleClickEvent,
+		DispatchMouseDownEvent,
+		DispatchMouseUpEvent,
+		DispatchMouseOverEvent,
+		DispatchMouseOutEvent,
+		DispatchMouseMoveEvent,
+		DispatchKeyDownEvent,
+		DispatchKeyUpEvent,
+		DispatchKeyPressEvent,
+		DispatchPressEvent,
+		DispatchTypeEvent,
+		DispatchInputEvent,
+		DispatchChangeEvent,
+		DispatchSubmitEvent,
+		DispatchResetEvent,
+		DispatchFocusEvent,
+		DispatchBlurEvent,
+		DispatchCheckEvent,
+		DispatchUncheckEvent,
+		DispatchToggleEvent,
+		DispatchScrollEvent,
+	}
+)
+
+// SupportedNetworkEvents returns the ordered network event names supported by the driver.
+func SupportedNetworkEvents() []string {
+	return append([]string(nil), networkEvents...)
+}
+
+// SupportedObservableEvents returns the ordered observable event names supported by the driver.
+func SupportedObservableEvents() []string {
+	return append([]string(nil), observableEvents...)
 }
 
 // SupportedDispatchEvents returns the ordered dispatch event names supported by the driver.
@@ -66,20 +92,19 @@ func SupportedDispatchEvents() []string {
 }
 
 func IsNetworkEvent(name string) bool {
-	switch name {
-	case NetworkRequestStartedEvent,
-		NetworkResponseReceivedEvent,
-		NetworkRequestFinishedEvent,
-		NetworkRequestFailedEvent,
-		NetworkIdleEvent:
-		return true
-	default:
-		return false
-	}
+	return containsEvent(networkEvents, name)
+}
+
+func IsObservableEvent(name string) bool {
+	return containsEvent(observableEvents, name)
 }
 
 func IsDispatchEvent(name string) bool {
-	for _, event := range dispatchEvents {
+	return containsEvent(dispatchEvents, name)
+}
+
+func containsEvent(events []string, name string) bool {
+	for _, event := range events {
 		if event == name {
 			return true
 		}

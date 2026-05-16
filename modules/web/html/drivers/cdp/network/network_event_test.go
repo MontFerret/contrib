@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -122,6 +123,24 @@ func TestNetworkEventOptionParsing(t *testing.T) {
 		if idle.typeList[i] != expected {
 			t.Fatalf("expected normalized type list %+v, got %+v", expectedTypeList, idle.typeList)
 		}
+	}
+}
+
+func TestNetworkObserverSubscribeRejectsUnknownEventName(t *testing.T) {
+	observer := newNetworkObserver(zerolog.Nop(), nil, nil)
+
+	_, err := observer.Subscribe(context.Background(), "network.unknown", nil)
+	if err == nil {
+		t.Fatal("expected unknown event error")
+	}
+
+	if !strings.Contains(err.Error(), "unknown event name: network.unknown") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expectedEvents := strings.Join(drivers.SupportedNetworkEvents(), ", ")
+	if !strings.Contains(err.Error(), "supported events: "+expectedEvents) {
+		t.Fatalf("expected supported event list in error, got %v", err)
 	}
 }
 
