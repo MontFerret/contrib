@@ -382,5 +382,5 @@ func parseDispatchScrollCoordinateFields(
 }
 
 func supportedDispatchEventNames() string {
-	return strings.Join(supportedDispatchEvents, ", ")
+	return strings.Join(drivers.SupportedDispatchEvents(), ", ")
 }

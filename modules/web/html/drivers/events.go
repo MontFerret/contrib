@@ -35,6 +35,36 @@ const (
 	DispatchScrollEvent      = "scroll"
 )
 
+var dispatchEvents = []string{
+	DispatchClickEvent,
+	DispatchDoubleClickEvent,
+	DispatchMouseDownEvent,
+	DispatchMouseUpEvent,
+	DispatchMouseOverEvent,
+	DispatchMouseOutEvent,
+	DispatchMouseMoveEvent,
+	DispatchKeyDownEvent,
+	DispatchKeyUpEvent,
+	DispatchKeyPressEvent,
+	DispatchPressEvent,
+	DispatchTypeEvent,
+	DispatchInputEvent,
+	DispatchChangeEvent,
+	DispatchSubmitEvent,
+	DispatchResetEvent,
+	DispatchFocusEvent,
+	DispatchBlurEvent,
+	DispatchCheckEvent,
+	DispatchUncheckEvent,
+	DispatchToggleEvent,
+	DispatchScrollEvent,
+}
+
+// SupportedDispatchEvents returns the ordered dispatch event names supported by the driver.
+func SupportedDispatchEvents() []string {
+	return append([]string(nil), dispatchEvents...)
+}
+
 func IsNetworkEvent(name string) bool {
 	switch name {
 	case NetworkRequestStartedEvent,
@@ -49,31 +79,11 @@ func IsNetworkEvent(name string) bool {
 }
 
 func IsDispatchEvent(name string) bool {
-	switch name {
-	case DispatchClickEvent,
-		DispatchDoubleClickEvent,
-		DispatchMouseDownEvent,
-		DispatchMouseUpEvent,
-		DispatchMouseOverEvent,
-		DispatchMouseOutEvent,
-		DispatchMouseMoveEvent,
-		DispatchKeyDownEvent,
-		DispatchKeyUpEvent,
-		DispatchKeyPressEvent,
-		DispatchPressEvent,
-		DispatchTypeEvent,
-		DispatchInputEvent,
-		DispatchChangeEvent,
-		DispatchSubmitEvent,
-		DispatchResetEvent,
-		DispatchFocusEvent,
-		DispatchBlurEvent,
-		DispatchCheckEvent,
-		DispatchUncheckEvent,
-		DispatchToggleEvent,
-		DispatchScrollEvent:
-		return true
-	default:
-		return false
+	for _, event := range dispatchEvents {
+		if event == name {
+			return true
+		}
 	}
+
+	return false
 }

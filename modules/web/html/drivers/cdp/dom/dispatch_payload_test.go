@@ -34,7 +34,9 @@ func TestValidateDispatchEventRejectsUnknownEvent(t *testing.T) {
 		t.Fatalf("expected invalid operation, got %v", err)
 	}
 
-	if !strings.Contains(err.Error(), "click, dblclick") {
+	expectedEvents := strings.Join(drivers.SupportedDispatchEvents(), ", ")
+
+	if !strings.Contains(err.Error(), "supported events: "+expectedEvents) {
 		t.Fatalf("expected supported event list in error, got %v", err)
 	}
 }

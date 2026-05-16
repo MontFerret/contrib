@@ -1,44 +1,62 @@
 package drivers
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
+
+func TestSupportedDispatchEvents(t *testing.T) {
+	t.Parallel()
+
+	expected := []string{
+		DispatchClickEvent,
+		DispatchDoubleClickEvent,
+		DispatchMouseDownEvent,
+		DispatchMouseUpEvent,
+		DispatchMouseOverEvent,
+		DispatchMouseOutEvent,
+		DispatchMouseMoveEvent,
+		DispatchKeyDownEvent,
+		DispatchKeyUpEvent,
+		DispatchKeyPressEvent,
+		DispatchPressEvent,
+		DispatchTypeEvent,
+		DispatchInputEvent,
+		DispatchChangeEvent,
+		DispatchSubmitEvent,
+		DispatchResetEvent,
+		DispatchFocusEvent,
+		DispatchBlurEvent,
+		DispatchCheckEvent,
+		DispatchUncheckEvent,
+		DispatchToggleEvent,
+		DispatchScrollEvent,
+	}
+
+	if got := SupportedDispatchEvents(); !reflect.DeepEqual(got, expected) {
+		t.Fatalf("SupportedDispatchEvents() = %#v, want %#v", got, expected)
+	}
+
+	events := SupportedDispatchEvents()
+	events[0] = "changed"
+
+	if got := SupportedDispatchEvents()[0]; got != DispatchClickEvent {
+		t.Fatalf("SupportedDispatchEvents() returned mutable state, first event = %q", got)
+	}
+}
 
 func TestIsDispatchEvent(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name string
-		want bool
-	}{
-		{DispatchClickEvent, true},
-		{DispatchDoubleClickEvent, true},
-		{DispatchMouseDownEvent, true},
-		{DispatchMouseUpEvent, true},
-		{DispatchMouseOverEvent, true},
-		{DispatchMouseOutEvent, true},
-		{DispatchMouseMoveEvent, true},
-		{DispatchKeyDownEvent, true},
-		{DispatchKeyUpEvent, true},
-		{DispatchKeyPressEvent, true},
-		{DispatchPressEvent, true},
-		{DispatchTypeEvent, true},
-		{DispatchInputEvent, true},
-		{DispatchChangeEvent, true},
-		{DispatchSubmitEvent, true},
-		{DispatchResetEvent, true},
-		{DispatchFocusEvent, true},
-		{DispatchBlurEvent, true},
-		{DispatchCheckEvent, true},
-		{DispatchUncheckEvent, true},
-		{DispatchToggleEvent, true},
-		{DispatchScrollEvent, true},
-		{"Click", false},
-		{"network.request_started", false},
-		{"", false},
+	for _, event := range SupportedDispatchEvents() {
+		if !IsDispatchEvent(event) {
+			t.Fatalf("IsDispatchEvent(%q) = false, want true", event)
+		}
 	}
 
-	for _, tt := range tests {
-		if got := IsDispatchEvent(tt.name); got != tt.want {
-			t.Fatalf("IsDispatchEvent(%q) = %t, want %t", tt.name, got, tt.want)
+	for _, event := range []string{"Click", NetworkRequestStartedEvent, ""} {
+		if IsDispatchEvent(event) {
+			t.Fatalf("IsDispatchEvent(%q) = true, want false", event)
 		}
 	}
 }

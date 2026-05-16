@@ -10,31 +10,6 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-var supportedDispatchEvents = []string{
-	drivers.DispatchClickEvent,
-	drivers.DispatchDoubleClickEvent,
-	drivers.DispatchMouseDownEvent,
-	drivers.DispatchMouseUpEvent,
-	drivers.DispatchMouseOverEvent,
-	drivers.DispatchMouseOutEvent,
-	drivers.DispatchMouseMoveEvent,
-	drivers.DispatchKeyDownEvent,
-	drivers.DispatchKeyUpEvent,
-	drivers.DispatchKeyPressEvent,
-	drivers.DispatchPressEvent,
-	drivers.DispatchTypeEvent,
-	drivers.DispatchInputEvent,
-	drivers.DispatchChangeEvent,
-	drivers.DispatchSubmitEvent,
-	drivers.DispatchResetEvent,
-	drivers.DispatchFocusEvent,
-	drivers.DispatchBlurEvent,
-	drivers.DispatchCheckEvent,
-	drivers.DispatchUncheckEvent,
-	drivers.DispatchToggleEvent,
-	drivers.DispatchScrollEvent,
-}
-
 func validateDispatchEvent(event runtime.DispatchEvent) error {
 	if event.Options != nil && event.Options != runtime.None {
 		return runtime.Error(runtime.ErrInvalidOperation, "dispatch options are not supported")
