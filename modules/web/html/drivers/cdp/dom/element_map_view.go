@@ -6,15 +6,17 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-type elementMapSetFunc func(ctx context.Context, key, value runtime.Value) (runtime.Value, bool, error)
+type (
+	elementMapView struct {
+		snapshot runtime.Map
+		set      elementMapSetFunc
+		remove   elementMapRemoveFunc
+	}
 
-type elementMapRemoveFunc func(ctx context.Context, key runtime.Value) error
+	elementMapRemoveFunc func(ctx context.Context, key runtime.Value) error
 
-type elementMapView struct {
-	snapshot runtime.Map
-	set      elementMapSetFunc
-	remove   elementMapRemoveFunc
-}
+	elementMapSetFunc func(ctx context.Context, key, value runtime.Value) (runtime.Value, bool, error)
+)
 
 func newElementMapView(snapshot runtime.Map, set elementMapSetFunc, remove elementMapRemoveFunc) *elementMapView {
 	if snapshot == nil {
