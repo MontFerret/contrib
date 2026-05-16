@@ -61,6 +61,8 @@ function setControlValue(el, value) {
 		const values = valuesOf(value);
 		const options = Array.from(el.options);
 
+		el.value = undefined;
+
 		for (const option of options) {
 			option.selected = values.includes(option.value);
 
@@ -123,6 +125,7 @@ const dispatchCheck = `(el, action) => {
 
 	const next = action === "toggle" ? !el.checked : action === "check";
 	setNativeChecked(el, next);
+	dispatchBubbling(el, "click", true);
 	dispatchBubbling(el, "input");
 	dispatchBubbling(el, "change");
 }`
