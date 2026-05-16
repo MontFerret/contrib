@@ -74,7 +74,58 @@ func (el *HTMLElement) Iterate(_ context.Context) (runtime.Iterator, error) {
 }
 
 func (el *HTMLElement) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
+	if key == nil || key == runtime.None {
+		return runtime.None, nil
+	}
+
+	switch key.String() {
+	case "text":
+		return el.eval.EvalValue(ctx, templates.GetTextContent(el.id))
+	case "html":
+		return el.GetInnerHTML(ctx)
+	case "checked", "disabled", "selected":
+		return el.eval.EvalValue(ctx, templates.GetDOMProperty(el.id, runtime.ToString(key)))
+	case "attributes":
+		return newAttributeView(ctx, el)
+	case "style":
+		return newStyleView(ctx, el)
+	case "classes":
+		return newClassListView(ctx, el)
+	case "dataset":
+		return newDatasetView(ctx, el)
+	}
+
 	return data.GetInElement(ctx, key, el)
+}
+
+func (el *HTMLElement) Set(ctx context.Context, key, value runtime.Value) error {
+	if key == nil || key == runtime.None {
+		return runtime.Error(runtime.ErrInvalidArgument, "element property name is empty")
+	}
+
+	if value == nil {
+		value = runtime.None
+	}
+
+	name := runtime.ToString(key)
+
+	switch name {
+	case "text":
+		return el.eval.Eval(ctx, templates.SetTextContent(el.id, runtime.ToString(value)))
+	case "html":
+		return el.SetInnerHTML(ctx, runtime.ToString(value))
+	case "value":
+		return el.SetValue(ctx, runtime.ToString(value))
+	case "checked", "disabled", "selected":
+		enabled, err := runtime.CastBoolean(value)
+		if err != nil {
+			return err
+		}
+
+		return el.eval.Eval(ctx, templates.SetDOMProperty(el.id, name, enabled))
+	default:
+		return runtime.Errorf(runtime.ErrInvalidArgument, "element property %q is not writable", name)
+	}
 }
 
 func (el *HTMLElement) GetValue(ctx context.Context) (runtime.Value, error) {

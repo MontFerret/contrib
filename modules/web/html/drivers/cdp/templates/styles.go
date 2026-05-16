@@ -29,6 +29,10 @@ func GetStyles(id cdpruntime.RemoteObjectID) *eval.Function {
 const getStyle = `(el, name) => {
 	const styles = window.getComputedStyle(el);
 
+	if (name.includes("-")) {
+		return styles.getPropertyValue(name);
+	}
+
 	return styles[name];
 }`
 
@@ -37,7 +41,11 @@ func GetStyle(id cdpruntime.RemoteObjectID, name runtime.String) *eval.Function 
 }
 
 const setStyle = `(el, name, value) => {
-	el.style[name] = value;
+	if (name.includes("-")) {
+		el.style.setProperty(name, value);
+	} else {
+		el.style[name] = value;
+	}
 }`
 
 func SetStyle(id cdpruntime.RemoteObjectID, name, value runtime.String) *eval.Function {
@@ -46,7 +54,12 @@ func SetStyle(id cdpruntime.RemoteObjectID, name, value runtime.String) *eval.Fu
 
 const setStyles = `(el, values) => {
 	Object.keys(values).forEach((key) => {
-		el.style[key] = values[key]
+		const value = values[key];
+		if (key.includes("-")) {
+			el.style.setProperty(key, value);
+		} else {
+			el.style[key] = value;
+		}
 	});
 }`
 
@@ -56,7 +69,13 @@ func SetStyles(id cdpruntime.RemoteObjectID, values runtime.Map) *eval.Function 
 
 const removeStyles = `(el, names) => {
 	const style = el.style;
-	names.forEach((name) => { style[name] = "" })
+	names.forEach((name) => {
+		if (name.includes("-")) {
+			style.removeProperty(name);
+		} else {
+			style[name] = "";
+		}
+	})
 }`
 
 func RemoveStyles(id cdpruntime.RemoteObjectID, names []runtime.String) *eval.Function {

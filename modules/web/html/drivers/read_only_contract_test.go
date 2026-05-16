@@ -12,20 +12,21 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-func TestHTMLValuesDoNotImplementKeyWritable(t *testing.T) {
+func TestOnlyCDPElementImplementsKeyWritable(t *testing.T) {
 	t.Parallel()
 
 	keyWritable := reflect.TypeOf((*runtime.KeyWritable)(nil)).Elem()
 	cases := []struct {
-		typ  reflect.Type
-		name string
+		typ      reflect.Type
+		name     string
+		writable bool
 	}{
 		{name: "memory page", typ: reflect.TypeOf((*memory.HTMLPage)(nil))},
 		{name: "memory document", typ: reflect.TypeOf((*memory.HTMLDocument)(nil))},
 		{name: "memory element", typ: reflect.TypeOf((*memory.HTMLElement)(nil))},
 		{name: "cdp page", typ: reflect.TypeOf((*cdp.HTMLPage)(nil))},
 		{name: "cdp document", typ: reflect.TypeOf((*cdpdom.HTMLDocument)(nil))},
-		{name: "cdp element", typ: reflect.TypeOf((*cdpdom.HTMLElement)(nil))},
+		{name: "cdp element", typ: reflect.TypeOf((*cdpdom.HTMLElement)(nil)), writable: true},
 	}
 
 	for _, tc := range cases {
@@ -33,8 +34,8 @@ func TestHTMLValuesDoNotImplementKeyWritable(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if tc.typ.Implements(keyWritable) {
-				t.Fatalf("%s unexpectedly implements runtime.KeyWritable", tc.name)
+			if got := tc.typ.Implements(keyWritable); got != tc.writable {
+				t.Fatalf("%s KeyWritable support mismatch: got %t, want %t", tc.name, got, tc.writable)
 			}
 		})
 	}

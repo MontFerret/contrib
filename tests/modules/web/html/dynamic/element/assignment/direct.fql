@@ -1,0 +1,34 @@
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET doc = DOCUMENT(url, { driver: "cdp" })
+
+WAIT_ELEMENT(doc, "form")
+
+LET output = ELEMENT(doc, "#text_output")
+output.text = "Continue"
+T::EQ(output.text, "Continue")
+
+output.html = "<strong>Go</strong>"
+T::EQ(output.html, "<strong>Go</strong>")
+
+LET input = ELEMENT(doc, "#text_input")
+input.value = "hello@example.com"
+T::EQ(input.value, "hello@example.com")
+
+input.disabled = TRUE
+T::TRUE(input.disabled)
+
+input.disabled = FALSE
+T::FALSE(input.disabled)
+
+LET checkbox = ELEMENT(doc, "#checkbox_input")
+checkbox.checked = TRUE
+T::TRUE(checkbox.checked)
+
+checkbox.checked = FALSE
+T::FALSE(checkbox.checked)
+
+LET option = ELEMENT(doc, "#select_input option:nth-child(4)")
+option.selected = TRUE
+T::TRUE(option.selected)
+
+RETURN NONE

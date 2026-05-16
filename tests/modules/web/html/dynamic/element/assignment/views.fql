@@ -1,0 +1,50 @@
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET doc = DOCUMENT(url, { driver: "cdp" })
+
+WAIT_ELEMENT(doc, "form")
+
+LET el = ELEMENT(doc, "#text_input")
+LET prevAttrs = el.attributes
+
+el.attributes["aria-label"] = "Email"
+T::NONE(prevAttrs["aria-label"])
+T::EQ(el.attributes["aria-label"], "Email")
+
+LET attrs = el.attributes
+attrs.placeholder = "Email"
+T::EQ(attrs.placeholder, "Email")
+T::EQ(el.attributes.placeholder, "Email")
+
+attrs.placeholder = NONE
+T::NONE(attrs.placeholder)
+T::NONE(el.attributes.placeholder)
+
+LET style = el.style
+style.display = "none"
+T::EQ(style.display, "none")
+T::EQ(el.style.display, "none")
+
+style.display = NONE
+T::NONE(style.display)
+
+LET classes = el.classes
+classes.active = TRUE
+T::TRUE(classes.active)
+T::TRUE(el.classes.active)
+
+classes.active = FALSE
+T::NONE(classes.active)
+T::NONE(el.classes.active)
+
+LET dataset = el.dataset
+dataset.productId = "123"
+T::EQ(dataset.productId, "123")
+T::EQ(el.dataset.productId, "123")
+T::EQ(el.attributes["data-product-id"], "123")
+
+dataset.productId = NONE
+T::NONE(dataset.productId)
+T::NONE(el.dataset.productId)
+T::NONE(el.attributes["data-product-id"])
+
+RETURN NONE
