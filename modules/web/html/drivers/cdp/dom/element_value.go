@@ -127,6 +127,13 @@ func (el *HTMLElement) Set(ctx context.Context, key, value runtime.Value) error 
 		}
 
 		return el.eval.Eval(ctx, templates.SetDOMProperty(el.id, name, enabled))
+	case "attributes":
+		attrs, err := runtime.CastMap(value)
+		if err != nil {
+			return err
+		}
+
+		return el.attributes.SetAttributes(ctx, attrs)
 	case "style":
 		styles, err := runtime.CastMap(value)
 		if err != nil {

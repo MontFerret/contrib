@@ -41,6 +41,63 @@ func TestOnlyCDPElementImplementsKeyWritable(t *testing.T) {
 	}
 }
 
+func TestDocumentAndPageDotAccessDoNotExposeElementOnlyViews(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	page := newMemoryPage(t, `<html><body><article id="hero" class="card" style="display:block" data-role="hero">Text</article></body></html>`)
+	doc := page.GetMainFrame()
+
+	for _, tc := range []struct {
+		target runtime.KeyReadable
+		key    string
+		name   string
+	}{
+		{name: "document attributes", target: doc, key: "attributes"},
+		{name: "document style", target: doc, key: "style"},
+		{name: "document value", target: doc, key: "value"},
+		{name: "page attributes", target: page, key: "attributes"},
+		{name: "page style", target: page, key: "style"},
+		{name: "page value", target: page, key: "value"},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			value, err := tc.target.Get(ctx, runtime.NewString(tc.key))
+			if err != nil {
+				t.Fatalf("read %s: %v", tc.key, err)
+			}
+
+			if value != runtime.None {
+				t.Fatalf("expected %s to stay element-only, got %T %v", tc.key, value, value)
+			}
+		})
+	}
+
+	for _, tc := range []struct {
+		target runtime.KeyReadable
+		name   string
+	}{
+		{name: "document", target: doc},
+		{name: "page", target: page},
+	} {
+		tc := tc
+		t.Run(tc.name+" inner content", func(t *testing.T) {
+			t.Parallel()
+
+			value, err := tc.target.Get(ctx, runtime.NewString("innerText"))
+			if err != nil {
+				t.Fatalf("read innerText: %v", err)
+			}
+
+			if runtime.CompareValues(value, runtime.NewString("Text")) != 0 {
+				t.Fatalf("expected innerText to remain readable, got %v", value)
+			}
+		})
+	}
+}
+
 func TestExplicitElementMutationCapabilitiesRemain(t *testing.T) {
 	t.Parallel()
 

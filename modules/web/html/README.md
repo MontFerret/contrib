@@ -307,7 +307,7 @@ Common readable properties include:
 | --- | --- |
 | `HTMLPage` | `response`, `mainFrame`, `document`, `frames`, `url`, `URL`, `cookies`, `title`, `isClosed`, plus document properties through the main frame. |
 | `HTMLDocument` | `url`, `URL`, `name`, `title`, `parent`, `body`, `head`, `innerHTML`, `innerText`, plus node properties. |
-| `HTMLElement` | `innerText`, `innerHTML`, `textContent` (CDP), `value`, `checked` (CDP), `disabled` (CDP), `selected` (CDP), `attributes`, `style`, `classes` (CDP), `dataset` (CDP), `previousElementSibling`, `nextElementSibling`, `parentElement`, plus node properties. |
+| `HTMLElement` | `innerText`, `innerHTML`, `textContent`, `value`, `checked` (CDP), `disabled` (CDP), `selected` (CDP), `attributes`, `style`, `classes` (CDP), `dataset` (CDP), `previousElementSibling`, `nextElementSibling`, `parentElement`, plus node properties. |
 | HTML node values | integer child indexes, `nodeType`, `nodeName`, `children`, `length`. |
 
 Use the mutation module functions for driver-portable writes:
@@ -324,7 +324,7 @@ STYLE_SET(preview, "display", "block")
 RETURN preview.innerHTML
 ```
 
-CDP-backed elements can also be mutated with normal assignment. Nested assignment writes through snapshot views returned by `attributes`, `style`, `classes`, and `dataset`; a captured view keeps its read snapshot while writes through that view update the browser:
+CDP-backed elements can also be mutated with normal assignment. Top-level assignment supports content/value properties plus `attributes`, `style`, `classes`, and `dataset`; nested assignment writes through snapshot views returned by those collection properties. A captured view keeps its read snapshot while writes through that view update the browser:
 
 ```fql
 LET page = DOCUMENT($url, { driver: "cdp" })
@@ -333,12 +333,13 @@ LET button = ELEMENT(page, "button[type=submit]")
 button.textContent = "Continue"
 button.innerHTML = "<strong>Continue</strong>"
 button.disabled = FALSE
-button.attributes["aria-label"] = "Continue"
+button.attributes = { "aria-label": "Continue" }
+button.attributes["data-state"] = "ready"
 button.style.display = "block"
 button.classes.active = TRUE
 button.dataset.productId = "123"
 
-button.attributes["aria-label"] = NONE
+button.attributes["data-state"] = NONE
 button.style.display = NONE
 button.classes.active = FALSE
 button.dataset.productId = NONE

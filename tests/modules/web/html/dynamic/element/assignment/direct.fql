@@ -17,6 +17,20 @@ LET input = ELEMENT(doc, "#text_input")
 input.value = "hello@example.com"
 T::EQ(input.value, "hello@example.com")
 
+input.attributes = { placeholder: "Email" }
+T::EQ(input.attributes.placeholder, "Email")
+
+input.style = { display: "none" }
+T::EQ(input.style.display, "none")
+
+input.classes = ["assigned", "active"]
+T::TRUE(input.classes.assigned)
+T::TRUE(input.classes.active)
+
+input.dataset = { productId: "123" }
+T::EQ(input.dataset.productId, "123")
+T::EQ(input.attributes["data-product-id"], "123")
+
 input.disabled = TRUE
 T::TRUE(input.disabled)
 
