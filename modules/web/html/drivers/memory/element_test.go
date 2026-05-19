@@ -333,7 +333,10 @@ func TestElement(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		v, err := el.GetValue(ctx)
+		target, err := drivers.ToValueTarget(el)
+		So(err, ShouldBeNil)
+
+		v, err := target.GetValue(ctx)
 
 		So(err, ShouldBeNil)
 		So(runtime.CompareValues(v, runtime.NewString("find")), ShouldEqual, 0)
@@ -361,7 +364,10 @@ func TestElement(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		v, err := el.GetInnerText(ctx)
+		target, err := drivers.ToContentTarget(el)
+		So(err, ShouldBeNil)
+
+		v, err := target.GetInnerText(ctx)
 
 		So(err, ShouldBeNil)
 		So(runtime.CompareValues(v, runtime.NewString("Ferret")), ShouldEqual, 0)
@@ -389,7 +395,10 @@ func TestElement(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		v, err := el.GetInnerHTML(ctx)
+		target, err := drivers.ToContentTarget(el)
+		So(err, ShouldBeNil)
+
+		v, err := target.GetInnerHTML(ctx)
 
 		So(err, ShouldBeNil)
 		So(runtime.CompareValues(v, runtime.NewString("<h2>Ferret</h2>")), ShouldEqual, 0)

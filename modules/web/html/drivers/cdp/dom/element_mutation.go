@@ -12,46 +12,6 @@ func (el *HTMLElement) SetValue(ctx context.Context, value runtime.Value) error 
 	return el.eval.Eval(ctx, templates.SetValue(el.id, value))
 }
 
-func (el *HTMLElement) GetStyles(ctx context.Context) (runtime.Map, error) {
-	return el.styles.GetStyles(ctx)
-}
-
-func (el *HTMLElement) GetStyle(ctx context.Context, name runtime.String) (runtime.Value, error) {
-	return el.styles.GetStyle(ctx, name)
-}
-
-func (el *HTMLElement) SetStyles(ctx context.Context, styles runtime.Map) error {
-	return el.styles.SetStyles(ctx, styles)
-}
-
-func (el *HTMLElement) SetStyle(ctx context.Context, name, value runtime.String) error {
-	return el.styles.SetStyle(ctx, name, value)
-}
-
-func (el *HTMLElement) RemoveStyle(ctx context.Context, names ...runtime.String) error {
-	return el.styles.RemoveStyle(ctx, names...)
-}
-
-func (el *HTMLElement) GetAttributes(ctx context.Context) (runtime.Map, error) {
-	return el.attributes.GetAttributes(ctx)
-}
-
-func (el *HTMLElement) GetAttribute(ctx context.Context, name runtime.String) (runtime.Value, error) {
-	return el.attributes.GetAttribute(ctx, name)
-}
-
-func (el *HTMLElement) SetAttributes(ctx context.Context, attrs runtime.Map) error {
-	return el.attributes.SetAttributes(ctx, attrs)
-}
-
-func (el *HTMLElement) SetAttribute(ctx context.Context, name, value runtime.String) error {
-	return el.attributes.SetAttribute(ctx, name, value)
-}
-
-func (el *HTMLElement) RemoveAttribute(ctx context.Context, names ...runtime.String) error {
-	return el.attributes.RemoveAttribute(ctx, names...)
-}
-
 func (el *HTMLElement) GetTextContent(ctx context.Context) (runtime.String, error) {
 	out, err := el.eval.EvalValue(ctx, templates.GetTextContent(el.id))
 	if err != nil {

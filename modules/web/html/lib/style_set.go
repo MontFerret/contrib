@@ -24,6 +24,12 @@ func StyleSet(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 		return runtime.None, err
 	}
 
+	styles, err := drivers.ToStyleTarget(el)
+
+	if err != nil {
+		return runtime.None, err
+	}
+
 	switch arg1 := args[1].(type) {
 	case runtime.String:
 		// STYLE_SET(el, name, value)
@@ -33,10 +39,10 @@ func StyleSet(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 			return runtime.None, err
 		}
 
-		return runtime.None, el.SetStyle(ctx, arg1, runtime.NewString(args[2].String()))
+		return runtime.None, styles.SetStyle(ctx, arg1, runtime.NewString(args[2].String()))
 	case runtime.Map:
 		// STYLE_SET(el, values)
-		return runtime.None, el.SetStyles(ctx, arg1)
+		return runtime.None, styles.SetStyles(ctx, arg1)
 	default:
 		return runtime.None, runtime.TypeError(runtime.TypeOf(arg1), runtime.TypeString, runtime.TypeObject)
 	}

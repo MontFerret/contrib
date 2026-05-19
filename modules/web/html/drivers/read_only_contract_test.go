@@ -54,12 +54,16 @@ func TestExplicitElementMutationCapabilitiesRemain(t *testing.T) {
 	}
 
 	hero := mustElementFromValue(t, heroValue)
+	heroAttrs, err := drivers.ToAttributeTarget(hero)
+	if err != nil {
+		t.Fatalf("hero attribute target: %v", err)
+	}
 
-	if err := hero.SetAttribute(ctx, runtime.NewString("data-role"), runtime.NewString("hero")); err != nil {
+	if err := heroAttrs.SetAttribute(ctx, runtime.NewString("data-role"), runtime.NewString("hero")); err != nil {
 		t.Fatalf("set attribute: %v", err)
 	}
 
-	attrValue, err := hero.GetAttribute(ctx, runtime.NewString("data-role"))
+	attrValue, err := heroAttrs.GetAttribute(ctx, runtime.NewString("data-role"))
 	if err != nil {
 		t.Fatalf("get attribute: %v", err)
 	}
@@ -68,11 +72,16 @@ func TestExplicitElementMutationCapabilitiesRemain(t *testing.T) {
 		t.Fatalf("unexpected attribute value: %v", attrValue)
 	}
 
-	if err := hero.SetStyle(ctx, runtime.NewString("color"), runtime.NewString("red")); err != nil {
+	heroStyles, err := drivers.ToStyleTarget(hero)
+	if err != nil {
+		t.Fatalf("hero style target: %v", err)
+	}
+
+	if err := heroStyles.SetStyle(ctx, runtime.NewString("color"), runtime.NewString("red")); err != nil {
 		t.Fatalf("set style: %v", err)
 	}
 
-	styleValue, err := hero.GetStyle(ctx, runtime.NewString("color"))
+	styleValue, err := heroStyles.GetStyle(ctx, runtime.NewString("color"))
 	if err != nil {
 		t.Fatalf("get style: %v", err)
 	}
@@ -87,12 +96,16 @@ func TestExplicitElementMutationCapabilitiesRemain(t *testing.T) {
 	}
 
 	search := mustElementFromValue(t, searchValue)
+	searchValueTarget, err := drivers.ToValueTarget(search)
+	if err != nil {
+		t.Fatalf("search value target: %v", err)
+	}
 
-	if err := search.SetValue(ctx, runtime.NewString("updated")); err != nil {
+	if err := searchValueTarget.SetValue(ctx, runtime.NewString("updated")); err != nil {
 		t.Fatalf("set value: %v", err)
 	}
 
-	value, err := search.GetValue(ctx)
+	value, err := searchValueTarget.GetValue(ctx)
 	if err != nil {
 		t.Fatalf("get value: %v", err)
 	}

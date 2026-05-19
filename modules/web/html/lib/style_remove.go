@@ -23,6 +23,12 @@ func StyleRemove(ctx context.Context, args ...runtime.Value) (runtime.Value, err
 		return runtime.None, err
 	}
 
+	styles, err := drivers.ToStyleTarget(el)
+
+	if err != nil {
+		return runtime.None, err
+	}
+
 	attrs := args[1:]
 	attrsStr := make([]runtime.String, 0, len(attrs))
 
@@ -36,5 +42,5 @@ func StyleRemove(ctx context.Context, args ...runtime.Value) (runtime.Value, err
 		attrsStr = append(attrsStr, str)
 	}
 
-	return runtime.None, el.RemoveStyle(ctx, attrsStr...)
+	return runtime.None, styles.RemoveStyle(ctx, attrsStr...)
 }

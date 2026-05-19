@@ -24,12 +24,18 @@ func StyleGet(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 		return runtime.None, err
 	}
 
+	styles, err := drivers.ToStyleTarget(el)
+
+	if err != nil {
+		return runtime.None, err
+	}
+
 	names := args[1:]
 	result := runtime.NewObject()
 
 	for _, n := range names {
 		name := runtime.NewString(n.String())
-		val, err := el.GetStyle(ctx, name)
+		val, err := styles.GetStyle(ctx, name)
 
 		if err != nil {
 			return runtime.None, err

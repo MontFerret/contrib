@@ -76,23 +76,68 @@ func GetInElement(ctx context.Context, key runtime.Value, el drivers.HTMLElement
 
 	switch key.String() {
 	case "textContent":
-		return valueOrNone(el.GetTextContent(ctx))
+		target, err := drivers.ToContentTarget(el)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return valueOrNone(target.GetTextContent(ctx))
 	case "innerText":
-		return valueOrNone(el.GetInnerText(ctx))
+		target, err := drivers.ToContentTarget(el)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return valueOrNone(target.GetInnerText(ctx))
 	case "innerHTML":
-		return valueOrNone(el.GetInnerHTML(ctx))
+		target, err := drivers.ToContentTarget(el)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return valueOrNone(target.GetInnerHTML(ctx))
 	case "value":
-		return valueOrNone(el.GetValue(ctx))
+		target, err := drivers.ToValueTarget(el)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return valueOrNone(target.GetValue(ctx))
 	case "attributes":
-		return valueOrNone(el.GetAttributes(ctx))
+		target, err := drivers.ToAttributeTarget(el)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return valueOrNone(target.GetAttributes(ctx))
 	case "style":
-		return valueOrNone(el.GetStyles(ctx))
+		target, err := drivers.ToStyleTarget(el)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return valueOrNone(target.GetStyles(ctx))
 	case "previousElementSibling":
-		return valueOrNone(el.GetPreviousElementSibling(ctx))
+		target, err := drivers.ToRelationTarget(el)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return valueOrNone(target.GetPreviousElementSibling(ctx))
 	case "nextElementSibling":
-		return valueOrNone(el.GetNextElementSibling(ctx))
+		target, err := drivers.ToRelationTarget(el)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return valueOrNone(target.GetNextElementSibling(ctx))
 	case "parentElement":
-		return valueOrNone(el.GetParentElement(ctx))
+		target, err := drivers.ToRelationTarget(el)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return valueOrNone(target.GetParentElement(ctx))
 	default:
 		return GetInNode(ctx, key, el)
 	}

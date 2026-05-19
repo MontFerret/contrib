@@ -6,6 +6,7 @@ import (
 
 	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
 
+	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/memory"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -42,7 +43,12 @@ func TestCSSXContractAcrossBackends(t *testing.T) {
 					t.Fatalf("read first item: %v", err)
 				}
 				element := mustElementFromValue(t, first)
-				attr, err := element.GetAttribute(ctx, runtime.NewString("data-role"))
+				attrs, err := drivers.ToAttributeTarget(element)
+				if err != nil {
+					t.Fatalf("attribute target: %v", err)
+				}
+
+				attr, err := attrs.GetAttribute(ctx, runtime.NewString("data-role"))
 				if err != nil {
 					t.Fatalf("read data-role: %v", err)
 				}

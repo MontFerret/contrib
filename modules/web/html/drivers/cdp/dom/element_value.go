@@ -133,7 +133,7 @@ func (el *HTMLElement) Set(ctx context.Context, key, value runtime.Value) error 
 			return err
 		}
 
-		return el.SetStyles(ctx, styles)
+		return el.styles.SetStyles(ctx, styles)
 	case "classes":
 		classes, err := runtime.CastArray(value)
 		if err != nil {

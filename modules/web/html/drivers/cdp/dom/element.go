@@ -7,6 +7,7 @@ import (
 	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
 	"github.com/rs/zerolog"
 
+	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/input"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
@@ -69,6 +70,34 @@ func (el *HTMLElement) RemoteID() cdpruntime.RemoteObjectID {
 
 func (el *HTMLElement) Close() error {
 	return nil
+}
+
+func (el *HTMLElement) AsContentTarget() drivers.ContentTarget {
+	return el
+}
+
+func (el *HTMLElement) AsAttributeTarget() drivers.AttributeTarget {
+	return el.attributes
+}
+
+func (el *HTMLElement) AsStyleTarget() drivers.StyleTarget {
+	return el.styles
+}
+
+func (el *HTMLElement) AsValueTarget() drivers.ValueTarget {
+	return el
+}
+
+func (el *HTMLElement) AsRelationTarget() drivers.RelationTarget {
+	return el
+}
+
+func (el *HTMLElement) AsInteractionTarget() drivers.InteractionTarget {
+	return el
+}
+
+func (el *HTMLElement) AsWaitTarget() drivers.WaitTarget {
+	return el.wait
 }
 
 func (el *HTMLElement) logError(err error) *zerolog.Event {

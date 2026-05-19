@@ -104,6 +104,34 @@ type (
 		WaitForClassBySelectorAll(ctx context.Context, selector QuerySelector, class runtime.String, when WaitEvent) error
 	}
 
+	contentTargetProvider interface {
+		AsContentTarget() ContentTarget
+	}
+
+	valueTargetProvider interface {
+		AsValueTarget() ValueTarget
+	}
+
+	styleTargetProvider interface {
+		AsStyleTarget() StyleTarget
+	}
+
+	attributeTargetProvider interface {
+		AsAttributeTarget() AttributeTarget
+	}
+
+	relationTargetProvider interface {
+		AsRelationTarget() RelationTarget
+	}
+
+	interactionTargetProvider interface {
+		AsInteractionTarget() InteractionTarget
+	}
+
+	waitTargetProvider interface {
+		AsWaitTarget() WaitTarget
+	}
+
 	DocumentMetadataTarget interface {
 		GetTitle() runtime.String
 		GetElement() HTMLElement
@@ -178,12 +206,6 @@ type (
 	// HTMLElement is the most general base interface which most objects in a GetMainFrame implement.
 	HTMLElement interface {
 		HTMLNode
-
-		ContentTarget
-		AttributeTarget
-		StyleTarget
-		ValueTarget
-		RelationTarget
 	}
 
 	HTMLDocument interface {

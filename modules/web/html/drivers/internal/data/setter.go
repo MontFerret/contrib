@@ -36,27 +36,57 @@ func SetInElement(ctx context.Context, key runtime.Value, value runtime.Value, e
 
 	switch name {
 	case "textContent":
-		return el.SetTextContent(ctx, runtime.ToString(value))
+		target, err := drivers.ToContentTarget(el)
+		if err != nil {
+			return err
+		}
+
+		return target.SetTextContent(ctx, runtime.ToString(value))
 	case "innerText":
-		return el.SetInnerText(ctx, runtime.ToString(value))
+		target, err := drivers.ToContentTarget(el)
+		if err != nil {
+			return err
+		}
+
+		return target.SetInnerText(ctx, runtime.ToString(value))
 	case "innerHTML":
-		return el.SetInnerHTML(ctx, runtime.ToString(value))
+		target, err := drivers.ToContentTarget(el)
+		if err != nil {
+			return err
+		}
+
+		return target.SetInnerHTML(ctx, runtime.ToString(value))
 	case "value":
-		return el.SetValue(ctx, value)
+		target, err := drivers.ToValueTarget(el)
+		if err != nil {
+			return err
+		}
+
+		return target.SetValue(ctx, value)
 	case "attributes":
 		attrs, err := runtime.CastMap(value)
 		if err != nil {
 			return err
 		}
 
-		return el.SetAttributes(ctx, attrs)
+		target, err := drivers.ToAttributeTarget(el)
+		if err != nil {
+			return err
+		}
+
+		return target.SetAttributes(ctx, attrs)
 	case "style":
 		styles, err := runtime.CastMap(value)
 		if err != nil {
 			return err
 		}
 
-		return el.SetStyles(ctx, styles)
+		target, err := drivers.ToStyleTarget(el)
+		if err != nil {
+			return err
+		}
+
+		return target.SetStyles(ctx, styles)
 	default:
 		return runtime.Errorf(runtime.ErrInvalidArgument, "element property %q is not writable", name)
 	}
