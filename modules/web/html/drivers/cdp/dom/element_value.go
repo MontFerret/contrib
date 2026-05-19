@@ -79,20 +79,22 @@ func (el *HTMLElement) Get(ctx context.Context, key runtime.Value) (runtime.Valu
 	}
 
 	switch key.String() {
-	case "text":
-		return el.eval.EvalValue(ctx, templates.GetTextContent(el.id))
-	case "html":
+	case "textContent":
+		return el.GetTextContent(ctx)
+	case "innerText":
+		return el.GetInnerText(ctx)
+	case "innerHTML":
 		return el.GetInnerHTML(ctx)
 	case "checked", "disabled", "selected":
 		return el.eval.EvalValue(ctx, templates.GetDOMProperty(el.id, runtime.ToString(key)))
 	case "attributes":
-		return newAttributeView(ctx, el)
+		return newAttributeView(ctx, el.attributes)
 	case "style":
-		return newStyleView(ctx, el)
+		return newStyleView(ctx, el.styles)
 	case "classes":
-		return newClassListView(ctx, el)
+		return newClassListView(ctx, el.classes)
 	case "dataset":
-		return newDatasetView(ctx, el)
+		return newDatasetView(ctx, el.dataset)
 	}
 
 	return data.GetInElement(ctx, key, el)
@@ -110,9 +112,11 @@ func (el *HTMLElement) Set(ctx context.Context, key, value runtime.Value) error 
 	name := runtime.ToString(key)
 
 	switch name {
-	case "text":
-		return el.eval.Eval(ctx, templates.SetTextContent(el.id, runtime.ToString(value)))
-	case "html":
+	case "textContent":
+		return el.SetTextContent(ctx, runtime.ToString(value))
+	case "innerText":
+		return el.SetInnerText(ctx, runtime.ToString(value))
+	case "innerHTML":
 		return el.SetInnerHTML(ctx, runtime.ToString(value))
 	case "value":
 		return el.SetValue(ctx, runtime.ToString(value))
@@ -123,6 +127,27 @@ func (el *HTMLElement) Set(ctx context.Context, key, value runtime.Value) error 
 		}
 
 		return el.eval.Eval(ctx, templates.SetDOMProperty(el.id, name, enabled))
+	case "style":
+		styles, err := runtime.CastMap(value)
+		if err != nil {
+			return err
+		}
+
+		return el.SetStyles(ctx, styles)
+	case "classes":
+		classes, err := runtime.CastArray(value)
+		if err != nil {
+			return err
+		}
+
+		return el.classes.SetClasses(ctx, classes)
+	case "dataset":
+		dataset, err := runtime.CastMap(value)
+		if err != nil {
+			return err
+		}
+
+		return el.dataset.SetDataset(ctx, dataset)
 	default:
 		return runtime.Errorf(runtime.ErrInvalidArgument, "element property %q is not writable", name)
 	}

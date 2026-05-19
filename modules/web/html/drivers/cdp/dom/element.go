@@ -16,14 +16,19 @@ import (
 )
 
 type HTMLElement struct {
-	logger   zerolog.Logger
-	client   *cdp.Client
-	dom      *Manager
-	input    *input.Manager
-	eval     *eval.Runtime
-	nodeType *lazy.Value
-	nodeName *lazy.Value
-	id       cdpruntime.RemoteObjectID
+	logger     zerolog.Logger
+	client     *cdp.Client
+	dom        *Manager
+	input      *input.Manager
+	eval       *eval.Runtime
+	attributes *elementAttributes
+	styles     *elementStyles
+	classes    *elementClasses
+	dataset    *elementDataset
+	wait       *elementWait
+	nodeType   *lazy.Value
+	nodeName   *lazy.Value
+	id         cdpruntime.RemoteObjectID
 }
 
 func NewHTMLElement(
@@ -43,6 +48,11 @@ func NewHTMLElement(
 	el.input = input
 	el.eval = exec
 	el.id = id
+	el.attributes = newElementAttributes(exec, id)
+	el.styles = newElementStyles(exec, id)
+	el.classes = newElementClasses(exec, id)
+	el.dataset = newElementDataset(exec, id)
+	el.wait = newElementWait(exec, id)
 	el.nodeType = lazy.New(func(ctx context.Context) (runtime.Value, error) {
 		return el.eval.EvalValue(ctx, templates.GetNodeType(el.id))
 	})

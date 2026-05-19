@@ -13,53 +13,59 @@ func (el *HTMLElement) SetValue(ctx context.Context, value runtime.Value) error 
 }
 
 func (el *HTMLElement) GetStyles(ctx context.Context) (runtime.Map, error) {
-	out, err := el.eval.EvalValue(ctx, templates.GetStyles(el.id))
-	if err != nil {
-		return runtime.NewObject(), err
-	}
-
-	return runtime.ToMap(ctx, out)
+	return el.styles.GetStyles(ctx)
 }
 
 func (el *HTMLElement) GetStyle(ctx context.Context, name runtime.String) (runtime.Value, error) {
-	return el.eval.EvalValue(ctx, templates.GetStyle(el.id, name))
+	return el.styles.GetStyle(ctx, name)
 }
 
 func (el *HTMLElement) SetStyles(ctx context.Context, styles runtime.Map) error {
-	return el.eval.Eval(ctx, templates.SetStyles(el.id, styles))
+	return el.styles.SetStyles(ctx, styles)
 }
 
 func (el *HTMLElement) SetStyle(ctx context.Context, name, value runtime.String) error {
-	return el.eval.Eval(ctx, templates.SetStyle(el.id, name, value))
+	return el.styles.SetStyle(ctx, name, value)
 }
 
 func (el *HTMLElement) RemoveStyle(ctx context.Context, names ...runtime.String) error {
-	return el.eval.Eval(ctx, templates.RemoveStyles(el.id, names))
+	return el.styles.RemoveStyle(ctx, names...)
 }
 
 func (el *HTMLElement) GetAttributes(ctx context.Context) (runtime.Map, error) {
-	out, err := el.eval.EvalValue(ctx, templates.GetAttributes(el.id))
-	if err != nil {
-		return runtime.NewObject(), err
-	}
-
-	return runtime.ToMap(ctx, out)
+	return el.attributes.GetAttributes(ctx)
 }
 
 func (el *HTMLElement) GetAttribute(ctx context.Context, name runtime.String) (runtime.Value, error) {
-	return el.eval.EvalValue(ctx, templates.GetAttribute(el.id, name))
+	return el.attributes.GetAttribute(ctx, name)
 }
 
 func (el *HTMLElement) SetAttributes(ctx context.Context, attrs runtime.Map) error {
-	return el.eval.Eval(ctx, templates.SetAttributes(el.id, attrs))
+	return el.attributes.SetAttributes(ctx, attrs)
 }
 
 func (el *HTMLElement) SetAttribute(ctx context.Context, name, value runtime.String) error {
-	return el.eval.Eval(ctx, templates.SetAttribute(el.id, name, value))
+	return el.attributes.SetAttribute(ctx, name, value)
 }
 
 func (el *HTMLElement) RemoveAttribute(ctx context.Context, names ...runtime.String) error {
-	return el.eval.Eval(ctx, templates.RemoveAttributes(el.id, names))
+	return el.attributes.RemoveAttribute(ctx, names...)
+}
+
+func (el *HTMLElement) GetTextContent(ctx context.Context) (runtime.String, error) {
+	out, err := el.eval.EvalValue(ctx, templates.GetTextContent(el.id))
+	if err != nil {
+		return runtime.EmptyString, err
+	}
+
+	return runtime.ToString(out), nil
+}
+
+func (el *HTMLElement) SetTextContent(ctx context.Context, textContent runtime.String) error {
+	return el.eval.Eval(
+		ctx,
+		templates.SetTextContent(el.id, textContent),
+	)
 }
 
 func (el *HTMLElement) GetInnerText(ctx context.Context) (runtime.String, error) {

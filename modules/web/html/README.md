@@ -307,7 +307,7 @@ Common readable properties include:
 | --- | --- |
 | `HTMLPage` | `response`, `mainFrame`, `document`, `frames`, `url`, `URL`, `cookies`, `title`, `isClosed`, plus document properties through the main frame. |
 | `HTMLDocument` | `url`, `URL`, `name`, `title`, `parent`, `body`, `head`, `innerHTML`, `innerText`, plus node properties. |
-| `HTMLElement` | `innerText`, `innerHTML`, `text` (CDP), `html` (CDP), `value`, `checked` (CDP), `disabled` (CDP), `selected` (CDP), `attributes`, `style`, `classes` (CDP), `dataset` (CDP), `previousElementSibling`, `nextElementSibling`, `parentElement`, plus node properties. |
+| `HTMLElement` | `innerText`, `innerHTML`, `textContent` (CDP), `value`, `checked` (CDP), `disabled` (CDP), `selected` (CDP), `attributes`, `style`, `classes` (CDP), `dataset` (CDP), `previousElementSibling`, `nextElementSibling`, `parentElement`, plus node properties. |
 | HTML node values | integer child indexes, `nodeType`, `nodeName`, `children`, `length`. |
 
 Use the mutation module functions for driver-portable writes:
@@ -330,7 +330,8 @@ CDP-backed elements can also be mutated with normal assignment. Nested assignmen
 LET page = DOCUMENT($url, { driver: "cdp" })
 LET button = ELEMENT(page, "button[type=submit]")
 
-button.text = "Continue"
+button.textContent = "Continue"
+button.innerHTML = "<strong>Continue</strong>"
 button.disabled = FALSE
 button.attributes["aria-label"] = "Continue"
 button.style.display = "block"

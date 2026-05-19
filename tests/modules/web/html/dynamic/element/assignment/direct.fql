@@ -4,11 +4,14 @@ LET doc = DOCUMENT(url, { driver: "cdp" })
 WAIT_ELEMENT(doc, "form")
 
 LET output = ELEMENT(doc, "#text_output")
-output.text = "Continue"
-T::EQ(output.text, "Continue")
+output.textContent = "Continue"
+T::EQ(output.textContent, "Continue")
 
-output.html = "<strong>Go</strong>"
-T::EQ(output.html, "<strong>Go</strong>")
+output.innerText = "Go"
+T::EQ(output.innerText, "Go")
+
+output.innerHTML = "<strong>Submit</strong>"
+T::EQ(output.innerHTML, "<strong>Submit</strong>")
 
 LET input = ELEMENT(doc, "#text_input")
 input.value = "hello@example.com"

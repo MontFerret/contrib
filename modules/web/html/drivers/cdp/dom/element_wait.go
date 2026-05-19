@@ -4,69 +4,27 @@ import (
 	"context"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 func (el *HTMLElement) WaitForElement(ctx context.Context, selector drivers.QuerySelector, when drivers.WaitEvent) error {
-	task := events.NewEvalWaitTask(
-		el.eval,
-		templates.WaitForElement(el.id, selector, when),
-		events.DefaultPolling,
-	)
-
-	_, err := task.Run(ctx)
-
-	return err
+	return el.wait.WaitForElement(ctx, selector, when)
 }
 
 func (el *HTMLElement) WaitForElementAll(ctx context.Context, selector drivers.QuerySelector, when drivers.WaitEvent) error {
-	task := events.NewEvalWaitTask(
-		el.eval,
-		templates.WaitForElementAll(el.id, selector, when),
-		events.DefaultPolling,
-	)
-
-	_, err := task.Run(ctx)
-
-	return err
+	return el.wait.WaitForElementAll(ctx, selector, when)
 }
 
 func (el *HTMLElement) WaitForClass(ctx context.Context, class runtime.String, when drivers.WaitEvent) error {
-	task := events.NewEvalWaitTask(
-		el.eval,
-		templates.WaitForClass(el.id, class, when),
-		events.DefaultPolling,
-	)
-
-	_, err := task.Run(ctx)
-
-	return err
+	return el.wait.WaitForClass(ctx, class, when)
 }
 
 func (el *HTMLElement) WaitForClassBySelector(ctx context.Context, selector drivers.QuerySelector, class runtime.String, when drivers.WaitEvent) error {
-	task := events.NewEvalWaitTask(
-		el.eval,
-		templates.WaitForClassBySelector(el.id, selector, class, when),
-		events.DefaultPolling,
-	)
-
-	_, err := task.Run(ctx)
-
-	return err
+	return el.wait.WaitForClassBySelector(ctx, selector, class, when)
 }
 
 func (el *HTMLElement) WaitForClassBySelectorAll(ctx context.Context, selector drivers.QuerySelector, class runtime.String, when drivers.WaitEvent) error {
-	task := events.NewEvalWaitTask(
-		el.eval,
-		templates.WaitForClassBySelectorAll(el.id, selector, class, when),
-		events.DefaultPolling,
-	)
-
-	_, err := task.Run(ctx)
-
-	return err
+	return el.wait.WaitForClassBySelectorAll(ctx, selector, class, when)
 }
 
 func (el *HTMLElement) WaitForAttribute(
@@ -75,75 +33,27 @@ func (el *HTMLElement) WaitForAttribute(
 	value runtime.Value,
 	when drivers.WaitEvent,
 ) error {
-	task := events.NewEvalWaitTask(
-		el.eval,
-		templates.WaitForAttribute(el.id, name, value, when),
-		events.DefaultPolling,
-	)
-
-	_, err := task.Run(ctx)
-
-	return err
+	return el.wait.WaitForAttribute(ctx, name, value, when)
 }
 
 func (el *HTMLElement) WaitForAttributeBySelector(ctx context.Context, selector drivers.QuerySelector, name runtime.String, value runtime.Value, when drivers.WaitEvent) error {
-	task := events.NewEvalWaitTask(
-		el.eval,
-		templates.WaitForAttributeBySelector(el.id, selector, name, value, when),
-		events.DefaultPolling,
-	)
-
-	_, err := task.Run(ctx)
-
-	return err
+	return el.wait.WaitForAttributeBySelector(ctx, selector, name, value, when)
 }
 
 func (el *HTMLElement) WaitForAttributeBySelectorAll(ctx context.Context, selector drivers.QuerySelector, name runtime.String, value runtime.Value, when drivers.WaitEvent) error {
-	task := events.NewEvalWaitTask(
-		el.eval,
-		templates.WaitForAttributeBySelectorAll(el.id, selector, name, value, when),
-		events.DefaultPolling,
-	)
-
-	_, err := task.Run(ctx)
-
-	return err
+	return el.wait.WaitForAttributeBySelectorAll(ctx, selector, name, value, when)
 }
 
 func (el *HTMLElement) WaitForStyle(ctx context.Context, name runtime.String, value runtime.Value, when drivers.WaitEvent) error {
-	task := events.NewEvalWaitTask(
-		el.eval,
-		templates.WaitForStyle(el.id, name, value, when),
-		events.DefaultPolling,
-	)
-
-	_, err := task.Run(ctx)
-
-	return err
+	return el.wait.WaitForStyle(ctx, name, value, when)
 }
 
 func (el *HTMLElement) WaitForStyleBySelector(ctx context.Context, selector drivers.QuerySelector, name runtime.String, value runtime.Value, when drivers.WaitEvent) error {
-	task := events.NewEvalWaitTask(
-		el.eval,
-		templates.WaitForStyleBySelector(el.id, selector, name, value, when),
-		events.DefaultPolling,
-	)
-
-	_, err := task.Run(ctx)
-
-	return err
+	return el.wait.WaitForStyleBySelector(ctx, selector, name, value, when)
 }
 
 func (el *HTMLElement) WaitForStyleBySelectorAll(ctx context.Context, selector drivers.QuerySelector, name runtime.String, value runtime.Value, when drivers.WaitEvent) error {
-	task := events.NewEvalWaitTask(
-		el.eval,
-		templates.WaitForStyleBySelectorAll(el.id, selector, name, value, when),
-		events.DefaultPolling,
-	)
-
-	_, err := task.Run(ctx)
-
-	return err
+	return el.wait.WaitForStyleBySelectorAll(ctx, selector, name, value, when)
 }
 
 func (el *HTMLElement) Subscribe(ctx context.Context, subscription runtime.Subscription) (runtime.Stream, error) {

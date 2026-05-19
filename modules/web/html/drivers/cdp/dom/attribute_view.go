@@ -10,8 +10,8 @@ type attributeView struct {
 	*elementMapView
 }
 
-func newAttributeView(ctx context.Context, el *HTMLElement) (*attributeView, error) {
-	snapshot, err := el.GetAttributes(ctx)
+func newAttributeView(ctx context.Context, attrs *elementAttributes) (*attributeView, error) {
+	snapshot, err := attrs.GetAttributes(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -22,15 +22,15 @@ func newAttributeView(ctx context.Context, el *HTMLElement) (*attributeView, err
 			func(ctx context.Context, key, value runtime.Value) (runtime.Value, bool, error) {
 				name := runtime.ToString(key)
 				if value == runtime.None {
-					return runtime.None, true, el.RemoveAttribute(ctx, name)
+					return runtime.None, true, attrs.RemoveAttribute(ctx, name)
 				}
 
 				next := runtime.ToString(value)
 
-				return next, false, el.SetAttribute(ctx, name, next)
+				return next, false, attrs.SetAttribute(ctx, name, next)
 			},
 			func(ctx context.Context, key runtime.Value) error {
-				return el.RemoveAttribute(ctx, runtime.ToString(key))
+				return attrs.RemoveAttribute(ctx, runtime.ToString(key))
 			},
 		),
 	}, nil

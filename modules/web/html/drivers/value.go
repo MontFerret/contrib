@@ -28,6 +28,8 @@ type (
 	}
 
 	ContentTarget interface {
+		GetTextContent(ctx context.Context) (runtime.String, error)
+		SetTextContent(ctx context.Context, textContent runtime.String) error
 		GetInnerText(ctx context.Context) (runtime.String, error)
 		SetInnerText(ctx context.Context, innerText runtime.String) error
 		GetInnerHTML(ctx context.Context) (runtime.String, error)

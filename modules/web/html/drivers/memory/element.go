@@ -136,6 +136,16 @@ func (el *HTMLElement) SetValue(_ context.Context, value runtime.Value) error {
 	return nil
 }
 
+func (el *HTMLElement) GetTextContent(_ context.Context) (runtime.String, error) {
+	return runtime.NewString(el.selection.Text()), nil
+}
+
+func (el *HTMLElement) SetTextContent(_ context.Context, textContent runtime.String) error {
+	el.selection.SetText(textContent.String())
+
+	return nil
+}
+
 func (el *HTMLElement) GetInnerText(_ context.Context) (runtime.String, error) {
 	return runtime.NewString(el.selection.Text()), nil
 }

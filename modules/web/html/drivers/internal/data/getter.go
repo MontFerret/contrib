@@ -64,12 +64,8 @@ func GetInDocument(ctx context.Context, key runtime.Value, doc drivers.HTMLDocum
 		return valueOrNone(doc.GetParentDocument(ctx))
 	case "body", "head":
 		return valueOrNone(doc.QuerySelector(ctx, drivers.NewCSSSelector(runtime.String(key.String()))))
-	case "innerHTML":
-		return valueOrNone(doc.GetElement().GetInnerHTML(ctx))
-	case "innerText":
-		return valueOrNone(doc.GetElement().GetInnerText(ctx))
 	default:
-		return GetInNode(ctx, key, doc.GetElement())
+		return GetInElement(ctx, key, doc.GetElement())
 	}
 }
 
@@ -79,6 +75,8 @@ func GetInElement(ctx context.Context, key runtime.Value, el drivers.HTMLElement
 	}
 
 	switch key.String() {
+	case "textContent":
+		return valueOrNone(el.GetTextContent(ctx))
 	case "innerText":
 		return valueOrNone(el.GetInnerText(ctx))
 	case "innerHTML":
