@@ -213,13 +213,18 @@ func TestRootElementHelpersResolveRootElement(t *testing.T) {
 			t.Fatalf("expected %s root element %T, got %T", tc.name, tc.want, got)
 		}
 
+		wantAttrs, err := drivers.ToAttributeTarget(tc.want)
+		if err != nil {
+			t.Fatalf("unexpected error resolving %s expected root attribute target: %v", tc.name, err)
+		}
+
 		attrs, err := toRootAttributeTarget(tc.target)
 		if err != nil {
 			t.Fatalf("unexpected error resolving %s root attribute target: %v", tc.name, err)
 		}
 
-		if attrs != tc.want {
-			t.Fatalf("expected %s root attribute target %T, got %T", tc.name, tc.want, attrs)
+		if attrs != wantAttrs {
+			t.Fatalf("expected %s root attribute target %T, got %T", tc.name, wantAttrs, attrs)
 		}
 	}
 }

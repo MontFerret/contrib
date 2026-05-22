@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
+	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
+	"github.com/rs/zerolog"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp"
@@ -61,12 +63,9 @@ var (
 	_ drivers.NodeInspector     = (*cdpdom.HTMLElement)(nil)
 	_ drivers.QueryTarget       = (*cdpdom.HTMLElement)(nil)
 	_ drivers.ContentTarget     = (*cdpdom.HTMLElement)(nil)
-	_ drivers.AttributeTarget   = (*cdpdom.HTMLElement)(nil)
-	_ drivers.StyleTarget       = (*cdpdom.HTMLElement)(nil)
 	_ drivers.ValueTarget       = (*cdpdom.HTMLElement)(nil)
 	_ drivers.RelationTarget    = (*cdpdom.HTMLElement)(nil)
 	_ drivers.InteractionTarget = (*cdpdom.HTMLElement)(nil)
-	_ drivers.WaitTarget        = (*cdpdom.HTMLElement)(nil)
 	_ runtime.Dispatchable      = (*cdpdom.HTMLElement)(nil)
 )
 
@@ -168,12 +167,9 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 				"NodeInspector":     true,
 				"QueryTarget":       true,
 				"ContentTarget":     true,
-				"AttributeTarget":   true,
-				"StyleTarget":       true,
 				"ValueTarget":       true,
 				"RelationTarget":    true,
 				"InteractionTarget": true,
-				"WaitTarget":        true,
 			},
 		},
 	}
@@ -197,6 +193,87 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 				})
 			}
 		})
+	}
+}
+
+func TestCDPElementCapabilityResolversUseProviders(t *testing.T) {
+	t.Parallel()
+
+	element := cdpdom.NewHTMLElement(zerolog.Nop(), nil, nil, nil, nil, cdpruntime.RemoteObjectID("node"))
+
+	if reflect.TypeOf((*cdpdom.HTMLElement)(nil)).Implements(reflect.TypeOf((*drivers.AttributeTarget)(nil)).Elem()) {
+		t.Fatal("expected cdp element to stop directly implementing AttributeTarget")
+	}
+
+	if reflect.TypeOf((*cdpdom.HTMLElement)(nil)).Implements(reflect.TypeOf((*drivers.StyleTarget)(nil)).Elem()) {
+		t.Fatal("expected cdp element to stop directly implementing StyleTarget")
+	}
+
+	if reflect.TypeOf((*cdpdom.HTMLElement)(nil)).Implements(reflect.TypeOf((*drivers.WaitTarget)(nil)).Elem()) {
+		t.Fatal("expected cdp element to stop directly implementing WaitTarget")
+	}
+
+	if _, err := drivers.ToAttributeTarget(element); err != nil {
+		t.Fatalf("expected cdp element attribute provider: %v", err)
+	}
+
+	if _, err := drivers.ToStyleTarget(element); err != nil {
+		t.Fatalf("expected cdp element style provider: %v", err)
+	}
+
+	if _, err := drivers.ToWaitTarget(element); err != nil {
+		t.Fatalf("expected cdp element wait provider: %v", err)
+	}
+}
+
+func TestCapabilityResolversUseProviderMethods(t *testing.T) {
+	t.Parallel()
+
+	base := newMemoryDocument(t, `<html><body><button id="cta">go</button></body></html>`).GetElement()
+	attrs, err := drivers.ToAttributeTarget(base)
+	if err != nil {
+		t.Fatalf("base attribute target: %v", err)
+	}
+
+	styles, err := drivers.ToStyleTarget(base)
+	if err != nil {
+		t.Fatalf("base style target: %v", err)
+	}
+
+	wait := &providerWaitTarget{}
+	element := &providerElement{
+		HTMLNode: base,
+		attrs:    attrs,
+		styles:   styles,
+		wait:     wait,
+	}
+
+	if reflect.TypeOf(element).Implements(reflect.TypeOf((*drivers.AttributeTarget)(nil)).Elem()) {
+		t.Fatal("provider element should not directly implement AttributeTarget")
+	}
+
+	resolvedAttrs, err := drivers.ToAttributeTarget(element)
+	if err != nil {
+		t.Fatalf("resolve attribute provider: %v", err)
+	}
+	if resolvedAttrs != attrs {
+		t.Fatal("expected attribute resolver to return provider target")
+	}
+
+	resolvedStyles, err := drivers.ToStyleTarget(element)
+	if err != nil {
+		t.Fatalf("resolve style provider: %v", err)
+	}
+	if resolvedStyles != styles {
+		t.Fatal("expected style resolver to return provider target")
+	}
+
+	resolvedWait, err := drivers.ToWaitTarget(element)
+	if err != nil {
+		t.Fatalf("resolve wait provider: %v", err)
+	}
+	if resolvedWait != wait {
+		t.Fatal("expected wait resolver to return provider target")
 	}
 }
 

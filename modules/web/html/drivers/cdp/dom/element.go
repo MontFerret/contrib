@@ -7,6 +7,7 @@ import (
 	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
 	"github.com/rs/zerolog"
 
+	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/input"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
@@ -16,14 +17,19 @@ import (
 )
 
 type HTMLElement struct {
-	logger   zerolog.Logger
-	client   *cdp.Client
-	dom      *Manager
-	input    *input.Manager
-	eval     *eval.Runtime
-	nodeType *lazy.Value
-	nodeName *lazy.Value
-	id       cdpruntime.RemoteObjectID
+	logger     zerolog.Logger
+	client     *cdp.Client
+	dom        *Manager
+	input      *input.Manager
+	eval       *eval.Runtime
+	attributes *elementAttributes
+	styles     *elementStyles
+	classes    *elementClasses
+	dataset    *elementDataset
+	wait       *elementWait
+	nodeType   *lazy.Value
+	nodeName   *lazy.Value
+	id         cdpruntime.RemoteObjectID
 }
 
 func NewHTMLElement(
@@ -43,6 +49,11 @@ func NewHTMLElement(
 	el.input = input
 	el.eval = exec
 	el.id = id
+	el.attributes = newElementAttributes(exec, id)
+	el.styles = newElementStyles(exec, id)
+	el.classes = newElementClasses(exec, id)
+	el.dataset = newElementDataset(exec, id)
+	el.wait = newElementWait(exec, id)
 	el.nodeType = lazy.New(func(ctx context.Context) (runtime.Value, error) {
 		return el.eval.EvalValue(ctx, templates.GetNodeType(el.id))
 	})
@@ -59,6 +70,34 @@ func (el *HTMLElement) RemoteID() cdpruntime.RemoteObjectID {
 
 func (el *HTMLElement) Close() error {
 	return nil
+}
+
+func (el *HTMLElement) AsContentTarget() drivers.ContentTarget {
+	return el
+}
+
+func (el *HTMLElement) AsAttributeTarget() drivers.AttributeTarget {
+	return el.attributes
+}
+
+func (el *HTMLElement) AsStyleTarget() drivers.StyleTarget {
+	return el.styles
+}
+
+func (el *HTMLElement) AsValueTarget() drivers.ValueTarget {
+	return el
+}
+
+func (el *HTMLElement) AsRelationTarget() drivers.RelationTarget {
+	return el
+}
+
+func (el *HTMLElement) AsInteractionTarget() drivers.InteractionTarget {
+	return el
+}
+
+func (el *HTMLElement) AsWaitTarget() drivers.WaitTarget {
+	return el.wait
 }
 
 func (el *HTMLElement) logError(err error) *zerolog.Event {

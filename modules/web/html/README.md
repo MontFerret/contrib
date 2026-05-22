@@ -283,7 +283,7 @@ RETURN sections[* RETURN {
 
 ## Reading And Mutating DOM Content
 
-HTML page, document, and element values expose a read-only dot-access surface for convenient reads. Use explicit module functions for mutations.
+HTML page, document, and element values expose a dot-access surface for convenient reads. Static/memory-backed values are read-only through dot access. CDP-backed elements also support a small write-through assignment surface.
 
 ```fql
 LET page = DOCUMENT($url)
@@ -307,10 +307,10 @@ Common readable properties include:
 | --- | --- |
 | `HTMLPage` | `response`, `mainFrame`, `document`, `frames`, `url`, `URL`, `cookies`, `title`, `isClosed`, plus document properties through the main frame. |
 | `HTMLDocument` | `url`, `URL`, `name`, `title`, `parent`, `body`, `head`, `innerHTML`, `innerText`, plus node properties. |
-| `HTMLElement` | `innerText`, `innerHTML`, `value`, `attributes`, `style`, `previousElementSibling`, `nextElementSibling`, `parentElement`, plus node properties. |
+| `HTMLElement` | `innerText`, `innerHTML`, `textContent`, `value`, `checked` (CDP), `disabled` (CDP), `selected` (CDP), `attributes`, `style`, `classes` (CDP), `dataset` (CDP), `previousElementSibling`, `nextElementSibling`, `parentElement`, plus node properties. |
 | HTML node values | integer child indexes, `nodeType`, `nodeName`, `children`, `length`. |
 
-Dot access does not write back to HTML values. Use the mutation module functions instead:
+Use the mutation module functions for driver-portable writes:
 
 ```fql
 LET page = DOCUMENT($url, { driver: "cdp" })
@@ -322,6 +322,27 @@ ATTR_SET(preview, "data-state", "ready")
 STYLE_SET(preview, "display", "block")
 
 RETURN preview.innerHTML
+```
+
+CDP-backed elements can also be mutated with normal assignment. Top-level assignment supports content/value properties plus `attributes`, `style`, `classes`, and `dataset`; nested assignment writes through snapshot views returned by those collection properties. A captured view keeps its read snapshot while writes through that view update the browser:
+
+```fql
+LET page = DOCUMENT($url, { driver: "cdp" })
+LET button = ELEMENT(page, "button[type=submit]")
+
+button.textContent = "Continue"
+button.innerHTML = "<strong>Continue</strong>"
+button.disabled = FALSE
+button.attributes = { "aria-label": "Continue" }
+button.attributes["data-state"] = "ready"
+button.style.display = "block"
+button.classes.active = TRUE
+button.dataset.productId = "123"
+
+button.attributes["data-state"] = NONE
+button.style.display = NONE
+button.classes.active = FALSE
+button.dataset.productId = NONE
 ```
 
 Attribute and style module functions can work with individual names or maps depending on the function:

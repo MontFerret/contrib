@@ -74,7 +74,90 @@ func (el *HTMLElement) Iterate(_ context.Context) (runtime.Iterator, error) {
 }
 
 func (el *HTMLElement) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
+	if key == nil || key == runtime.None {
+		return runtime.None, nil
+	}
+
+	switch key.String() {
+	case "textContent":
+		return el.GetTextContent(ctx)
+	case "innerText":
+		return el.GetInnerText(ctx)
+	case "innerHTML":
+		return el.GetInnerHTML(ctx)
+	case "checked", "disabled", "selected":
+		return el.eval.EvalValue(ctx, templates.GetDOMProperty(el.id, runtime.ToString(key)))
+	case "attributes":
+		return newAttributeView(ctx, el.attributes)
+	case "style":
+		return newStyleView(ctx, el.styles)
+	case "classes":
+		return newClassListView(ctx, el.classes)
+	case "dataset":
+		return newDatasetView(ctx, el.dataset)
+	}
+
 	return data.GetInElement(ctx, key, el)
+}
+
+func (el *HTMLElement) Set(ctx context.Context, key, value runtime.Value) error {
+	if key == nil || key == runtime.None {
+		return runtime.Error(runtime.ErrInvalidArgument, "element property name is empty")
+	}
+
+	if value == nil {
+		value = runtime.None
+	}
+
+	name := runtime.ToString(key)
+
+	switch name {
+	case "textContent":
+		return el.SetTextContent(ctx, runtime.ToString(value))
+	case "innerText":
+		return el.SetInnerText(ctx, runtime.ToString(value))
+	case "innerHTML":
+		return el.SetInnerHTML(ctx, runtime.ToString(value))
+	case "value":
+		return el.SetValue(ctx, runtime.ToString(value))
+	case "checked", "disabled", "selected":
+		enabled, err := runtime.CastBoolean(value)
+		if err != nil {
+			return err
+		}
+
+		return el.eval.Eval(ctx, templates.SetDOMProperty(el.id, name, enabled))
+	case "attributes":
+		attrs, err := runtime.CastMap(value)
+		if err != nil {
+			return err
+		}
+
+		return el.attributes.SetAttributes(ctx, attrs)
+	case "style":
+		styles, err := runtime.CastMap(value)
+		if err != nil {
+			return err
+		}
+
+		return el.styles.SetStyles(ctx, styles)
+	case "classes":
+		classes, err := runtime.CastArray(value)
+		if err != nil {
+			return err
+		}
+
+		return el.classes.SetClasses(ctx, classes)
+	case "dataset":
+		dataset, err := runtime.CastMap(value)
+		if err != nil {
+			return err
+		}
+
+		return el.dataset.SetDataset(ctx, dataset)
+	default:
+		return runtime.Errorf(runtime.ErrInvalidArgument, "element property %q is not writable", name)
+	}
 }
 
 func (el *HTMLElement) GetValue(ctx context.Context) (runtime.Value, error) {

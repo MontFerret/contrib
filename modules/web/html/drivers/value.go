@@ -28,6 +28,8 @@ type (
 	}
 
 	ContentTarget interface {
+		GetTextContent(ctx context.Context) (runtime.String, error)
+		SetTextContent(ctx context.Context, textContent runtime.String) error
 		GetInnerText(ctx context.Context) (runtime.String, error)
 		SetInnerText(ctx context.Context, innerText runtime.String) error
 		GetInnerHTML(ctx context.Context) (runtime.String, error)
@@ -100,6 +102,34 @@ type (
 		WaitForClass(ctx context.Context, class runtime.String, when WaitEvent) error
 		WaitForClassBySelector(ctx context.Context, selector QuerySelector, class runtime.String, when WaitEvent) error
 		WaitForClassBySelectorAll(ctx context.Context, selector QuerySelector, class runtime.String, when WaitEvent) error
+	}
+
+	contentTargetProvider interface {
+		AsContentTarget() ContentTarget
+	}
+
+	valueTargetProvider interface {
+		AsValueTarget() ValueTarget
+	}
+
+	styleTargetProvider interface {
+		AsStyleTarget() StyleTarget
+	}
+
+	attributeTargetProvider interface {
+		AsAttributeTarget() AttributeTarget
+	}
+
+	relationTargetProvider interface {
+		AsRelationTarget() RelationTarget
+	}
+
+	interactionTargetProvider interface {
+		AsInteractionTarget() InteractionTarget
+	}
+
+	waitTargetProvider interface {
+		AsWaitTarget() WaitTarget
 	}
 
 	DocumentMetadataTarget interface {
@@ -176,12 +206,6 @@ type (
 	// HTMLElement is the most general base interface which most objects in a GetMainFrame implement.
 	HTMLElement interface {
 		HTMLNode
-
-		ContentTarget
-		AttributeTarget
-		StyleTarget
-		ValueTarget
-		RelationTarget
 	}
 
 	HTMLDocument interface {

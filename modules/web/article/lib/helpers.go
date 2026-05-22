@@ -92,7 +92,12 @@ func sourceFromElement(ctx context.Context, el htmldrivers.HTMLElement) (core.So
 }
 
 func snapshotElementHTML(ctx context.Context, el htmldrivers.HTMLElement) (string, error) {
-	innerHTML, err := el.GetInnerHTML(ctx)
+	content, err := htmldrivers.ToContentTarget(el)
+	if err != nil {
+		return "", err
+	}
+
+	innerHTML, err := content.GetInnerHTML(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -107,7 +112,12 @@ func snapshotElementHTML(ctx context.Context, el htmldrivers.HTMLElement) (strin
 		return innerHTML.String(), nil
 	}
 
-	attrs, err := el.GetAttributes(ctx)
+	attributes, err := htmldrivers.ToAttributeTarget(el)
+	if err != nil {
+		return "", err
+	}
+
+	attrs, err := attributes.GetAttributes(ctx)
 	if err != nil {
 		return "", err
 	}

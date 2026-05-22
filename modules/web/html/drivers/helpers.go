@@ -27,6 +27,11 @@ func ToDocument(value runtime.Value) (HTMLDocument, error) {
 }
 
 func ToElement(value runtime.Value) (HTMLElement, error) {
+	doc, ok := value.(HTMLDocument)
+	if ok && !isNilValue(doc) {
+		return nil, runtime.TypeErrorOf(value, HTMLElementType)
+	}
+
 	el, ok := value.(HTMLElement)
 	if !ok || isNilValue(el) {
 		return nil, runtime.TypeErrorOf(value, HTMLElementType)
@@ -49,31 +54,80 @@ func ToQueryTarget(value runtime.Value) (QueryTarget, error) {
 }
 
 func ToContentTarget(value runtime.Value) (ContentTarget, error) {
-	return toHTMLCapability[ContentTarget](value, "content")
+	return toHTMLCapability(value, "content", func(value any) (ContentTarget, bool) {
+		provider, ok := value.(contentTargetProvider)
+		if !ok {
+			return nil, false
+		}
+
+		return provider.AsContentTarget(), true
+	})
 }
 
 func ToAttributeTarget(value runtime.Value) (AttributeTarget, error) {
-	return toHTMLCapability[AttributeTarget](value, "attribute")
+	return toHTMLCapability(value, "attribute", func(value any) (AttributeTarget, bool) {
+		provider, ok := value.(attributeTargetProvider)
+		if !ok {
+			return nil, false
+		}
+
+		return provider.AsAttributeTarget(), true
+	})
 }
 
 func ToStyleTarget(value runtime.Value) (StyleTarget, error) {
-	return toHTMLCapability[StyleTarget](value, "style")
+	return toHTMLCapability(value, "style", func(value any) (StyleTarget, bool) {
+		provider, ok := value.(styleTargetProvider)
+		if !ok {
+			return nil, false
+		}
+
+		return provider.AsStyleTarget(), true
+	})
 }
 
 func ToValueTarget(value runtime.Value) (ValueTarget, error) {
-	return toHTMLCapability[ValueTarget](value, "value")
+	return toHTMLCapability(value, "value", func(value any) (ValueTarget, bool) {
+		provider, ok := value.(valueTargetProvider)
+		if !ok {
+			return nil, false
+		}
+
+		return provider.AsValueTarget(), true
+	})
 }
 
 func ToRelationTarget(value runtime.Value) (RelationTarget, error) {
-	return toHTMLCapability[RelationTarget](value, "relation")
+	return toHTMLCapability(value, "relation", func(value any) (RelationTarget, bool) {
+		provider, ok := value.(relationTargetProvider)
+		if !ok {
+			return nil, false
+		}
+
+		return provider.AsRelationTarget(), true
+	})
 }
 
 func ToInteractionTarget(value runtime.Value) (InteractionTarget, error) {
-	return toHTMLCapability[InteractionTarget](value, "interaction")
+	return toHTMLCapability(value, "interaction", func(value any) (InteractionTarget, bool) {
+		provider, ok := value.(interactionTargetProvider)
+		if !ok {
+			return nil, false
+		}
+
+		return provider.AsInteractionTarget(), true
+	})
 }
 
 func ToWaitTarget(value runtime.Value) (WaitTarget, error) {
-	return toHTMLCapability[WaitTarget](value, "wait")
+	return toHTMLCapability(value, "wait", func(value any) (WaitTarget, bool) {
+		provider, ok := value.(waitTargetProvider)
+		if !ok {
+			return nil, false
+		}
+
+		return provider.AsWaitTarget(), true
+	})
 }
 
 func ToDocumentViewportTarget(value runtime.Value) (DocumentViewportTarget, error) {
@@ -162,12 +216,12 @@ func SetDefaultParams(opts *Options, params Params) Params {
 	return params
 }
 
-func toHTMLCapability[T any](value runtime.Value, capability string) (T, error) {
+func toHTMLCapability[T any](value runtime.Value, capability string, provider func(any) (T, bool)) (T, error) {
 	var zero T
 
 	switch value.(type) {
 	case HTMLPage, HTMLDocument, HTMLElement:
-		return asCapability[T](value, capability)
+		return asCapability(value, capability, provider)
 	default:
 		return zero, runtime.TypeErrorOf(value, HTMLPageType, HTMLDocumentType, HTMLElementType)
 	}
@@ -178,9 +232,9 @@ func toDocumentCapability[T any](value runtime.Value, capability string) (T, err
 
 	switch v := value.(type) {
 	case HTMLPage:
-		return asCapability[T](v.GetMainFrame(), capability)
+		return asCapability[T](v.GetMainFrame(), capability, nil)
 	case HTMLDocument:
-		return asCapability[T](v, capability)
+		return asCapability[T](v, capability, nil)
 	default:
 		return zero, runtime.TypeErrorOf(value, HTMLPageType, HTMLDocumentType)
 	}
@@ -194,18 +248,25 @@ func toPageCapability[T any](value runtime.Value, capability string) (T, error) 
 		return zero, err
 	}
 
-	return asCapability[T](page, capability)
+	return asCapability[T](page, capability, nil)
 }
 
-func asCapability[T any](value any, capability string) (T, error) {
+func asCapability[T any](value any, capability string, provider func(any) (T, bool)) (T, error) {
 	var zero T
 
 	target, ok := value.(T)
-	if !ok || isNilValue(target) {
-		return zero, runtime.Errorf(runtime.ErrNotSupported, "%s capability", capability)
+	if ok && !isNilValue(target) {
+		return target, nil
 	}
 
-	return target, nil
+	if provider != nil {
+		target, ok = provider(value)
+		if ok && !isNilValue(target) {
+			return target, nil
+		}
+	}
+
+	return zero, runtime.Errorf(runtime.ErrNotSupported, "%s capability", capability)
 }
 
 func isNilValue(value any) bool {

@@ -108,6 +108,26 @@ func (el *HTMLElement) Close() error {
 	return nil
 }
 
+func (el *HTMLElement) AsContentTarget() drivers.ContentTarget {
+	return el
+}
+
+func (el *HTMLElement) AsAttributeTarget() drivers.AttributeTarget {
+	return el
+}
+
+func (el *HTMLElement) AsStyleTarget() drivers.StyleTarget {
+	return el
+}
+
+func (el *HTMLElement) AsValueTarget() drivers.ValueTarget {
+	return el
+}
+
+func (el *HTMLElement) AsRelationTarget() drivers.RelationTarget {
+	return el
+}
+
 func (el *HTMLElement) GetNodeName(_ context.Context) (runtime.String, error) {
 	return runtime.NewString(goquery.NodeName(el.selection)), nil
 }
@@ -132,6 +152,16 @@ func (el *HTMLElement) GetValue(_ context.Context) (runtime.Value, error) {
 
 func (el *HTMLElement) SetValue(_ context.Context, value runtime.Value) error {
 	el.selection.SetAttr("value", value.String())
+
+	return nil
+}
+
+func (el *HTMLElement) GetTextContent(_ context.Context) (runtime.String, error) {
+	return runtime.NewString(el.selection.Text()), nil
+}
+
+func (el *HTMLElement) SetTextContent(_ context.Context, textContent runtime.String) error {
+	el.selection.SetText(textContent.String())
 
 	return nil
 }
@@ -395,7 +425,12 @@ func (el *HTMLElement) SetInnerHTMLBySelector(ctx context.Context, selector driv
 		return drivers.ErrNotFound
 	}
 
-	return found.SetInnerHTML(ctx, innerHTML)
+	content, err := drivers.ToContentTarget(found)
+	if err != nil {
+		return err
+	}
+
+	return content.SetInnerHTML(ctx, innerHTML)
 }
 
 func (el *HTMLElement) GetInnerHTMLBySelector(ctx context.Context, selector drivers.QuerySelector) (runtime.String, error) {
@@ -425,7 +460,12 @@ func (el *HTMLElement) GetInnerHTMLBySelector(ctx context.Context, selector driv
 		return runtime.EmptyString, drivers.ErrNotFound
 	}
 
-	return found.GetInnerHTML(ctx)
+	content, err := drivers.ToContentTarget(found)
+	if err != nil {
+		return runtime.EmptyString, err
+	}
+
+	return content.GetInnerHTML(ctx)
 }
 
 func (el *HTMLElement) GetInnerHTMLBySelectorAll(ctx context.Context, selector drivers.QuerySelector) (runtime.List, error) {
@@ -467,7 +507,12 @@ func (el *HTMLElement) GetInnerHTMLBySelectorAll(ctx context.Context, selector d
 			return runtime.None, err
 		}
 
-		return found.GetInnerHTML(ctx)
+		content, err := drivers.ToContentTarget(found)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return content.GetInnerHTML(ctx)
 	})
 }
 
@@ -492,7 +537,12 @@ func (el *HTMLElement) GetInnerTextBySelector(ctx context.Context, selector driv
 		return runtime.EmptyString, drivers.ErrNotFound
 	}
 
-	return found.GetInnerText(ctx)
+	content, err := drivers.ToContentTarget(found)
+	if err != nil {
+		return runtime.EmptyString, err
+	}
+
+	return content.GetInnerText(ctx)
 }
 
 func (el *HTMLElement) SetInnerTextBySelector(ctx context.Context, selector drivers.QuerySelector, innerText runtime.String) error {
@@ -518,7 +568,12 @@ func (el *HTMLElement) SetInnerTextBySelector(ctx context.Context, selector driv
 		return drivers.ErrNotFound
 	}
 
-	return found.SetInnerText(ctx, innerText)
+	content, err := drivers.ToContentTarget(found)
+	if err != nil {
+		return err
+	}
+
+	return content.SetInnerText(ctx, innerText)
 }
 
 func (el *HTMLElement) GetInnerTextBySelectorAll(ctx context.Context, selector drivers.QuerySelector) (runtime.List, error) {
@@ -546,7 +601,12 @@ func (el *HTMLElement) GetInnerTextBySelectorAll(ctx context.Context, selector d
 			return runtime.None, err
 		}
 
-		return found.GetInnerText(ctx)
+		content, err := drivers.ToContentTarget(found)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return content.GetInnerText(ctx)
 	})
 }
 

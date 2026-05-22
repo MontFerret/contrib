@@ -19,33 +19,37 @@ func toRootElement(value runtime.Value) (drivers.HTMLElement, error) {
 }
 
 func toRootContentTarget(value runtime.Value) (drivers.ContentTarget, error) {
-	return toRootElementCapability[drivers.ContentTarget](value, "content")
+	el, err := toRootElement(value)
+	if err != nil {
+		return nil, err
+	}
+
+	return drivers.ToContentTarget(el)
 }
 
 func toRootAttributeTarget(value runtime.Value) (drivers.AttributeTarget, error) {
-	return toRootElementCapability[drivers.AttributeTarget](value, "attribute")
+	el, err := toRootElement(value)
+	if err != nil {
+		return nil, err
+	}
+
+	return drivers.ToAttributeTarget(el)
 }
 
 func toRootInteractionTarget(value runtime.Value) (drivers.InteractionTarget, error) {
-	return toRootElementCapability[drivers.InteractionTarget](value, "interaction")
+	el, err := toRootElement(value)
+	if err != nil {
+		return nil, err
+	}
+
+	return drivers.ToInteractionTarget(el)
 }
 
 func toRootWaitTarget(value runtime.Value) (drivers.WaitTarget, error) {
-	return toRootElementCapability[drivers.WaitTarget](value, "wait")
-}
-
-func toRootElementCapability[T any](value runtime.Value, capability string) (T, error) {
-	var zero T
-
 	el, err := toRootElement(value)
 	if err != nil {
-		return zero, err
+		return nil, err
 	}
 
-	target, ok := any(el).(T)
-	if !ok {
-		return zero, runtime.Errorf(runtime.ErrNotSupported, "root element %s capability", capability)
-	}
-
-	return target, nil
+	return drivers.ToWaitTarget(el)
 }
