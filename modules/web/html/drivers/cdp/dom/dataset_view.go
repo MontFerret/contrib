@@ -32,6 +32,8 @@ func newDatasetView(ctx context.Context, dataset *elementDataset) (*datasetView,
 			func(ctx context.Context, key runtime.Value) error {
 				return dataset.RemoveDatasetProperty(ctx, datasetPropertyName(key))
 			},
-		),
+		).withKeyNormalizer(func(key runtime.Value) runtime.Value {
+			return datasetPropertyName(key)
+		}),
 	}, nil
 }

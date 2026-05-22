@@ -78,3 +78,62 @@ func TestElementMapViewWritesThroughAndPreservesSnapshotSemantics(t *testing.T) 
 		}
 	}
 }
+
+func TestElementMapViewNormalizesSnapshotAndWriteKeys(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	writes := make(map[string]runtime.Value)
+	removes := make(map[string]bool)
+	view := newElementMapView(
+		runtime.NewObjectWith(map[string]runtime.Value{
+			"canonical": runtime.NewString("snapshot"),
+		}),
+		func(_ context.Context, key, value runtime.Value) (runtime.Value, bool, error) {
+			writes[key.String()] = value
+			if value == runtime.None {
+				return runtime.None, true, nil
+			}
+
+			return runtime.ToString(value), false, nil
+		},
+		func(_ context.Context, key runtime.Value) error {
+			removes[key.String()] = true
+
+			return nil
+		},
+	).withKeyNormalizer(func(key runtime.Value) runtime.Value {
+		if key.String() == "alias" {
+			return runtime.NewString("canonical")
+		}
+
+		return key
+	})
+
+	assertViewValue(t, ctx, view, "alias", runtime.NewString("snapshot"))
+
+	if err := view.Set(ctx, runtime.NewString("alias"), runtime.NewString("fresh")); err != nil {
+		t.Fatalf("set alias: %v", err)
+	}
+
+	assertViewValue(t, ctx, view, "canonical", runtime.NewString("fresh"))
+	assertViewValue(t, ctx, view, "alias", runtime.NewString("fresh"))
+	if _, ok := writes["canonical"]; !ok {
+		t.Fatal("expected write-through to use normalized key")
+	}
+	if _, ok := writes["alias"]; ok {
+		t.Fatal("did not expect write-through to use raw alias key")
+	}
+
+	if err := view.RemoveKey(ctx, runtime.NewString("alias")); err != nil {
+		t.Fatalf("remove alias: %v", err)
+	}
+
+	assertViewValue(t, ctx, view, "canonical", runtime.None)
+	if !removes["canonical"] {
+		t.Fatal("expected remove to use normalized key")
+	}
+	if removes["alias"] {
+		t.Fatal("did not expect remove to use raw alias key")
+	}
+}

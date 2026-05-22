@@ -24,6 +24,10 @@ style.display = "none"
 T::EQ(style.display, "none")
 T::EQ(el.style.display, "none")
 
+style.backgroundColor = "rgb(255, 0, 0)"
+T::EQ(style["background-color"], "rgb(255, 0, 0)")
+T::EQ(el.style.backgroundColor, "rgb(255, 0, 0)")
+
 style.display = NONE
 T::NONE(style.display)
 
@@ -42,7 +46,18 @@ T::EQ(dataset.productId, "123")
 T::EQ(el.dataset.productId, "123")
 T::EQ(el.attributes["data-product-id"], "123")
 
-dataset.productId = NONE
+dataset["data-product-id"] = "456"
+T::EQ(dataset.productId, "456")
+T::EQ(el.dataset.productId, "456")
+T::EQ(el.attributes["data-product-id"], "456")
+
+dataset["data-foo_bar"] = "stable"
+T::EQ(dataset.foo_bar, "stable")
+T::EQ(el.dataset.foo_bar, "stable")
+T::EQ(el.attributes["data-foo_bar"], "stable")
+T::NONE(dataset.fooBar)
+
+dataset["data-product-id"] = NONE
 T::NONE(dataset.productId)
 T::NONE(el.dataset.productId)
 T::NONE(el.attributes["data-product-id"])

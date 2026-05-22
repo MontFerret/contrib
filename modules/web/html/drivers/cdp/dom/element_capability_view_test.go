@@ -82,6 +82,82 @@ func TestStyleViewWritesThroughCapabilityAndSnapshot(t *testing.T) {
 	}
 }
 
+func TestStyleViewNormalizesSnapshotKeys(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	exec := &recordingElementEvaluator{
+		value: runtime.NewObjectWith(map[string]runtime.Value{
+			"background-color": runtime.NewString("transparent"),
+		}),
+	}
+
+	view, err := newStyleView(ctx, newElementStyles(exec, "node"))
+	if err != nil {
+		t.Fatalf("new style view: %v", err)
+	}
+
+	assertViewValue(t, ctx, view, "backgroundColor", runtime.NewString("transparent"))
+
+	if err := view.Set(ctx, runtime.NewString("backgroundColor"), runtime.NewString("red")); err != nil {
+		t.Fatalf("set backgroundColor: %v", err)
+	}
+
+	assertViewValue(t, ctx, view, "background-color", runtime.NewString("red"))
+	assertViewValue(t, ctx, view, "backgroundColor", runtime.NewString("red"))
+
+	if err := view.Set(ctx, runtime.NewString("backgroundColor"), runtime.None); err != nil {
+		t.Fatalf("remove backgroundColor: %v", err)
+	}
+
+	assertViewValue(t, ctx, view, "background-color", runtime.None)
+	if exec.evalCalls != 2 {
+		t.Fatalf("expected two remote writes, got %d", exec.evalCalls)
+	}
+}
+
+func TestDatasetViewNormalizesSnapshotKeys(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	exec := &recordingElementEvaluator{
+		value: runtime.NewObjectWith(map[string]runtime.Value{
+			"productId": runtime.NewString("old"),
+			"foo_bar":   runtime.NewString("kept"),
+		}),
+	}
+
+	view, err := newDatasetView(ctx, newElementDataset(exec, "node"))
+	if err != nil {
+		t.Fatalf("new dataset view: %v", err)
+	}
+
+	assertViewValue(t, ctx, view, "data-product-id", runtime.NewString("old"))
+
+	if err := view.Set(ctx, runtime.NewString("data-product-id"), runtime.NewString("123")); err != nil {
+		t.Fatalf("set data-product-id: %v", err)
+	}
+
+	assertViewValue(t, ctx, view, "productId", runtime.NewString("123"))
+	assertViewValue(t, ctx, view, "data-product-id", runtime.NewString("123"))
+
+	if err := view.Set(ctx, runtime.NewString("data-foo_bar"), runtime.NewString("stable")); err != nil {
+		t.Fatalf("set data-foo_bar: %v", err)
+	}
+
+	assertViewValue(t, ctx, view, "foo_bar", runtime.NewString("stable"))
+	assertViewValue(t, ctx, view, "fooBar", runtime.None)
+
+	if err := view.Set(ctx, runtime.NewString("data-product-id"), runtime.None); err != nil {
+		t.Fatalf("remove data-product-id: %v", err)
+	}
+
+	assertViewValue(t, ctx, view, "productId", runtime.None)
+	if exec.evalCalls != 3 {
+		t.Fatalf("expected three remote writes, got %d", exec.evalCalls)
+	}
+}
+
 func TestClassListViewWritesThroughCapabilityAndSnapshot(t *testing.T) {
 	t.Parallel()
 

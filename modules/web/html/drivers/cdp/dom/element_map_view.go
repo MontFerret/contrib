@@ -8,10 +8,13 @@ import (
 
 type (
 	elementMapView struct {
-		snapshot runtime.Map
-		set      elementMapSetFunc
-		remove   elementMapRemoveFunc
+		snapshot     runtime.Map
+		set          elementMapSetFunc
+		remove       elementMapRemoveFunc
+		normalizeKey elementMapKeyFunc
 	}
+
+	elementMapKeyFunc func(key runtime.Value) runtime.Value
 
 	elementMapRemoveFunc func(ctx context.Context, key runtime.Value) error
 
@@ -28,6 +31,12 @@ func newElementMapView(snapshot runtime.Map, set elementMapSetFunc, remove eleme
 		set:      set,
 		remove:   remove,
 	}
+}
+
+func (view *elementMapView) withKeyNormalizer(normalize elementMapKeyFunc) *elementMapView {
+	view.normalizeKey = normalize
+
+	return view
 }
 
 func (view *elementMapView) ObjectLike() {}
@@ -74,10 +83,14 @@ func (view *elementMapView) Contains(ctx context.Context, value runtime.Value) (
 }
 
 func (view *elementMapView) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
+	key = view.key(key)
+
 	return view.snapshot.Get(ctx, key)
 }
 
 func (view *elementMapView) Lookup(ctx context.Context, key runtime.Value) (runtime.Value, bool, error) {
+	key = view.key(key)
+
 	return view.snapshot.Lookup(ctx, key)
 }
 
@@ -85,6 +98,8 @@ func (view *elementMapView) Set(ctx context.Context, key, value runtime.Value) e
 	if value == nil {
 		value = runtime.None
 	}
+
+	key = view.key(key)
 
 	snapshotValue, remove, err := view.set(ctx, key, value)
 	if err != nil {
@@ -99,6 +114,8 @@ func (view *elementMapView) Set(ctx context.Context, key, value runtime.Value) e
 }
 
 func (view *elementMapView) RemoveKey(ctx context.Context, key runtime.Value) error {
+	key = view.key(key)
+
 	if err := view.remove(ctx, key); err != nil {
 		return err
 	}
@@ -155,6 +172,8 @@ func (view *elementMapView) Merge(ctx context.Context, other runtime.Map) error 
 }
 
 func (view *elementMapView) ContainsKey(ctx context.Context, key runtime.Value) (runtime.Boolean, error) {
+	key = view.key(key)
+
 	return view.snapshot.ContainsKey(ctx, key)
 }
 
@@ -176,4 +195,17 @@ func (view *elementMapView) Find(ctx context.Context, predicate runtime.KeyReada
 
 func (view *elementMapView) ForEach(ctx context.Context, predicate runtime.KeyReadablePredicate) error {
 	return view.snapshot.ForEach(ctx, predicate)
+}
+
+func (view *elementMapView) key(key runtime.Value) runtime.Value {
+	if key == nil || view.normalizeKey == nil {
+		return key
+	}
+
+	normalized := view.normalizeKey(key)
+	if normalized == nil {
+		return key
+	}
+
+	return normalized
 }

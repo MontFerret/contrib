@@ -32,6 +32,8 @@ func newStyleView(ctx context.Context, styles *elementStyles) (*styleView, error
 			func(ctx context.Context, key runtime.Value) error {
 				return styles.RemoveStyle(ctx, runtime.ToString(key))
 			},
-		),
+		).withKeyNormalizer(func(key runtime.Value) runtime.Value {
+			return stylePropertyName(key)
+		}),
 	}, nil
 }
