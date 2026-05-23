@@ -1,8 +1,5 @@
-github.com/MontFerret/contrib/modules/xml v1.0.0-rc.1 h1:n0dLjldCh9F2DoCIF3VVUNsoCMyvasVmnsKe0v++0kc=
-github.com/MontFerret/contrib/modules/xml v1.0.0-rc.1/go.mod h1:dJ4RwDsBqBVU6b/qYWSjHMTeKe6Yn/o3sgSA8CE1yro=
 github.com/MontFerret/contrib/modules/xml v1.0.0-rc.2 h1:q47camEhshGbfo6YJbkAh2inHwtzY65u/D7xGcOqcA4=
 github.com/MontFerret/contrib/modules/xml v1.0.0-rc.2/go.mod h1:gVKhCOSXmIjTATqbeirxyR2b5yZZRcOEvZDi8B5Ws4U=
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.15 h1:sjg3mFmeuBLzWvdIGtLSUXFFIPMPKvhULFM+yXrnxto=
 github.com/MontFerret/ferret/v2 v2.0.0-alpha.17 h1:Hy94ku7qRCeSIHfnjIN0qkTrc00oNwvarbCn2XMeIKk=
 github.com/MontFerret/ferret/v2 v2.0.0-alpha.17/go.mod h1:xnhO/65Sa17LSRC8GLIO51JZ4Wm08JjEtmowGVut4z0=
 github.com/goccy/go-json v0.10.6 h1:p8HrPJzOakx/mn/bQtjgNjdTcN+/S6FcG2CTtQOrHVU=
@@ -25,6 +22,5 @@ github.com/vmihailenco/msgpack/v5 v5.4.1 h1:cQriyiUvjTwOHg8QZaPihLWeRAAVoCpE00IU
 github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAhO7/IwNM9g=
 github.com/wI2L/jettison v0.7.4 h1:ptjriu75R/k5RAZO0DJzy2t55f7g+dPiBxBY38icaKg=
 github.com/wI2L/jettison v0.7.4/go.mod h1:O+F+T7X7ZN6kTsd167Qk4aZMC8jNrH48SMedNmkfPb0=
-golang.org/x/sys v0.44.0 h1:ildZl3J4uzeKP07r2F++Op7E9B29JRUy+a27EibtBTQ=
 golang.org/x/sys v0.45.0 h1:dO4czNzziLiiXplLQgBCEpCvXQ3dnkn0SdaZSYdQ+FY=
 golang.org/x/sys v0.45.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
