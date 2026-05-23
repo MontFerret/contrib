@@ -413,6 +413,7 @@ DISPATCH "input" IN searchBox WITH { value: "macbook" }
 DISPATCH "keydown" IN input WITH { key: "Enter" }
 DISPATCH "type" IN input WITH { text: "macbook pro", delay: 50 }
 DISPATCH "scroll" IN doc WITH { y: 1200 }
+DISPATCH "scroll" IN doc WITH { to: "bottom" }
 DISPATCH "scroll" IN container WITH { by: { y: 800 } }
 DISPATCH "scroll" IN item WITH { intoView: true }
 ```
@@ -426,7 +427,7 @@ Supported CDP dispatch event names are:
 | Forms | `input`, `change`, `submit`, `reset`, `focus`, `blur`, `check`, `uncheck`, `toggle` |
 | Scroll | `scroll` |
 
-Mouse payloads may include `button`, `count`, `x`, and `y`. Keyboard `press` accepts `key` or `keys`; `type` accepts `text`, optional `delay`, and optional `clear`. Form `input` requires `value`; `change` may include `value`. Scroll accepts absolute coordinates via `x`/`y` or `to`, relative coordinates via `by`, or `intoView: true`.
+Mouse payloads may include `button`, `count`, `x`, and `y`. Keyboard `press` accepts `key` or `keys`; `type` accepts `text`, optional `delay`, and optional `clear`. Form `input` requires `value`; `change` may include `value`. Scroll accepts absolute coordinates via `x`/`y` or `to`, named absolute targets via `to: "top"` or `to: "bottom"`, relative coordinates via `by`, or `intoView: true`.
 
 Navigation and scrolling module functions:
 

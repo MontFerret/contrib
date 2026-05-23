@@ -167,6 +167,24 @@ const elementScroll = `(el, mode, opts) => {
 		behavior: opts.behavior
 	};
 
+	if (mode === "top") {
+		el.scrollTo({
+			left: 0,
+			top: 0,
+			behavior: opts.behavior
+		});
+		return true;
+	}
+
+	if (mode === "bottom") {
+		el.scrollTo({
+			left: 0,
+			top: el.scrollHeight,
+			behavior: opts.behavior
+		});
+		return true;
+	}
+
 	if (mode === "by") {
 		el.scrollBy(args);
 		return true;
