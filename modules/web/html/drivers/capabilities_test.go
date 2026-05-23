@@ -38,6 +38,8 @@ var (
 	_ drivers.StyleTarget     = (*memory.HTMLElement)(nil)
 	_ drivers.ValueTarget     = (*memory.HTMLElement)(nil)
 	_ drivers.RelationTarget  = (*memory.HTMLElement)(nil)
+	_ runtime.IndexRemovable  = (*memory.HTMLElement)(nil)
+	_ runtime.KeyRemovable    = (*memory.HTMLElement)(nil)
 
 	_ drivers.HTMLPage             = (*cdp.HTMLPage)(nil)
 	_ drivers.PageStateTarget      = (*cdp.HTMLPage)(nil)
@@ -66,6 +68,8 @@ var (
 	_ drivers.ValueTarget       = (*cdpdom.HTMLElement)(nil)
 	_ drivers.RelationTarget    = (*cdpdom.HTMLElement)(nil)
 	_ drivers.InteractionTarget = (*cdpdom.HTMLElement)(nil)
+	_ runtime.IndexRemovable    = (*cdpdom.HTMLElement)(nil)
+	_ runtime.KeyRemovable      = (*cdpdom.HTMLElement)(nil)
 	_ runtime.Dispatchable      = (*cdpdom.HTMLElement)(nil)
 )
 
@@ -102,6 +106,8 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 		{name: "PageResponseTarget", typ: reflect.TypeOf((*drivers.PageResponseTarget)(nil)).Elem()},
 		{name: "PageSnapshotTarget", typ: reflect.TypeOf((*drivers.PageSnapshotTarget)(nil)).Elem()},
 		{name: "PageNavigationTarget", typ: reflect.TypeOf((*drivers.PageNavigationTarget)(nil)).Elem()},
+		{name: "IndexRemovable", typ: reflect.TypeOf((*runtime.IndexRemovable)(nil)).Elem()},
+		{name: "KeyRemovable", typ: reflect.TypeOf((*runtime.KeyRemovable)(nil)).Elem()},
 	}
 
 	backends := []backend{
@@ -135,6 +141,8 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 				"StyleTarget":     true,
 				"ValueTarget":     true,
 				"RelationTarget":  true,
+				"IndexRemovable":  true,
+				"KeyRemovable":    true,
 			},
 		},
 		{
@@ -170,6 +178,8 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 				"ValueTarget":       true,
 				"RelationTarget":    true,
 				"InteractionTarget": true,
+				"IndexRemovable":    true,
+				"KeyRemovable":      true,
 			},
 		},
 	}

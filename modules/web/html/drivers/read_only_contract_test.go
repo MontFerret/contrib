@@ -16,17 +16,21 @@ func TestOnlyCDPElementImplementsKeyWritable(t *testing.T) {
 	t.Parallel()
 
 	keyWritable := reflect.TypeOf((*runtime.KeyWritable)(nil)).Elem()
+	indexRemovable := reflect.TypeOf((*runtime.IndexRemovable)(nil)).Elem()
+	keyRemovable := reflect.TypeOf((*runtime.KeyRemovable)(nil)).Elem()
 	cases := []struct {
-		typ      reflect.Type
-		name     string
-		writable bool
+		typ            reflect.Type
+		name           string
+		writable       bool
+		indexRemovable bool
+		keyRemovable   bool
 	}{
 		{name: "memory page", typ: reflect.TypeOf((*memory.HTMLPage)(nil))},
 		{name: "memory document", typ: reflect.TypeOf((*memory.HTMLDocument)(nil))},
-		{name: "memory element", typ: reflect.TypeOf((*memory.HTMLElement)(nil))},
+		{name: "memory element", typ: reflect.TypeOf((*memory.HTMLElement)(nil)), indexRemovable: true, keyRemovable: true},
 		{name: "cdp page", typ: reflect.TypeOf((*cdp.HTMLPage)(nil))},
 		{name: "cdp document", typ: reflect.TypeOf((*cdpdom.HTMLDocument)(nil))},
-		{name: "cdp element", typ: reflect.TypeOf((*cdpdom.HTMLElement)(nil)), writable: true},
+		{name: "cdp element", typ: reflect.TypeOf((*cdpdom.HTMLElement)(nil)), writable: true, indexRemovable: true, keyRemovable: true},
 	}
 
 	for _, tc := range cases {
@@ -36,6 +40,14 @@ func TestOnlyCDPElementImplementsKeyWritable(t *testing.T) {
 
 			if got := tc.typ.Implements(keyWritable); got != tc.writable {
 				t.Fatalf("%s KeyWritable support mismatch: got %t, want %t", tc.name, got, tc.writable)
+			}
+
+			if got := tc.typ.Implements(indexRemovable); got != tc.indexRemovable {
+				t.Fatalf("%s IndexRemovable support mismatch: got %t, want %t", tc.name, got, tc.indexRemovable)
+			}
+
+			if got := tc.typ.Implements(keyRemovable); got != tc.keyRemovable {
+				t.Fatalf("%s KeyRemovable support mismatch: got %t, want %t", tc.name, got, tc.keyRemovable)
 			}
 		})
 	}

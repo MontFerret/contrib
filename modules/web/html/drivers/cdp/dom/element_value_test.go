@@ -2,6 +2,7 @@ package dom
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -56,5 +57,16 @@ func TestHTMLElementSetSupportsAttributeMap(t *testing.T) {
 
 	if exec.evalCalls != 1 {
 		t.Fatalf("expected one remote attributes write, got %d", exec.evalCalls)
+	}
+}
+
+func TestHTMLElementRemoveKeyRejectsNonIntegerKeys(t *testing.T) {
+	t.Parallel()
+
+	el := new(HTMLElement)
+
+	err := el.RemoveKey(context.Background(), runtime.NewString("attributes"))
+	if !errors.Is(err, runtime.ErrInvalidArgument) {
+		t.Fatalf("expected invalid argument error, got %v", err)
 	}
 }

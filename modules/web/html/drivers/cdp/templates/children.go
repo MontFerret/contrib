@@ -24,3 +24,17 @@ const getChildByIndex = "(el, idx) => el.children[idx]"
 func GetChildByIndex(id cdpruntime.RemoteObjectID, index runtime.Int) *eval.Function {
 	return eval.F(getChildByIndex).WithArgRef(id).WithArgValue(index)
 }
+
+const removeChildByIndex = `(el, idx) => {
+	const child = el.children[idx];
+	if (!child) {
+		return null;
+	}
+
+	child.remove();
+	return child;
+}`
+
+func RemoveChildByIndex(id cdpruntime.RemoteObjectID, index runtime.Int) *eval.Function {
+	return eval.F(removeChildByIndex).WithArgRef(id).WithArgValue(index)
+}

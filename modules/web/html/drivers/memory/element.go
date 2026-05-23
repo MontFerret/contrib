@@ -346,6 +346,37 @@ func (el *HTMLElement) GetChildNode(ctx context.Context, idx runtime.Int) (runti
 	return el.children.At(ctx, idx)
 }
 
+func (el *HTMLElement) RemoveAt(ctx context.Context, idx runtime.Int) (runtime.Value, error) {
+	if idx < 0 {
+		return runtime.None, nil
+	}
+
+	if el.children == nil {
+		el.children = el.parseChildren()
+	}
+
+	removed, err := el.children.At(ctx, idx)
+	if err != nil || removed == runtime.None {
+		return removed, err
+	}
+
+	el.selection.Children().Eq(int(idx)).Remove()
+	el.children = nil
+
+	return removed, nil
+}
+
+func (el *HTMLElement) RemoveKey(ctx context.Context, key runtime.Value) error {
+	idx, ok := key.(runtime.Int)
+	if !ok {
+		return runtime.Error(runtime.ErrInvalidArgument, "element child index must be an integer")
+	}
+
+	_, err := el.RemoveAt(ctx, idx)
+
+	return err
+}
+
 func (el *HTMLElement) QuerySelector(_ context.Context, selector drivers.QuerySelector) (runtime.Value, error) {
 	if selector.Kind == drivers.CSSSelector {
 		selection := el.selection.Find(selector.String())
