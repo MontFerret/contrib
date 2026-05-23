@@ -118,10 +118,10 @@ main() {
   echo "Tag:             $new_tag"
 
   git tag -a "$new_tag" -m "Release $new_tag"
-
   echo "Created tag: $new_tag"
-  echo "Push with:"
-  echo "  git push origin $new_tag"
+
+  git push origin "$new_tag"
+  echo "Pushed tag:  $new_tag"
 }
 
 main "$@"
