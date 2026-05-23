@@ -17,6 +17,25 @@ func (el *HTMLElement) GetChildNode(ctx context.Context, idx runtime.Int) (runti
 	return el.eval.EvalElement(ctx, templates.GetChildByIndex(el.id, idx))
 }
 
+func (el *HTMLElement) RemoveAt(ctx context.Context, idx runtime.Int) (runtime.Value, error) {
+	if idx < 0 {
+		return runtime.None, nil
+	}
+
+	return el.eval.EvalElement(ctx, templates.RemoveChildByIndex(el.id, idx))
+}
+
+func (el *HTMLElement) RemoveKey(ctx context.Context, key runtime.Value) error {
+	idx, ok := key.(runtime.Int)
+	if !ok {
+		return runtime.Error(runtime.ErrInvalidArgument, "element child index must be an integer")
+	}
+
+	_, err := el.RemoveAt(ctx, idx)
+
+	return err
+}
+
 func (el *HTMLElement) GetParentElement(ctx context.Context) (runtime.Value, error) {
 	return el.eval.EvalElement(ctx, templates.GetParent(el.id))
 }
