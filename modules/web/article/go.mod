@@ -3,12 +3,12 @@ module github.com/MontFerret/contrib/modules/web/article
 go 1.25.6
 
 require (
-	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.0
-	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.3
+	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.1
+	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.4
 	github.com/MontFerret/ferret/v2 v2.0.0-alpha.17
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/microcosm-cc/bluemonday v1.0.27
-	golang.org/x/net v0.54.0
+	golang.org/x/net v0.55.0
 )
 
 require (
@@ -26,13 +26,12 @@ require (
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/zerolog v1.35.1 // indirect
 	github.com/sethgrid/pester v1.2.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/wI2L/jettison v0.7.4 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 )
