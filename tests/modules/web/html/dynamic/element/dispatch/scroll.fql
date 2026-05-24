@@ -7,10 +7,34 @@ DISPATCH "scroll" IN doc WITH { y: 300 }
 WAIT(100)
 T::NOT::EQ(INNER_TEXT(doc, "#scroll_output"), "0")
 
+DISPATCH "scroll" IN doc WITH { to: "top" }
+WAIT(100)
+T::EQ(INNER_TEXT(doc, "#scroll_output"), "0")
+
+DISPATCH "scroll" IN doc WITH { to: "bottom" }
+WAIT(100)
+T::NOT::EQ(INNER_TEXT(doc, "#scroll_output"), "0")
+
+DISPATCH "scroll" IN doc WITH { to: "top" }
+WAIT(100)
+T::EQ(INNER_TEXT(doc, "#scroll_output"), "0")
+
 LET container = ELEMENT(doc, "#scroll_container")
 DISPATCH "scroll" IN container WITH { by: { y: 120 } }
 WAIT(100)
 T::NOT::EQ(INNER_TEXT(doc, "#scroll_container_output"), "0")
+
+DISPATCH "scroll" IN container WITH { to: "top" }
+WAIT(100)
+T::EQ(INNER_TEXT(doc, "#scroll_container_output"), "0")
+
+DISPATCH "scroll" IN container WITH { to: "bottom" }
+WAIT(100)
+T::NOT::EQ(INNER_TEXT(doc, "#scroll_container_output"), "0")
+
+DISPATCH "scroll" IN container WITH { to: "top" }
+WAIT(100)
+T::EQ(INNER_TEXT(doc, "#scroll_container_output"), "0")
 
 DISPATCH "scroll" IN container WITH { intoView: true }
 

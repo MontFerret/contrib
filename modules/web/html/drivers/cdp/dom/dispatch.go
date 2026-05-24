@@ -151,6 +151,10 @@ func dispatchDocumentScroll(ctx context.Context, doc *HTMLDocument, payload runt
 		return doc.element.ScrollIntoView(ctx, params.Options)
 	case dispatchScrollModeBy:
 		return doc.input.ScrollByDelta(ctx, params.Options)
+	case dispatchScrollModeTop:
+		return doc.ScrollTop(ctx, params.Options)
+	case dispatchScrollModeBottom:
+		return doc.ScrollBottom(ctx, params.Options)
 	default:
 		return doc.Scroll(ctx, params.Options)
 	}

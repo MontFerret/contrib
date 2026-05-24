@@ -149,6 +149,50 @@ func TestParseDispatchScrollPayload(t *testing.T) {
 	}
 
 	params, err = parseDispatchScrollPayload(ctx, runtime.NewObjectWith(map[string]runtime.Value{
+		"to": runtime.NewObjectWith(map[string]runtime.Value{
+			"x": runtime.NewInt(5),
+			"y": runtime.NewInt(10),
+		}),
+	}))
+	if err != nil {
+		t.Fatalf("unexpected coordinate target scroll error: %v", err)
+	}
+
+	if params.Mode != dispatchScrollModeTo || params.Options.Left != 5 || params.Options.Top != 10 {
+		t.Fatalf("unexpected coordinate target scroll params: %#v", params)
+	}
+
+	params, err = parseDispatchScrollPayload(ctx, runtime.NewObjectWith(map[string]runtime.Value{
+		"to": runtime.NewString("top"),
+	}))
+	if err != nil {
+		t.Fatalf("unexpected top target scroll error: %v", err)
+	}
+
+	if params.Mode != dispatchScrollModeTop {
+		t.Fatalf("unexpected top target scroll params: %#v", params)
+	}
+
+	params, err = parseDispatchScrollPayload(ctx, runtime.NewObjectWith(map[string]runtime.Value{
+		"to":       runtime.NewString("bottom"),
+		"behavior": runtime.NewString("smooth"),
+	}))
+	if err != nil {
+		t.Fatalf("unexpected bottom target scroll error: %v", err)
+	}
+
+	if params.Mode != dispatchScrollModeBottom || params.Options.Behavior != drivers.ScrollBehaviorSmooth {
+		t.Fatalf("unexpected bottom target scroll params: %#v", params)
+	}
+
+	_, err = parseDispatchScrollPayload(ctx, runtime.NewObjectWith(map[string]runtime.Value{
+		"to": runtime.NewString("middle"),
+	}))
+	if !errors.Is(err, runtime.ErrInvalidOperation) || !strings.Contains(err.Error(), "supported targets: top, bottom") {
+		t.Fatalf("expected invalid target error, got %v", err)
+	}
+
+	params, err = parseDispatchScrollPayload(ctx, runtime.NewObjectWith(map[string]runtime.Value{
 		"by": runtime.NewObjectWith(map[string]runtime.Value{
 			"x": runtime.NewInt(10),
 			"y": runtime.NewInt(20),

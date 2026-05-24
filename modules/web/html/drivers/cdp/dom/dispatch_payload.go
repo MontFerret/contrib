@@ -10,32 +10,36 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-type dispatchPayload struct {
-	fields runtime.Map
-}
+type (
+	dispatchPayload struct {
+		fields runtime.Map
+	}
 
-type dispatchKeyboardParams struct {
-	Keys  []runtime.String
-	Count runtime.Int
-}
+	dispatchKeyboardParams struct {
+		Keys  []runtime.String
+		Count runtime.Int
+	}
 
-type dispatchTypeParams struct {
-	Text  string
-	Clear bool
-	Delay runtime.Int
-}
+	dispatchTypeParams struct {
+		Text  string
+		Clear bool
+		Delay runtime.Int
+	}
 
-type dispatchScrollMode string
+	dispatchScrollMode string
 
-type dispatchScrollParams struct {
-	Mode    dispatchScrollMode
-	Options drivers.ScrollOptions
-}
+	dispatchScrollParams struct {
+		Mode    dispatchScrollMode
+		Options drivers.ScrollOptions
+	}
+)
 
 const (
 	dispatchScrollModeTo       dispatchScrollMode = "to"
 	dispatchScrollModeBy       dispatchScrollMode = "by"
 	dispatchScrollModeIntoView dispatchScrollMode = "intoView"
+	dispatchScrollModeTop      dispatchScrollMode = "top"
+	dispatchScrollModeBottom   dispatchScrollMode = "bottom"
 )
 
 func newDispatchPayload(value runtime.Value) (dispatchPayload, error) {
@@ -284,12 +288,12 @@ func parseDispatchScrollPayload(ctx context.Context, value runtime.Value) (dispa
 	if toValue, found, err := dispatchLookup(ctx, payload, "to"); err != nil {
 		return dispatchScrollParams{}, err
 	} else if found && toValue != runtime.None {
-		options, err = parseDispatchScrollCoordinates(ctx, toValue, options)
+		params, err := parseDispatchScrollTarget(ctx, toValue, options)
 		if err != nil {
 			return dispatchScrollParams{}, err
 		}
 
-		return dispatchScrollParams{Mode: dispatchScrollModeTo, Options: options}, nil
+		return params, nil
 	}
 
 	if byValue, found, err := dispatchLookup(ctx, payload, "by"); err != nil {
@@ -337,6 +341,34 @@ func parseDispatchScrollOptions(ctx context.Context, payload dispatchPayload) (d
 	}
 
 	return options, nil
+}
+
+func parseDispatchScrollTarget(
+	ctx context.Context,
+	value runtime.Value,
+	options drivers.ScrollOptions,
+) (dispatchScrollParams, error) {
+	if target, err := runtime.CastString(value); err == nil {
+		switch target.String() {
+		case string(dispatchScrollModeTop):
+			return dispatchScrollParams{Mode: dispatchScrollModeTop, Options: options}, nil
+		case string(dispatchScrollModeBottom):
+			return dispatchScrollParams{Mode: dispatchScrollModeBottom, Options: options}, nil
+		default:
+			return dispatchScrollParams{}, runtime.Errorf(
+				runtime.ErrInvalidOperation,
+				"unsupported scroll target %q; supported targets: top, bottom",
+				target.String(),
+			)
+		}
+	}
+
+	options, err := parseDispatchScrollCoordinates(ctx, value, options)
+	if err != nil {
+		return dispatchScrollParams{}, err
+	}
+
+	return dispatchScrollParams{Mode: dispatchScrollModeTo, Options: options}, nil
 }
 
 func parseDispatchScrollCoordinates(ctx context.Context, value runtime.Value, options drivers.ScrollOptions) (drivers.ScrollOptions, error) {

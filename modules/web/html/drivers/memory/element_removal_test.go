@@ -20,10 +20,10 @@ func TestHTMLElementRemoveAtRemovesChildAndRefreshesChildren(t *testing.T) {
 
 	for _, tc := range []struct {
 		name          string
-		idx           runtime.Int
 		removedText   string
-		nextIdx       runtime.Int
 		nextIndexAttr string
+		idx           runtime.Int
+		nextIdx       runtime.Int
 	}{
 		{name: "first child", idx: 0, removedText: "one", nextIdx: 0, nextIndexAttr: "1"},
 		{name: "middle child", idx: 1, removedText: "two", nextIdx: 1, nextIndexAttr: "2"},
