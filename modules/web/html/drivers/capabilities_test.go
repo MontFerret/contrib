@@ -24,11 +24,13 @@ var (
 	_ drivers.PageFrameTarget    = (*memory.HTMLPage)(nil)
 	_ drivers.PageCookieReader   = (*memory.HTMLPage)(nil)
 	_ drivers.PageResponseTarget = (*memory.HTMLPage)(nil)
+	_ runtime.Queryable          = (*memory.HTMLPage)(nil)
 
 	_ drivers.HTMLDocument           = (*memory.HTMLDocument)(nil)
 	_ drivers.NodeInspector          = (*memory.HTMLDocument)(nil)
 	_ drivers.QueryTarget            = (*memory.HTMLDocument)(nil)
 	_ drivers.DocumentMetadataTarget = (*memory.HTMLDocument)(nil)
+	_ runtime.Queryable              = (*memory.HTMLDocument)(nil)
 
 	_ drivers.HTMLElement     = (*memory.HTMLElement)(nil)
 	_ drivers.NodeInspector   = (*memory.HTMLElement)(nil)
@@ -40,6 +42,7 @@ var (
 	_ drivers.RelationTarget  = (*memory.HTMLElement)(nil)
 	_ runtime.IndexRemovable  = (*memory.HTMLElement)(nil)
 	_ runtime.KeyRemovable    = (*memory.HTMLElement)(nil)
+	_ runtime.Queryable       = (*memory.HTMLElement)(nil)
 
 	_ drivers.HTMLPage             = (*cdp.HTMLPage)(nil)
 	_ drivers.PageStateTarget      = (*cdp.HTMLPage)(nil)
@@ -71,6 +74,7 @@ var (
 	_ runtime.IndexRemovable    = (*cdpdom.HTMLElement)(nil)
 	_ runtime.KeyRemovable      = (*cdpdom.HTMLElement)(nil)
 	_ runtime.Dispatchable      = (*cdpdom.HTMLElement)(nil)
+	_ runtime.Queryable         = (*cdpdom.HTMLElement)(nil)
 )
 
 func TestBackendCapabilityMatrix(t *testing.T) {

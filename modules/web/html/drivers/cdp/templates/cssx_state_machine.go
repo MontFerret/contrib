@@ -571,13 +571,5 @@ if (stack.length === 0) {
 
 const result = stack[stack.length - 1];
 
-if (Array.isArray(result)) {
-	return result;
-}
-
-if (result == null) {
-	return [];
-}
-
-return [result];
+%s
 }`

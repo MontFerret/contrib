@@ -189,3 +189,15 @@ func (p *HTMLPage) GetResponse(_ context.Context) (drivers.HTTPResponse, error) 
 func (p *HTMLPage) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
 	return p.document.Query(ctx, q)
 }
+
+func (p *HTMLPage) QueryOne(ctx context.Context, q runtime.Query) (runtime.Value, error) {
+	return p.document.QueryOne(ctx, q)
+}
+
+func (p *HTMLPage) QueryCount(ctx context.Context, q runtime.Query) (runtime.Int, error) {
+	return p.document.QueryCount(ctx, q)
+}
+
+func (p *HTMLPage) QueryExists(ctx context.Context, q runtime.Query) (runtime.Boolean, error) {
+	return p.document.QueryExists(ctx, q)
+}

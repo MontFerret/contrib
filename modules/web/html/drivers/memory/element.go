@@ -740,6 +740,18 @@ func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List
 	}
 }
 
+func (el *HTMLElement) QueryOne(ctx context.Context, q runtime.Query) (runtime.Value, error) {
+	return runtime.DefaultQueryOne(ctx, q, el.Query)
+}
+
+func (el *HTMLElement) QueryCount(ctx context.Context, q runtime.Query) (runtime.Int, error) {
+	return runtime.DefaultQueryCount(ctx, q, el.Query)
+}
+
+func (el *HTMLElement) QueryExists(ctx context.Context, q runtime.Query) (runtime.Boolean, error) {
+	return runtime.DefaultQueryExists(ctx, q, el.Query)
+}
+
 func (el *HTMLElement) ensureStyles(ctx context.Context) error {
 	if el.styles == nil {
 		styles, err := el.parseStyles(ctx)

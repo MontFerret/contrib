@@ -1,20 +1,20 @@
 LET valueDoc = DOCUMENT(@lab.static.static + '/value.html', { driver: "cdp" })
 
-LET el = QUERY VALUE ":first(.ListingId)" IN valueDoc USING css
+LET el = QUERY ONE ":first(.ListingId)" IN valueDoc USING css
 T::NOT::NONE(el)
 T::EQ(el.value, "068728")
 
-LET rawValue = QUERY VALUE ":value(:first(.ListingId))" IN valueDoc USING css
+LET rawValue = QUERY ONE ":value(:first(.ListingId))" IN valueDoc USING css
 T::EQ(rawValue, "068728")
 
-LET count = QUERY VALUE ":count(.ListingId)" IN valueDoc USING css
+LET count = QUERY ONE ":count(.ListingId)" IN valueDoc USING css
 T::EQ(count, 40)
 
-LET numeric = QUERY VALUE ":toNumber(:value(:first(.ListingId)))" IN valueDoc USING css
+LET numeric = QUERY ONE ":toNumber(:value(:first(.ListingId)))" IN valueDoc USING css
 T::EQ(numeric, 68728)
 
 LET urlDoc = DOCUMENT(@lab.static.static + '/overview.html', { driver: "cdp" })
-LET parsed = QUERY VALUE ':parseUrl(:url("href", :first(a.navbar-brand)))' IN urlDoc USING css
+LET parsed = QUERY ONE ':parseUrl(:url("href", :first(a.navbar-brand)))' IN urlDoc USING css
 
 T::EQ(parsed["host"], "getbootstrap.com")
 T::EQ(parsed["protocol"], "http:")

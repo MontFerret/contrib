@@ -63,3 +63,15 @@ func (doc *HTMLDocument) XPath(ctx context.Context, expression runtime.String) (
 func (doc *HTMLDocument) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
 	return doc.element.Query(ctx, q)
 }
+
+func (doc *HTMLDocument) QueryOne(ctx context.Context, q runtime.Query) (runtime.Value, error) {
+	return doc.element.QueryOne(ctx, q)
+}
+
+func (doc *HTMLDocument) QueryCount(ctx context.Context, q runtime.Query) (runtime.Int, error) {
+	return doc.element.QueryCount(ctx, q)
+}
+
+func (doc *HTMLDocument) QueryExists(ctx context.Context, q runtime.Query) (runtime.Boolean, error) {
+	return doc.element.QueryExists(ctx, q)
+}
