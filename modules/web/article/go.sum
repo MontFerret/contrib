@@ -4,6 +4,8 @@ github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.1 h1:IpUgup6ucCE4wB59wAP0Y2
 github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.1/go.mod h1:KUwy/WLgv9kv2yeBZkPCgDokHzg0M6EdRc17thnbVFw=
 github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.4 h1:LEtZLrGxNEJ/u/a4xj7dvmL2c6VhOrTcKokErJPsd6A=
 github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.4/go.mod h1:1mudKWh69vWjAbKfhlPeD0tRb6r0zSOklF1PUmh55Rg=
+github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.5 h1:BqdZ2sEkWrIeIj3d1uPwZ7dC3DaF9s0d1rpE0RmxuoA=
+github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.5/go.mod h1:OA65RfUU1pttnI5QadVB+8qCmF30Sbh7gd6hUaxc4+Y=
 github.com/MontFerret/cssx v0.2.0 h1:De0C6Irbg+qgFPXgWmPpVnwD4RRYUBQSbIYFTUVCNWU=
 github.com/MontFerret/cssx v0.2.0/go.mod h1:fmGtRUNVaeJYpiPSDlNIbbYzb3+K8NxmNmJOYqlHATU=
 github.com/MontFerret/ferret/v2 v2.0.0-alpha.17 h1:Hy94ku7qRCeSIHfnjIN0qkTrc00oNwvarbCn2XMeIKk=

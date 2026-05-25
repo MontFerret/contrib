@@ -4,7 +4,7 @@ go 1.25.6
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.1
-	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.4
+	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.5
 	github.com/MontFerret/ferret/v2 v2.0.0-alpha.20
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/microcosm-cc/bluemonday v1.0.27
@@ -26,6 +26,7 @@ require (
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/zerolog v1.35.1 // indirect
 	github.com/sethgrid/pester v1.2.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
