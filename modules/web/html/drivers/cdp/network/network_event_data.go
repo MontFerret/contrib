@@ -13,7 +13,40 @@ const (
 )
 
 type (
+	networkEventFields struct {
+		documentURL                 *string
+		urlFragment                 *string
+		hasPostData                 *bool
+		initialPriority             *string
+		referrerPolicy              *string
+		isLinkPreload               *bool
+		isSameSite                  *bool
+		hasUserGesture              *bool
+		initiatorType               *string
+		initiatorURL                *string
+		initiatorLineNumber         *float64
+		initiatorColumnNumber       *float64
+		initiatorRequestID          *string
+		charset                     *string
+		connectionReused            *bool
+		connectionID                *float64
+		remoteIPAddress             *string
+		remotePort                  *int
+		fromEarlyHints              *bool
+		responseTime                *float64
+		protocol                    *string
+		securityState               *string
+		cacheStorageCacheName       *string
+		serviceWorkerResponseSource *string
+		alternateProtocolUsage      *string
+		redirectURL                 *string
+		redirectStatus              *int
+		redirectStatusText          *string
+		redirected                  bool
+	}
+
 	networkEvent struct {
+		networkEventFields
 		headers           *drivers.HTTPHeaders
 		requestHeaders    *drivers.HTTPHeaders
 		client            *cdp.Client
@@ -43,6 +76,7 @@ type (
 	}
 
 	networkRequestState struct {
+		networkEventFields
 		headers           *drivers.HTTPHeaders
 		requestHeaders    *drivers.HTTPHeaders
 		client            *cdp.Client
@@ -82,30 +116,31 @@ func networkRequestKey(sessionKey string, requestID cdpnetwork.RequestID) string
 
 func networkEventFromState(name string, state networkRequestState) networkEvent {
 	return networkEvent{
-		name:              name,
-		sessionKey:        state.sessionKey,
-		requestID:         state.requestID,
-		loaderID:          state.loaderID,
-		frameID:           state.frameID,
-		url:               state.url,
-		method:            state.method,
-		resourceType:      state.resourceType,
-		status:            state.status,
-		statusText:        state.statusText,
-		mimeType:          state.mimeType,
-		headers:           state.headers,
-		requestHeaders:    state.requestHeaders,
-		failed:            state.failed,
-		errorText:         state.errorText,
-		canceled:          state.canceled,
-		blockedReason:     state.blockedReason,
-		fromCache:         state.fromCache,
-		fromDiskCache:     state.fromDiskCache,
-		fromServiceWorker: state.fromServiceWorker,
-		fromPrefetchCache: state.fromPrefetchCache,
-		encodedDataLength: state.encodedDataLength,
-		timestamp:         state.timestamp,
-		wallTime:          state.wallTime,
-		client:            state.client,
+		networkEventFields: state.networkEventFields,
+		name:               name,
+		sessionKey:         state.sessionKey,
+		requestID:          state.requestID,
+		loaderID:           state.loaderID,
+		frameID:            state.frameID,
+		url:                state.url,
+		method:             state.method,
+		resourceType:       state.resourceType,
+		status:             state.status,
+		statusText:         state.statusText,
+		mimeType:           state.mimeType,
+		headers:            state.headers,
+		requestHeaders:     state.requestHeaders,
+		failed:             state.failed,
+		errorText:          state.errorText,
+		canceled:           state.canceled,
+		blockedReason:      state.blockedReason,
+		fromCache:          state.fromCache,
+		fromDiskCache:      state.fromDiskCache,
+		fromServiceWorker:  state.fromServiceWorker,
+		fromPrefetchCache:  state.fromPrefetchCache,
+		encodedDataLength:  state.encodedDataLength,
+		timestamp:          state.timestamp,
+		wallTime:           state.wallTime,
+		client:             state.client,
 	}
 }

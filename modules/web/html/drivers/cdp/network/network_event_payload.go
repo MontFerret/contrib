@@ -18,29 +18,58 @@ func buildNetworkEventPayload(
 	options networkEventOptions,
 ) runtime.Value {
 	props := map[string]runtime.Value{
-		"event":             runtime.NewString(event.name),
-		"requestId":         runtime.NewString(string(event.requestID)),
-		"loaderId":          runtime.NewString(string(event.loaderID)),
-		"frameId":           runtime.NewString(event.frameID),
-		"url":               runtime.NewString(event.url),
-		"method":            runtime.NewString(event.method),
-		"type":              runtime.NewString(event.resourceType),
-		"status":            runtime.NewInt(event.status),
-		"statusText":        runtime.NewString(event.statusText),
-		"mimeType":          runtime.NewString(event.mimeType),
-		"headers":           headersRuntimeValue(event.headers),
-		"requestHeaders":    headersRuntimeValue(event.requestHeaders),
-		"failed":            runtime.NewBoolean(event.failed),
-		"errorText":         runtime.NewString(event.errorText),
-		"canceled":          runtime.NewBoolean(event.canceled),
-		"blockedReason":     runtime.NewString(event.blockedReason),
-		"fromCache":         runtime.NewBoolean(event.fromCache),
-		"fromDiskCache":     runtime.NewBoolean(event.fromDiskCache),
-		"fromServiceWorker": runtime.NewBoolean(event.fromServiceWorker),
-		"fromPrefetchCache": runtime.NewBoolean(event.fromPrefetchCache),
-		"encodedDataLength": runtime.NewFloat(event.encodedDataLength),
-		"timestamp":         runtime.NewFloat(event.timestamp),
-		"wallTime":          runtime.NewFloat(event.wallTime),
+		"event":                       runtime.NewString(event.name),
+		"requestId":                   runtime.NewString(string(event.requestID)),
+		"loaderId":                    runtime.NewString(string(event.loaderID)),
+		"frameId":                     runtime.NewString(event.frameID),
+		"url":                         runtime.NewString(event.url),
+		"method":                      runtime.NewString(event.method),
+		"type":                        runtime.NewString(event.resourceType),
+		"status":                      runtime.NewInt(event.status),
+		"statusText":                  runtime.NewString(event.statusText),
+		"mimeType":                    runtime.NewString(event.mimeType),
+		"headers":                     headersRuntimeValue(event.headers),
+		"requestHeaders":              headersRuntimeValue(event.requestHeaders),
+		"failed":                      runtime.NewBoolean(event.failed),
+		"errorText":                   runtime.NewString(event.errorText),
+		"canceled":                    runtime.NewBoolean(event.canceled),
+		"blockedReason":               runtime.NewString(event.blockedReason),
+		"fromCache":                   runtime.NewBoolean(event.fromCache),
+		"fromDiskCache":               runtime.NewBoolean(event.fromDiskCache),
+		"fromServiceWorker":           runtime.NewBoolean(event.fromServiceWorker),
+		"fromPrefetchCache":           runtime.NewBoolean(event.fromPrefetchCache),
+		"encodedDataLength":           runtime.NewFloat(event.encodedDataLength),
+		"timestamp":                   runtime.NewFloat(event.timestamp),
+		"wallTime":                    runtime.NewFloat(event.wallTime),
+		"documentURL":                 optionalStringRuntimeValue(event.documentURL),
+		"urlFragment":                 optionalStringRuntimeValue(event.urlFragment),
+		"hasPostData":                 optionalBoolRuntimeValue(event.hasPostData),
+		"initialPriority":             optionalStringRuntimeValue(event.initialPriority),
+		"referrerPolicy":              optionalStringRuntimeValue(event.referrerPolicy),
+		"isLinkPreload":               optionalBoolRuntimeValue(event.isLinkPreload),
+		"isSameSite":                  optionalBoolRuntimeValue(event.isSameSite),
+		"hasUserGesture":              optionalBoolRuntimeValue(event.hasUserGesture),
+		"initiatorType":               optionalStringRuntimeValue(event.initiatorType),
+		"initiatorURL":                optionalStringRuntimeValue(event.initiatorURL),
+		"initiatorLineNumber":         optionalFloatRuntimeValue(event.initiatorLineNumber),
+		"initiatorColumnNumber":       optionalFloatRuntimeValue(event.initiatorColumnNumber),
+		"initiatorRequestId":          optionalStringRuntimeValue(event.initiatorRequestID),
+		"charset":                     optionalStringRuntimeValue(event.charset),
+		"connectionReused":            optionalBoolRuntimeValue(event.connectionReused),
+		"connectionId":                optionalFloatRuntimeValue(event.connectionID),
+		"remoteIPAddress":             optionalStringRuntimeValue(event.remoteIPAddress),
+		"remotePort":                  optionalIntRuntimeValue(event.remotePort),
+		"fromEarlyHints":              optionalBoolRuntimeValue(event.fromEarlyHints),
+		"responseTime":                optionalFloatRuntimeValue(event.responseTime),
+		"protocol":                    optionalStringRuntimeValue(event.protocol),
+		"securityState":               optionalStringRuntimeValue(event.securityState),
+		"cacheStorageCacheName":       optionalStringRuntimeValue(event.cacheStorageCacheName),
+		"serviceWorkerResponseSource": optionalStringRuntimeValue(event.serviceWorkerResponseSource),
+		"alternateProtocolUsage":      optionalStringRuntimeValue(event.alternateProtocolUsage),
+		"redirected":                  runtime.NewBoolean(event.redirected),
+		"redirectURL":                 optionalStringRuntimeValue(event.redirectURL),
+		"redirectStatus":              optionalIntRuntimeValue(event.redirectStatus),
+		"redirectStatusText":          optionalStringRuntimeValue(event.redirectStatusText),
 	}
 
 	if event.name == drivers.NetworkRequestFinishedEvent && options.captureBody {
@@ -123,4 +152,36 @@ func resourceTypesRuntimeValue(types []string) runtime.Value {
 	}
 
 	return runtime.NewArrayWith(values...)
+}
+
+func optionalStringRuntimeValue(value *string) runtime.Value {
+	if value == nil {
+		return runtime.None
+	}
+
+	return runtime.NewString(*value)
+}
+
+func optionalBoolRuntimeValue(value *bool) runtime.Value {
+	if value == nil {
+		return runtime.None
+	}
+
+	return runtime.NewBoolean(*value)
+}
+
+func optionalIntRuntimeValue(value *int) runtime.Value {
+	if value == nil {
+		return runtime.None
+	}
+
+	return runtime.NewInt(*value)
+}
+
+func optionalFloatRuntimeValue(value *float64) runtime.Value {
+	if value == nil {
+		return runtime.None
+	}
+
+	return runtime.NewFloat(*value)
 }

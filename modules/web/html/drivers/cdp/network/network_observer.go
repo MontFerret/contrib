@@ -299,6 +299,28 @@ func (o *networkObserver) handleRequestStarted(
 		timestamp:      float64(reply.Timestamp),
 		wallTime:       float64(reply.WallTime),
 		client:         client,
+		networkEventFields: networkEventFields{
+			documentURL:           optionalEventString(reply.DocumentURL),
+			urlFragment:           reply.Request.URLFragment,
+			hasPostData:           reply.Request.HasPostData,
+			initialPriority:       optionalEventString(reply.Request.InitialPriority.String()),
+			referrerPolicy:        optionalEventString(reply.Request.ReferrerPolicy),
+			isLinkPreload:         reply.Request.IsLinkPreload,
+			isSameSite:            reply.Request.IsSameSite,
+			hasUserGesture:        reply.HasUserGesture,
+			initiatorType:         optionalEventString(reply.Initiator.Type),
+			initiatorURL:          reply.Initiator.URL,
+			initiatorLineNumber:   reply.Initiator.LineNumber,
+			initiatorColumnNumber: reply.Initiator.ColumnNumber,
+			initiatorRequestID:    eventRequestID(reply.Initiator.RequestID),
+		},
+	}
+
+	if reply.RedirectResponse != nil {
+		state.redirected = true
+		state.redirectURL = optionalEventString(reply.RedirectResponse.URL)
+		state.redirectStatus = eventInt(reply.RedirectResponse.Status)
+		state.redirectStatusText = eventString(reply.RedirectResponse.StatusText)
 	}
 
 	key := networkRequestKey(sessionKey, reply.RequestID)
@@ -335,14 +357,26 @@ func (o *networkObserver) handleResponseReceived(
 	state.statusText = reply.Response.StatusText
 	state.mimeType = reply.Response.MimeType
 	state.headers = toDriverHeaders(reply.Response.Headers)
+	state.charset = optionalEventString(reply.Response.Charset)
+	state.connectionReused = eventBool(reply.Response.ConnectionReused)
+	state.connectionID = eventFloat(reply.Response.ConnectionID)
+	state.remoteIPAddress = reply.Response.RemoteIPAddress
+	state.remotePort = reply.Response.RemotePort
 	if len(reply.Response.RequestHeaders) > 0 {
 		state.requestHeaders = toDriverHeaders(reply.Response.RequestHeaders)
 	}
 	state.fromDiskCache = boolPtrValue(reply.Response.FromDiskCache)
 	state.fromServiceWorker = boolPtrValue(reply.Response.FromServiceWorker)
 	state.fromPrefetchCache = boolPtrValue(reply.Response.FromPrefetchCache)
+	state.fromEarlyHints = reply.Response.FromEarlyHints
 	state.fromCache = state.fromCache || state.fromDiskCache || state.fromServiceWorker || state.fromPrefetchCache
 	state.encodedDataLength = reply.Response.EncodedDataLength
+	state.responseTime = optionalEventFloat(float64(reply.Response.ResponseTime))
+	state.protocol = reply.Response.Protocol
+	state.securityState = optionalEventString(reply.Response.SecurityState.String())
+	state.cacheStorageCacheName = reply.Response.CacheStorageCacheName
+	state.serviceWorkerResponseSource = optionalEventString(reply.Response.ServiceWorkerResponseSource.String())
+	state.alternateProtocolUsage = optionalEventString(reply.Response.AlternateProtocolUsage.String())
 	state.timestamp = float64(reply.Timestamp)
 	state.client = client
 	o.requests[key] = state

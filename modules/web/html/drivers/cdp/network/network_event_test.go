@@ -9,6 +9,7 @@ import (
 	"github.com/mafredri/cdp"
 	cdpnetwork "github.com/mafredri/cdp/protocol/network"
 	"github.com/mafredri/cdp/protocol/page"
+	"github.com/mafredri/cdp/protocol/security"
 	"github.com/rs/zerolog"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
@@ -144,6 +145,120 @@ func TestNetworkObserverSubscribeRejectsUnknownEventName(t *testing.T) {
 	}
 }
 
+func TestNetworkObserverEmitsRequestStartedMetadata(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	client := &cdp.Client{Network: &networkEventTestAPI{}}
+	observer := newStartedTestNetworkObserver(ctx, client)
+
+	stream, err := observer.Subscribe(ctx, drivers.NetworkRequestStartedEvent, nil)
+	if err != nil {
+		t.Fatalf("unexpected subscribe error: %v", err)
+	}
+	defer stream.Close()
+
+	messages := stream.Read(ctx)
+	waitForNetworkSubscribers(t, observer, 1)
+
+	frameID := page.FrameID("frame-1")
+	hasPostData := true
+	isLinkPreload := true
+	isSameSite := false
+	hasUserGesture := true
+	urlFragment := "#details"
+	initiatorURL := "https://example.com/app.js"
+	initiatorLine := 12.5
+	initiatorColumn := 4.25
+	initiatorRequestID := cdpnetwork.RequestID("preflight-1")
+
+	observer.handleRequestStarted(rootSessionKey, client, &cdpnetwork.RequestWillBeSentReply{
+		RequestID:      "request-1",
+		LoaderID:       "loader-1",
+		DocumentURL:    "https://example.com/app",
+		FrameID:        &frameID,
+		Type:           cdpnetwork.ResourceTypeFetch,
+		HasUserGesture: &hasUserGesture,
+		Request: cdpnetwork.Request{
+			URL:             "https://example.com/api/products",
+			URLFragment:     &urlFragment,
+			Method:          "POST",
+			Headers:         cdpnetwork.Headers(`{"Accept":"application/json"}`),
+			HasPostData:     &hasPostData,
+			InitialPriority: cdpnetwork.ResourcePriorityHigh,
+			ReferrerPolicy:  "strict-origin-when-cross-origin",
+			IsLinkPreload:   &isLinkPreload,
+			IsSameSite:      &isSameSite,
+		},
+		Initiator: cdpnetwork.Initiator{
+			Type:         "script",
+			URL:          &initiatorURL,
+			LineNumber:   &initiatorLine,
+			ColumnNumber: &initiatorColumn,
+			RequestID:    &initiatorRequestID,
+		},
+		Timestamp: 1.25,
+		WallTime:  10,
+	})
+
+	payload := readNetworkObject(t, messages)
+	assertStringField(t, payload, "event", drivers.NetworkRequestStartedEvent)
+	assertStringField(t, payload, "documentURL", "https://example.com/app")
+	assertStringField(t, payload, "urlFragment", "#details")
+	assertBoolField(t, payload, "hasPostData", true)
+	assertStringField(t, payload, "initialPriority", "High")
+	assertStringField(t, payload, "referrerPolicy", "strict-origin-when-cross-origin")
+	assertBoolField(t, payload, "isLinkPreload", true)
+	assertBoolField(t, payload, "isSameSite", false)
+	assertBoolField(t, payload, "hasUserGesture", true)
+	assertStringField(t, payload, "initiatorType", "script")
+	assertStringField(t, payload, "initiatorURL", "https://example.com/app.js")
+	assertFloatField(t, payload, "initiatorLineNumber", 12.5)
+	assertFloatField(t, payload, "initiatorColumnNumber", 4.25)
+	assertStringField(t, payload, "initiatorRequestId", "preflight-1")
+	assertBoolField(t, payload, "redirected", false)
+	assertNoneField(t, payload, "redirectURL")
+}
+
+func TestNetworkObserverEmitsRedirectMetadata(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	client := &cdp.Client{Network: &networkEventTestAPI{}}
+	observer := newStartedTestNetworkObserver(ctx, client)
+
+	stream, err := observer.Subscribe(ctx, drivers.NetworkRequestStartedEvent, nil)
+	if err != nil {
+		t.Fatalf("unexpected subscribe error: %v", err)
+	}
+	defer stream.Close()
+
+	messages := stream.Read(ctx)
+	waitForNetworkSubscribers(t, observer, 1)
+
+	observer.handleRequestStarted(rootSessionKey, client, &cdpnetwork.RequestWillBeSentReply{
+		RequestID:   "request-2",
+		DocumentURL: "https://example.com/next",
+		Type:        cdpnetwork.ResourceTypeDocument,
+		Request: cdpnetwork.Request{
+			URL:    "https://example.com/next",
+			Method: "GET",
+		},
+		RedirectResponse: &cdpnetwork.Response{
+			URL:        "https://example.com/old",
+			Status:     302,
+			StatusText: "Found",
+		},
+	})
+
+	payload := readNetworkObject(t, messages)
+	assertStringField(t, payload, "event", drivers.NetworkRequestStartedEvent)
+	assertBoolField(t, payload, "redirected", true)
+	assertStringField(t, payload, "redirectURL", "https://example.com/old")
+	assertIntField(t, payload, "redirectStatus", 302)
+	assertStringField(t, payload, "redirectStatusText", "Found")
+}
+
 func TestNetworkObserverEmitsRequestResponseAndFinishedPayloads(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -161,15 +276,27 @@ func TestNetworkObserverEmitsRequestResponseAndFinishedPayloads(t *testing.T) {
 	waitForNetworkSubscribers(t, observer, 1)
 
 	frameID := page.FrameID("frame-1")
+	hasPostData := true
+	isSameSite := true
+	remoteIP := "203.0.113.10"
+	remotePort := 443
+	fromEarlyHints := true
+	protocol := "h2"
+	cacheName := "api-cache"
 	observer.handleRequestStarted(rootSessionKey, client, &cdpnetwork.RequestWillBeSentReply{
-		RequestID: "request-1",
-		LoaderID:  "loader-1",
-		FrameID:   &frameID,
-		Type:      cdpnetwork.ResourceTypeFetch,
+		RequestID:   "request-1",
+		LoaderID:    "loader-1",
+		DocumentURL: "https://example.com/app",
+		FrameID:     &frameID,
+		Type:        cdpnetwork.ResourceTypeFetch,
 		Request: cdpnetwork.Request{
-			URL:     "https://example.com/api/products",
-			Method:  "POST",
-			Headers: cdpnetwork.Headers(`{"Accept":"application/json"}`),
+			URL:             "https://example.com/api/products",
+			Method:          "POST",
+			Headers:         cdpnetwork.Headers(`{"Accept":"application/json"}`),
+			HasPostData:     &hasPostData,
+			InitialPriority: cdpnetwork.ResourcePriorityVeryHigh,
+			ReferrerPolicy:  "origin",
+			IsSameSite:      &isSameSite,
 		},
 		Timestamp: 1.25,
 		WallTime:  10,
@@ -180,13 +307,25 @@ func TestNetworkObserverEmitsRequestResponseAndFinishedPayloads(t *testing.T) {
 		FrameID:   &frameID,
 		Type:      cdpnetwork.ResourceTypeFetch,
 		Response: cdpnetwork.Response{
-			URL:               "https://example.com/api/products",
-			Status:            200,
-			StatusText:        "OK",
-			MimeType:          "application/json",
-			Headers:           cdpnetwork.Headers(`{"Content-Type":"application/json"}`),
-			RequestHeaders:    cdpnetwork.Headers(`{"Accept":"application/json"}`),
-			EncodedDataLength: 42,
+			URL:                         "https://example.com/api/products",
+			Status:                      200,
+			StatusText:                  "OK",
+			MimeType:                    "application/json",
+			Charset:                     "utf-8",
+			Headers:                     cdpnetwork.Headers(`{"Content-Type":"application/json"}`),
+			RequestHeaders:              cdpnetwork.Headers(`{"Accept":"application/json"}`),
+			ConnectionReused:            true,
+			ConnectionID:                7,
+			RemoteIPAddress:             &remoteIP,
+			RemotePort:                  &remotePort,
+			FromEarlyHints:              &fromEarlyHints,
+			EncodedDataLength:           42,
+			ResponseTime:                cdpnetwork.TimeSinceEpoch(1234.5),
+			Protocol:                    &protocol,
+			SecurityState:               security.StateSecure,
+			CacheStorageCacheName:       &cacheName,
+			ServiceWorkerResponseSource: cdpnetwork.ServiceWorkerResponseSourceNetwork,
+			AlternateProtocolUsage:      cdpnetwork.AlternateProtocolUsageAlternativeJobWonRace,
 		},
 		Timestamp: 2.5,
 	})
@@ -211,6 +350,23 @@ func TestNetworkObserverEmitsRequestResponseAndFinishedPayloads(t *testing.T) {
 	assertBoolField(t, payload, "failed", false)
 	assertBoolField(t, payload, "fromCache", false)
 	assertFloatField(t, payload, "encodedDataLength", 128)
+	assertStringField(t, payload, "documentURL", "https://example.com/app")
+	assertBoolField(t, payload, "hasPostData", true)
+	assertStringField(t, payload, "initialPriority", "VeryHigh")
+	assertStringField(t, payload, "referrerPolicy", "origin")
+	assertBoolField(t, payload, "isSameSite", true)
+	assertStringField(t, payload, "charset", "utf-8")
+	assertBoolField(t, payload, "connectionReused", true)
+	assertFloatField(t, payload, "connectionId", 7)
+	assertStringField(t, payload, "remoteIPAddress", "203.0.113.10")
+	assertIntField(t, payload, "remotePort", 443)
+	assertBoolField(t, payload, "fromEarlyHints", true)
+	assertFloatField(t, payload, "responseTime", 1234.5)
+	assertStringField(t, payload, "protocol", "h2")
+	assertStringField(t, payload, "securityState", "secure")
+	assertStringField(t, payload, "cacheStorageCacheName", "api-cache")
+	assertStringField(t, payload, "serviceWorkerResponseSource", "network")
+	assertStringField(t, payload, "alternateProtocolUsage", "alternativeJobWonRace")
 }
 
 func TestNetworkObserverEmitsResponseReceivedPayload(t *testing.T) {
@@ -229,6 +385,7 @@ func TestNetworkObserverEmitsResponseReceivedPayload(t *testing.T) {
 	messages := stream.Read(ctx)
 	waitForNetworkSubscribers(t, observer, 1)
 
+	fromEarlyHints := false
 	observer.handleRequestStarted(rootSessionKey, client, &cdpnetwork.RequestWillBeSentReply{
 		RequestID: "request-1",
 		Type:      cdpnetwork.ResourceTypeXHR,
@@ -241,10 +398,13 @@ func TestNetworkObserverEmitsResponseReceivedPayload(t *testing.T) {
 		RequestID: "request-1",
 		Type:      cdpnetwork.ResourceTypeXHR,
 		Response: cdpnetwork.Response{
-			URL:        "https://example.com/api/products",
-			Status:     204,
-			StatusText: "No Content",
-			MimeType:   "application/json",
+			URL:            "https://example.com/api/products",
+			Status:         204,
+			StatusText:     "No Content",
+			MimeType:       "application/json",
+			Charset:        "utf-8",
+			FromEarlyHints: &fromEarlyHints,
+			SecurityState:  security.StateNeutral,
 		},
 	})
 
@@ -253,6 +413,10 @@ func TestNetworkObserverEmitsResponseReceivedPayload(t *testing.T) {
 	assertStringField(t, payload, "type", "xhr")
 	assertIntField(t, payload, "status", 204)
 	assertStringField(t, payload, "statusText", "No Content")
+	assertStringField(t, payload, "charset", "utf-8")
+	assertBoolField(t, payload, "connectionReused", false)
+	assertBoolField(t, payload, "fromEarlyHints", false)
+	assertStringField(t, payload, "securityState", "neutral")
 }
 
 func TestNetworkObserverEmitsSignedExchangeResourceType(t *testing.T) {
@@ -302,8 +466,9 @@ func TestNetworkObserverEmitsRequestFailedPayload(t *testing.T) {
 	waitForNetworkSubscribers(t, observer, 1)
 
 	observer.handleRequestStarted(rootSessionKey, client, &cdpnetwork.RequestWillBeSentReply{
-		RequestID: "request-1",
-		Type:      cdpnetwork.ResourceTypeFetch,
+		RequestID:   "request-1",
+		DocumentURL: "https://example.com/app",
+		Type:        cdpnetwork.ResourceTypeFetch,
 		Request: cdpnetwork.Request{
 			URL:    "https://example.com/api/products",
 			Method: "GET",
@@ -326,6 +491,9 @@ func TestNetworkObserverEmitsRequestFailedPayload(t *testing.T) {
 	assertBoolField(t, payload, "canceled", true)
 	assertStringField(t, payload, "errorText", "net::ERR_ABORTED")
 	assertStringField(t, payload, "blockedReason", "inspector")
+	assertStringField(t, payload, "documentURL", "https://example.com/app")
+	assertNoneField(t, payload, "connectionReused")
+	assertNoneField(t, payload, "remoteIPAddress")
 }
 
 func TestNetworkObserverPropagatesFromCacheState(t *testing.T) {
@@ -361,6 +529,7 @@ func TestNetworkObserverPropagatesFromCacheState(t *testing.T) {
 
 	payload := readNetworkObject(t, messages)
 	assertBoolField(t, payload, "fromCache", true)
+	assertNoneField(t, payload, "fromEarlyHints")
 }
 
 func TestNetworkObserverSlowSubscriberDoesNotBlockDelivery(t *testing.T) {
@@ -440,6 +609,50 @@ func TestNetworkEventPayloadCapturesAndTruncatesBody(t *testing.T) {
 	}
 
 	assertBoolField(t, payload, "bodyTruncated", true)
+}
+
+func TestNetworkEventPayloadUsesNoneForUnavailableOptionalFields(t *testing.T) {
+	payload := buildNetworkEventPayload(
+		context.Background(),
+		zerolog.Nop(),
+		networkEvent{name: drivers.NetworkRequestStartedEvent},
+		networkEventOptions{},
+	).(*runtime.Object)
+
+	for _, field := range []string{
+		"documentURL",
+		"urlFragment",
+		"hasPostData",
+		"initialPriority",
+		"referrerPolicy",
+		"isLinkPreload",
+		"isSameSite",
+		"hasUserGesture",
+		"initiatorType",
+		"initiatorURL",
+		"initiatorLineNumber",
+		"initiatorColumnNumber",
+		"initiatorRequestId",
+		"charset",
+		"connectionReused",
+		"connectionId",
+		"remoteIPAddress",
+		"remotePort",
+		"fromEarlyHints",
+		"responseTime",
+		"protocol",
+		"securityState",
+		"cacheStorageCacheName",
+		"serviceWorkerResponseSource",
+		"alternateProtocolUsage",
+		"redirectURL",
+		"redirectStatus",
+		"redirectStatusText",
+	} {
+		assertNoneField(t, payload, field)
+	}
+
+	assertBoolField(t, payload, "redirected", false)
 }
 
 func TestNetworkIdleWaitsForScopedRequests(t *testing.T) {
@@ -671,6 +884,15 @@ func assertBoolField(t *testing.T, obj *runtime.Object, field string, expected b
 
 	if bool(actual) != expected {
 		t.Fatalf("expected %s %v, got %v", field, expected, actual)
+	}
+}
+
+func assertNoneField(t *testing.T, obj *runtime.Object, field string) {
+	t.Helper()
+
+	value := objectField(t, obj, field)
+	if value != runtime.None {
+		t.Fatalf("expected %s to be none, got %T (%v)", field, value, value)
 	}
 }
 

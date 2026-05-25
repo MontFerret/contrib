@@ -525,6 +525,10 @@ RETURN evt == NONE ? NONE : {
 }
 ```
 
+Network events expose stable scalar fields for filtering and projection. Request and response payloads include `event`, `requestId`, `loaderId`, `frameId`, `url`, `method`, `type`, `status`, `statusText`, `mimeType`, `headers`, `requestHeaders`, `failed`, `errorText`, `canceled`, `blockedReason`, `fromCache`, `fromDiskCache`, `fromServiceWorker`, `fromPrefetchCache`, `encodedDataLength`, `timestamp`, and `wallTime`.
+
+CDP-backed network payloads also expose HTTP metadata when the browser provides it: `documentURL`, `urlFragment`, `hasPostData`, `initialPriority`, `referrerPolicy`, `isLinkPreload`, `isSameSite`, `hasUserGesture`, `initiatorType`, `initiatorURL`, `initiatorLineNumber`, `initiatorColumnNumber`, `initiatorRequestId`, `charset`, `connectionReused`, `connectionId`, `remoteIPAddress`, `remotePort`, `fromEarlyHints`, `responseTime`, `protocol`, `securityState`, `cacheStorageCacheName`, `serviceWorkerResponseSource`, `alternateProtocolUsage`, `redirected`, `redirectURL`, `redirectStatus`, and `redirectStatusText`. Optional metadata is `NONE` when CDP does not provide it.
+
 DOM custom events can be observed from documents or elements:
 
 ```fql
