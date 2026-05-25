@@ -9,4 +9,9 @@ T::NOT::NONE(first)
 
 LET count = QUERY COUNT ".track" IN page USING css
 
-RETURN T::EQ(count, 20)
+T::EQ(count, 20)
+
+T::TRUE(QUERY EXISTS ".track[data-index='19']" IN page USING css)
+T::FALSE(QUERY EXISTS ".track[data-index='20']" IN page USING css)
+
+RETURN TRUE

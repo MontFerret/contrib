@@ -6,6 +6,7 @@ import (
 
 	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
 
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -89,6 +90,111 @@ func TestCSSXUsesCallNameField(t *testing.T) {
 
 	if !strings.Contains(fn.String(), `":first"`) {
 		t.Fatalf("expected generated JS to include normalized call name, got %s", fn.String())
+	}
+}
+
+func TestCSSXModifierTemplatesUseDistinctFinalizers(t *testing.T) {
+	cases := []struct {
+		build func(cdpruntime.RemoteObjectID, runtime.String) (*eval.Function, error)
+		name  string
+		want  string
+	}{
+		{
+			name: "list",
+			build: func(id cdpruntime.RemoteObjectID, exp runtime.String) (*eval.Function, error) {
+				return CSSX(id, exp)
+			},
+			want: "return [result];",
+		},
+		{
+			name: "one",
+			build: func(id cdpruntime.RemoteObjectID, exp runtime.String) (*eval.Function, error) {
+				return CSSXOne(id, exp)
+			},
+			want: "return result.length > 0 ? result[0] : null;",
+		},
+		{
+			name: "count",
+			build: func(id cdpruntime.RemoteObjectID, exp runtime.String) (*eval.Function, error) {
+				return CSSXCount(id, exp)
+			},
+			want: "return 1;",
+		},
+		{
+			name: "exists",
+			build: func(id cdpruntime.RemoteObjectID, exp runtime.String) (*eval.Function, error) {
+				return CSSXExists(id, exp)
+			},
+			want: "return result != null;",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			fn, err := tc.build(cdpruntime.RemoteObjectID("obj"), runtime.NewString(`:value(:first(input))`))
+			if err != nil {
+				t.Fatalf("expected expression to compile, got %v", err)
+			}
+
+			js := fn.String()
+			if !strings.Contains(js, "const ops =") {
+				t.Fatalf("expected state machine JS, got %s", js)
+			}
+
+			if !strings.Contains(js, tc.want) {
+				t.Fatalf("expected generated JS to include %q, got %s", tc.want, js)
+			}
+		})
+	}
+}
+
+func TestCSSXModifierTemplatesUseSimpleSelectorFastPaths(t *testing.T) {
+	cases := []struct {
+		build func(cdpruntime.RemoteObjectID, runtime.String) (*eval.Function, error)
+		name  string
+		want  string
+	}{
+		{
+			name: "one",
+			build: func(id cdpruntime.RemoteObjectID, exp runtime.String) (*eval.Function, error) {
+				return CSSXOne(id, exp)
+			},
+			want: "return el.querySelector(selector);",
+		},
+		{
+			name: "count",
+			build: func(id cdpruntime.RemoteObjectID, exp runtime.String) (*eval.Function, error) {
+				return CSSXCount(id, exp)
+			},
+			want: "return el.querySelectorAll(selector).length;",
+		},
+		{
+			name: "exists",
+			build: func(id cdpruntime.RemoteObjectID, exp runtime.String) (*eval.Function, error) {
+				return CSSXExists(id, exp)
+			},
+			want: "return el.querySelector(selector) != null;",
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			fn, err := tc.build(cdpruntime.RemoteObjectID("obj"), runtime.NewString(`.track[data-index='0']`))
+			if err != nil {
+				t.Fatalf("expected expression to compile, got %v", err)
+			}
+
+			js := fn.String()
+			if strings.Contains(js, "const ops =") {
+				t.Fatalf("expected simple selector fast path, got %s", js)
+			}
+
+			if !strings.Contains(js, tc.want) {
+				t.Fatalf("expected generated JS to include %q, got %s", tc.want, js)
+			}
+		})
 	}
 }
 

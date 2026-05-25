@@ -40,6 +40,7 @@ func TestReadQueryContractForDocumentAndElement(t *testing.T) {
 			target := tt.target(t)
 
 			assertSharedQuerySemantics(t, ctx, target)
+			assertSharedQueryModifierSemantics(t, ctx, target.(runtime.Queryable))
 			assertSharedReadSemantics(t, ctx, target)
 		})
 	}
@@ -57,6 +58,7 @@ func TestReadQueryContractForPageQueryResolver(t *testing.T) {
 	}
 
 	assertSharedQuerySemantics(t, ctx, target)
+	assertSharedQueryModifierSemantics(t, ctx, page)
 }
 
 func assertSharedQuerySemantics(t *testing.T, ctx context.Context, target drivers.QueryTarget) {
@@ -151,6 +153,73 @@ func assertSharedQuerySemantics(t *testing.T, ctx context.Context, target driver
 
 	if runtime.CompareValues(xpathCount, runtime.NewFloat(2)) != 0 {
 		t.Fatalf("expected xpath count 2, got %v", xpathCount)
+	}
+}
+
+func assertSharedQueryModifierSemantics(t *testing.T, ctx context.Context, target runtime.Queryable) {
+	t.Helper()
+
+	cards := runtime.Query{
+		Kind:    runtime.NewString("css"),
+		Payload: runtime.NewString(".card"),
+	}
+
+	first, err := target.QueryOne(ctx, cards)
+	if err != nil {
+		t.Fatalf("query one failed: %v", err)
+	}
+
+	hero := mustElementFromValue(t, first)
+	assertElementID(t, ctx, hero, "hero")
+
+	count, err := target.QueryCount(ctx, cards)
+	if err != nil {
+		t.Fatalf("query count failed: %v", err)
+	}
+
+	if runtime.CompareValues(count, runtime.NewInt(2)) != 0 {
+		t.Fatalf("expected query count 2, got %v", count)
+	}
+
+	exists, err := target.QueryExists(ctx, cards)
+	if err != nil {
+		t.Fatalf("query exists failed: %v", err)
+	}
+
+	if exists != runtime.True {
+		t.Fatalf("expected query exists true, got %v", exists)
+	}
+
+	missing := runtime.Query{
+		Kind:    runtime.NewString("css"),
+		Payload: runtime.NewString(".missing"),
+	}
+
+	missingOne, err := target.QueryOne(ctx, missing)
+	if err != nil {
+		t.Fatalf("missing query one failed: %v", err)
+	}
+
+	if missingOne != runtime.None {
+		t.Fatalf("expected missing query one to return None, got %v", missingOne)
+	}
+
+	missingCount, err := target.QueryCount(ctx, missing)
+	if err != nil {
+		t.Fatalf("missing query count failed: %v", err)
+	}
+
+	if runtime.CompareValues(missingCount, runtime.ZeroInt) != 0 {
+		t.Fatalf("expected missing query count 0, got %v", missingCount)
+	}
+
+	missingExists, err := target.QueryExists(ctx, missing)
+	if err != nil {
+		t.Fatalf("missing query exists failed: %v", err)
+	}
+
+	if missingExists != runtime.False {
+		t.Fatalf("expected missing query exists false, got %v", missingExists)
 	}
 }
 

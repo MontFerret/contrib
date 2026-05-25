@@ -108,3 +108,71 @@ func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List
 		return nil, runtime.Error(runtime.ErrInvalidArgument, "unsupported query kind")
 	}
 }
+
+func (el *HTMLElement) QueryOne(ctx context.Context, q runtime.Query) (runtime.Value, error) {
+	switch query.Parse(string(q.Kind)) {
+	case query.CSS:
+		fn, err := templates.CSSXOne(el.id, q.Payload)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return el.eval.EvalResult(ctx, fn)
+	case query.XPath:
+		return el.eval.EvalResult(ctx, templates.XPathOne(el.id, q.Payload))
+	default:
+		return runtime.None, runtime.Error(runtime.ErrInvalidArgument, "unsupported query kind")
+	}
+}
+
+func (el *HTMLElement) QueryCount(ctx context.Context, q runtime.Query) (runtime.Int, error) {
+	switch query.Parse(string(q.Kind)) {
+	case query.CSS:
+		fn, err := templates.CSSXCount(el.id, q.Payload)
+		if err != nil {
+			return runtime.ZeroInt, err
+		}
+
+		out, err := el.eval.EvalValue(ctx, fn)
+		if err != nil {
+			return runtime.ZeroInt, err
+		}
+
+		return runtime.ToInt(ctx, out)
+	case query.XPath:
+		out, err := el.eval.EvalValue(ctx, templates.XPathCount(el.id, q.Payload))
+		if err != nil {
+			return runtime.ZeroInt, err
+		}
+
+		return runtime.ToInt(ctx, out)
+	default:
+		return runtime.ZeroInt, runtime.Error(runtime.ErrInvalidArgument, "unsupported query kind")
+	}
+}
+
+func (el *HTMLElement) QueryExists(ctx context.Context, q runtime.Query) (runtime.Boolean, error) {
+	switch query.Parse(string(q.Kind)) {
+	case query.CSS:
+		fn, err := templates.CSSXExists(el.id, q.Payload)
+		if err != nil {
+			return runtime.False, err
+		}
+
+		out, err := el.eval.EvalValue(ctx, fn)
+		if err != nil {
+			return runtime.False, err
+		}
+
+		return runtime.ToBoolean(out), nil
+	case query.XPath:
+		out, err := el.eval.EvalValue(ctx, templates.XPathExists(el.id, q.Payload))
+		if err != nil {
+			return runtime.False, err
+		}
+
+		return runtime.ToBoolean(out), nil
+	default:
+		return runtime.False, runtime.Error(runtime.ErrInvalidArgument, "unsupported query kind")
+	}
+}
