@@ -117,9 +117,9 @@ func (el *HTMLElement) QueryOne(ctx context.Context, q runtime.Query) (runtime.V
 			return runtime.None, err
 		}
 
-		return el.eval.EvalValue(ctx, fn)
+		return el.eval.EvalResult(ctx, fn)
 	case query.XPath:
-		return el.eval.EvalValue(ctx, templates.XPathOne(el.id, q.Payload))
+		return el.eval.EvalResult(ctx, templates.XPathOne(el.id, q.Payload))
 	default:
 		return runtime.None, runtime.Error(runtime.ErrInvalidArgument, "unsupported query kind")
 	}

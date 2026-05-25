@@ -95,6 +95,15 @@ func (rt *Runtime) EvalValue(ctx context.Context, fn *Function) (runtime.Value, 
 	return rt.resolver.ToValue(ctx, out)
 }
 
+func (rt *Runtime) EvalResult(ctx context.Context, fn *Function) (runtime.Value, error) {
+	out, err := rt.EvalRef(ctx, fn)
+	if err != nil {
+		return runtime.None, err
+	}
+
+	return rt.resolver.ToValue(ctx, out)
+}
+
 func (rt *Runtime) EvalList(ctx context.Context, fn *Function) (*runtime.Array, error) {
 	ref, err := rt.EvalRef(ctx, fn)
 	if err != nil {
