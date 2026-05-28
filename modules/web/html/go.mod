@@ -4,7 +4,7 @@ go 1.25.6
 
 require (
 	github.com/MontFerret/cssx v0.2.0
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.20
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.21
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/antchfx/htmlquery v1.3.6
 	github.com/antchfx/xpath v1.3.6
@@ -26,6 +26,7 @@ require (
 
 require (
 	github.com/andybalholm/cascadia v1.3.3 // indirect
+	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
@@ -36,7 +37,10 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/smarty/assertions v1.16.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/wI2L/jettison v0.7.4 // indirect
+	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/sys v0.45.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
