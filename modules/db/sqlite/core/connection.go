@@ -61,7 +61,11 @@ func (c *Connection) Begin(ctx context.Context) (*Transaction, error) {
 	}
 
 	tx := NewTransaction(c, sqlTx)
-	c.addTransaction(tx)
+
+	if err := c.addTransaction(tx); err != nil {
+		_ = tx.Close()
+		return nil, err
+	}
 
 	return tx, nil
 }
@@ -134,13 +138,17 @@ func (c *Connection) database(operation string) (*sql.DB, error) {
 	return c.db, nil
 }
 
-func (c *Connection) addTransaction(tx *Transaction) {
+func (c *Connection) addTransaction(tx *Transaction) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if !c.closed {
 		c.txs[tx] = struct{}{}
+
+		return nil
 	}
+
+	return OperationError("BEGIN", errConnectionClosed)
 }
 
 func (c *Connection) removeTransaction(tx *Transaction) {
