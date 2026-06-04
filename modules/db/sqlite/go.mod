@@ -1,6 +1,6 @@
 module github.com/MontFerret/contrib/modules/db/sqlite
 
-go 1.25.6
+go 1.25
 
 require (
 	github.com/MontFerret/ferret/v2 v2.0.0-alpha.21
