@@ -51,15 +51,6 @@ func (t *Transaction) QueryExists(ctx context.Context, q runtime.Query) (runtime
 	return runtime.DefaultQueryExists(ctx, q, t.Query)
 }
 
-func (t *Transaction) Dispatch(ctx context.Context, event runtime.DispatchEvent) (runtime.Value, error) {
-	tx, err := t.activeTx("DISPATCH")
-	if err != nil {
-		return runtime.None, err
-	}
-
-	return dispatchSQL(ctx, "DISPATCH", tx, event)
-}
-
 func (t *Transaction) Commit() error {
 	tx, err := t.finish("COMMIT")
 	if err != nil {

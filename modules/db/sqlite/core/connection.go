@@ -49,15 +49,6 @@ func (c *Connection) QueryExists(ctx context.Context, q runtime.Query) (runtime.
 	return runtime.DefaultQueryExists(ctx, q, c.Query)
 }
 
-func (c *Connection) Dispatch(ctx context.Context, event runtime.DispatchEvent) (runtime.Value, error) {
-	db, err := c.database("DISPATCH")
-	if err != nil {
-		return runtime.None, err
-	}
-
-	return dispatchSQL(ctx, "DISPATCH", db, event)
-}
-
 func (c *Connection) Begin(ctx context.Context) (*Transaction, error) {
 	db, err := c.database("BEGIN")
 	if err != nil {

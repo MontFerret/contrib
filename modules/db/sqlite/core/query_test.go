@@ -13,8 +13,8 @@ func TestConnectionQueryRowsAndParams(t *testing.T) {
 	ctx := context.Background()
 	db := openMemoryDB(t, ctx)
 
-	dispatchSQLForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, score REAL, note TEXT)`)
-	dispatchSQLForTest(t, ctx, db, `INSERT INTO users(name, score, note) VALUES (?, ?, ?)`,
+	queryExecForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, score REAL, note TEXT)`)
+	queryExecForTest(t, ctx, db, `INSERT INTO users(name, score, note) VALUES (?, ?, ?)`,
 		runtime.NewString("Ada"),
 		runtime.NewFloat(9.5),
 		runtime.None,
@@ -77,9 +77,9 @@ func TestQueryModifiers(t *testing.T) {
 	ctx := context.Background()
 	db := openMemoryDB(t, ctx)
 
-	dispatchSQLForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
-	dispatchSQLForTest(t, ctx, db, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
-	dispatchSQLForTest(t, ctx, db, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Grace"))
+	queryExecForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
+	queryExecForTest(t, ctx, db, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
+	queryExecForTest(t, ctx, db, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Grace"))
 
 	query := runtime.Query{
 		Kind:    runtime.NewString("sql"),

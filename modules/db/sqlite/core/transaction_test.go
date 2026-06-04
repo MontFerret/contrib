@@ -12,14 +12,14 @@ func TestTransactionCommitPersistsChanges(t *testing.T) {
 
 	ctx := context.Background()
 	db := openMemoryDB(t, ctx)
-	dispatchSQLForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
+	queryExecForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
 
 	tx, err := db.Begin(ctx)
 	if err != nil {
 		t.Fatalf("unexpected begin error: %v", err)
 	}
 
-	dispatchSQLForTest(t, ctx, tx, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
+	queryExecForTest(t, ctx, tx, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
 
 	inTx := queryRowsForTest(t, ctx, tx, `SELECT name FROM users`)
 	assertArrayLen(t, ctx, inTx, 1)
@@ -37,14 +37,14 @@ func TestTransactionRollbackDiscardsChanges(t *testing.T) {
 
 	ctx := context.Background()
 	db := openMemoryDB(t, ctx)
-	dispatchSQLForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
+	queryExecForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
 
 	tx, err := db.Begin(ctx)
 	if err != nil {
 		t.Fatalf("unexpected begin error: %v", err)
 	}
 
-	dispatchSQLForTest(t, ctx, tx, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
+	queryExecForTest(t, ctx, tx, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
 
 	if err := tx.Rollback(); err != nil {
 		t.Fatalf("unexpected rollback error: %v", err)
@@ -59,7 +59,7 @@ func TestTransactionAfterFinishFails(t *testing.T) {
 
 	ctx := context.Background()
 	db := openMemoryDB(t, ctx)
-	dispatchSQLForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
+	queryExecForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
 
 	tx, err := db.Begin(ctx)
 	if err != nil {
@@ -78,13 +78,13 @@ func TestActiveTransactionRollsBackOnClose(t *testing.T) {
 
 	ctx := context.Background()
 	db := openMemoryDB(t, ctx)
-	dispatchSQLForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
+	queryExecForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
 
 	tx, err := db.Begin(ctx)
 	if err != nil {
 		t.Fatalf("unexpected begin error: %v", err)
 	}
-	dispatchSQLForTest(t, ctx, tx, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
+	queryExecForTest(t, ctx, tx, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
 
 	if err := tx.Close(); err != nil {
 		t.Fatalf("unexpected tx close error: %v", err)
@@ -99,7 +99,7 @@ func TestClosingDBInvalidatesTransaction(t *testing.T) {
 
 	ctx := context.Background()
 	db := openMemoryDB(t, ctx)
-	dispatchSQLForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
+	queryExecForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
 
 	tx, err := db.Begin(ctx)
 	if err != nil {

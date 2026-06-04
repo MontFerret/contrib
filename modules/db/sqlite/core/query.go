@@ -57,5 +57,5 @@ func queryExec(ctx context.Context, operation string, runner execRunner, q runti
 		return nil, OperationError(operation, err)
 	}
 
-	return runtime.NewArrayWith(dispatchResult(q.Payload.String(), result)), nil
+	return runtime.NewArrayWith(execResult(q.Payload.String(), result)), nil
 }

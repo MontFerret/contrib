@@ -33,30 +33,6 @@ func openMemoryDB(t *testing.T, ctx context.Context) *Connection {
 	return db
 }
 
-func dispatchSQLForTest(t *testing.T, ctx context.Context, target interface {
-	Dispatch(context.Context, runtime.DispatchEvent) (runtime.Value, error)
-}, sqlText string, params ...runtime.Value) runtime.Value {
-	t.Helper()
-
-	var options runtime.Value = runtime.None
-	if len(params) > 0 {
-		options = runtime.NewObjectWith(map[string]runtime.Value{
-			"params": runtime.NewArrayWith(params...),
-		})
-	}
-
-	out, err := target.Dispatch(ctx, runtime.DispatchEvent{
-		Name:    runtime.NewString("sql"),
-		Payload: runtime.NewString(sqlText),
-		Options: options,
-	})
-	if err != nil {
-		t.Fatalf("unexpected dispatch error: %v", err)
-	}
-
-	return out
-}
-
 func queryRowsForTest(t *testing.T, ctx context.Context, target runtime.Queryable, sqlText string, params ...runtime.Value) *runtime.Array {
 	t.Helper()
 

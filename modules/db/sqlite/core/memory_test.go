@@ -14,8 +14,8 @@ func TestPrivateMemoryDatabasesAreIsolated(t *testing.T) {
 	first := openMemoryDB(t, ctx)
 	second := openMemoryDB(t, ctx)
 
-	dispatchSQLForTest(t, ctx, first, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
-	dispatchSQLForTest(t, ctx, first, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
+	queryExecForTest(t, ctx, first, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
+	queryExecForTest(t, ctx, first, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
 
 	_, err := second.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Payload: runtime.NewString(`SELECT name FROM users`)})
 	assertErrorContains(t, err, "no such table: users")
@@ -38,8 +38,8 @@ func TestSharedURIMemoryDatabase(t *testing.T) {
 	}
 	defer second.Close()
 
-	dispatchSQLForTest(t, ctx, first, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
-	dispatchSQLForTest(t, ctx, first, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
+	queryExecForTest(t, ctx, first, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
+	queryExecForTest(t, ctx, first, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
 
 	rows := queryRowsForTest(t, ctx, second, `SELECT name FROM users`)
 	assertArrayLen(t, ctx, rows, 1)

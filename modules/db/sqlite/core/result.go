@@ -7,7 +7,7 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-func dispatchResult(sqlText string, result sql.Result) runtime.Value {
+func execResult(sqlText string, result sql.Result) runtime.Value {
 	rowsAffected := runtime.Value(runtime.None)
 	if value, err := result.RowsAffected(); err == nil {
 		rowsAffected = runtime.NewInt64(value)
