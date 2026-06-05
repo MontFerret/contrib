@@ -1,0 +1,22 @@
+LET db = DB::SQLITE::OPEN({ memory: true })
+
+LET create = QUERY ONE `
+  CREATE TABLE users (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL
+  )
+` IN db USING sql_exec
+
+LET insert = QUERY ONE `
+  INSERT INTO users(name)
+  VALUES (?)
+` IN db USING sql_exec WITH {
+  params: ["Ada"]
+}
+
+LET rows = QUERY `
+  SELECT id, name
+  FROM users
+` IN db USING sql
+
+RETURN T::EQ(rows, [{ id: 1, name: "Ada" }])
