@@ -10,6 +10,16 @@ import (
 
 // Open creates a SQLite database handle from an options object.
 func Open(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
+	return open(ctx, core.DefaultOpenPolicy(), args...)
+}
+
+func openWithPolicy(policy core.OpenPolicy) runtime.Function {
+	return func(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
+		return open(ctx, policy, args...)
+	}
+}
+
+func open(ctx context.Context, policy core.OpenPolicy, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return runtime.None, err
 	}
@@ -19,7 +29,7 @@ func Open(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, err
 	}
 
-	return core.Open(ctx, options)
+	return core.OpenWithPolicy(ctx, options, policy)
 }
 
 // Close closes a SQLite database handle. Closing an already closed database is

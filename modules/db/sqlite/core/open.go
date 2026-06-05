@@ -12,6 +12,16 @@ const driverName = "sqlite"
 
 // Open opens a SQLite database connection from validated options.
 func Open(ctx context.Context, options OpenOptions) (*Connection, error) {
+	return OpenWithPolicy(ctx, options, DefaultOpenPolicy())
+}
+
+// OpenWithPolicy opens a SQLite database connection after applying an open
+// policy.
+func OpenWithPolicy(ctx context.Context, options OpenOptions, policy OpenPolicy) (*Connection, error) {
+	if err := policy.validate(options); err != nil {
+		return nil, OperationError("OPEN", err)
+	}
+
 	dsn, err := options.dsn()
 	if err != nil {
 		return nil, OperationError("OPEN", err)

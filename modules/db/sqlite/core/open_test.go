@@ -28,6 +28,17 @@ func TestOpenFileBackedDB(t *testing.T) {
 	defer db.Close()
 }
 
+func TestOpenWithDefaultPolicyAllowsFileBackedDB(t *testing.T) {
+	t.Parallel()
+
+	path := tempDBPath(t)
+	db, err := OpenWithPolicy(context.Background(), OpenOptions{Path: stringPtr(path)}, DefaultOpenPolicy())
+	if err != nil {
+		t.Fatalf("unexpected open error: %v", err)
+	}
+	defer db.Close()
+}
+
 func TestOpenFileBackedDBEscapesReservedPathCharacters(t *testing.T) {
 	t.Parallel()
 
@@ -41,6 +52,54 @@ func TestOpenFileBackedDBEscapesReservedPathCharacters(t *testing.T) {
 	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("expected database file at original path: %v", err)
 	}
+}
+
+func TestOpenWithMemoryOnlyPolicyAllowsPrivateMemoryDB(t *testing.T) {
+	t.Parallel()
+
+	db, err := OpenWithPolicy(context.Background(), OpenOptions{Memory: boolPtr(true)}, MemoryOnlyOpenPolicy())
+	if err != nil {
+		t.Fatalf("unexpected open error: %v", err)
+	}
+	defer db.Close()
+}
+
+func TestOpenWithMemoryOnlyPolicyAllowsSharedMemoryURI(t *testing.T) {
+	t.Parallel()
+
+	db, err := OpenWithPolicy(
+		context.Background(),
+		OpenOptions{URI: stringPtr("file:ferret_policy_memory?mode=memory&cache=shared")},
+		MemoryOnlyOpenPolicy(),
+	)
+	if err != nil {
+		t.Fatalf("unexpected open error: %v", err)
+	}
+	defer db.Close()
+}
+
+func TestOpenWithMemoryOnlyPolicyRejectsPath(t *testing.T) {
+	t.Parallel()
+
+	path := tempDBPath(t)
+	_, err := OpenWithPolicy(context.Background(), OpenOptions{Path: stringPtr(path)}, MemoryOnlyOpenPolicy())
+	assertErrorContains(t, err, fileDBDisabledMessage)
+
+	if _, statErr := os.Stat(path); !os.IsNotExist(statErr) {
+		t.Fatalf("expected no database file, got stat error %v", statErr)
+	}
+}
+
+func TestOpenWithMemoryOnlyPolicyRejectsFileURI(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join(t.TempDir(), "ferret.db")
+	_, err := OpenWithPolicy(
+		context.Background(),
+		OpenOptions{URI: stringPtr("file:" + path + "?mode=rwc")},
+		MemoryOnlyOpenPolicy(),
+	)
+	assertErrorContains(t, err, fileDBDisabledMessage)
 }
 
 func TestOpenURIDB(t *testing.T) {

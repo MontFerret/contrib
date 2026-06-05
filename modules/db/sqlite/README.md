@@ -44,6 +44,17 @@ func main() {
 }
 ```
 
+Sandboxed hosts can disable file-backed databases while keeping private and shared in-memory databases:
+
+```go
+engine, err := ferret.New(
+	ferret.WithModules(sqlitemodule.New(sqlitemodule.WithMemoryOnly())),
+)
+if err != nil {
+	panic(err)
+}
+```
+
 ## Function Reference
 
 | Function | Signature | Returns | Notes |
@@ -73,6 +84,8 @@ LET db = DB::SQLITE::OPEN({
 ```
 
 `memory: true` uses SQLite's private `:memory:` database behavior, so separate opens are isolated. Use `uri` for shared in-memory databases; at least one connection must remain open while other connections use the shared database.
+
+When the module is registered with `WithMemoryOnly()`, `OPEN` accepts `memory: true` and `uri` values with `mode=memory`, and rejects file paths or file-backed URIs.
 
 `create` defaults to `true`, and `readOnly` defaults to `false`. `readOnly: true` and `create: true` together are rejected.
 
