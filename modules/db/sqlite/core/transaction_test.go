@@ -94,22 +94,29 @@ func TestActiveTransactionRollsBackOnClose(t *testing.T) {
 	assertArrayLen(t, ctx, rows, 0)
 }
 
-func TestClosingDBInvalidatesTransaction(t *testing.T) {
+func TestClosingDBInvalidatesAllTransactions(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 	db := openMemoryDB(t, ctx)
 	queryExecForTest(t, ctx, db, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
 
-	tx, err := db.Begin(ctx)
+	first, err := db.Begin(ctx)
 	if err != nil {
 		t.Fatalf("unexpected begin error: %v", err)
+	}
+	second, err := db.Begin(ctx)
+	if err != nil {
+		t.Fatalf("unexpected second begin error: %v", err)
 	}
 
 	if err := db.Close(); err != nil {
 		t.Fatalf("unexpected db close error: %v", err)
 	}
 
-	_, err = tx.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Payload: runtime.NewString("SELECT 1")})
+	_, err = first.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Payload: runtime.NewString("SELECT 1")})
+	assertErrorContains(t, err, "parent database has been closed")
+
+	_, err = second.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Payload: runtime.NewString("SELECT 1")})
 	assertErrorContains(t, err, "parent database has been closed")
 }

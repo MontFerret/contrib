@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/binary"
+	"errors"
 	"hash/fnv"
 	"sync"
 
@@ -87,13 +88,17 @@ func (c *Connection) Close() error {
 	db := c.db
 	c.mu.Unlock()
 
+	errs := make([]error, 0)
 	for _, tx := range txs {
 		if err := tx.closeFromParent(); err != nil {
-			return OperationError("CLOSE", err)
+			errs = append(errs, err)
 		}
 	}
 
 	if err := db.Close(); err != nil {
+		errs = append(errs, err)
+	}
+	if err := errors.Join(errs...); err != nil {
 		return OperationError("CLOSE", err)
 	}
 

@@ -63,6 +63,9 @@ func TestConnectionQueryTypeMapping(t *testing.T) {
 	if got := objectField(t, ctx, row, "s"); got != runtime.NewString("ferret") {
 		t.Fatalf("expected string ferret, got %v", got)
 	}
+	if got := objectField(t, ctx, row, "b"); got != runtime.NewInt(1) {
+		t.Fatalf("expected bool param to decode as SQLite integer 1, got %v", got)
+	}
 	if got := objectField(t, ctx, row, "blob"); runtime.CompareValues(got, runtime.NewBinary([]byte("bin"))) != 0 {
 		t.Fatalf("expected binary value, got %v", got)
 	}
@@ -149,6 +152,15 @@ func TestConnectionQueryExecMetadataAndModifiers(t *testing.T) {
 	insert := queryExecForTest(t, ctx, db, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
 	assertExecMetadata(t, ctx, insert, runtime.NewInt64(1), runtime.NewInt64(1))
 
+	cteInsert := queryExecForTest(
+		t,
+		ctx,
+		db,
+		`WITH incoming(name) AS (SELECT ?) INSERT INTO users(name) SELECT name FROM incoming`,
+		runtime.NewString("Lovelace"),
+	)
+	assertExecMetadata(t, ctx, cteInsert, runtime.NewInt64(1), runtime.NewInt64(2))
+
 	update := queryExecForTest(
 		t,
 		ctx,
@@ -158,6 +170,16 @@ func TestConnectionQueryExecMetadataAndModifiers(t *testing.T) {
 		runtime.NewInt(1),
 	)
 	assertExecMetadata(t, ctx, update, runtime.NewInt64(1), runtime.None)
+
+	cteUpdate := queryExecForTest(
+		t,
+		ctx,
+		db,
+		`WITH selected(id) AS (SELECT ?) UPDATE users SET name = ? WHERE id = (SELECT id FROM selected)`,
+		runtime.NewInt(2),
+		runtime.NewString("Byron"),
+	)
+	assertExecMetadata(t, ctx, cteUpdate, runtime.NewInt64(1), runtime.None)
 
 	count, err := db.QueryCount(ctx, runtime.Query{
 		Kind:    runtime.NewString("sql_exec"),
@@ -192,6 +214,13 @@ func TestConnectionQueryExecMetadataAndModifiers(t *testing.T) {
 	row := mustObjectAt(t, ctx, rows, 0)
 	if got := objectField(t, ctx, row, "name"); got != runtime.NewString("Grace") {
 		t.Fatalf("expected name Grace, got %v", got)
+	}
+
+	rows = queryRowsForTest(t, ctx, db, `SELECT name FROM users WHERE id = ?`, runtime.NewInt(2))
+	assertArrayLen(t, ctx, rows, 1)
+	row = mustObjectAt(t, ctx, rows, 0)
+	if got := objectField(t, ctx, row, "name"); got != runtime.NewString("Byron") {
+		t.Fatalf("expected name Byron, got %v", got)
 	}
 }
 

@@ -2,6 +2,8 @@ package core
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -24,6 +26,21 @@ func TestOpenFileBackedDB(t *testing.T) {
 		t.Fatalf("unexpected open error: %v", err)
 	}
 	defer db.Close()
+}
+
+func TestOpenFileBackedDBEscapesReservedPathCharacters(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join(t.TempDir(), "ferret #?.db")
+	db, err := Open(context.Background(), OpenOptions{Path: stringPtr(path)})
+	if err != nil {
+		t.Fatalf("unexpected open error: %v", err)
+	}
+	defer db.Close()
+
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("expected database file at original path: %v", err)
+	}
 }
 
 func TestOpenURIDB(t *testing.T) {

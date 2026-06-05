@@ -101,7 +101,11 @@ func pathDSN(path, mode string) string {
 	query := url.Values{}
 	query.Set("mode", mode)
 
-	escapedPath := strings.ReplaceAll(path, "?", "%3f")
+	uri := url.URL{
+		Scheme:   "file",
+		Path:     path,
+		RawQuery: query.Encode(),
+	}
 
-	return "file:" + escapedPath + "?" + query.Encode()
+	return uri.String()
 }
