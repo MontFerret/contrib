@@ -281,6 +281,48 @@ RETURN sections[* RETURN {
 }]
 ```
 
+### CSSX Selection Pipelines
+
+CSS queries can use CSSX pseudo-functions to transform and refine their results. Pseudo-functions operate on a normalized selection, so singular projection names such as `:text` and `:attr` apply to every selected item.
+
+```fql
+LET page = DOCUMENT($url)
+
+LET paragraphs = QUERY ":text(p)" IN page USING css
+LET links = QUERY 'a >> :attr("href") >> :compact() >> :distinct()' IN page USING css
+LET cards = QUERY '.card >> :has(".price") >> :children(".title") >> :text()' IN page USING css
+
+RETURN {
+  paragraphs: paragraphs,
+  links: links,
+  firstParagraph: QUERY ONE ":text(p)" IN page USING css,
+  cards: cards
+}
+```
+
+`QUERY` returns the complete final selection. `QUERY ONE` evaluates the same pipeline and returns its first final value. `QUERY COUNT` and `QUERY EXISTS` inspect the final result shape.
+
+CSSX operation families:
+
+| Family | Operations | Behavior |
+| --- | --- | --- |
+| Maps | `text`, `ownText`, `normalize`, `trim`, `attr`, `prop`, `html`, `outerHtml`, `value`, `absUrl`, `url`, `parseUrl`, `replace`, `regex`, `toNumber`, `toDate` | Return one value per input slot and preserve missing values as `NONE`. |
+| Traversals | `parent`, `closest`, `children`, `next`, `prev`, `siblings` | Flat-map nodes in input order, preserve duplicates, and omit missing traversal results. |
+| Filters | `within`, `has`, `matches`, `not`, `withAttr`, `withText` | Keep matching nodes from the input selection. |
+| Selection operators | `take`, `skip`, `slice`, `compact`, `distinct`, `dedupeByAttr`, `dedupeByText` | Return another selection. `compact` removes `NONE`; `distinct` performs stable identity/value deduplication. |
+| Reducers | `exists`, `empty`, `count`, `one`, `indexOf`, `len`, `join` | Collapse the selection to one value. |
+| Cardinality | `first`, `last`, `nth` | Collapse to one item or `NONE`; a following ordinary pseudo-function lifts the item into a selection again. |
+
+Predicates and filtered traversals take a literal CSS criterion evaluated relative to each input node:
+
+```fql
+LET priced = QUERY '.product >> :has(".price")' IN page USING css
+LET inactive = QUERY 'li >> :not(".active")' IN page USING css
+LET containers = QUERY ':closest(".card", .title)' IN page USING css
+```
+
+Mapped `NONE` values keep their positions and count toward `count`, `exists`, `empty`, and `one`. Use `:compact()` when missing values should be removed before a reducer.
+
 ## Reading And Mutating DOM Content
 
 HTML page, document, and element values expose a dot-access surface for convenient reads. Static/memory-backed values are read-only through dot access. CDP-backed elements also support a small write-through assignment surface.

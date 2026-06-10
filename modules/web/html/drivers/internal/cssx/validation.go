@@ -10,13 +10,14 @@ func ValidateCallArgs(exp Expression, step cssx.Op) error {
 	switch exp {
 	case ExpressionFirst,
 		ExpressionLast,
-		ExpressionParent,
+		ExpressionCompact,
+		ExpressionDistinct,
 		ExpressionExists,
 		ExpressionEmpty,
 		ExpressionCount,
+		ExpressionOne,
 		ExpressionLen,
 		ExpressionText,
-		ExpressionTexts,
 		ExpressionOwnText,
 		ExpressionNormalize,
 		ExpressionTrim,
@@ -58,15 +59,27 @@ func ValidateCallArgs(exp Expression, step cssx.Op) error {
 		}
 
 		return validateArityRange(step, 0, 1)
-	case ExpressionWithin,
-		ExpressionClosest,
+	case ExpressionParent,
 		ExpressionChildren,
 		ExpressionNext,
 		ExpressionPrev,
+		ExpressionSiblings:
+		if err := validateOptionalStringLiteral(step); err != nil {
+			return err
+		}
+
+		return validateArityRange(step, 0, 1)
+	case ExpressionClosest,
+		ExpressionWithin,
 		ExpressionHas,
 		ExpressionMatches,
-		ExpressionIndexOf,
-		ExpressionFilter:
+		ExpressionNot:
+		if err := validateStringLiteral(step); err != nil {
+			return err
+		}
+
+		return validateArityRange(step, 0, 1)
+	case ExpressionIndexOf:
 		if err := validateLiteralCount(step, 0); err != nil {
 			return err
 		}
@@ -83,7 +96,6 @@ func ValidateCallArgs(exp Expression, step cssx.Op) error {
 
 		return validateArityRange(step, 0, 1)
 	case ExpressionAttr,
-		ExpressionAttrs,
 		ExpressionProp,
 		ExpressionURL,
 		ExpressionWithAttr,
@@ -143,6 +155,26 @@ func ValidateCallArgs(exp Expression, step cssx.Op) error {
 	default:
 		return fmt.Errorf("unsupported expression %q", exp)
 	}
+}
+
+func validateStringLiteral(step cssx.Op) error {
+	if err := validateLiteralCount(step, 1); err != nil {
+		return err
+	}
+
+	return validateLiteralKind(step, 0, cssx.CallArgString)
+}
+
+func validateOptionalStringLiteral(step cssx.Op) error {
+	if err := validateLiteralCountRange(step, 0, 1); err != nil {
+		return err
+	}
+
+	if len(step.Args) == 0 {
+		return nil
+	}
+
+	return validateLiteralKind(step, 0, cssx.CallArgString)
 }
 
 func CollectCallArgs(step cssx.Op) ([]any, error) {

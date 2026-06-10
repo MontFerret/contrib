@@ -15,12 +15,13 @@ const (
 )
 
 type CompiledOp struct {
-	Kind     OpKind `json:"kind"`
-	Selector string `json:"selector,omitempty"`
-	Name     string `json:"name,omitempty"`
-	Args     []any  `json:"args,omitempty"`
-	Arity    int    `json:"arity,omitempty"`
-	Index    int    `json:"index"`
+	Kind     OpKind          `json:"kind"`
+	Family   OperationFamily `json:"family,omitempty"`
+	Selector string          `json:"selector,omitempty"`
+	Name     string          `json:"name,omitempty"`
+	Args     []any           `json:"args,omitempty"`
+	Arity    int             `json:"arity,omitempty"`
+	Index    int             `json:"index"`
 }
 
 func CompileOps(input string) ([]CompiledOp, error) {
@@ -49,13 +50,13 @@ func CompilePipeline(pipeline cssxpipeline.Pipeline) ([]CompiledOp, error) {
 				Index:    idx,
 			})
 		case cssxpipeline.OpCall:
-			exp, err := ResolveSelector(step.Name)
+			op, err := ResolveOperation(step.Name)
 			if err != nil {
 				return nil, fmt.Errorf("invalid call operation at %d: %w", idx, err)
 			}
 
-			if err := ValidateCallArgs(exp, step); err != nil {
-				return nil, fmt.Errorf("invalid %s call at %d: %w", exp, idx, err)
+			if err := ValidateCallArgs(op.Expression, step); err != nil {
+				return nil, fmt.Errorf("invalid %s call at %d: %w", op.Expression, idx, err)
 			}
 
 			args, err := CollectCallArgs(step)
@@ -64,11 +65,12 @@ func CompilePipeline(pipeline cssxpipeline.Pipeline) ([]CompiledOp, error) {
 			}
 
 			ops = append(ops, CompiledOp{
-				Kind:  OpCall,
-				Name:  string(exp),
-				Arity: step.Arity,
-				Args:  args,
-				Index: idx,
+				Kind:   OpCall,
+				Family: op.Family,
+				Name:   string(op.Expression),
+				Arity:  step.Arity,
+				Args:   args,
+				Index:  idx,
 			})
 		default:
 			return nil, fmt.Errorf("unexpected pipeline operation at %d: %d", idx, step.Kind)

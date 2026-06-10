@@ -21,27 +21,28 @@ func TestCSSXCompilesAllSupportedSelectors(t *testing.T) {
 		{name: "take", exp: `:take(2, section)`},
 		{name: "skip", exp: `:skip(1, section)`},
 		{name: "slice", exp: `:slice(1, 2, section)`},
-		{name: "within", exp: `:within(section, :text(:first(h1)))`},
+		{name: "within", exp: `:within(".card", h1)`},
 		{name: "parent", exp: `:parent(:first(section))`},
-		{name: "closest", exp: `:closest(section, :first(h1))`},
-		{name: "children", exp: `:children(li, :first(ul))`},
-		{name: "next", exp: `:next(div, :first(span))`},
-		{name: "prev", exp: `:prev(div, :first(span))`},
+		{name: "closest", exp: `:closest("section", h1)`},
+		{name: "children", exp: `:children("li", ul)`},
+		{name: "next", exp: `:next("div", span)`},
+		{name: "prev", exp: `:prev("div", span)`},
+		{name: "siblings", exp: `:siblings("li", li.active)`},
 		{name: "exists", exp: `:exists(section)`},
 		{name: "empty", exp: `:empty(section)`},
-		{name: "has", exp: `:has(div, :first(section))`},
-		{name: "matches", exp: `:matches(section, :first(section))`},
+		{name: "has", exp: `:has("h1", section)`},
+		{name: "matches", exp: `:matches(".active", section)`},
+		{name: "not", exp: `:not(".active", section)`},
 		{name: "count", exp: `:count(section)`},
+		{name: "one", exp: `:one(section)`},
 		{name: "indexOf", exp: `:indexOf(section, :first(section))`},
-		{name: "len", exp: `:len(:texts(section))`},
+		{name: "len", exp: `:len(:text(section))`},
 		{name: "text", exp: `:text(:first(section))`},
-		{name: "texts", exp: `:texts(section)`},
 		{name: "ownText", exp: `:ownText(section)`},
 		{name: "normalize", exp: `:normalize(:text(section))`},
 		{name: "trim", exp: `:trim(:text(section))`},
-		{name: "join", exp: `:join(", ", :texts(section))`},
+		{name: "join", exp: `:join(", ", :text(section))`},
 		{name: "attr", exp: `:attr("href", :first(a))`},
-		{name: "attrs", exp: `:attrs("href", a)`},
 		{name: "prop", exp: `:prop("value", :first(input))`},
 		{name: "html", exp: `:html(:first(section))`},
 		{name: "outerHtml", exp: `:outerHtml(:first(section))`},
@@ -49,7 +50,8 @@ func TestCSSXCompilesAllSupportedSelectors(t *testing.T) {
 		{name: "absUrl", exp: `:absUrl(:attr("href", :first(a)))`},
 		{name: "url", exp: `:url("href", :first(a))`},
 		{name: "parseUrl", exp: `:parseUrl(:url("href", :first(a)))`},
-		{name: "filter", exp: `:filter(section, section)`},
+		{name: "compact", exp: `:compact(:attr("href", a))`},
+		{name: "distinct", exp: `:distinct(:text(section))`},
 		{name: "withAttr", exp: `:withAttr("href", a)`},
 		{name: "withText", exp: `:withText("Sale", section)`},
 		{name: "dedupeByAttr", exp: `:dedupeByAttr("href", a)`},
@@ -90,6 +92,10 @@ func TestCSSXUsesCallNameField(t *testing.T) {
 
 	if !strings.Contains(fn.String(), `":first"`) {
 		t.Fatalf("expected generated JS to include normalized call name, got %s", fn.String())
+	}
+
+	if !strings.Contains(fn.String(), `"family":"cardinality"`) {
+		t.Fatalf("expected generated JS to include operation family, got %s", fn.String())
 	}
 }
 
@@ -203,6 +209,11 @@ func TestCSSXRejectsInvalidArgs(t *testing.T) {
 		`:nth("1", section)`,
 		`:slice(1, section)`,
 		`:attr(1, a)`,
+		`:texts(a)`,
+		`:attrs("href", a)`,
+		`:filter(a, a)`,
+		`:has(.price, .product)`,
+		`:closest(.card)`,
 		`:replace("\\s+", :text(section))`,
 		`:regex(1, :text(section))`,
 	}
