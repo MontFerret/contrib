@@ -3,7 +3,7 @@ module github.com/MontFerret/contrib/modules/yaml
 go 1.25.6
 
 require (
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.20
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.21
 	github.com/goccy/go-yaml v1.19.2
 )
 

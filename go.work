@@ -3,6 +3,7 @@ go 1.26.1
 use (
 	modules/csv
 	modules/db/sqlite
+	modules/security/jwt
 	modules/toml
 	modules/web/article
 	modules/web/html
