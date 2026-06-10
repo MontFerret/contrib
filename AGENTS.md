@@ -38,6 +38,125 @@ Agents should reason about changes by ownership boundary:
 - If the task changes workspace-wide development behavior, start at the repo root (`Makefile`, `go.work`, `scripts/`).
 - If the task would require changing Ferret core semantics, APIs, compiler behavior, VM behavior, or runtime internals, that change likely belongs in `github.com/MontFerret/ferret`, not here.
 
+## Module Code Organization
+
+Ferret contrib modules should follow a consistent internal layout so that implementation code, Ferret runtime bindings, and public module wiring stay easy to understand and maintain.
+
+Use `modules/db/sqlite` as the reference structure for new modules.
+
+### Recommended structure
+
+```text
+modules/<category>/<module>/
+  core/
+    ...
+  lib/
+    ...
+  README.md
+  doc.go
+  options.go
+  <module>.go
+  <module>_test.go
+```
+
+### `core/`
+
+The `core` package contains the module's main implementation.
+
+Put business logic, resource management, protocol/client code, validation, parsing, query handling, and reusable internal types here. Code in `core` should not depend on Ferret function binding details unless there is a strong reason.
+
+This package should be testable as normal Go code.
+
+Examples of things that belong in `core`:
+
+- database connections and transactions
+- archive readers/writers
+- JWT signing and verification logic
+- OAuth2 clients and token handling
+- queryable/resource implementations
+- option validation
+- error normalization
+
+### `lib/`
+
+The `lib` package contains the Ferret-facing function bridge.
+
+Keep this layer thin. Its job is to adapt Ferret runtime values to Go values, call `core`, and convert results back into Ferret values.
+
+Avoid putting main implementation logic in `lib`. If a Ferret function starts to contain meaningful behavior, move that behavior into `core` and let `lib` call it.
+
+Examples of things that belong in `lib`:
+
+- Ferret function declarations
+- argument decoding
+- runtime value conversion
+- function registration helpers
+- small wrappers around `core` operations
+- Ferret-specific error messages and arity/type checks
+
+### Top-level module package
+
+The top-level package wires the module together.
+
+It should expose the public module constructor, module options, documentation package comments, and integration tests where appropriate.
+
+Typical top-level files:
+
+- `<module>.go` — module constructor and registration
+- `options.go` — public configuration options
+- `doc.go` — package documentation
+- `README.md` — user-facing module documentation
+- `<module>_test.go` — module-level behavior tests
+
+### Dependency direction
+
+Keep dependencies flowing in one direction:
+
+```text
+top-level module package
+        ↓
+       lib
+        ↓
+      core
+```
+
+`core` should not import `lib`.
+
+`core` should generally not know about Ferret function names, namespaces, or registration details. `lib` is responsible for translating between Ferret's runtime API and the module implementation.
+
+### Naming
+
+Use a namespace that matches the module category and purpose.
+
+Examples:
+
+```text
+DB::SQLITE
+SECURITY::JWT
+SECURITY::OAUTH2
+ARCHIVE::ZIP
+ARCHIVE::TAR
+```
+
+Prefer namespaces that leave room for related future modules under the same umbrella.
+
+### Testing expectations
+
+Prefer testing at two levels:
+
+1. `core` tests for implementation behavior without Ferret runtime setup.
+2. Module-level tests for public Ferret behavior, function names, value conversion, and error handling.
+
+Ferret-facing tests should verify the public contract, not private implementation details.
+
+### Rule of thumb
+
+If the code would still be useful outside Ferret, it probably belongs in `core`.
+
+If the code exists only to expose something as a Ferret function, it belongs in `lib`.
+
+If the code configures, registers, documents, or packages the module, it belongs in the top-level module package.
+
 ## Canonical invariants
 
 - This repository contains optional modules, not the Ferret core runtime.
@@ -78,31 +197,18 @@ Agents should begin with the package or directory whose responsibility owns the 
 
 ### Module surfaces
 
-- `modules/csv`
-    - CSV module and `CSV` namespace helpers.
+Modules live under `modules/`.
 
-- `modules/toml`
-    - TOML module and `TOML` namespace helpers.
+Do not rely on this file for a complete list of modules. Module discovery for repo-level automation is owned by `scripts/modules.sh` and is based on finding `go.mod` files under `modules/`.
 
-- `modules/xml`
-    - XML module and `XML` namespace helpers.
+When working on module-specific behavior:
 
-- `modules/yaml`
-    - YAML module and `YAML` namespace helpers.
+- find the owning module under `modules/...`
+- inspect that module’s `go.mod`
+- inspect that module’s `README.md`
+- treat that module directory as the primary ownership boundary
 
-- `modules/web/article`
-    - Article extraction helpers under `WEB::ARTICLE`.
-
-- `modules/web/html`
-    - HTML-related Ferret module functionality.
-
-- `modules/web/robots`
-    - robots.txt parsing and policy helpers under `WEB::ROBOTS`.
-
-- `modules/web/sitemap`
-    - Sitemap discovery helpers under `WEB::SITEMAP`.
-
-Each module should be treated as its own ownership boundary first.
+Examples of module paths may appear elsewhere in this guide only as structural examples, not as a canonical module registry.
 
 ## Primary surfaces
 
