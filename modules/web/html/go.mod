@@ -6,6 +6,7 @@ require (
 	github.com/MontFerret/cssx v0.2.0
 	github.com/MontFerret/ferret/v2 v2.0.0-alpha.21
 	github.com/PuerkitoBio/goquery v1.12.0
+	github.com/andybalholm/cascadia v1.3.3
 	github.com/antchfx/htmlquery v1.3.6
 	github.com/antchfx/xpath v1.3.6
 	github.com/corpix/uarand v0.2.0
@@ -25,7 +26,6 @@ require (
 )
 
 require (
-	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect

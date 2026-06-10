@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/andybalholm/cascadia"
 	"golang.org/x/net/html"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/cssx"
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 var cssxNonNumeric = regexp.MustCompile(`[^\d+\-.,eE]`)
@@ -34,607 +35,322 @@ func cssxApplyCall(name cssx.Expression, args []any, values []any, baseURL *url.
 		input = values[len(values)-1]
 	}
 
+	op, err := cssx.ResolveOperation(string(name))
+	if err != nil {
+		return []any{}
+	}
+
+	switch op.Family {
+	case cssx.FamilyCardinality:
+		return cssxApplyCardinality(name, args, input)
+	case cssx.FamilySelection:
+		return cssxApplySelection(name, args, input)
+	case cssx.FamilyTraversal:
+		return cssxApplyTraversal(name, args, input)
+	case cssx.FamilyFilter:
+		return cssxApplyFilter(name, args, input)
+	case cssx.FamilyMap:
+		return cssxApplyMap(name, args, input, baseURL)
+	case cssx.FamilyReducer:
+		return cssxApplyReducer(name, args, values, input)
+	default:
+		return []any{}
+	}
+}
+
+func cssxApplyCardinality(name cssx.Expression, args []any, input any) any {
+	items := cssxToArray(input)
+
 	switch name {
 	case cssx.ExpressionFirst:
-		arr := cssxToArray(input)
-
-		if len(arr) == 0 {
-			return nil
+		if len(items) > 0 {
+			return items[0]
 		}
-
-		return arr[0]
 	case cssx.ExpressionLast:
-		arr := cssxToArray(input)
-
-		if len(arr) == 0 {
-			return nil
+		if len(items) > 0 {
+			return items[len(items)-1]
 		}
-
-		return arr[len(arr)-1]
 	case cssx.ExpressionNth:
-		arr := cssxToArray(input)
 		idx, ok := cssxToInt(cssxArgNumber(args, 0))
-
-		if !ok || idx < 0 || idx >= len(arr) {
-			return nil
+		if ok && idx >= 0 && idx < len(items) {
+			return items[idx]
 		}
+	}
 
-		return arr[idx]
+	return nil
+}
+
+func cssxApplySelection(name cssx.Expression, args []any, input any) []any {
+	items := cssxToArray(input)
+
+	switch name {
 	case cssx.ExpressionTake:
-		arr := cssxToArray(input)
 		n, ok := cssxToInt(cssxArgNumber(args, 0))
-
 		if !ok || n <= 0 {
 			return []any{}
 		}
-
-		if n > len(arr) {
-			n = len(arr)
+		if n > len(items) {
+			n = len(items)
 		}
-
-		out := make([]any, n)
-		copy(out, arr[:n])
-
-		return out
+		return append([]any(nil), items[:n]...)
 	case cssx.ExpressionSkip:
-		arr := cssxToArray(input)
 		n, ok := cssxToInt(cssxArgNumber(args, 0))
-
 		if !ok || n <= 0 {
-			return arr
+			return append([]any(nil), items...)
 		}
-
-		if n >= len(arr) {
+		if n >= len(items) {
 			return []any{}
 		}
-
-		out := make([]any, len(arr)-n)
-		copy(out, arr[n:])
-
-		return out
+		return append([]any(nil), items[n:]...)
 	case cssx.ExpressionSlice:
-		arr := cssxToArray(input)
-		start, startOk := cssxToInt(cssxArgNumber(args, 0))
-		count, countOk := cssxToInt(cssxArgNumber(args, 1))
-
-		if !startOk || !countOk || count <= 0 {
+		start, startOK := cssxToInt(cssxArgNumber(args, 0))
+		count, countOK := cssxToInt(cssxArgNumber(args, 1))
+		if !startOK || !countOK || count <= 0 {
 			return []any{}
 		}
-
-		return cssxSliceArray(arr, start, start+count)
-	case cssx.ExpressionWithin:
-		var scope any
-
-		if len(values) > 1 {
-			scope = values[0]
-		}
-
-		scopedNodes := cssxToNodes(scope)
-
-		if len(scopedNodes) == 0 {
-			return []any{}
-		}
-
-		if selector, ok := input.(string); ok {
-			var out []*html.Node
-
-			for _, node := range scopedNodes {
-				doc := goquery.NewDocumentFromNode(node)
-				out = append(out, doc.Selection.Find(selector).Nodes...)
+		return cssxSliceArray(items, start, start+count)
+	case cssx.ExpressionCompact:
+		out := make([]any, 0, len(items))
+		for _, item := range items {
+			if item != nil {
+				out = append(out, item)
 			}
-
-			return cssxNodesToAny(cssxDedupeNodes(out))
 		}
+		return out
+	case cssx.ExpressionDistinct:
+		out := make([]any, 0, len(items))
+		for _, item := range items {
+			if !cssxArrayContainsDistinct(out, item) {
+				out = append(out, item)
+			}
+		}
+		return out
+	case cssx.ExpressionDedupeByAttr:
+		seen := make(map[string]struct{}, len(items))
+		out := make([]any, 0, len(items))
+		for _, node := range cssxToNodes(items) {
+			value, ok := cssxNodeAttr(node, cssxArgString(args, 0))
+			key := "<none>"
+			if ok {
+				key = value
+			}
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			seen[key] = struct{}{}
+			out = append(out, node)
+		}
+		return out
+	case cssx.ExpressionDedupeByText:
+		seen := make(map[string]struct{}, len(items))
+		out := make([]any, 0, len(items))
+		for _, node := range cssxToNodes(items) {
+			key := cssxNormalizeSpace(cssxTextContent(node))
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			seen[key] = struct{}{}
+			out = append(out, node)
+		}
+		return out
+	default:
+		return []any{}
+	}
+}
 
-		nodeValues := cssxToNodes(input)
+func cssxApplyTraversal(name cssx.Expression, args []any, input any) []any {
+	criterion := cssxArgString(args, 0)
+	out := make([]any, 0)
 
-		if len(nodeValues) > 0 {
-			out := make([]any, 0, len(nodeValues))
-
-			for _, node := range nodeValues {
-				for _, scopeNode := range scopedNodes {
-					if cssxContainsNode(scopeNode, node) {
-						out = append(out, node)
-						break
-					}
+	for _, node := range cssxToNodes(input) {
+		switch name {
+		case cssx.ExpressionParent:
+			cssxAppendMatchingNode(&out, cssxParentElement(node), criterion)
+		case cssx.ExpressionClosest:
+			for current := node; current != nil; current = cssxParentElement(current) {
+				if cssxNodeMatches(current, criterion) {
+					out = append(out, current)
+					break
 				}
 			}
-
-			return out
-		}
-
-		return input
-	case cssx.ExpressionParent:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return nil
-		}
-
-		return cssxParentElement(node)
-	case cssx.ExpressionClosest:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return nil
-		}
-
-		var candidates []*html.Node
-
-		if len(values) > 1 {
-			candidates = cssxToNodes(values[0])
-		}
-
-		if len(candidates) == 0 {
-			return cssxParentElement(node)
-		}
-
-		candidateSet := make(map[*html.Node]struct{}, len(candidates))
-
-		for _, candidate := range candidates {
-			candidateSet[candidate] = struct{}{}
-		}
-
-		for cursor := node; cursor != nil; cursor = cssxParentElement(cursor) {
-			if _, ok := candidateSet[cursor]; ok {
-				return cursor
+		case cssx.ExpressionChildren:
+			for _, child := range cssxElementChildren(node) {
+				cssxAppendMatchingNode(&out, child, criterion)
+			}
+		case cssx.ExpressionNext:
+			cssxAppendMatchingNode(&out, cssxNextElementSibling(node), criterion)
+		case cssx.ExpressionPrev:
+			cssxAppendMatchingNode(&out, cssxPrevElementSibling(node), criterion)
+		case cssx.ExpressionSiblings:
+			for _, sibling := range cssxElementSiblings(node) {
+				cssxAppendMatchingNode(&out, sibling, criterion)
 			}
 		}
+	}
 
-		return nil
-	case cssx.ExpressionChildren:
-		node := cssxFirstNode(input)
+	return out
+}
 
-		if node == nil {
-			return []any{}
-		}
+func cssxApplyFilter(name cssx.Expression, args []any, input any) []any {
+	criterion := cssxArgString(args, 0)
+	out := make([]any, 0)
 
-		children := cssxElementChildren(node)
-
-		if len(values) <= 1 {
-			return cssxNodesToAny(children)
-		}
-
-		candidates := cssxToNodes(values[0])
-
-		if len(candidates) == 0 {
-			return cssxNodesToAny(children)
-		}
-
-		candidateSet := make(map[*html.Node]struct{}, len(candidates))
-
-		for _, candidate := range candidates {
-			candidateSet[candidate] = struct{}{}
-		}
-
-		out := make([]any, 0, len(children))
-
-		for _, child := range children {
-			if _, ok := candidateSet[child]; ok {
-				out = append(out, child)
-			}
-		}
-
+	if !cssxValidSelector(criterion) {
 		return out
-	case cssx.ExpressionNext:
-		node := cssxFirstNode(input)
+	}
 
-		if node == nil {
-			return nil
+	for _, node := range cssxToNodes(input) {
+		keep := false
+
+		switch name {
+		case cssx.ExpressionWithin:
+			keep = cssxNodeWithin(node, criterion)
+		case cssx.ExpressionHas:
+			keep = cssxNodeHas(node, criterion)
+		case cssx.ExpressionMatches:
+			keep = cssxNodeMatches(node, criterion)
+		case cssx.ExpressionNot:
+			keep = !cssxNodeMatches(node, criterion)
+		case cssx.ExpressionWithAttr:
+			keep = cssxNodeHasAttr(node, criterion)
+		case cssx.ExpressionWithText:
+			keep = strings.Contains(cssxTextContent(node), criterion)
 		}
 
-		next := cssxNextElementSibling(node)
+		if keep {
+			out = append(out, node)
+		}
+	}
 
-		if next == nil {
-			return nil
+	return out
+}
+
+func cssxApplyMap(name cssx.Expression, args []any, input any, baseURL *url.URL) []any {
+	items := cssxToArray(input)
+	out := make([]any, 0, len(items))
+
+	for _, item := range items {
+		if item == nil {
+			out = append(out, nil)
+			continue
 		}
 
-		if len(values) <= 1 {
-			return next
-		}
+		out = append(out, cssxMapItem(name, args, item, baseURL))
+	}
 
-		candidates := cssxToNodes(values[0])
+	return out
+}
 
-		if len(candidates) == 0 {
-			return next
-		}
+func cssxMapItem(name cssx.Expression, args []any, input any, baseURL *url.URL) any {
+	node, _ := input.(*html.Node)
 
-		for _, candidate := range candidates {
-			if candidate == next {
-				return next
-			}
-		}
-
-		return nil
-	case cssx.ExpressionPrev:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return nil
-		}
-
-		prev := cssxPrevElementSibling(node)
-
-		if prev == nil {
-			return nil
-		}
-
-		if len(values) <= 1 {
-			return prev
-		}
-
-		candidates := cssxToNodes(values[0])
-
-		if len(candidates) == 0 {
-			return prev
-		}
-
-		for _, candidate := range candidates {
-			if candidate == prev {
-				return prev
-			}
-		}
-
-		return nil
-	case cssx.ExpressionExists:
-		return len(cssxToArray(input)) > 0
-	case cssx.ExpressionEmpty:
-		return len(cssxToArray(input)) == 0
-	case cssx.ExpressionHas:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return false
-		}
-
-		var candidates []*html.Node
-
-		if len(values) > 1 {
-			candidates = cssxToNodes(values[0])
-		}
-
-		for _, candidate := range candidates {
-			if cssxContainsNode(node, candidate) {
-				return true
-			}
-		}
-
-		return false
-	case cssx.ExpressionMatches:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return false
-		}
-
-		var candidates []*html.Node
-
-		if len(values) > 1 {
-			candidates = cssxToNodes(values[0])
-		}
-
-		for _, candidate := range candidates {
-			if candidate == node {
-				return true
-			}
-		}
-
-		return false
-	case cssx.ExpressionCount:
-		return len(cssxToArray(input))
-	case cssx.ExpressionIndexOf:
-		var list []any
-
-		if len(values) > 1 {
-			list = cssxToArray(values[0])
-		}
-
-		item := any(cssxFirstNode(input))
-
-		if runtime.IsNil(item) {
-			item = input
-		}
-
-		for idx, candidate := range list {
-			if cssxAnyEqual(candidate, item) {
-				return idx
-			}
-		}
-
-		return -1
-	case cssx.ExpressionLen:
-		switch v := input.(type) {
-		case string:
-			return len(v)
-		case []any:
-			return len(v)
-		case nil:
-			return 0
-		default:
-			return len(cssxToArray(v))
-		}
+	switch name {
 	case cssx.ExpressionText:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return nil
+		if node != nil {
+			return cssxTextContent(node)
 		}
-
-		return cssxTextContent(node)
-	case cssx.ExpressionTexts:
-		nodes := cssxToNodes(input)
-		out := make([]any, 0, len(nodes))
-
-		for _, node := range nodes {
-			out = append(out, cssxTextContent(node))
-		}
-
-		return out
 	case cssx.ExpressionOwnText:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return nil
+		if node != nil {
+			return cssxOwnText(node)
 		}
-
-		return cssxOwnText(node)
 	case cssx.ExpressionNormalize:
 		return cssxNormalizeSpace(cssxTextOf(input))
 	case cssx.ExpressionTrim:
 		return strings.TrimSpace(cssxTextOf(input))
-	case cssx.ExpressionJoin:
-		sep := cssxArgString(args, 0)
-		arr := cssxToArray(input)
-		vals := make([]string, 0, len(arr))
-
-		for _, item := range arr {
-			vals = append(vals, cssxTextOf(item))
-		}
-
-		return strings.Join(vals, sep)
 	case cssx.ExpressionAttr:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return nil
+		if value, ok := cssxNodeAttr(node, cssxArgString(args, 0)); ok {
+			return value
 		}
-
-		if val, ok := cssxNodeAttr(node, cssxArgString(args, 0)); ok {
-			return val
-		}
-
-		return nil
-	case cssx.ExpressionAttrs:
-		nodes := cssxToNodes(input)
-		name := cssxArgString(args, 0)
-		out := make([]any, 0, len(nodes))
-
-		for _, node := range nodes {
-			if val, ok := cssxNodeAttr(node, name); ok {
-				out = append(out, val)
-				continue
-			}
-
-			out = append(out, nil)
-		}
-
-		return out
 	case cssx.ExpressionProp:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return nil
-		}
-
 		return cssxNodeProp(node, cssxArgString(args, 0))
 	case cssx.ExpressionHTML:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return nil
-		}
-
 		return cssxInnerHTML(node)
 	case cssx.ExpressionOuterHTML:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return nil
-		}
-
 		return cssxOuterHTML(node)
 	case cssx.ExpressionValue:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return nil
-		}
-
 		return cssxNodeProp(node, "value")
 	case cssx.ExpressionAbsURL:
-		arr := cssxToArray(input)
-
-		if len(arr) == 0 {
-			return nil
-		}
-
-		return cssxAsURL(arr[0], baseURL)
+		return cssxAsURL(input, baseURL)
 	case cssx.ExpressionURL:
-		node := cssxFirstNode(input)
-
-		if node == nil {
-			return nil
+		if value, ok := cssxNodeAttr(node, cssxArgString(args, 0)); ok {
+			return cssxAsURL(value, baseURL)
 		}
-
-		if val, ok := cssxNodeAttr(node, cssxArgString(args, 0)); ok {
-			return cssxAsURL(val, baseURL)
-		}
-
-		return nil
 	case cssx.ExpressionParseURL:
-		arr := cssxToArray(input)
-
-		if len(arr) == 0 {
-			return nil
-		}
-
-		return cssxParseURL(arr[0], baseURL)
-	case cssx.ExpressionFilter:
-		predicate := any(true)
-		source := input
-
-		if len(values) > 1 {
-			predicate = values[0]
-			source = values[1]
-		}
-
-		arr := cssxToArray(source)
-
-		switch v := predicate.(type) {
-		case []any:
-			out := make([]any, 0, len(arr))
-
-			for _, item := range arr {
-				if cssxArrayContains(v, item) {
-					out = append(out, item)
-				}
-			}
-
-			return out
-		case bool:
-			if v {
-				return arr
-			}
-
-			return []any{}
-		case string:
-			out := make([]any, 0, len(arr))
-
-			for _, item := range arr {
-				if strings.Contains(cssxTextOf(item), v) {
-					out = append(out, item)
-				}
-			}
-
-			return out
-		case nil:
-			return []any{}
-		default:
-			out := make([]any, 0, len(arr))
-
-			for _, item := range arr {
-				if cssxTruthy(item) {
-					out = append(out, item)
-				}
-			}
-
-			return out
-		}
-	case cssx.ExpressionWithAttr:
-		nodes := cssxToNodes(input)
-		name := cssxArgString(args, 0)
-		out := make([]any, 0, len(nodes))
-
-		for _, node := range nodes {
-			if cssxNodeHasAttr(node, name) {
-				out = append(out, node)
-			}
-		}
-
-		return out
-	case cssx.ExpressionWithText:
-		nodes := cssxToNodes(input)
-		needle := cssxArgString(args, 0)
-		out := make([]any, 0, len(nodes))
-
-		for _, node := range nodes {
-			if strings.Contains(cssxTextContent(node), needle) {
-				out = append(out, node)
-			}
-		}
-
-		return out
-	case cssx.ExpressionDedupeByAttr:
-		nodes := cssxToNodes(input)
-		name := cssxArgString(args, 0)
-		seen := make(map[string]struct{}, len(nodes))
-		out := make([]any, 0, len(nodes))
-
-		for _, node := range nodes {
-			val, ok := cssxNodeAttr(node, name)
-
-			key := "<nil>"
-			if ok {
-				key = val
-			}
-
-			if _, exists := seen[key]; exists {
-				continue
-			}
-
-			seen[key] = struct{}{}
-			out = append(out, node)
-		}
-
-		return out
-	case cssx.ExpressionDedupeByText:
-		nodes := cssxToNodes(input)
-		seen := make(map[string]struct{}, len(nodes))
-		out := make([]any, 0, len(nodes))
-
-		for _, node := range nodes {
-			key := cssxNormalizeSpace(cssxTextContent(node))
-
-			if _, exists := seen[key]; exists {
-				continue
-			}
-
-			seen[key] = struct{}{}
-			out = append(out, node)
-		}
-
-		return out
+		return cssxParseURL(input, baseURL)
 	case cssx.ExpressionReplace:
 		pattern := cssxArgString(args, 0)
 		replacement := cssxArgString(args, 1)
 		source := cssxTextOf(input)
 		rx, err := regexp.Compile(pattern)
-
 		if err == nil {
 			return rx.ReplaceAllString(source, replacement)
 		}
-
 		return strings.ReplaceAll(source, pattern, replacement)
 	case cssx.ExpressionRegex:
 		pattern := cssxArgString(args, 0)
 		group := 0
-
 		if len(args) > 1 {
 			if value, ok := cssxToInt(cssxArgNumber(args, 1)); ok {
 				group = value
 			}
 		}
-
-		source := cssxTextOf(input)
 		rx, err := regexp.Compile(pattern)
-
 		if err != nil {
 			return nil
 		}
-
-		matches := rx.FindStringSubmatch(source)
-
-		if len(matches) == 0 || group < 0 || group >= len(matches) {
-			return nil
+		matches := rx.FindStringSubmatch(cssxTextOf(input))
+		if len(matches) > 0 && group >= 0 && group < len(matches) {
+			return matches[group]
 		}
-
-		return matches[group]
 	case cssx.ExpressionToNumber:
 		return cssxToNumber(input)
 	case cssx.ExpressionToDate:
 		return cssxToDate(input, args)
+	}
+
+	return nil
+}
+
+func cssxApplyReducer(name cssx.Expression, args []any, values []any, input any) any {
+	items := cssxToArray(input)
+
+	switch name {
+	case cssx.ExpressionExists:
+		return len(items) > 0
+	case cssx.ExpressionEmpty:
+		return len(items) == 0
+	case cssx.ExpressionCount:
+		return len(items)
+	case cssx.ExpressionOne:
+		return len(items) == 1
+	case cssx.ExpressionIndexOf:
+		if len(values) < 2 {
+			return -1
+		}
+		list := cssxToArray(values[0])
+		target := cssxToArray(values[1])
+		if len(target) == 0 {
+			return -1
+		}
+		for idx, candidate := range list {
+			if cssxAnyEqual(candidate, target[0]) {
+				return idx
+			}
+		}
+		return -1
+	case cssx.ExpressionLen:
+		if value, ok := input.(string); ok {
+			return len(value)
+		}
+		return len(items)
+	case cssx.ExpressionJoin:
+		values := make([]string, 0, len(items))
+		for _, item := range items {
+			values = append(values, cssxTextOf(item))
+		}
+		return strings.Join(values, cssxArgString(args, 0))
 	default:
-		return []any{}
+		return nil
 	}
 }
 
@@ -688,14 +404,8 @@ func cssxToArray(value any) []any {
 	case nil:
 		return []any{}
 	case []any:
-		out := make([]any, 0, len(v))
-
-		for _, item := range v {
-			if item != nil {
-				out = append(out, item)
-			}
-		}
-
+		out := make([]any, len(v))
+		copy(out, v)
 		return out
 	default:
 		return []any{v}
@@ -741,6 +451,54 @@ func cssxNodesToAny(nodes []*html.Node) []any {
 	}
 
 	return out
+}
+
+func cssxAppendMatchingNode(out *[]any, node *html.Node, criterion string) {
+	if node == nil {
+		return
+	}
+
+	if criterion != "" && !cssxNodeMatches(node, criterion) {
+		return
+	}
+
+	*out = append(*out, node)
+}
+
+func cssxNodeMatches(node *html.Node, selector string) bool {
+	if node == nil || selector == "" {
+		return false
+	}
+
+	return goquery.NewDocumentFromNode(node).Selection.Is(selector)
+}
+
+func cssxValidSelector(selector string) bool {
+	if selector == "" {
+		return false
+	}
+
+	_, err := cascadia.Compile(selector)
+
+	return err == nil
+}
+
+func cssxNodeHas(node *html.Node, selector string) bool {
+	if node == nil || selector == "" {
+		return false
+	}
+
+	return goquery.NewDocumentFromNode(node).Selection.Find(selector).Length() > 0
+}
+
+func cssxNodeWithin(node *html.Node, selector string) bool {
+	for parent := cssxParentElement(node); parent != nil; parent = cssxParentElement(parent) {
+		if cssxNodeMatches(parent, selector) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func cssxContainsNode(ancestor, node *html.Node) bool {
@@ -865,6 +623,22 @@ func cssxElementChildren(node *html.Node) []*html.Node {
 	for child := node.FirstChild; child != nil; child = child.NextSibling {
 		if child.Type == html.ElementNode {
 			out = append(out, child)
+		}
+	}
+
+	return out
+}
+
+func cssxElementSiblings(node *html.Node) []*html.Node {
+	if node == nil || node.Parent == nil {
+		return nil
+	}
+
+	out := make([]*html.Node, 0)
+
+	for sibling := node.Parent.FirstChild; sibling != nil; sibling = sibling.NextSibling {
+		if sibling != node && sibling.Type == html.ElementNode {
+			out = append(out, sibling)
 		}
 	}
 
@@ -1197,9 +971,9 @@ func cssxAnyEqual(left, right any) bool {
 	}
 }
 
-func cssxArrayContains(items []any, target any) bool {
+func cssxArrayContainsDistinct(items []any, target any) bool {
 	for _, item := range items {
-		if cssxAnyEqual(item, target) {
+		if cssxDistinctEqual(item, target) {
 			return true
 		}
 	}
@@ -1207,23 +981,21 @@ func cssxArrayContains(items []any, target any) bool {
 	return false
 }
 
-func cssxTruthy(value any) bool {
-	switch v := value.(type) {
-	case nil:
-		return false
-	case bool:
-		return v
-	case string:
-		return v != ""
-	case int:
-		return v != 0
-	case int64:
-		return v != 0
-	case float64:
-		return v != 0 && !math.IsNaN(v)
-	default:
-		return true
+func cssxDistinctEqual(left, right any) bool {
+	switch left.(type) {
+	case nil, string, bool, int, int64, float32, float64:
+		return cssxAnyEqual(left, right)
+	case *html.Node:
+		return cssxAnyEqual(left, right)
 	}
+
+	leftValue := reflect.ValueOf(left)
+	rightValue := reflect.ValueOf(right)
+
+	return leftValue.IsValid() &&
+		rightValue.IsValid() &&
+		leftValue.Type() == rightValue.Type() &&
+		leftValue == rightValue
 }
 
 func cssxSliceArray(items []any, start, end int) []any {

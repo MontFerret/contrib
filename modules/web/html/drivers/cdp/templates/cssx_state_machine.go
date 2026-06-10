@@ -3,79 +3,69 @@ package templates
 const cssxStateMachine = `(el) => {
 const ops = %s;
 
-const isNode = (v) => v != null && typeof v === "object" && typeof v.nodeType === "number";
-const toArray = (v) => {
-	if (Array.isArray(v)) {
-		return v.filter((i) => i != null);
+const isNode = (value) => value != null && typeof value === "object" && typeof value.nodeType === "number";
+const toSelection = (value) => {
+	if (Array.isArray(value)) {
+		return value.slice();
 	}
 
-	if (v == null) {
-		return [];
-	}
-
-	return [v];
+	return value == null ? [] : [value];
 };
-const toNodes = (v) => toArray(v).filter(isNode);
-const firstNode = (v) => {
-	if (isNode(v)) {
-		return v;
-	}
-
-	const nodes = toNodes(v);
-	return nodes.length > 0 ? nodes[0] : null;
-};
+const toNodes = (value) => toSelection(value).filter(isNode);
 const queryAll = (root, selector) => {
 	try {
-		if (root == null || typeof root.querySelectorAll !== "function") {
-			return [];
-		}
-
-		return Array.from(root.querySelectorAll(selector));
+		return root != null && typeof root.querySelectorAll === "function"
+			? Array.from(root.querySelectorAll(selector))
+			: [];
 	} catch (_) {
 		return [];
 	}
 };
-const textOf = (v) => {
-	if (v == null) {
-		return "";
-	}
-
-	if (Array.isArray(v)) {
-		return v.map((i) => textOf(i)).join("");
-	}
-
-	if (isNode(v)) {
-		return v.textContent ?? "";
-	}
-
-	return String(v);
-};
-const normalizeSpace = (v) => String(v ?? "").replace(/\s+/g, " ").trim();
-const containsNode = (ancestor, node) => {
+const matches = (node, selector) => {
 	try {
-		return ancestor === node || (ancestor != null && typeof ancestor.contains === "function" && ancestor.contains(node));
+		return node != null && selector !== "" && typeof node.matches === "function" && node.matches(selector);
 	} catch (_) {
 		return false;
 	}
 };
-const dedupeNodes = (nodes) => {
-	const out = [];
-	const seen = new Set();
-
-	for (const node of toNodes(nodes)) {
-		if (seen.has(node)) {
-			continue;
+const validSelector = (selector) => {
+	try {
+		document.createDocumentFragment().querySelector(selector);
+		return selector !== "";
+	} catch (_) {
+		return false;
+	}
+};
+const has = (node, selector) => {
+	try {
+		return node != null && selector !== "" && typeof node.querySelector === "function" && node.querySelector(selector) != null;
+	} catch (_) {
+		return false;
+	}
+};
+const within = (node, selector) => {
+	for (let parent = node?.parentElement ?? null; parent != null; parent = parent.parentElement) {
+		if (matches(parent, selector)) {
+			return true;
 		}
-
-		seen.add(node);
-		out.push(node);
 	}
 
-	return out;
+	return false;
 };
-const asURL = (value) => {
-	const input = value == null ? "" : String(value);
+const textOf = (value) => {
+	if (value == null) {
+		return "";
+	}
 
+	if (isNode(value)) {
+		return value.textContent ?? "";
+	}
+
+	return String(value);
+};
+const normalizeSpace = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
+const asURL = (value) => {
+	const input = value == null ? "" : String(value).trim();
 	if (input === "") {
 		return null;
 	}
@@ -87,390 +77,103 @@ const asURL = (value) => {
 	}
 };
 const parseURL = (value) => {
-	const input = value == null ? "" : String(value);
-
+	const input = value == null ? "" : String(value).trim();
 	if (input === "") {
 		return null;
 	}
 
 	try {
-		const u = new URL(input, document.baseURI);
+		const url = new URL(input, document.baseURI);
 		return {
-			href: u.href,
-			protocol: u.protocol,
-			username: u.username,
-			password: u.password,
-			host: u.host,
-			hostname: u.hostname,
-			port: u.port,
-			pathname: u.pathname,
-			search: u.search,
-			hash: u.hash,
-			origin: u.origin
+			href: url.href,
+			protocol: url.protocol,
+			username: url.username,
+			password: url.password,
+			host: url.host,
+			hostname: url.hostname,
+			port: url.port,
+			pathname: url.pathname,
+			search: url.search,
+			hash: url.hash,
+			origin: url.origin
 		};
 	} catch (_) {
 		return null;
 	}
 };
 const toNumber = (value) => {
-	const str = textOf(value).trim();
-
-	if (str === "") {
+	const source = textOf(value).trim();
+	if (source === "") {
 		return null;
 	}
 
-	const normalized = str.
+	const normalized = source.
 		replace(/[^\d+\-.,eE]/g, "").
 		replace(/,(?=\d{3}\b)/g, "").
 		replace(",", ".");
-	const out = Number(normalized);
+	const result = Number(normalized);
 
-	return Number.isFinite(out) ? out : null;
+	return Number.isFinite(result) ? result : null;
 };
 const toDate = (value) => {
-	const str = textOf(value).trim();
-
-	if (str === "") {
+	const source = textOf(value).trim();
+	if (source === "") {
 		return null;
 	}
 
-	const date = new Date(str);
-
-	return Number.isNaN(date.getTime()) ? null : date.toISOString();
+	const result = new Date(source);
+	return Number.isNaN(result.getTime()) ? null : result.toISOString();
 };
-const applyCall = (name, args, values) => {
-	const input = values.length > 0 ? values[values.length - 1] : null;
+const cardinality = (name, args, input) => {
+	const items = toSelection(input);
 
 	switch (name) {
-		case ":first": {
-			const arr = toArray(input);
-			return arr.length > 0 ? arr[0] : null;
-		}
-		case ":last": {
-			const arr = toArray(input);
-			return arr.length > 0 ? arr[arr.length - 1] : null;
-		}
+		case ":first":
+			return items.length > 0 ? items[0] : null;
+		case ":last":
+			return items.length > 0 ? items[items.length - 1] : null;
 		case ":nth": {
-			const arr = toArray(input);
-			const idx = Number(args[0]);
-
-			if (!Number.isInteger(idx) || idx < 0 || idx >= arr.length) {
-				return null;
-			}
-
-			return arr[idx];
+			const index = Number(args[0]);
+			return Number.isInteger(index) && index >= 0 && index < items.length ? items[index] : null;
 		}
+		default:
+			return null;
+	}
+};
+const select = (name, args, input) => {
+	const items = toSelection(input);
+
+	switch (name) {
 		case ":take": {
-			const arr = toArray(input);
-			const n = Number(args[0]);
-
-			if (!Number.isFinite(n) || n <= 0) {
-				return [];
-			}
-
-			return arr.slice(0, Math.trunc(n));
+			const count = Number(args[0]);
+			return Number.isFinite(count) && count > 0 ? items.slice(0, Math.trunc(count)) : [];
 		}
 		case ":skip": {
-			const arr = toArray(input);
-			const n = Number(args[0]);
-
-			if (!Number.isFinite(n) || n <= 0) {
-				return arr;
-			}
-
-			return arr.slice(Math.trunc(n));
+			const count = Number(args[0]);
+			return Number.isFinite(count) && count > 0 ? items.slice(Math.trunc(count)) : items;
 		}
 		case ":slice": {
-			const arr = toArray(input);
 			const start = Number(args[0]);
 			const count = Number(args[1]);
-
-			if (!Number.isFinite(start) || !Number.isFinite(count) || count <= 0) {
-				return [];
-			}
-
-			return arr.slice(Math.trunc(start), Math.trunc(start + count));
+			return Number.isFinite(start) && Number.isFinite(count) && count > 0
+				? items.slice(Math.trunc(start), Math.trunc(start + count))
+				: [];
 		}
-		case ":within": {
-			const scope = values.length > 1 ? values[0] : null;
-			const scopedNodes = toNodes(scope);
-
-			if (scopedNodes.length === 0) {
-				return [];
-			}
-
-			if (typeof input === "string") {
-				const out = [];
-
-				for (const node of scopedNodes) {
-					out.push(...queryAll(node, input));
-				}
-
-				return dedupeNodes(out);
-			}
-
-			const nodeValues = toNodes(input);
-
-			if (nodeValues.length > 0) {
-				return nodeValues.filter((node) => scopedNodes.some((scopeNode) => containsNode(scopeNode, node)));
-			}
-
-			return input;
-		}
-		case ":parent": {
-			const node = firstNode(input);
-			return node != null ? node.parentElement : null;
-		}
-		case ":closest": {
-			const candidates = toNodes(values.length > 1 ? values[0] : []);
-			const node = firstNode(input);
-
-			if (node == null) {
-				return null;
-			}
-
-			if (candidates.length === 0) {
-				return node.parentElement;
-			}
-
-			const cset = new Set(candidates);
-			let cursor = node;
-
-			for (; cursor != null; cursor = cursor.parentElement) {
-				if (cset.has(cursor)) {
-					return cursor;
-				}
-			}
-
-			return null;
-		}
-		case ":children": {
-			const node = firstNode(input);
-
-			if (node == null) {
-				return [];
-			}
-
-			const children = Array.from(node.children ?? []);
-			const candidates = toNodes(values.length > 1 ? values[0] : []);
-
-			if (candidates.length === 0) {
-				return children;
-			}
-
-			const cset = new Set(candidates);
-			return children.filter((child) => cset.has(child));
-		}
-		case ":next": {
-			const node = firstNode(input);
-
-			if (node == null) {
-				return null;
-			}
-
-			const next = node.nextElementSibling;
-
-			if (next == null) {
-				return null;
-			}
-
-			const candidates = toNodes(values.length > 1 ? values[0] : []);
-
-			if (candidates.length === 0) {
-				return next;
-			}
-
-			const cset = new Set(candidates);
-			return cset.has(next) ? next : null;
-		}
-		case ":prev": {
-			const node = firstNode(input);
-
-			if (node == null) {
-				return null;
-			}
-
-			const prev = node.previousElementSibling;
-
-			if (prev == null) {
-				return null;
-			}
-
-			const candidates = toNodes(values.length > 1 ? values[0] : []);
-
-			if (candidates.length === 0) {
-				return prev;
-			}
-
-			const cset = new Set(candidates);
-			return cset.has(prev) ? prev : null;
-		}
-		case ":exists":
-			return toArray(input).length > 0;
-		case ":empty":
-			return toArray(input).length === 0;
-		case ":has": {
-			const node = firstNode(input);
-
-			if (node == null) {
-				return false;
-			}
-
-			const candidates = toNodes(values.length > 1 ? values[0] : []);
-			return candidates.some((candidate) => containsNode(node, candidate));
-		}
-		case ":matches": {
-			const node = firstNode(input);
-
-			if (node == null) {
-				return false;
-			}
-
-			const candidates = toNodes(values.length > 1 ? values[0] : []);
-			return candidates.some((candidate) => candidate === node);
-		}
-		case ":count":
-			return toArray(input).length;
-		case ":indexOf": {
-			const list = toArray(values.length > 1 ? values[0] : []);
-			const item = firstNode(input) ?? input;
-			return list.indexOf(item);
-		}
-		case ":len": {
-			if (typeof input === "string" || Array.isArray(input)) {
-				return input.length;
-			}
-
-			if (input == null) {
-				return 0;
-			}
-
-			return toArray(input).length;
-		}
-		case ":text": {
-			const node = firstNode(input);
-
-			if (node == null) {
-				return null;
-			}
-
-			return node.textContent ?? "";
-		}
-		case ":texts":
-			return toNodes(input).map((node) => node.textContent ?? "");
-		case ":ownText": {
-			const node = firstNode(input);
-
-			if (node == null) {
-				return null;
-			}
-
-			let out = "";
-
-			for (const child of Array.from(node.childNodes ?? [])) {
-				if (child.nodeType === 3) {
-					out += child.textContent ?? "";
-				}
-			}
-
-			return out;
-		}
-		case ":normalize":
-			return normalizeSpace(textOf(input));
-		case ":trim":
-			return textOf(input).trim();
-		case ":join": {
-			const arr = toArray(input).map((i) => textOf(i));
-			const sep = String(args[0]);
-			return arr.join(sep);
-		}
-		case ":attr": {
-			const node = firstNode(input);
-			return node != null && typeof node.getAttribute === "function" ? node.getAttribute(String(args[0])) : null;
-		}
-		case ":attrs": {
-			const name = String(args[0]);
-			return toNodes(input).map((node) => (typeof node.getAttribute === "function" ? node.getAttribute(name) : null));
-		}
-		case ":prop": {
-			const node = firstNode(input);
-			return node != null ? node[String(args[0])] : null;
-		}
-		case ":html": {
-			const node = firstNode(input);
-			return node != null ? (node.innerHTML ?? null) : null;
-		}
-		case ":outerHtml": {
-			const node = firstNode(input);
-			return node != null ? (node.outerHTML ?? null) : null;
-		}
-		case ":value": {
-			const node = firstNode(input);
-			return node != null ? (node.value ?? null) : null;
-		}
-		case ":absUrl":
-			return asURL(Array.isArray(input) ? input[0] : input);
-		case ":url": {
-			const node = firstNode(input);
-
-			if (node == null || typeof node.getAttribute !== "function") {
-				return null;
-			}
-
-			return asURL(node.getAttribute(String(args[0])));
-		}
-		case ":parseUrl":
-			return parseURL(Array.isArray(input) ? input[0] : input);
-		case ":filter": {
-			const predicate = values.length > 1 ? values[0] : true;
-			const source = values.length > 1 ? values[1] : input;
-			const arr = toArray(source);
-
-			if (Array.isArray(predicate)) {
-				const pset = new Set(predicate);
-				return arr.filter((item) => pset.has(item));
-			}
-
-			if (typeof predicate === "boolean") {
-				return predicate ? arr : [];
-			}
-
-			if (typeof predicate === "string") {
-				return arr.filter((item) => textOf(item).includes(predicate));
-			}
-
-			if (predicate == null) {
-				return [];
-			}
-
-			return arr.filter((item) => Boolean(item));
-		}
-		case ":withAttr": {
-			const attr = String(args[0]);
-			return toNodes(input).filter((node) => typeof node.hasAttribute === "function" && node.hasAttribute(attr));
-		}
-		case ":withText": {
-			const needle = String(args[0]);
-			return toNodes(input).filter((node) => (node.textContent ?? "").includes(needle));
-		}
+		case ":compact":
+			return items.filter((item) => item != null);
+		case ":distinct":
+			return Array.from(new Set(items));
 		case ":dedupeByAttr": {
 			const attr = String(args[0]);
 			const seen = new Set();
 			const out = [];
 
-			for (const node of toNodes(input)) {
-				if (typeof node.getAttribute !== "function") {
-					continue;
+			for (const node of toNodes(items)) {
+				const value = typeof node.getAttribute === "function" ? node.getAttribute(attr) : null;
+				if (!seen.has(value)) {
+					seen.add(value);
+					out.push(node);
 				}
-
-				const value = node.getAttribute(attr);
-
-				if (seen.has(value)) {
-					continue;
-				}
-
-				seen.add(value);
-				out.push(node);
 			}
 
 			return out;
@@ -479,60 +182,223 @@ const applyCall = (name, args, values) => {
 			const seen = new Set();
 			const out = [];
 
-			for (const node of toNodes(input)) {
-				const key = normalizeSpace(node.textContent ?? "");
-
-				if (seen.has(key)) {
-					continue;
+			for (const node of toNodes(items)) {
+				const value = normalizeSpace(node.textContent ?? "");
+				if (!seen.has(value)) {
+					seen.add(value);
+					out.push(node);
 				}
-
-				seen.add(key);
-				out.push(node);
 			}
 
 			return out;
 		}
+		default:
+			return [];
+	}
+};
+const appendMatching = (out, node, criterion) => {
+	if (node != null && (criterion === "" || matches(node, criterion))) {
+		out.push(node);
+	}
+};
+const traverse = (name, args, input) => {
+	const criterion = args.length > 0 ? String(args[0]) : "";
+	const out = [];
+
+	for (const node of toNodes(input)) {
+		switch (name) {
+			case ":parent":
+				appendMatching(out, node.parentElement, criterion);
+				break;
+			case ":closest": {
+				let current = node;
+				while (current != null) {
+					if (matches(current, criterion)) {
+						out.push(current);
+						break;
+					}
+					current = current.parentElement;
+				}
+				break;
+			}
+			case ":children":
+				for (const child of Array.from(node.children ?? [])) {
+					appendMatching(out, child, criterion);
+				}
+				break;
+			case ":next":
+				appendMatching(out, node.nextElementSibling, criterion);
+				break;
+			case ":prev":
+				appendMatching(out, node.previousElementSibling, criterion);
+				break;
+			case ":siblings":
+				for (const sibling of Array.from(node.parentElement?.children ?? [])) {
+					if (sibling !== node) {
+						appendMatching(out, sibling, criterion);
+					}
+				}
+				break;
+		}
+	}
+
+	return out;
+};
+const filter = (name, args, input) => {
+	const criterion = String(args[0]);
+	const out = [];
+
+	if ((name === ":within" || name === ":has" || name === ":matches" || name === ":not") && !validSelector(criterion)) {
+		return out;
+	}
+
+	for (const node of toNodes(input)) {
+		let keep = false;
+
+		switch (name) {
+			case ":within":
+				keep = within(node, criterion);
+				break;
+			case ":has":
+				keep = has(node, criterion);
+				break;
+			case ":matches":
+				keep = matches(node, criterion);
+				break;
+			case ":not":
+				keep = !matches(node, criterion);
+				break;
+			case ":withAttr":
+				keep = typeof node.hasAttribute === "function" && node.hasAttribute(criterion);
+				break;
+			case ":withText":
+				keep = (node.textContent ?? "").includes(criterion);
+				break;
+		}
+
+		if (keep) {
+			out.push(node);
+		}
+	}
+
+	return out;
+};
+const mapItem = (name, args, input) => {
+	switch (name) {
+		case ":text":
+			return isNode(input) ? (input.textContent ?? "") : null;
+		case ":ownText": {
+			if (!isNode(input)) {
+				return null;
+			}
+
+			let out = "";
+			for (const child of Array.from(input.childNodes ?? [])) {
+				if (child.nodeType === 3) {
+					out += child.textContent ?? "";
+				}
+			}
+			return out;
+		}
+		case ":normalize":
+			return normalizeSpace(textOf(input));
+		case ":trim":
+			return textOf(input).trim();
+		case ":attr":
+			return isNode(input) && typeof input.getAttribute === "function" ? input.getAttribute(String(args[0])) : null;
+		case ":prop":
+			return isNode(input) ? (input[String(args[0])] ?? null) : null;
+		case ":html":
+			return isNode(input) ? (input.innerHTML ?? null) : null;
+		case ":outerHtml":
+			return isNode(input) ? (input.outerHTML ?? null) : null;
+		case ":value":
+			return isNode(input) ? (input.value ?? null) : null;
+		case ":absUrl":
+			return asURL(input);
+		case ":url":
+			return isNode(input) && typeof input.getAttribute === "function"
+				? asURL(input.getAttribute(String(args[0])))
+				: null;
+		case ":parseUrl":
+			return parseURL(input);
 		case ":replace": {
 			const pattern = String(args[0]);
 			const replacement = String(args[1]);
 			const source = textOf(input);
-			let rx = null;
 
 			try {
-				rx = new RegExp(pattern, "g");
-			} catch (_) {}
-
-			if (rx != null) {
-				return source.replace(rx, replacement);
+				return source.replace(new RegExp(pattern, "g"), replacement);
+			} catch (_) {
+				return source.split(pattern).join(replacement);
 			}
-
-			return source.split(pattern).join(replacement);
 		}
 		case ":regex": {
-			const pattern = String(args[0]);
 			const group = args.length > 1 ? Number(args[1]) : 0;
-			const source = textOf(input);
-			let rx = null;
+			let match = null;
 
 			try {
-				rx = new RegExp(pattern);
+				match = new RegExp(String(args[0])).exec(textOf(input));
 			} catch (_) {
 				return null;
 			}
 
-			const match = rx.exec(source);
-
-			if (match == null) {
-				return null;
-			}
-
-			const idx = Number.isInteger(group) ? group : 0;
-			return match[idx] ?? null;
+			return match != null && Number.isInteger(group) ? (match[group] ?? null) : null;
 		}
 		case ":toNumber":
 			return toNumber(input);
 		case ":toDate":
 			return toDate(input);
+		default:
+			return null;
+	}
+};
+const map = (name, args, input) => toSelection(input).map((item) => item == null ? null : mapItem(name, args, item));
+const reduce = (name, args, values, input) => {
+	const items = toSelection(input);
+
+	switch (name) {
+		case ":exists":
+			return items.length > 0;
+		case ":empty":
+			return items.length === 0;
+		case ":count":
+			return items.length;
+		case ":one":
+			return items.length === 1;
+		case ":indexOf": {
+			if (values.length < 2) {
+				return -1;
+			}
+			const list = toSelection(values[0]);
+			const target = toSelection(values[1]);
+			return target.length > 0 ? list.indexOf(target[0]) : -1;
+		}
+		case ":len":
+			return typeof input === "string" ? input.length : items.length;
+		case ":join":
+			return items.map((item) => textOf(item)).join(String(args[0]));
+		default:
+			return null;
+	}
+};
+const applyCall = (op, values) => {
+	const input = values.length > 0 ? values[values.length - 1] : null;
+	const args = op.args ?? [];
+
+	switch (op.family) {
+		case "cardinality":
+			return cardinality(op.name, args, input);
+		case "selection":
+			return select(op.name, args, input);
+		case "traversal":
+			return traverse(op.name, args, input);
+		case "filter":
+			return filter(op.name, args, input);
+		case "map":
+			return map(op.name, args, input);
+		case "reducer":
+			return reduce(op.name, args, values, input);
 		default:
 			return [];
 	}
@@ -551,7 +417,6 @@ for (const op of ops) {
 	}
 
 	let consume = op.arity;
-
 	if (consume === 0 && stack.length > 0) {
 		consume = 1;
 	}
@@ -562,7 +427,7 @@ for (const op of ops) {
 	}
 
 	const values = consume > 0 ? stack.splice(stack.length - consume, consume) : [];
-	stack.push(applyCall(op.name, op.args ?? [], values));
+	stack.push(applyCall(op, values));
 }
 
 if (stack.length === 0) {

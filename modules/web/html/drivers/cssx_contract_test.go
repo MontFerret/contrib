@@ -59,7 +59,7 @@ func TestCSSXContractAcrossBackends(t *testing.T) {
 		},
 		{
 			name: "card attrs",
-			exp:  `:attrs("data-role", .card)`,
+			exp:  `:attr("data-role", .card)`,
 			assert: func(t *testing.T, list runtime.List) {
 				assertListValues(t, ctx, list, []runtime.Value{runtime.NewString("hero"), runtime.NewString("related")})
 			},

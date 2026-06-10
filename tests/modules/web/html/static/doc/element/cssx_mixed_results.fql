@@ -7,13 +7,49 @@ T::EQ(el.value, "068728")
 LET rawValue = QUERY ONE ":value(:first(.ListingId))" IN valueDoc USING css
 T::EQ(rawValue, "068728")
 
+LET values = QUERY ":value(.ListingId)" IN valueDoc USING css
+T::EQ(LENGTH(values), 40)
+T::EQ(values[0], "068728")
+T::EQ(values[1], "068728")
+
+LET firstValue = QUERY ONE ":value(.ListingId)" IN valueDoc USING css
+T::EQ(firstValue, values[0])
+
 LET count = QUERY ONE ":count(.ListingId)" IN valueDoc USING css
 T::EQ(count, 40)
+
+T::EQ(QUERY ONE ':count(:attr("missing", .ListingId))' IN valueDoc USING css, 40)
+T::EQ(QUERY ONE ':count(:compact(:attr("missing", .ListingId)))' IN valueDoc USING css, 0)
+T::EQ(QUERY ONE ':count(:distinct(:value(.ListingId)))' IN valueDoc USING css, 39)
+T::TRUE(QUERY ONE ':one(:first(.ListingId))' IN valueDoc USING css)
+T::FALSE(QUERY ONE ':one(.ListingId)' IN valueDoc USING css)
+
+T::EQ(QUERY ONE ':count(:has(".ListingId", tr))' IN valueDoc USING css, 40)
+T::EQ(QUERY ONE ':count(:matches(".ListingId", input))' IN valueDoc USING css, 40)
+T::EQ(QUERY ONE ':count(:not(".ListingId", input))' IN valueDoc USING css, 0)
+T::EQ(QUERY ONE ':count(:within("tr", .ListingId))' IN valueDoc USING css, 40)
+T::EQ(QUERY ONE ':count(:closest("tr", .ListingId))' IN valueDoc USING css, 40)
+T::EQ(QUERY ONE ':count(:children("input", td))' IN valueDoc USING css, 40)
+T::EQ(QUERY ONE ":count(:siblings(tr))" IN valueDoc USING css, 1560)
+T::EQ(QUERY ONE ":count(:distinct(:siblings(tr)))" IN valueDoc USING css, 40)
+T::EQ(QUERY ONE ":count(:next(tr))" IN valueDoc USING css, 39)
+T::EQ(QUERY ONE ":count(:prev(tr))" IN valueDoc USING css, 39)
+T::EQ(QUERY ONE ':count(:matches("[", input))' IN valueDoc USING css, 0)
+T::EQ(QUERY ONE ':count(:not("[", input))' IN valueDoc USING css, 0)
+T::EQ(QUERY ONE ':count(:children("[", td))' IN valueDoc USING css, 0)
 
 LET numeric = QUERY ONE ":toNumber(:value(:first(.ListingId)))" IN valueDoc USING css
 T::EQ(numeric, 68728)
 
 LET urlDoc = DOCUMENT(@lab.static.static + '/overview.html', { driver: "cdp" })
+LET texts = QUERY ":text(p)" IN urlDoc USING css
+T::GT(LENGTH(texts), 1)
+T::EQ(QUERY ONE ":text(p)" IN urlDoc USING css, texts[0])
+
+LET parentCount = QUERY ONE ":count(:parent(a))" IN urlDoc USING css
+LET distinctParentCount = QUERY ONE ":count(:distinct(:parent(a)))" IN urlDoc USING css
+T::GT(parentCount, distinctParentCount)
+
 LET parsed = QUERY ONE ':parseUrl(:url("href", :first(a.navbar-brand)))' IN urlDoc USING css
 
 T::EQ(parsed["host"], "getbootstrap.com")
