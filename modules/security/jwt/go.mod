@@ -1,8 +1,11 @@
-module github.com/MontFerret/contrib/modules/csv
+module github.com/MontFerret/contrib/modules/security/jwt
 
-go 1.25.6
+go 1.26.1
 
-require github.com/MontFerret/ferret/v2 v2.0.0-alpha.21
+require (
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.21
+	github.com/golang-jwt/jwt/v5 v5.2.2
+)
 
 require (
 	github.com/mattn/go-colorable v0.1.14 // indirect

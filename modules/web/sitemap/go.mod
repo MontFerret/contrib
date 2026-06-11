@@ -4,7 +4,7 @@ go 1.25.6
 
 require (
 	github.com/MontFerret/contrib/modules/xml v1.0.0-rc.3
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.20
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.21
 )
 
 require (

@@ -14,6 +14,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/csv"
 	dbsqlite "github.com/MontFerret/contrib/modules/db/sqlite"
+	jwtmodule "github.com/MontFerret/contrib/modules/security/jwt"
 	"github.com/MontFerret/contrib/modules/toml"
 	"github.com/MontFerret/contrib/modules/web/article"
 	"github.com/MontFerret/contrib/modules/web/html"
@@ -185,6 +186,7 @@ func main() {
 		ferret.WithModules(
 			csv.New(),
 			dbsqlite.New(),
+			jwtmodule.New(),
 			toml.New(),
 			xml.New(),
 			yaml.New(),
