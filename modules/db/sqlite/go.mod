@@ -3,7 +3,7 @@ module github.com/MontFerret/contrib/modules/db/sqlite
 go 1.25
 
 require (
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.21
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.23
 	modernc.org/sqlite v1.51.0
 )
 

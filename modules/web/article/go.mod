@@ -4,8 +4,8 @@ go 1.25.6
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.1
-	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.5
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.20
+	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.6
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.23
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	golang.org/x/net v0.55.0
