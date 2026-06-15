@@ -17,7 +17,7 @@ func TestPrivateMemoryDatabasesAreIsolated(t *testing.T) {
 	queryExecForTest(t, ctx, first, `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`)
 	queryExecForTest(t, ctx, first, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Ada"))
 
-	_, err := second.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Payload: runtime.NewString(`SELECT name FROM users`)})
+	_, err := second.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Expression: runtime.NewString(`SELECT name FROM users`)})
 	assertErrorContains(t, err, "no such table: users")
 }
 

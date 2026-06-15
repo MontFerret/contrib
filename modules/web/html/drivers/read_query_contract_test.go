@@ -160,8 +160,8 @@ func assertSharedQueryModifierSemantics(t *testing.T, ctx context.Context, targe
 	t.Helper()
 
 	cards := runtime.Query{
-		Kind:    runtime.NewString("css"),
-		Payload: runtime.NewString(".card"),
+		Kind:       runtime.NewString("css"),
+		Expression: runtime.NewString(".card"),
 	}
 
 	first, err := target.QueryOne(ctx, cards)
@@ -191,8 +191,8 @@ func assertSharedQueryModifierSemantics(t *testing.T, ctx context.Context, targe
 	}
 
 	missing := runtime.Query{
-		Kind:    runtime.NewString("css"),
-		Payload: runtime.NewString(".missing"),
+		Kind:       runtime.NewString("css"),
+		Expression: runtime.NewString(".missing"),
 	}
 
 	missingOne, err := target.QueryOne(ctx, missing)

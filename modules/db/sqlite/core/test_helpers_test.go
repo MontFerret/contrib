@@ -36,17 +36,17 @@ func openMemoryDB(t *testing.T, ctx context.Context) *Connection {
 func queryRowsForTest(t *testing.T, ctx context.Context, target runtime.Queryable, sqlText string, params ...runtime.Value) *runtime.Array {
 	t.Helper()
 
-	var options runtime.Value = runtime.None
+	var queryParams runtime.Value = runtime.None
 	if len(params) > 0 {
-		options = runtime.NewObjectWith(map[string]runtime.Value{
+		queryParams = runtime.NewObjectWith(map[string]runtime.Value{
 			"params": runtime.NewArrayWith(params...),
 		})
 	}
 
 	out, err := target.Query(ctx, runtime.Query{
-		Kind:    runtime.NewString("sql"),
-		Payload: runtime.NewString(sqlText),
-		Options: options,
+		Kind:       runtime.NewString("sql"),
+		Expression: runtime.NewString(sqlText),
+		Params:     queryParams,
 	})
 	if err != nil {
 		t.Fatalf("unexpected query error: %v", err)
@@ -63,17 +63,17 @@ func queryRowsForTest(t *testing.T, ctx context.Context, target runtime.Queryabl
 func queryExecForTest(t *testing.T, ctx context.Context, target runtime.Queryable, sqlText string, params ...runtime.Value) *runtime.Object {
 	t.Helper()
 
-	var options runtime.Value = runtime.None
+	var queryParams runtime.Value = runtime.None
 	if len(params) > 0 {
-		options = runtime.NewObjectWith(map[string]runtime.Value{
+		queryParams = runtime.NewObjectWith(map[string]runtime.Value{
 			"params": runtime.NewArrayWith(params...),
 		})
 	}
 
 	out, err := target.QueryOne(ctx, runtime.Query{
-		Kind:    runtime.NewString("sql_exec"),
-		Payload: runtime.NewString(sqlText),
-		Options: options,
+		Kind:       runtime.NewString("sql_exec"),
+		Expression: runtime.NewString(sqlText),
+		Params:     queryParams,
 	})
 	if err != nil {
 		t.Fatalf("unexpected query exec error: %v", err)

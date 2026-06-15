@@ -9,17 +9,17 @@ import (
 
 var paramsKey = runtime.NewString("params")
 
-func parseParams(ctx context.Context, options runtime.Value) ([]any, error) {
-	if options == nil || options == runtime.None {
+func parseParams(ctx context.Context, input runtime.Value) ([]any, error) {
+	if input == nil || input == runtime.None {
 		return nil, nil
 	}
 
-	optionsMap, ok := options.(runtime.Map)
+	paramsMap, ok := input.(runtime.Map)
 	if !ok {
-		return nil, fmt.Errorf("options must be an object")
+		return nil, fmt.Errorf("query params must be an object")
 	}
 
-	paramsValue, err := optionsMap.Get(ctx, paramsKey)
+	paramsValue, err := paramsMap.Get(ctx, paramsKey)
 	if err != nil {
 		return nil, err
 	}

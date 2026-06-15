@@ -69,7 +69,7 @@ func TestTransactionAfterFinishFails(t *testing.T) {
 		t.Fatalf("unexpected commit error: %v", err)
 	}
 
-	_, err = tx.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Payload: runtime.NewString("SELECT 1")})
+	_, err = tx.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Expression: runtime.NewString("SELECT 1")})
 	assertErrorContains(t, err, "transaction has already been finished")
 }
 
@@ -114,9 +114,9 @@ func TestClosingDBInvalidatesAllTransactions(t *testing.T) {
 		t.Fatalf("unexpected db close error: %v", err)
 	}
 
-	_, err = first.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Payload: runtime.NewString("SELECT 1")})
+	_, err = first.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Expression: runtime.NewString("SELECT 1")})
 	assertErrorContains(t, err, "parent database has been closed")
 
-	_, err = second.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Payload: runtime.NewString("SELECT 1")})
+	_, err = second.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Expression: runtime.NewString("SELECT 1")})
 	assertErrorContains(t, err, "parent database has been closed")
 }

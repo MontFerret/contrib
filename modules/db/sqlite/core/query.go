@@ -27,12 +27,12 @@ func queryRows(ctx context.Context, operation string, runner queryRunner, q runt
 		return nil, OperationError(operation, err)
 	}
 
-	params, err := parseParams(ctx, q.Options)
+	params, err := parseParams(ctx, q.Params)
 	if err != nil {
 		return nil, OperationError(operation, err)
 	}
 
-	rows, err := runner.QueryContext(ctx, q.Payload.String(), params...)
+	rows, err := runner.QueryContext(ctx, q.Expression.String(), params...)
 	if err != nil {
 		return nil, OperationError(operation, err)
 	}
@@ -47,15 +47,15 @@ func queryRows(ctx context.Context, operation string, runner queryRunner, q runt
 }
 
 func queryExec(ctx context.Context, operation string, runner execRunner, q runtime.Query) (runtime.List, error) {
-	params, err := parseParams(ctx, q.Options)
+	params, err := parseParams(ctx, q.Params)
 	if err != nil {
 		return nil, OperationError(operation, err)
 	}
 
-	result, err := runner.ExecContext(ctx, q.Payload.String(), params...)
+	result, err := runner.ExecContext(ctx, q.Expression.String(), params...)
 	if err != nil {
 		return nil, OperationError(operation, err)
 	}
 
-	return runtime.NewArrayWith(execResult(q.Payload.String(), result)), nil
+	return runtime.NewArrayWith(execResult(q.Expression.String(), result)), nil
 }

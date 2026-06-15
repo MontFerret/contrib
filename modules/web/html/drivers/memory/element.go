@@ -720,9 +720,9 @@ func (el *HTMLElement) GetNextElementSibling(_ context.Context) (runtime.Value, 
 func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List, error) {
 	switch query.Parse(string(q.Kind)) {
 	case query.CSS:
-		return EvalCSSX(ctx, el, q.Payload)
+		return EvalCSSX(ctx, el, q.Expression)
 	case query.XPath:
-		res, err := el.XPath(ctx, q.Payload)
+		res, err := el.XPath(ctx, q.Expression)
 
 		if err != nil {
 			return nil, err

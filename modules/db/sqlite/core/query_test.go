@@ -38,6 +38,35 @@ func TestConnectionQueryRowsAndParams(t *testing.T) {
 	}
 }
 
+func TestConnectionQueryUsesParamsIndependentlyFromOptions(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	db := openMemoryDB(t, ctx)
+
+	out, err := db.Query(ctx, runtime.Query{
+		Kind:       runtime.NewString("sql"),
+		Expression: runtime.NewString(`SELECT ? AS value`),
+		Params: runtime.NewObjectWith(map[string]runtime.Value{
+			"params": runtime.NewArrayWith(runtime.NewString("from-params")),
+		}),
+		Options: runtime.NewString("ignored-options"),
+	})
+	if err != nil {
+		t.Fatalf("unexpected query error: %v", err)
+	}
+
+	rows, ok := out.(*runtime.Array)
+	if !ok {
+		t.Fatalf("expected runtime array, got %T", out)
+	}
+
+	row := mustObjectAt(t, ctx, rows, 0)
+	if got := objectField(t, ctx, row, "value"); got != runtime.NewString("from-params") {
+		t.Fatalf("expected query parameter value, got %v", got)
+	}
+}
+
 func TestConnectionQueryTypeMapping(t *testing.T) {
 	t.Parallel()
 
@@ -85,8 +114,8 @@ func TestQueryModifiers(t *testing.T) {
 	queryExecForTest(t, ctx, db, `INSERT INTO users(name) VALUES (?)`, runtime.NewString("Grace"))
 
 	query := runtime.Query{
-		Kind:    runtime.NewString("sql"),
-		Payload: runtime.NewString(`SELECT id, name FROM users ORDER BY id`),
+		Kind:       runtime.NewString("sql"),
+		Expression: runtime.NewString(`SELECT id, name FROM users ORDER BY id`),
 	}
 
 	one, err := db.QueryOne(ctx, query)
@@ -118,8 +147,8 @@ func TestQueryModifiers(t *testing.T) {
 	}
 
 	missing, err := db.QueryOne(ctx, runtime.Query{
-		Kind:    runtime.NewString("sql"),
-		Payload: runtime.NewString(`SELECT id FROM users WHERE id = 99`),
+		Kind:       runtime.NewString("sql"),
+		Expression: runtime.NewString(`SELECT id FROM users WHERE id = 99`),
 	})
 	if err != nil {
 		t.Fatalf("unexpected missing query one error: %v", err)
@@ -136,8 +165,8 @@ func TestConnectionQueryExecMetadataAndModifiers(t *testing.T) {
 	db := openMemoryDB(t, ctx)
 
 	createList, err := db.Query(ctx, runtime.Query{
-		Kind:    runtime.NewString("SQL_EXEC"),
-		Payload: runtime.NewString(`CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`),
+		Kind:       runtime.NewString("SQL_EXEC"),
+		Expression: runtime.NewString(`CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`),
 	})
 	if err != nil {
 		t.Fatalf("unexpected query exec error: %v", err)
@@ -182,9 +211,9 @@ func TestConnectionQueryExecMetadataAndModifiers(t *testing.T) {
 	assertExecMetadata(t, ctx, cteUpdate, runtime.NewInt64(1), runtime.None)
 
 	count, err := db.QueryCount(ctx, runtime.Query{
-		Kind:    runtime.NewString("sql_exec"),
-		Payload: runtime.NewString(`UPDATE users SET name = ? WHERE id = ?`),
-		Options: runtime.NewObjectWith(map[string]runtime.Value{
+		Kind:       runtime.NewString("sql_exec"),
+		Expression: runtime.NewString(`UPDATE users SET name = ? WHERE id = ?`),
+		Params: runtime.NewObjectWith(map[string]runtime.Value{
 			"params": runtime.NewArrayWith(runtime.NewString("Missing"), runtime.NewInt(99)),
 		}),
 	})
@@ -196,9 +225,9 @@ func TestConnectionQueryExecMetadataAndModifiers(t *testing.T) {
 	}
 
 	exists, err := db.QueryExists(ctx, runtime.Query{
-		Kind:    runtime.NewString("sql_exec"),
-		Payload: runtime.NewString(`DELETE FROM users WHERE id = ?`),
-		Options: runtime.NewObjectWith(map[string]runtime.Value{
+		Kind:       runtime.NewString("sql_exec"),
+		Expression: runtime.NewString(`DELETE FROM users WHERE id = ?`),
+		Params: runtime.NewObjectWith(map[string]runtime.Value{
 			"params": runtime.NewArrayWith(runtime.NewInt(99)),
 		}),
 	})
@@ -264,13 +293,13 @@ func TestQueryErrors(t *testing.T) {
 	ctx := context.Background()
 	db := openMemoryDB(t, ctx)
 
-	_, err := db.Query(ctx, runtime.Query{Kind: runtime.NewString("css"), Payload: runtime.NewString("body")})
+	_, err := db.Query(ctx, runtime.Query{Kind: runtime.NewString("css"), Expression: runtime.NewString("body")})
 	assertErrorContains(t, err, `unsupported dialect "css"; expected "sql" or "sql_exec"`)
 
 	if err := db.Close(); err != nil {
 		t.Fatalf("unexpected close error: %v", err)
 	}
 
-	_, err = db.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Payload: runtime.NewString("SELECT 1")})
+	_, err = db.Query(ctx, runtime.Query{Kind: runtime.NewString("sql"), Expression: runtime.NewString("SELECT 1")})
 	assertErrorContains(t, err, "database connection has been closed")
 }
