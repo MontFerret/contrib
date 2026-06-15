@@ -1,5 +1,5 @@
-github.com/MontFerret/contrib/modules/xml v1.0.0-rc.3 h1:NosqwOsvdwuShJzkztEaKPEQCeWLrsfjW3IIKhQhsCY=
-github.com/MontFerret/contrib/modules/xml v1.0.0-rc.3/go.mod h1:2/xtbSDY33PjslSiSMciD6sR+yYZQd02CAr2QmHumhw=
+github.com/MontFerret/contrib/modules/xml v1.0.0-rc.4 h1:PjT+hr/ZDRBiNbyePLP1fv4tjoIaLS/ADdrhLWR/6kw=
+github.com/MontFerret/contrib/modules/xml v1.0.0-rc.4/go.mod h1:eMl++62DU9ejC2sFyCldTi2fXZTxX21l7S+u0XmmTZc=
 github.com/MontFerret/ferret/v2 v2.0.0-alpha.24 h1:I37xWo5q+gr3UQw0jxQHCID0edtVhIwdjClrW6vMFHk=
 github.com/MontFerret/ferret/v2 v2.0.0-alpha.24/go.mod h1:jkZZNJrQKhQ8K9v3lzkMKR5NnCyOUKRRKCTAwCOBq8A=
 github.com/goccy/go-json v0.10.6 h1:p8HrPJzOakx/mn/bQtjgNjdTcN+/S6FcG2CTtQOrHVU=
