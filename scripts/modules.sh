@@ -18,7 +18,52 @@ get_modules() {
 
 usage() {
   echo "Usage:"
-  echo "  $0 <list|build|test|lint|fmt> [module ...]"
+  echo "  $0 <list|build|test|lint|fmt|versions|deps> [module ...]"
+}
+
+get_direct_dependencies() {
+  local module="$1"
+  local go_mod="$DIR_MODULES/$module/go.mod"
+
+  if [[ ! -f "$go_mod" ]]; then
+    return
+  fi
+
+  # Extract the module path prefix from go.mod
+  local module_prefix
+  module_prefix=$(grep -E '^module ' "$go_mod" | awk '{print $2}' | sed 's|/modules/.*||')
+
+  # Find all require statements that reference internal modules
+  grep -E '^\s+'"$module_prefix"'/modules/' "$go_mod" 2>/dev/null | \
+    awk '{print $1}' | \
+    sed 's|^.*/modules/||' || true
+}
+
+get_all_dependencies() {
+  local module="$1"
+  local indent="${2:-}"
+  local visited_list="${3:-}"
+
+  # Check if already visited (avoid cycles)
+  if echo "$visited_list" | grep -q "^${module}$"; then
+    return
+  fi
+
+  # Add to visited list
+  visited_list="${visited_list}${module}"$'\n'
+
+  # Get direct dependencies and process them
+  while IFS= read -r dep; do
+    # Skip empty entries
+    if [[ -z "$dep" ]]; then
+      continue
+    fi
+
+    echo "${indent}${dep}"
+
+    # Recursively get dependencies of this dependency
+    get_all_dependencies "$dep" "  ${indent}" "$visited_list"
+  done < <(get_direct_dependencies "$module")
 }
 
 module_exists() {
@@ -34,7 +79,7 @@ module_exists() {
   return 1
 }
 
-get_version() {
+get_versions() {
   if [[ $# -ne 1 ]]; then
     usage
     exit 1
@@ -134,7 +179,11 @@ main() {
         ;;
       versions)
         echo "Listing versions for module '$module'"
-        get_version $module
+        get_versions $module
+        ;;
+      deps)
+        echo "Listing module dependencies for '$module'"
+        get_all_dependencies "$module" "" ""
         ;;
       *)
         echo "Unknown command: $command" >&2

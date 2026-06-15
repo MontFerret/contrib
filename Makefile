@@ -1,4 +1,4 @@
-.PHONY: install-tools modules build test lint fmt release-major release-minor release-patch release-pre
+.PHONY: install-tools modules build test lint fmt versions deps release-major release-minor release-patch release-pre
 
 install-tools:
 	go install honnef.co/go/tools/cmd/staticcheck@latest && \
@@ -28,6 +28,9 @@ fmt:
 
 versions:
 	@./scripts/modules.sh versions $(filter-out $@,$(MAKECMDGOALS))
+
+deps:
+	@./scripts/modules.sh deps $(filter-out $@,$(MAKECMDGOALS))
 
 release-major:
 	@./scripts/release.sh major $(filter-out $@,$(MAKECMDGOALS))
