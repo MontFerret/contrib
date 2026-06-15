@@ -7,6 +7,7 @@ DIR_TESTS="./tests"
 DIR_RUNTIME="$DIR_TESTS/runtime"
 DIR_TESTDATA="$DIR_TESTS/data"
 DIR_MODULE_TESTS="$DIR_TESTS/modules"
+TAG_MODULES="modules"
 
 get_modules() {
   find "$DIR_MODULES" -type f -name go.mod \
@@ -31,6 +32,21 @@ module_exists() {
   done < <(get_modules)
 
   return 1
+}
+
+get_version() {
+  if [[ $# -ne 1 ]]; then
+    usage
+    exit 1
+  fi
+
+  local module="$1"
+
+  # Get all tags for the module, sort by version (descending), and limit to 10
+  git tag --list "$TAG_MODULES/$module/v*" --sort=-version:refname | head -n 10 | while IFS= read -r tag; do
+    # Extract just the version from the tag (remove the prefix)
+    echo "${tag##*/}"
+  done
 }
 
 main() {
@@ -115,6 +131,10 @@ main() {
           go fmt ./... && \
           goimports -w -local github.com/MontFerret .
         )
+        ;;
+      versions)
+        echo "Listing versions for module '$module'"
+        get_version $module
         ;;
       *)
         echo "Unknown command: $command" >&2

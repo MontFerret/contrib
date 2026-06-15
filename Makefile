@@ -26,6 +26,9 @@ lint:
 fmt:
 	@./scripts/modules.sh fmt $(filter-out $@,$(MAKECMDGOALS))
 
+versions:
+	@./scripts/modules.sh versions $(filter-out $@,$(MAKECMDGOALS))
+
 release-major:
 	@./scripts/release.sh major $(filter-out $@,$(MAKECMDGOALS))
 
