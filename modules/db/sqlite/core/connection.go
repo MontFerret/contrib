@@ -73,6 +73,7 @@ func (c *Connection) Begin(ctx context.Context) (*Transaction, error) {
 
 func (c *Connection) Close() error {
 	c.mu.Lock()
+
 	if c.closed {
 		c.mu.Unlock()
 
@@ -81,14 +82,17 @@ func (c *Connection) Close() error {
 
 	c.closed = true
 	txs := make([]*Transaction, 0, len(c.txs))
+
 	for tx := range c.txs {
 		txs = append(txs, tx)
 	}
+
 	c.txs = make(map[*Transaction]struct{})
 	db := c.db
 	c.mu.Unlock()
 
 	errs := make([]error, 0)
+
 	for _, tx := range txs {
 		if err := tx.closeFromParent(); err != nil {
 			errs = append(errs, err)
@@ -98,6 +102,7 @@ func (c *Connection) Close() error {
 	if err := db.Close(); err != nil {
 		errs = append(errs, err)
 	}
+
 	if err := errors.Join(errs...); err != nil {
 		return OperationError("CLOSE", err)
 	}

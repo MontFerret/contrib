@@ -9,6 +9,7 @@ import (
 // namespace.
 func RegisterLib(ns runtime.Namespace, policies ...core.OpenPolicy) {
 	policy := core.DefaultOpenPolicy()
+
 	if len(policies) > 0 {
 		policy = policies[0]
 	}

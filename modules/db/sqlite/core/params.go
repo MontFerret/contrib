@@ -23,6 +23,7 @@ func parseParams(ctx context.Context, input runtime.Value) ([]any, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if paramsValue == nil || paramsValue == runtime.None {
 		return nil, nil
 	}
@@ -35,6 +36,7 @@ func parseParams(ctx context.Context, input runtime.Value) ([]any, error) {
 	params := make([]any, 0)
 	if err := runtime.ForEach(ctx, paramsList, func(ctx context.Context, value, _ runtime.Value) (runtime.Boolean, error) {
 		param, err := runtimeValueToSQLParam(value)
+
 		if err != nil {
 			return runtime.False, err
 		}

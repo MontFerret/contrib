@@ -15,9 +15,11 @@ func scanRows(ctx context.Context, rows *sql.Rows) (runtime.List, error) {
 	}
 
 	out := runtime.NewArray(0)
+
 	for rows.Next() {
 		values := make([]any, len(columns))
 		dest := make([]any, len(columns))
+
 		for idx := range values {
 			dest[idx] = &values[idx]
 		}
@@ -29,6 +31,7 @@ func scanRows(ctx context.Context, rows *sql.Rows) (runtime.List, error) {
 		obj := runtime.NewObjectOf(len(columns))
 		for idx, column := range columns {
 			value, err := sqlValueToRuntime(values[idx])
+
 			if err != nil {
 				return nil, err
 			}
@@ -42,6 +45,7 @@ func scanRows(ctx context.Context, rows *sql.Rows) (runtime.List, error) {
 			return nil, err
 		}
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}

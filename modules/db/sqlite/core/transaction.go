@@ -124,9 +124,11 @@ func (t *Transaction) activeTx(operation string) (*sql.Tx, error) {
 	if t.closedByParent {
 		return nil, OperationError(operation, errParentClosed)
 	}
+
 	if t.finished {
 		return nil, OperationError(operation, errTransactionDone)
 	}
+
 	if t.parent.isClosed() {
 		t.finished = true
 		t.closedByParent = true
@@ -144,9 +146,11 @@ func (t *Transaction) finish(operation string) (*sql.Tx, error) {
 	if t.closedByParent {
 		return nil, OperationError(operation, errParentClosed)
 	}
+
 	if t.finished {
 		return nil, OperationError(operation, errTransactionDone)
 	}
+
 	if t.parent.isClosed() {
 		t.finished = true
 		t.closedByParent = true
@@ -164,6 +168,7 @@ func (t *Transaction) finish(operation string) (*sql.Tx, error) {
 
 func (t *Transaction) closeFromParent() error {
 	tx := t.closeActive(true)
+
 	if tx == nil {
 		return nil
 	}
@@ -187,6 +192,7 @@ func (t *Transaction) closeActive(parent bool) *sql.Tx {
 	t.tx = nil
 	t.finished = true
 	t.closedByParent = parent
+
 	if !parent {
 		t.parent.removeTransaction(t)
 	}

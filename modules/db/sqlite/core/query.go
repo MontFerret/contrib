@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/ziflex/dbx"
 )
 
-func querySQL(ctx context.Context, operation string, runner sqlRunner, q runtime.Query) (runtime.List, error) {
+func querySQL(ctx context.Context, operation string, runner dbx.Executor, q runtime.Query) (runtime.List, error) {
 	dialect, err := parseQueryDialect(string(q.Kind))
 	if err != nil {
 		return nil, OperationError(operation, err)
@@ -22,7 +23,7 @@ func querySQL(ctx context.Context, operation string, runner sqlRunner, q runtime
 	}
 }
 
-func queryRows(ctx context.Context, operation string, runner queryRunner, q runtime.Query) (runtime.List, error) {
+func queryRows(ctx context.Context, operation string, runner dbx.Executor, q runtime.Query) (runtime.List, error) {
 	if err := validateDialect(string(q.Kind)); err != nil {
 		return nil, OperationError(operation, err)
 	}
@@ -46,7 +47,7 @@ func queryRows(ctx context.Context, operation string, runner queryRunner, q runt
 	return out, nil
 }
 
-func queryExec(ctx context.Context, operation string, runner execRunner, q runtime.Query) (runtime.List, error) {
+func queryExec(ctx context.Context, operation string, runner dbx.Executor, q runtime.Query) (runtime.List, error) {
 	params, err := parseParams(ctx, q.Params)
 	if err != nil {
 		return nil, OperationError(operation, err)

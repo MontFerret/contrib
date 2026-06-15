@@ -14,6 +14,7 @@ func isInsertStatement(sqlText string) bool {
 func firstSQLStatementKeyword(sqlText string) string {
 	idx := skipSQLSpaceAndComments(sqlText, 0)
 	keyword, next := readSQLKeyword(sqlText, idx)
+
 	if keyword != "WITH" {
 		return keyword
 	}
@@ -24,6 +25,7 @@ func firstSQLStatementKeyword(sqlText string) string {
 func keywordAfterWith(sqlText string, idx int) string {
 	idx = skipSQLSpaceAndComments(sqlText, idx)
 	keyword, next := readSQLKeyword(sqlText, idx)
+
 	if keyword == "RECURSIVE" {
 		idx = next
 	}
@@ -66,6 +68,7 @@ func keywordAfterWith(sqlText string, idx int) string {
 func skipSQLMaterialization(sqlText string, idx int) int {
 	idx = skipSQLSpaceAndComments(sqlText, idx)
 	keyword, next := readSQLKeyword(sqlText, idx)
+
 	switch keyword {
 	case "MATERIALIZED":
 		return next
@@ -134,22 +137,27 @@ func skipSQLSpaceAndComments(sqlText string, idx int) int {
 		switch sqlText[idx] {
 		case ' ', '\t', '\n', '\r', '\f', '\v':
 			idx++
+
 			continue
 		}
 
 		if strings.HasPrefix(sqlText[idx:], "--") {
 			idx += 2
+
 			for idx < len(sqlText) && sqlText[idx] != '\n' && sqlText[idx] != '\r' {
 				idx++
 			}
+
 			continue
 		}
 
 		if strings.HasPrefix(sqlText[idx:], "/*") {
 			idx += 2
+
 			for idx+1 < len(sqlText) && !(sqlText[idx] == '*' && sqlText[idx+1] == '/') {
 				idx++
 			}
+
 			if idx+1 < len(sqlText) {
 				idx += 2
 			}
@@ -165,6 +173,7 @@ func skipSQLSpaceAndComments(sqlText string, idx int) int {
 func skipSQLQuoted(sqlText string, idx int) int {
 	quote := sqlText[idx]
 	idx++
+
 	for idx < len(sqlText) {
 		if sqlText[idx] != quote {
 			idx++
@@ -183,6 +192,7 @@ func skipSQLQuoted(sqlText string, idx int) int {
 
 func skipSQLBracketQuoted(sqlText string, idx int) int {
 	idx++
+
 	for idx < len(sqlText) {
 		if sqlText[idx] == ']' {
 			return idx + 1
@@ -200,6 +210,7 @@ func readSQLKeyword(sqlText string, idx int) (string, int) {
 
 	start := idx
 	idx++
+
 	for idx < len(sqlText) && isSQLIdentifierPart(sqlText[idx]) {
 		idx++
 	}

@@ -42,6 +42,7 @@ func DecodeOpenOptions(value runtime.Value) (OpenOptions, error) {
 func (o OpenOptions) dsn() (string, error) {
 	readOnly := valueOrDefault(o.ReadOnly, false)
 	create := valueOrDefault(o.Create, true)
+
 	if readOnly && create {
 		return "", fmt.Errorf("readOnly and create cannot both be true")
 	}
@@ -50,12 +51,15 @@ func (o OpenOptions) dsn() (string, error) {
 	if o.pathProvided() {
 		sourceCount++
 	}
+
 	if o.memoryProvided() {
 		sourceCount++
 	}
+
 	if o.uriProvided() {
 		sourceCount++
 	}
+
 	if sourceCount != 1 {
 		return "", fmt.Errorf("exactly one of path, memory, or uri must be provided")
 	}
