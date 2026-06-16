@@ -10,6 +10,22 @@ import (
 )
 
 func RegisterLib(ns runtime.Namespace) {
+	registerLibCore(ns)
+
+	ns.Function().Var().
+		Add("OPEN", Open).
+		Add("CAN_OPEN", PageExists)
+}
+
+func RegisterLibLegacy(ns runtime.Namespace) {
+	registerLibCore(ns)
+
+	ns.Function().Var().
+		Add("DOCUMENT", Open).
+		Add("DOCUMENT_EXISTS", PageExists)
+}
+
+func registerLibCore(ns runtime.Namespace) {
 	ns.Function().A1().
 		Add("IS_HTML_ELEMENT", IsHTMLElement).
 		Add("IS_HTML_DOCUMENT", IsHTMLDocument).
@@ -32,8 +48,6 @@ func RegisterLib(ns runtime.Namespace) {
 		Add("COOKIE_SET", CookieSet).
 		Add("CLICK", Click).
 		Add("CLICK_ALL", ClickAll).
-		Add("DOCUMENT", Open).
-		Add("DOCUMENT_EXISTS", DocumentExists).
 		Add("DOWNLOAD", Download).
 		Add("ELEMENT", Element).
 		Add("ELEMENT_EXISTS", ElementExists).

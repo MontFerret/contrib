@@ -45,7 +45,7 @@ func (m *mod) Name() string {
 func (m *mod) Register(registry module.Bootstrap) error {
 	if !m.noLib {
 		// Legacy support for modules that use module functions without namespace (e.g. `DOCUMENT` instead of `WEB::HTML::DOCUMENT`).
-		lib.RegisterLib(registry.Host().Library())
+		lib.RegisterLibLegacy(registry.Host().Library())
 		lib.RegisterLib(registry.Host().Library().Namespace("WEB").Namespace("HTML"))
 	}
 
