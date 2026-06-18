@@ -7,8 +7,8 @@ import (
 func TestSigningMethod(t *testing.T) {
 	tests := []struct {
 		alg     string
-		wantErr bool
 		code    string
+		wantErr bool
 	}{
 		{"HS256", false, ""},
 		{"RS256", false, ""},

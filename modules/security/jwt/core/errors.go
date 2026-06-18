@@ -20,9 +20,9 @@ const (
 
 // Error reports a JWT-specific failure with a stable code and safe message.
 type Error struct {
+	Err  error
 	Code string
 	Msg  string
-	Err  error
 }
 
 func newError(code, msg string) error {

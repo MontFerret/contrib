@@ -25,8 +25,8 @@ func TestRuntimeMapToClaims(t *testing.T) {
 
 func TestClaimAsInt64(t *testing.T) {
 	tests := []struct {
-		name  string
 		in    any
+		name  string
 		want  int64
 		wantB bool
 	}{

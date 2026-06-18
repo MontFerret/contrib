@@ -3,8 +3,9 @@ package core
 import (
 	"context"
 
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/ziflex/dbx"
+
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 func querySQL(ctx context.Context, operation string, runner dbx.Executor, q runtime.Query) (runtime.List, error) {
