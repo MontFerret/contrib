@@ -4,7 +4,6 @@ set -euo pipefail
 DIR_BIN="./bin"
 DIR_MODULES="./modules"
 DIR_TESTS="./tests"
-DIR_RUNTIME="$DIR_TESTS/runtime"
 DIR_TESTDATA="$DIR_TESTS/data"
 DIR_MODULE_TESTS="$DIR_TESTS/modules"
 TAG_MODULES="modules"
@@ -192,12 +191,6 @@ main() {
         ;;
     esac
   done
-
-  if [ "$command" = "build" ]; then
-    echo "Building runtime..."
-    mkdir -p "$DIR_BIN"
-    go build -v -o "$DIR_BIN/runtime" "$DIR_RUNTIME/runtime.go"
-  fi
 }
 
 main "$@"

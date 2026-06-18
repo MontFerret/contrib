@@ -13,7 +13,7 @@ install-tools:
 modules:
 	@./scripts/modules.sh list
 
-build:
+build: build-cli
 	@./scripts/modules.sh build $(filter-out $@,$(MAKECMDGOALS))
 
 build-cli:
