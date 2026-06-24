@@ -159,13 +159,16 @@ main() {
   for module in "${modules[@]}"; do
     current_version="$(get_required_version "$module" "$package_path")"
 
-    if [[ "$current_version" == "v$version" ]]; then
-      echo "Module '$module' already uses v$version"
-      continue
-    fi
+    ( cd "$DIR_MODULES/$module" && \
+      go mod edit -require="$package_path@v$version" && \
+      GOWORK=off go mod tidy
+    )
 
-    ( cd "$DIR_MODULES/$module" && go mod edit -require="$package_path@v$version" )
-    echo "Updated module '$module': $current_version -> v$version"
+    if [[ "$current_version" == "v$version" ]]; then
+      echo "Refreshed module '$module': already uses v$version"
+    else
+      echo "Updated module '$module': $current_version -> v$version"
+    fi
   done
 }
 

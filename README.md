@@ -32,7 +32,7 @@ make fmt [module ...]
 
 If no module names are provided, the commands run against all available modules.
 
-Support packages under `pkg/` can be updated across module `go.mod` files with:
+Support packages under `pkg/` can be updated across module `go.mod` and `go.sum` files with:
 
 ```sh
 make update-package <package> <version> [module ...]
@@ -88,7 +88,7 @@ make release-package-major <package>
 make release-package-pre <package> 0.1.0
 ```
 
-3. Update module requirements that use the released package:
+3. Update module requirements and sums that use the released package:
 
 ```sh
 make update-package <package> 0.1.0
