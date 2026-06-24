@@ -53,4 +53,4 @@ release-pre:
 	@./scripts/release.sh $(filter-out $@,$(MAKECMDGOALS))
 
 %:
-	echo "Unknown command" && exit 1
+	@:
