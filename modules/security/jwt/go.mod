@@ -3,7 +3,7 @@ module github.com/MontFerret/contrib/modules/security/jwt
 go 1.26.1
 
 require (
-	github.com/MontFerret/contrib/pkg/common v0.1.0
+	github.com/MontFerret/contrib/pkg/common v0.1.1
 	github.com/MontFerret/ferret/v2 v2.0.0-alpha.25
 	github.com/golang-jwt/jwt/v5 v5.2.2
 )
