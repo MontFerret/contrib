@@ -7,14 +7,14 @@ import (
 
 type mod struct{}
 
-// New returns the HTTP module, which registers HTTP API client helpers on a
-// Ferret host during bootstrap.
+// New returns the NET::REST module, which registers REST API client helpers on
+// a Ferret host during bootstrap.
 func New() module.Module {
 	return &mod{}
 }
 
 func (m *mod) Name() string {
-	return "rest"
+	return "net/rest"
 }
 
 func (m *mod) Register(bootstrap module.Bootstrap) error {

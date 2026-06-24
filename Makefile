@@ -17,7 +17,7 @@ build: build-cli
 	@./scripts/modules.sh build $(filter-out $@,$(MAKECMDGOALS))
 
 build-cli:
-	go build -v -o ${DIR_BIN}/ferret \
+	go build -v -o ${DIR_BIN}/runtime \
 		${DIR_TEST_CLI}/main.go
 
 test: test-unit test-integration
@@ -53,4 +53,4 @@ release-pre:
 	@./scripts/release.sh $(filter-out $@,$(MAKECMDGOALS))
 
 %:
-	@:
+	echo "Unknown command" && exit 1

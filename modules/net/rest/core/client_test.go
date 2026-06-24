@@ -8,7 +8,9 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
@@ -278,11 +280,79 @@ func TestClientFormRequestEncoding(t *testing.T) {
 	}
 }
 
+func TestClientAcceptsHTTPDialect(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/users" {
+			t.Fatalf("expected path /users, got %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode([]map[string]any{{"id": 1}})
+	}))
+	defer server.Close()
+
+	cfg := DefaultConfig()
+	cfg.BaseURL = server.URL
+	client := NewClient(cfg)
+
+	out, err := client.Query(context.Background(), runtime.Query{
+		Kind:       runtime.NewString("http"),
+		Expression: runtime.NewString("/users"),
+	})
+	if err != nil {
+		t.Fatalf("unexpected query error: %v", err)
+	}
+
+	length, err := out.Length(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected length error: %v", err)
+	}
+	if length != 1 {
+		t.Fatalf("expected 1 item, got %d", length)
+	}
+}
+
+func TestClientRequestTimeout(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+			return
+		case <-time.After(time.Second):
+			t.Fatal("request context was not canceled")
+		}
+	}))
+	defer server.Close()
+
+	cfg := DefaultConfig()
+	cfg.BaseURL = server.URL
+	cfg.Timeout = int64(10 * time.Millisecond)
+	client := NewClient(cfg)
+
+	_, err := client.QueryOne(context.Background(), runtime.Query{Expression: runtime.NewString("/slow")})
+	if err == nil {
+		t.Fatal("expected timeout error")
+	}
+	if !strings.Contains(err.Error(), "context deadline exceeded") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestClientRejectsUnsupportedDialect(t *testing.T) {
 	t.Parallel()
 
+	var called atomic.Bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called.Store(true)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
 	cfg := DefaultConfig()
-	cfg.BaseURL = "https://example.com"
+	cfg.BaseURL = server.URL
 	client := NewClient(cfg)
 
 	_, err := client.Query(context.Background(), runtime.Query{
@@ -294,6 +364,9 @@ func TestClientRejectsUnsupportedDialect(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), `unsupported dialect "sql"`) {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if called.Load() {
+		t.Fatal("expected unsupported dialect to fail before request")
 	}
 }
 

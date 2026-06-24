@@ -30,10 +30,10 @@ func TestClaimAsInt64(t *testing.T) {
 		want  int64
 		wantB bool
 	}{
-		{"float64", 123.0, 123, true},
-		{"int64", int64(456), 456, true},
-		{"int", 789, 789, true},
-		{"string", "123", 0, false},
+		{name: "float64", in: 123.0, want: 123, wantB: true},
+		{name: "int64", in: int64(456), want: 456, wantB: true},
+		{name: "int", in: 789, want: 789, wantB: true},
+		{name: "string", in: "123", want: 0, wantB: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

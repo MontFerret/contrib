@@ -9,7 +9,7 @@ import (
 
 func TestRegisterLib(t *testing.T) {
 	library := runtime.NewLibrary()
-	RegisterLib(library.Namespace("HTTP"))
+	RegisterLib(library.Namespace("NET").Namespace("REST"))
 
 	funcs, err := library.Build()
 	if err != nil {
@@ -17,7 +17,7 @@ func TestRegisterLib(t *testing.T) {
 	}
 
 	expected := []string{
-		"HTTP::CLIENT",
+		"NET::REST::CLIENT",
 	}
 
 	if funcs.Size() != len(expected) {

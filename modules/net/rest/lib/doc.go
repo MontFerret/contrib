@@ -1,2 +1,2 @@
-// Package lib exposes Ferret-facing HTTP namespace functions.
+// Package lib exposes Ferret-facing REST namespace functions.
 package lib

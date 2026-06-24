@@ -1,2 +1,2 @@
-// Package core implements HTTP API client behavior for the Ferret HTTP module.
+// Package core implements HTTP API client behavior for the Ferret REST module.
 package core

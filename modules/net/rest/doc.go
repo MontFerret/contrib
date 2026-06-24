@@ -1,2 +1,2 @@
-// Package http provides Ferret HTTP API client helpers.
+// Package rest provides Ferret HTTP API client helpers.
 package rest

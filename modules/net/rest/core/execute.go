@@ -9,6 +9,10 @@ import (
 )
 
 func executeQuery(ctx context.Context, client *Client, q runtime.Query) (runtime.Value, bool, error) {
+	if err := validateQueryDialect(q.Kind); err != nil {
+		return runtime.None, false, OperationError("QUERY", err)
+	}
+
 	requestData, err := DecodeRequestData(ctx, q.Params)
 	if err != nil {
 		return runtime.None, false, OperationError("QUERY", err)

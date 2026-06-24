@@ -18,6 +18,8 @@ type Config struct {
 	Timeout          int64
 }
 
+const clientConfigOwner = "NET::REST::CLIENT config"
+
 func DefaultConfig() Config {
 	return Config{
 		Headers:          make(http.Header),
@@ -36,80 +38,80 @@ func DecodeClientConfig(ctx context.Context, value runtime.Value) (Config, error
 		return cfg, nil
 	}
 
-	obj, err := requireMap(ctx, value, "HTTP::CLIENT config")
+	obj, err := requireMap(ctx, value, clientConfigOwner)
 	if err != nil {
 		return cfg, fmt.Errorf("%s or a string", err.Error())
 	}
 
-	if baseURL, found, err := lookupString(ctx, obj, "baseUrl", "HTTP::CLIENT config"); err != nil {
+	if baseURL, found, err := lookupString(ctx, obj, "baseUrl", clientConfigOwner); err != nil {
 		return cfg, err
 	} else if found {
 		cfg.BaseURL = baseURL
 	}
 	if cfg.BaseURL == "" {
-		return cfg, fmt.Errorf("HTTP::CLIENT config.baseUrl is required")
+		return cfg, fmt.Errorf("%s.baseUrl is required", clientConfigOwner)
 	}
 
 	if headers, found, err := lookupValue(ctx, obj, "headers"); err != nil {
 		return cfg, err
 	} else if found {
-		cfg.Headers, err = decodeHeaders(ctx, headers, "HTTP::CLIENT config.headers")
+		cfg.Headers, err = decodeHeaders(ctx, headers, clientConfigOwner+".headers")
 		if err != nil {
 			return cfg, err
 		}
 	}
 
-	if encoding, found, err := lookupString(ctx, obj, "encoding", "HTTP::CLIENT config"); err != nil {
+	if encoding, found, err := lookupString(ctx, obj, "encoding", clientConfigOwner); err != nil {
 		return cfg, err
 	} else if found {
 		enc, err := parseEncoding(encoding)
 		if err != nil {
-			return cfg, fmt.Errorf("HTTP::CLIENT config.encoding: %w", err)
+			return cfg, fmt.Errorf("%s.encoding: %w", clientConfigOwner, err)
 		}
 
 		cfg.RequestEncoding = enc
 		cfg.ResponseEncoding = enc
 	}
 
-	if encoding, found, err := lookupString(ctx, obj, "requestEncoding", "HTTP::CLIENT config"); err != nil {
+	if encoding, found, err := lookupString(ctx, obj, "requestEncoding", clientConfigOwner); err != nil {
 		return cfg, err
 	} else if found {
 		cfg.RequestEncoding, err = parseEncoding(encoding)
 		if err != nil {
-			return cfg, fmt.Errorf("HTTP::CLIENT config.requestEncoding: %w", err)
+			return cfg, fmt.Errorf("%s.requestEncoding: %w", clientConfigOwner, err)
 		}
 	}
 
-	if encoding, found, err := lookupString(ctx, obj, "responseEncoding", "HTTP::CLIENT config"); err != nil {
+	if encoding, found, err := lookupString(ctx, obj, "responseEncoding", clientConfigOwner); err != nil {
 		return cfg, err
 	} else if found {
 		cfg.ResponseEncoding, err = parseEncoding(encoding)
 		if err != nil {
-			return cfg, fmt.Errorf("HTTP::CLIENT config.responseEncoding: %w", err)
+			return cfg, fmt.Errorf("%s.responseEncoding: %w", clientConfigOwner, err)
 		}
 	}
 
-	if timeout, found, err := lookupDuration(ctx, obj, "timeout", "HTTP::CLIENT config"); err != nil {
+	if timeout, found, err := lookupDuration(ctx, obj, "timeout", clientConfigOwner); err != nil {
 		return cfg, err
 	} else if found {
 		cfg.Timeout = int64(timeout)
 	}
 
-	if response, found, err := lookupString(ctx, obj, "response", "HTTP::CLIENT config"); err != nil {
+	if response, found, err := lookupString(ctx, obj, "response", clientConfigOwner); err != nil {
 		return cfg, err
 	} else if found {
 		cfg.ResponseMode, err = parseResponseMode(response)
 		if err != nil {
-			return cfg, fmt.Errorf("HTTP::CLIENT config.response: %w", err)
+			return cfg, fmt.Errorf("%s.response: %w", clientConfigOwner, err)
 		}
 	}
 
-	if errorMode, found, err := lookupString(ctx, obj, "errorMode", "HTTP::CLIENT config"); err != nil {
+	if errorMode, found, err := lookupString(ctx, obj, "errorMode", clientConfigOwner); err != nil {
 		return cfg, err
 	} else if found {
 		cfg.ErrorMode, err = parseErrorMode(errorMode)
 		if err != nil {
-			return cfg, fmt.Errorf("HTTP::CLIENT config.errorMode: %w", err)
+			return cfg, fmt.Errorf("%s.errorMode: %w", clientConfigOwner, err)
 		}
 	}
 
