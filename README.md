@@ -8,7 +8,7 @@
 |----------------|-------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
 | `csv`          | CSV module and ``CSV`` namespace helpers for Ferret.                                      | [modules/csv/README.md](./modules/csv/README.md)                   |
 | `db/sqlite`    | SQLite database handles under `DB::SQLITE` for Ferret.                                    | [modules/db/sqlite/README.md](./modules/db/sqlite/README.md)       |
-| `net/rest`     | REST-style HTTP API clients under `NET::REST` for Ferret.                                 | [modules/net/rest/README.md](./modules/http/README.md)             |
+| `net/rest`     | REST-style HTTP API clients under `NET::REST` for Ferret.                                 | [modules/net/rest/README.md](./modules/net/rest/README.md)         |
 | `security/jwt` | JWT token signing, verification, and inspection helpers under `SECURITY::JWT` for Ferret. | [modules/security/jwt/README.md](./modules/security/jwt/README.md) |
 | `toml`         | TOML module and ``TOML`` namespace helpers for Ferret.                                    | [modules/toml/README.md](./modules/toml/README.md)                 |
 | `web/article`  | Article extraction helpers under `WEB::ARTICLE` for Ferret.                               | [modules/web/article/README.md](./modules/web/article/README.md)   |
