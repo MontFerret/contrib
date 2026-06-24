@@ -1,9 +1,9 @@
 package core
 
-import "sync/atomic"
+import commonresource "github.com/MontFerret/contrib/pkg/common/resource"
 
-var nextResourceID atomic.Uint64
+var resourceIDs commonresource.IDGenerator
 
 func newResourceID() uint64 {
-	return nextResourceID.Add(1)
+	return resourceIDs.Next()
 }

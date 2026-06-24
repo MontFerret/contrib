@@ -3,11 +3,10 @@ package core
 import (
 	"context"
 	"database/sql"
-	"encoding/binary"
 	"errors"
-	"hash/fnv"
 	"sync"
 
+	commonresource "github.com/MontFerret/contrib/pkg/common/resource"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -115,18 +114,11 @@ func (c *Connection) ResourceID() uint64 {
 }
 
 func (c *Connection) String() string {
-	return "<db.sqlite.connection>"
+	return commonresource.Display("db.sqlite.connection")
 }
 
 func (c *Connection) Hash() uint64 {
-	h := fnv.New64a()
-	h.Write([]byte("db.sqlite.connection:"))
-
-	bytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bytes, c.id)
-	h.Write(bytes)
-
-	return h.Sum64()
+	return commonresource.Hash("db.sqlite.connection", c.id)
 }
 
 func (c *Connection) Copy() runtime.Value {
@@ -134,7 +126,7 @@ func (c *Connection) Copy() runtime.Value {
 }
 
 func (c *Connection) MarshalJSON() ([]byte, error) {
-	return []byte(`"<db.sqlite.connection>"`), nil
+	return commonresource.MarshalDisplayJSON("db.sqlite.connection")
 }
 
 func (c *Connection) database(operation string) (*sql.DB, error) {

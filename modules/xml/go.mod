@@ -2,7 +2,10 @@ module github.com/MontFerret/contrib/modules/xml
 
 go 1.25.6
 
-require github.com/MontFerret/ferret/v2 v2.0.0-alpha.25
+require (
+	github.com/MontFerret/contrib/pkg/common v0.1.0
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.25
+)
 
 require (
 	github.com/mattn/go-colorable v0.1.14 // indirect

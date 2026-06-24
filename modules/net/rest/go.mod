@@ -2,7 +2,10 @@ module github.com/MontFerret/contrib/modules/net/rest
 
 go 1.25.6
 
-require github.com/MontFerret/ferret/v2 v2.0.0-alpha.25
+require (
+	github.com/MontFerret/contrib/pkg/common v0.1.0
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.25
+)
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect

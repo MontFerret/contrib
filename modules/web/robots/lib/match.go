@@ -5,6 +5,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/robots/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // Match returns effective rule-match details for the given path.
@@ -13,8 +14,8 @@ func Match(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return nil, err
 	}
 
-	doc, err := decodeDocument(args[0])
-	if err != nil {
+	var doc core.Document
+	if err := sdk.Decode(args[0], &doc); err != nil {
 		return nil, err
 	}
 
@@ -33,5 +34,5 @@ func Match(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 		userAgent = raw.String()
 	}
 
-	return encodeValue(core.Match(doc, path.String(), userAgent)), nil
+	return sdk.Encode(core.Match(doc, path.String(), userAgent)), nil
 }

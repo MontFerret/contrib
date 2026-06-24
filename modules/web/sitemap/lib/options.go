@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/MontFerret/contrib/modules/web/sitemap/core"
+	commonobject "github.com/MontFerret/contrib/pkg/common/object"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -98,25 +99,5 @@ func optionName(key runtime.Value) (string, error) {
 }
 
 func parseHeaders(ctx context.Context, headers runtime.Map) (map[string]string, error) {
-	out := make(map[string]string)
-
-	if err := headers.ForEach(ctx, func(_ context.Context, value, key runtime.Value) (runtime.Boolean, error) {
-		name, ok := key.(runtime.String)
-		if !ok {
-			return false, fmt.Errorf("sitemap headers keys must be strings")
-		}
-
-		text, ok := value.(runtime.String)
-		if !ok {
-			return false, fmt.Errorf("sitemap headers values must be strings")
-		}
-
-		out[name.String()] = text.String()
-
-		return true, nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return out, nil
+	return commonobject.StringMap(ctx, headers, "sitemap headers")
 }

@@ -3,11 +3,10 @@ package core
 import (
 	"context"
 	"database/sql"
-	"encoding/binary"
 	"errors"
-	"hash/fnv"
 	"sync"
 
+	commonresource "github.com/MontFerret/contrib/pkg/common/resource"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -95,18 +94,11 @@ func (t *Transaction) ResourceID() uint64 {
 }
 
 func (t *Transaction) String() string {
-	return "<db.sqlite.transaction>"
+	return commonresource.Display("db.sqlite.transaction")
 }
 
 func (t *Transaction) Hash() uint64 {
-	h := fnv.New64a()
-	h.Write([]byte("db.sqlite.transaction:"))
-
-	bytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bytes, t.id)
-	h.Write(bytes)
-
-	return h.Sum64()
+	return commonresource.Hash("db.sqlite.transaction", t.id)
 }
 
 func (t *Transaction) Copy() runtime.Value {
@@ -114,7 +106,7 @@ func (t *Transaction) Copy() runtime.Value {
 }
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {
-	return []byte(`"<db.sqlite.transaction>"`), nil
+	return commonresource.MarshalDisplayJSON("db.sqlite.transaction")
 }
 
 func (t *Transaction) activeTx(operation string) (*sql.Tx, error) {
