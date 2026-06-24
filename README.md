@@ -32,6 +32,14 @@ make fmt [module ...]
 
 If no module names are provided, the commands run against all available modules.
 
+Support packages under `pkg/` can be updated across module `go.mod` files with:
+
+```sh
+make update-package <package> <version> [module ...]
+```
+
+If no module names are provided, only modules that already require the package are updated.
+
 ## Release Procedure
 
 Each module is released by creating and pushing a module-specific git tag in the format:
@@ -78,4 +86,10 @@ make release-package-major <package>
 
 # Explicit semantic version (including pre-release)
 make release-package-pre <package> 0.1.0
+```
+
+3. Update module requirements that use the released package:
+
+```sh
+make update-package <package> 0.1.0
 ```
