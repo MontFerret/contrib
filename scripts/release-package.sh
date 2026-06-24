@@ -7,9 +7,11 @@ TAG_PACKAGES="pkg"
 usage() {
   echo "Usage: $0 <major|minor|patch> <package>"
   echo "       $0 <package> <semver>"
+  echo "       $0 <package> <preid>"
   echo "Examples:"
   echo "  $0 patch common"
   echo "  $0 common 0.2.0-rc.1"
+  echo "  $0 common rc"
 }
 
 get_packages() {
@@ -45,6 +47,11 @@ normalize_version() {
 is_semver() {
   local version="$1"
   [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]
+}
+
+is_preid() {
+  local preid="$1"
+  [[ "$preid" =~ ^[A-Za-z][0-9A-Za-z-]*$ ]]
 }
 
 extract_core_version() {
@@ -89,6 +96,20 @@ bump_version() {
   echo "$major.$minor.$patch"
 }
 
+bump_prerelease_version() {
+  local preid="$1"
+  local version="$2"
+
+  if [[ "$version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-$preid\.([0-9]+)$ ]]; then
+    echo "${BASH_REMATCH[1]}-$preid.$((10#${BASH_REMATCH[2]} + 1))"
+    return
+  fi
+
+  echo "Latest version is not a matching prerelease: v$version" >&2
+  echo "Use an explicit semantic version first, for example: $0 <package> 0.1.0-$preid.1" >&2
+  exit 1
+}
+
 main() {
   if [[ $# -ne 2 ]]; then
     usage
@@ -97,7 +118,7 @@ main() {
 
   local mode="$1"
   local target="$2"
-  local package new_version
+  local package new_version preid
 
   case "$mode" in
     major|minor|patch)
@@ -105,9 +126,14 @@ main() {
       ;;
     *)
       package="$mode"
-      new_version="$(normalize_version "$target")"
-      if ! is_semver "$new_version"; then
-        echo "Invalid version: $target" >&2
+      if is_preid "$target"; then
+        preid="$target"
+      else
+        new_version="$(normalize_version "$target")"
+      fi
+
+      if [[ -z "${preid:-}" ]] && ! is_semver "$new_version"; then
+        echo "Invalid version or prerelease identifier: $target" >&2
         usage
         exit 1
       fi
@@ -133,6 +159,11 @@ main() {
   case "$mode" in
     major|minor|patch)
       new_version="$(bump_version "$mode" "$current_version")"
+      ;;
+    *)
+      if [[ -n "${preid:-}" ]]; then
+        new_version="$(bump_prerelease_version "$preid" "$current_version")"
+      fi
       ;;
   esac
 
