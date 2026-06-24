@@ -1,4 +1,4 @@
-.PHONY: install-tools modules build build-cli test test-unit test-integration lint fmt versions deps release-major release-minor release-patch release-pre
+.PHONY: install-tools modules packages build build-cli build-packages test test-unit test-packages test-integration lint lint-packages fmt fmt-packages versions deps release-major release-minor release-patch release-pre
 
 DIR_BIN = ./bin
 DIR_TEST = ./tests
@@ -13,8 +13,14 @@ install-tools:
 modules:
 	@./scripts/modules.sh list
 
+packages:
+	@./scripts/packages.sh list
+
 build: build-cli
 	@./scripts/modules.sh build $(filter-out $@,$(MAKECMDGOALS))
+
+build-packages:
+	@./scripts/packages.sh build $(filter-out $@,$(MAKECMDGOALS))
 
 build-cli:
 	go build -v -o ${DIR_BIN}/runtime \
@@ -25,14 +31,23 @@ test: test-unit test-integration
 test-unit:
 	@./scripts/modules.sh test-unit $(filter-out $@,$(MAKECMDGOALS))
 
+test-packages:
+	@./scripts/packages.sh test-unit $(filter-out $@,$(MAKECMDGOALS))
+
 test-integration:
 	@./scripts/modules.sh test-integration $(filter-out $@,$(MAKECMDGOALS))
 
 lint:
 	@./scripts/modules.sh lint $(filter-out $@,$(MAKECMDGOALS))
 
+lint-packages:
+	@./scripts/packages.sh lint $(filter-out $@,$(MAKECMDGOALS))
+
 fmt:
 	@./scripts/modules.sh fmt $(filter-out $@,$(MAKECMDGOALS))
+
+fmt-packages:
+	@./scripts/packages.sh fmt $(filter-out $@,$(MAKECMDGOALS))
 
 versions:
 	@./scripts/modules.sh versions $(filter-out $@,$(MAKECMDGOALS))

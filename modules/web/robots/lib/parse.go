@@ -5,6 +5,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/robots/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // Parse parses raw robots.txt content into a plain object.
@@ -23,5 +24,5 @@ func Parse(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return nil, err
 	}
 
-	return encodeValue(doc), nil
+	return sdk.Encode(doc), nil
 }

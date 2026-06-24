@@ -7,6 +7,9 @@ on:
       - master
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   discover-modules:
     name: Discover modules
@@ -30,6 +33,29 @@ jobs:
 
           echo "modules=$modules_json" >> "$GITHUB_OUTPUT"
           echo "Discovered modules: $modules_json"
+
+  discover-packages:
+    name: Discover packages
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.discover.outputs.packages }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Discover packages
+        id: discover
+        shell: bash
+        run: |
+          packages_json="$(
+            make packages \
+              | jq -R . \
+              | jq -s -c .
+          )"
+
+          echo "packages=$packages_json" >> "$GITHUB_OUTPUT"
+          echo "Discovered packages: $packages_json"
 
   build:
     name: Build (${{ matrix.module }})
@@ -102,3 +128,75 @@ jobs:
 
       - name: Lint module
         run: make lint ${{ matrix.module }}
+
+  build-packages:
+    name: Build Package (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    needs: discover-packages
+
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+          cache: true
+
+      - name: Build package
+        run: make build-packages ${{ matrix.package }}
+
+  test-packages:
+    name: Unit Test Package (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    needs: discover-packages
+
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+          cache: true
+
+      - name: Unit test package
+        run: make test-packages ${{ matrix.package }}
+
+  lint-packages:
+    name: Lint Package (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    needs: discover-packages
+
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+          cache: true
+
+      - name: Install tools
+        run: make install-tools
+
+      - name: Lint package
+        run: make lint-packages ${{ matrix.package }}

@@ -2,10 +2,9 @@ package core
 
 import (
 	"context"
-	"encoding/binary"
-	"hash/fnv"
 	"net/http"
 
+	commonresource "github.com/MontFerret/contrib/pkg/common/resource"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -57,18 +56,11 @@ func (c *Client) ResourceID() uint64 {
 }
 
 func (c *Client) String() string {
-	return "<http.client>"
+	return commonresource.Display("http.client")
 }
 
 func (c *Client) Hash() uint64 {
-	h := fnv.New64a()
-	h.Write([]byte("http.client:"))
-
-	bytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bytes, c.id)
-	h.Write(bytes)
-
-	return h.Sum64()
+	return commonresource.Hash("http.client", c.id)
 }
 
 func (c *Client) Copy() runtime.Value {
@@ -76,5 +68,5 @@ func (c *Client) Copy() runtime.Value {
 }
 
 func (c *Client) MarshalJSON() ([]byte, error) {
-	return []byte(`"<http.client>"`), nil
+	return commonresource.MarshalDisplayJSON("http.client")
 }

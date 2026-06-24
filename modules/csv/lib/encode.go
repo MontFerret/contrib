@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/MontFerret/contrib/modules/csv/core"
+	"github.com/MontFerret/contrib/pkg/common/bind"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // Encode encodes an array of objects or row arrays into CSV text.
@@ -18,17 +18,9 @@ func Encode(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return nil, err
 	}
 
-	opts := core.DefaultOptions()
-
-	if len(args) > 1 {
-		optsmap, err := runtime.CastArgAt[runtime.Map](args, 1)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := sdk.Decode(optsmap, &opts); err != nil {
-			return nil, err
-		}
+	opts, err := bind.DecodeMapArgOrDefault(args, 1, core.DefaultOptions())
+	if err != nil {
+		return nil, err
 	}
 
 	result, err := core.Encode(ctx, args[0], opts)

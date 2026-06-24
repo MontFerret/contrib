@@ -5,11 +5,10 @@ import (
 	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/binary"
 	"encoding/pem"
-	"hash/fnv"
 	"strings"
 
+	commonresource "github.com/MontFerret/contrib/pkg/common/resource"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -238,42 +237,31 @@ func (k *HMACKey) Secret() []byte {
 }
 
 func (k *HMACKey) ResourceID() uint64 { return k.id }
-func (k *HMACKey) String() string     { return "<security.jwt.hmac_key>" }
+func (k *HMACKey) String() string     { return commonresource.Display("security.jwt.hmac_key") }
 func (k *HMACKey) Copy() runtime.Value {
 	return k
 }
 func (k *HMACKey) MarshalJSON() ([]byte, error) {
-	return []byte(`"<security.jwt.hmac_key>"`), nil
+	return commonresource.MarshalDisplayJSON("security.jwt.hmac_key")
 }
-func (k *HMACKey) Hash() uint64 { return opaqueHash("security.jwt.hmac_key", k.id) }
+func (k *HMACKey) Hash() uint64 { return commonresource.Hash("security.jwt.hmac_key", k.id) }
 
 func (k *PublicKey) ResourceID() uint64 { return k.id }
-func (k *PublicKey) String() string     { return "<security.jwt.public_key>" }
+func (k *PublicKey) String() string     { return commonresource.Display("security.jwt.public_key") }
 func (k *PublicKey) Copy() runtime.Value {
 	return k
 }
 func (k *PublicKey) MarshalJSON() ([]byte, error) {
-	return []byte(`"<security.jwt.public_key>"`), nil
+	return commonresource.MarshalDisplayJSON("security.jwt.public_key")
 }
-func (k *PublicKey) Hash() uint64 { return opaqueHash("security.jwt.public_key", k.id) }
+func (k *PublicKey) Hash() uint64 { return commonresource.Hash("security.jwt.public_key", k.id) }
 
 func (k *PrivateKey) ResourceID() uint64 { return k.id }
-func (k *PrivateKey) String() string     { return "<security.jwt.private_key>" }
+func (k *PrivateKey) String() string     { return commonresource.Display("security.jwt.private_key") }
 func (k *PrivateKey) Copy() runtime.Value {
 	return k
 }
 func (k *PrivateKey) MarshalJSON() ([]byte, error) {
-	return []byte(`"<security.jwt.private_key>"`), nil
+	return commonresource.MarshalDisplayJSON("security.jwt.private_key")
 }
-func (k *PrivateKey) Hash() uint64 { return opaqueHash("security.jwt.private_key", k.id) }
-
-func opaqueHash(prefix string, id uint64) uint64 {
-	h := fnv.New64a()
-	h.Write([]byte(prefix + ":"))
-
-	bytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bytes, id)
-	h.Write(bytes)
-
-	return h.Sum64()
-}
+func (k *PrivateKey) Hash() uint64 { return commonresource.Hash("security.jwt.private_key", k.id) }

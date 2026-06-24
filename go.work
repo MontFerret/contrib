@@ -12,5 +12,8 @@ use (
 	./modules/web/sitemap
 	./modules/xml
 	./modules/yaml
+	./pkg/common
 	./tests/runtime
 )
+
+replace github.com/MontFerret/contrib/pkg/common v0.1.0 => ./pkg/common

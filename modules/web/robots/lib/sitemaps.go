@@ -5,6 +5,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/robots/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // Sitemaps returns the declared sitemap URLs from a parsed robots object.
@@ -13,10 +14,10 @@ func Sitemaps(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return nil, err
 	}
 
-	doc, err := decodeDocument(args[0])
-	if err != nil {
+	var doc core.Document
+	if err := sdk.Decode(args[0], &doc); err != nil {
 		return nil, err
 	}
 
-	return encodeValue(core.SitemapValues(doc)), nil
+	return sdk.Encode(core.SitemapValues(doc)), nil
 }
