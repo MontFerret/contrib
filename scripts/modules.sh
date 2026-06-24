@@ -155,7 +155,7 @@ main() {
         local module_test_files="$root_dir/${DIR_MODULE_TESTS#./}/$module"
         local serve_dynamic="$root_dir/${DIR_TESTDATA#./}/pages/dynamic"
         local serve_static="$root_dir/${DIR_TESTDATA#./}/pages/static"
-        local mock_api="$root_dir/${DIR_TESTDATA#./}/api/rest"
+        local mock_api="$root_dir/${DIR_TESTDATA#./}/api/rest/spec.yaml"
 
         # If the module test folder doesn't exist, skip it
         if [ ! -d "$module_test_files" ]; then
