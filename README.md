@@ -54,7 +54,7 @@ make release-minor <module>
 make release-major <module>
 
 # Explicit semantic version (including pre-release)
-make release-pre 1.0.0-rc.1 <module>
+make release-pre <module> 1.0.0-rc.1
 ```
 
 Support packages under `pkg/` are released by creating and pushing a package-specific git tag in the format:
@@ -77,5 +77,5 @@ make release-package-minor <package>
 make release-package-major <package>
 
 # Explicit semantic version (including pre-release)
-make release-package-pre 0.1.0 <package>
+make release-package-pre <package> 0.1.0
 ```

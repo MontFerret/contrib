@@ -19,7 +19,7 @@ tags=()
 for module in "${modules[@]}"; do
   tag="modules/$module/v$VERSION"
   echo "Creating tag: $tag"
-  make release-pre "$VERSION" "$module"
+  make release-pre "$module" "$VERSION"
   tags+=("$tag")
 done
 

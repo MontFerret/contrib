@@ -5,10 +5,11 @@ DIR_PACKAGES="./pkg"
 TAG_PACKAGES="pkg"
 
 usage() {
-  echo "Usage: $0 <major|minor|patch|<semver>> <package>"
+  echo "Usage: $0 <major|minor|patch> <package>"
+  echo "       $0 <package> <semver>"
   echo "Examples:"
   echo "  $0 patch common"
-  echo "  $0 0.2.0-rc.1 common"
+  echo "  $0 common 0.2.0-rc.1"
 }
 
 get_packages() {
@@ -94,8 +95,24 @@ main() {
     exit 1
   fi
 
-  local bump_or_version="$1"
-  local package="$2"
+  local mode="$1"
+  local target="$2"
+  local package new_version
+
+  case "$mode" in
+    major|minor|patch)
+      package="$target"
+      ;;
+    *)
+      package="$mode"
+      new_version="$(normalize_version "$target")"
+      if ! is_semver "$new_version"; then
+        echo "Invalid version: $target" >&2
+        usage
+        exit 1
+      fi
+      ;;
+  esac
 
   if ! package_exists "$package"; then
     echo "Unknown package: $package" >&2
@@ -104,7 +121,7 @@ main() {
     exit 1
   fi
 
-  local latest_tag current_version new_version new_tag
+  local latest_tag current_version new_tag
   latest_tag="$(get_latest_tag "$package")"
 
   if [[ -z "$latest_tag" ]]; then
@@ -113,17 +130,9 @@ main() {
     current_version="$(normalize_version "${latest_tag##*/}")"
   fi
 
-  case "$bump_or_version" in
+  case "$mode" in
     major|minor|patch)
-      new_version="$(bump_version "$bump_or_version" "$current_version")"
-      ;;
-    *)
-      new_version="$(normalize_version "$bump_or_version")"
-      if ! is_semver "$new_version"; then
-        echo "Invalid version: $bump_or_version" >&2
-        usage
-        exit 1
-      fi
+      new_version="$(bump_version "$mode" "$current_version")"
       ;;
   esac
 
