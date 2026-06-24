@@ -66,6 +66,9 @@ make release-pre xml 1.0.0-rc.1
 
 # Auto-bump latest matching pre-release
 make release-pre xml rc
+
+# Auto-bump latest matching pre-release for all modules
+make release-pre-all rc
 ```
 
 Support packages under `pkg/` are released by creating and pushing a package-specific git tag in the format:

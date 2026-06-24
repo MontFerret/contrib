@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="${1:-1.0.0-rc.1}"
-REMOTE="${2:-origin}"
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 <semver|preid>" >&2
+  echo "Examples:" >&2
+  echo "  $0 1.0.0-rc.1" >&2
+  echo "  $0 rc" >&2
+  exit 1
+fi
+
+VERSION_OR_PREID="$1"
 
 modules=()
 while IFS= read -r module; do
@@ -14,14 +21,7 @@ if [ "${#modules[@]}" -eq 0 ]; then
   exit 1
 fi
 
-tags=()
-
 for module in "${modules[@]}"; do
-  tag="modules/$module/v$VERSION"
-  echo "Creating tag: $tag"
-  make release-pre "$module" "$VERSION"
-  tags+=("$tag")
+  echo "Releasing module '$module' with '$VERSION_OR_PREID'"
+  make release-pre "$module" "$VERSION_OR_PREID"
 done
-
-echo "Pushing ${#tags[@]} tags to remote '$REMOTE'"
-git push "$REMOTE" "${tags[@]}"

@@ -70,6 +70,9 @@ release-patch:
 release-pre:
 	@./scripts/release.sh $(filter-out $@,$(MAKECMDGOALS))
 
+release-pre-all:
+	@./scripts/release-all.sh $@
+
 release-package-major:
 	@./scripts/release-package.sh major $(filter-out $@,$(MAKECMDGOALS))
 
