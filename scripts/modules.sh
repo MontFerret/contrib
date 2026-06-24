@@ -175,13 +175,9 @@ main() {
         fi
 
         lab_args+=(--files="$module_test_files")
-
         lab_args+=(--serve="$serve_dynamic")
         lab_args+=(--serve="$serve_static")
-
-        if [ -d "$mock_api" ]; then
-          lab_args+=(--mock="$mock_api@api")
-        fi
+        lab_args+=(--mock="$mock_api@api")
 
         lab run "${lab_args[@]}"
         ;;
