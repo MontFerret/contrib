@@ -45,7 +45,7 @@ make test <module>
 make lint <module>
 ```
 
-2. Create a tag using the `Makefile` release targets:
+2. Create and push an annotated tag using the `Makefile` release targets:
 
 ```sh
 # Auto-bump from latest module tag
@@ -57,8 +57,25 @@ make release-major <module>
 make release-pre 1.0.0-rc.1 <module>
 ```
 
-3. Push the created tag:
+Support packages under `pkg/` are released by creating and pushing a package-specific git tag in the format:
+
+`pkg/<package>/v<version>`
+
+1. Validate the target package:
 
 ```sh
-git push origin modules/<module>/v<version>
+make test-packages <package>
+make lint-packages <package>
+```
+
+2. Create and push an annotated tag using the package release targets:
+
+```sh
+# Auto-bump from latest package tag
+make release-package-patch <package>
+make release-package-minor <package>
+make release-package-major <package>
+
+# Explicit semantic version (including pre-release)
+make release-package-pre 0.1.0 <package>
 ```
