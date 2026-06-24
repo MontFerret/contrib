@@ -4,10 +4,22 @@ set -euo pipefail
 DIR_BIN="./bin"
 DIR_MODULES="./modules"
 DIR_TESTS="./tests"
-DIR_RUNTIME="$DIR_TESTS/runtime"
 DIR_TESTDATA="$DIR_TESTS/data"
 DIR_MODULE_TESTS="$DIR_TESTS/modules"
 TAG_MODULES="modules"
+
+requires_chromium() {
+  local module="$1"
+
+  case "$module" in
+    web/html)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
 
 get_modules() {
   find "$DIR_MODULES" -type f -name go.mod \
@@ -143,6 +155,7 @@ main() {
         local module_test_files="$root_dir/${DIR_MODULE_TESTS#./}/$module"
         local serve_dynamic="$root_dir/${DIR_TESTDATA#./}/pages/dynamic"
         local serve_static="$root_dir/${DIR_TESTDATA#./}/pages/static"
+        local mock_api="$root_dir/${DIR_TESTDATA#./}/api/rest/spec.yaml"
 
         # If the module test folder doesn't exist, skip it
         if [ ! -d "$module_test_files" ]; then
@@ -150,15 +163,23 @@ main() {
           continue
         fi
 
-        lab run \
-          --runtime="$runtime_uri" \
-          --timeout=120 \
-          --attempts=5 \
-          --concurrency=1 \
-          --wait=http://127.0.0.1:9222/json/version \
-          --files="$module_test_files" \
-          --serve="$serve_dynamic" \
-          --serve="$serve_static"
+        local lab_args=(
+          --runtime="$runtime_uri"
+          --timeout=120
+          --attempts=5
+          --concurrency=1
+        )
+
+        if requires_chromium "$module"; then
+          lab_args+=(--wait=http://127.0.0.1:9222/json/version)
+        fi
+
+        lab_args+=(--files="$module_test_files")
+        lab_args+=(--serve="$serve_dynamic")
+        lab_args+=(--serve="$serve_static")
+        lab_args+=(--mock="$mock_api@api")
+
+        lab run "${lab_args[@]}"
         ;;
       lint)
         echo "Linting module '$module'"
@@ -192,12 +213,6 @@ main() {
         ;;
     esac
   done
-
-  if [ "$command" = "build" ]; then
-    echo "Building runtime..."
-    mkdir -p "$DIR_BIN"
-    go build -v -o "$DIR_BIN/runtime" "$DIR_RUNTIME/runtime.go"
-  fi
 }
 
 main "$@"

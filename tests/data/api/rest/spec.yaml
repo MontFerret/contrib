@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: Users API
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      operationId: getHealth
+      x-lab-mock:
+        status: 200
+        body:
+          version: "1.0.0"
+          status: "ok"
+  /users:
+    get:
+      summary: Get list of users
+      operationId: getUsers
+      x-lab-mock:
+        status: 200
+        headers:
+          content-type: application/json
+        bodyTemplate: |
+          [
+            {{- range $i := until 5 }}
+            {{- if $i }},{{ end }}
+            {
+              "id": {{ add $i 1 }},
+              "name": "User {{ add $i 1 }}",
+              "active": {{ eq (mod $i 2) 0 }}
+            }
+            {{- end }}
+          ]

@@ -19,14 +19,14 @@ type VerifyOptions struct {
 
 // SignOptions configures SECURITY::JWT::SIGN.
 type SignOptions struct {
+	Audience  any            `json:"audience"`
+	Header    map[string]any `json:"header"`
 	Algorithm string         `json:"algorithm"`
 	Issuer    string         `json:"issuer"`
-	Audience  any            `json:"audience"`
 	Subject   string         `json:"subject"`
 	ExpiresIn int64          `json:"expires_in"`
 	NotBefore int64          `json:"not_before"`
 	IssuedAt  bool           `json:"issued_at"`
-	Header    map[string]any `json:"header"`
 }
 
 // DecodeVerifyOptions decodes VERIFY options from a Ferret map.

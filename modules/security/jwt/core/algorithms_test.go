@@ -7,15 +7,15 @@ import (
 func TestSigningMethod(t *testing.T) {
 	tests := []struct {
 		alg     string
-		wantErr bool
 		code    string
+		wantErr bool
 	}{
-		{"HS256", false, ""},
-		{"RS256", false, ""},
-		{"ES256", false, ""},
-		{"EdDSA", false, ""},
-		{"none", true, ErrUnexpectedAlgorithm},
-		{"invalid", true, ErrUnsupportedAlgorithm},
+		{alg: "HS256", wantErr: false, code: ""},
+		{alg: "RS256", wantErr: false, code: ""},
+		{alg: "ES256", wantErr: false, code: ""},
+		{alg: "EdDSA", wantErr: false, code: ""},
+		{alg: "none", wantErr: true, code: ErrUnexpectedAlgorithm},
+		{alg: "invalid", wantErr: true, code: ErrUnsupportedAlgorithm},
 	}
 
 	for _, tt := range tests {

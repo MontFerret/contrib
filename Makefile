@@ -1,4 +1,8 @@
-.PHONY: install-tools modules build test lint fmt versions deps release-major release-minor release-patch release-pre
+.PHONY: install-tools modules build build-cli test test-unit test-integration lint fmt versions deps release-major release-minor release-patch release-pre
+
+DIR_BIN = ./bin
+DIR_TEST = ./tests
+DIR_TEST_CLI = ${DIR_TEST}/runtime
 
 install-tools:
 	go install honnef.co/go/tools/cmd/staticcheck@latest && \
@@ -9,8 +13,12 @@ install-tools:
 modules:
 	@./scripts/modules.sh list
 
-build:
+build: build-cli
 	@./scripts/modules.sh build $(filter-out $@,$(MAKECMDGOALS))
+
+build-cli:
+	go build -v -o ${DIR_BIN}/runtime \
+		${DIR_TEST_CLI}/main.go
 
 test: test-unit test-integration
 

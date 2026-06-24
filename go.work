@@ -1,15 +1,16 @@
 go 1.26.1
 
 use (
-	modules/csv
-	modules/db/sqlite
-	modules/security/jwt
-	modules/toml
-	modules/web/article
-	modules/web/html
-	modules/web/robots
-	modules/web/sitemap
-	modules/xml
-	modules/yaml
-	tests/runtime
+	./modules/csv
+	./modules/db/sqlite
+	./modules/net/rest
+	./modules/security/jwt
+	./modules/toml
+	./modules/web/article
+	./modules/web/html
+	./modules/web/robots
+	./modules/web/sitemap
+	./modules/xml
+	./modules/yaml
+	./tests/runtime
 )
