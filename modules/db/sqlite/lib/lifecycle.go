@@ -9,22 +9,18 @@ import (
 )
 
 // Open creates a SQLite database handle from an options object.
-func Open(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	return open(ctx, core.DefaultOpenPolicy(), args...)
+func Open(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
+	return open(ctx, core.DefaultOpenPolicy(), arg)
 }
 
-func openWithPolicy(policy core.OpenPolicy) runtime.Function {
-	return func(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-		return open(ctx, policy, args...)
+func openWithPolicy(policy core.OpenPolicy) runtime.Function1 {
+	return func(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
+		return open(ctx, policy, arg)
 	}
 }
 
-func open(ctx context.Context, policy core.OpenPolicy, args ...runtime.Value) (runtime.Value, error) {
-	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
-		return runtime.None, err
-	}
-
-	options, err := core.DecodeOpenOptions(args[0])
+func open(ctx context.Context, policy core.OpenPolicy, arg runtime.Value) (runtime.Value, error) {
+	options, err := core.DecodeOpenOptions(arg)
 	if err != nil {
 		return runtime.None, err
 	}
@@ -34,12 +30,8 @@ func open(ctx context.Context, policy core.OpenPolicy, args ...runtime.Value) (r
 
 // Close closes a SQLite database handle. Closing an already closed database is
 // idempotent.
-func Close(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
-	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
-		return runtime.None, err
-	}
-
-	db, ok := args[0].(*core.Connection)
+func Close(_ context.Context, arg runtime.Value) (runtime.Value, error) {
+	db, ok := arg.(*core.Connection)
 	if !ok {
 		return runtime.None, fmt.Errorf("DB::SQLITE CLOSE failed: expected SQLite database handle")
 	}
@@ -52,12 +44,8 @@ func Close(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 }
 
 // Begin starts a SQLite transaction and returns a transaction handle.
-func Begin(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
-		return runtime.None, err
-	}
-
-	db, ok := args[0].(*core.Connection)
+func Begin(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
+	db, ok := arg.(*core.Connection)
 	if !ok {
 		return runtime.None, fmt.Errorf("DB::SQLITE BEGIN failed: expected SQLite database handle")
 	}
@@ -66,12 +54,8 @@ func Begin(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 }
 
 // Commit commits a SQLite transaction handle.
-func Commit(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
-	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
-		return runtime.None, err
-	}
-
-	tx, ok := args[0].(*core.Transaction)
+func Commit(_ context.Context, arg runtime.Value) (runtime.Value, error) {
+	tx, ok := arg.(*core.Transaction)
 	if !ok {
 		return runtime.None, fmt.Errorf("DB::SQLITE COMMIT failed: expected SQLite transaction handle")
 	}
@@ -84,12 +68,8 @@ func Commit(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 }
 
 // Rollback rolls back a SQLite transaction handle.
-func Rollback(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
-	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
-		return runtime.None, err
-	}
-
-	tx, ok := args[0].(*core.Transaction)
+func Rollback(_ context.Context, arg runtime.Value) (runtime.Value, error) {
+	tx, ok := arg.(*core.Transaction)
 	if !ok {
 		return runtime.None, fmt.Errorf("DB::SQLITE ROLLBACK failed: expected SQLite transaction handle")
 	}
