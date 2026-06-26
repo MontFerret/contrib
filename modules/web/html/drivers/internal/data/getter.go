@@ -89,7 +89,7 @@ func GetInElement(ctx context.Context, key runtime.Value, el drivers.HTMLElement
 	}
 
 	switch key.String() {
-	case "textContent", "text":
+	case "textContent":
 		target, err := drivers.ToContentTarget(el)
 		if err != nil {
 			return runtime.None, err

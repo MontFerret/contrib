@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/MontFerret/contrib/modules/csv"
+	dbpostgres "github.com/MontFerret/contrib/modules/db/postgres"
 	dbsqlite "github.com/MontFerret/contrib/modules/db/sqlite"
 	restmodule "github.com/MontFerret/contrib/modules/net/rest"
 	jwtmodule "github.com/MontFerret/contrib/modules/security/jwt"
@@ -186,6 +187,7 @@ func main() {
 		ferret.WithLogLevel(ferret.MustParseLogLevel(*logLevel)),
 		ferret.WithModules(
 			csv.New(),
+			dbpostgres.New(),
 			dbsqlite.New(),
 			restmodule.New(),
 			jwtmodule.New(),

@@ -14,7 +14,7 @@ func RegisterLib(ns runtime.Namespace, policies ...core.OpenPolicy) {
 		policy = policies[0]
 	}
 
-	ns.Function().Var().
+	ns.Function().A1().
 		Add("OPEN", openWithPolicy(policy)).
 		Add("CLOSE", Close).
 		Add("BEGIN", Begin).

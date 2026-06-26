@@ -110,6 +110,38 @@ func TestDocumentAndPageDotAccessDoNotExposeElementOnlyViews(t *testing.T) {
 	}
 }
 
+func TestMemoryElementRejectsNonStandardTextAliases(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	page := newMemoryPage(t, `<html><body><article id="hero">Text</article></body></html>`)
+	doc := page.GetMainFrame()
+
+	heroValue, err := doc.QuerySelector(ctx, drivers.NewCSSSelector("#hero"))
+	if err != nil {
+		t.Fatalf("resolve hero: %v", err)
+	}
+
+	hero := mustElementFromValue(t, heroValue)
+
+	for _, name := range []string{"text", "html"} {
+		name := name
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			value, err := hero.Get(ctx, runtime.NewString(name))
+			if err != nil {
+				t.Fatalf("read %s: %v", name, err)
+			}
+
+			if value != runtime.None {
+				t.Fatalf("expected %s read to return none, got %T %v", name, value, value)
+			}
+		})
+	}
+}
+
 func TestExplicitElementMutationCapabilitiesRemain(t *testing.T) {
 	t.Parallel()
 
