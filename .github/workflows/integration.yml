@@ -85,3 +85,39 @@ jobs:
           LAB_SERVE_HOST: host.docker.internal
           LAB_SERVE_BIND: 0.0.0.0
         run: make test-integration ${{ matrix.module }}
+
+  postgres-integration:
+    name: Postgres Integration (db/postgres)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ferret
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: ferret
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U ferret -d ferret"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+          cache: true
+
+      - name: Run Postgres integration tests
+        working-directory: modules/db/postgres
+        env:
+          GOWORK: "off"
+          POSTGRES_DSN: "postgres://ferret:secret@127.0.0.1:${{ job.services.postgres.ports[5432] }}/ferret?sslmode=disable"
+        run: go test ./...

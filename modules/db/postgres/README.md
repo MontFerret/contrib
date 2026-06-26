@@ -199,6 +199,8 @@ POSTGRES_DSN='postgres://ferret:secret@localhost:5432/ferret?sslmode=disable' \
   go test ./...
 ```
 
+GitHub Actions runs the same live test path with a Postgres service container in `.github/workflows/integration.yml`.
+
 ## Behavior Notes
 
 - SQL is never rewritten and `LIMIT` is never appended automatically.
