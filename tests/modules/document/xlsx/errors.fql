@@ -1,0 +1,10 @@
+LET workbook = DOCUMENT::XLSX::CREATE()
+LET sheet = DOCUMENT::XLSX::SHEET(workbook, "Sheet1")
+
+DOCUMENT::XLSX::DELETE_SHEET(workbook, "Sheet1")
+
+LET deleted = DOCUMENT::XLSX::GET(sheet, "A1") ON ERROR RETURN "deleted"
+DOCUMENT::XLSX::CLOSE(workbook)
+LET closed = DOCUMENT::XLSX::SHEETS(workbook) ON ERROR RETURN "closed"
+
+RETURN T::EQ(deleted, "deleted") AND T::EQ(closed, "closed")

@@ -1,0 +1,25 @@
+LET workbook = DOCUMENT::XLSX::OPEN("./sales.xlsx")
+LET source = DOCUMENT::XLSX::SHEET(workbook, "Sales")
+LET output = DOCUMENT::XLSX::ADD_SHEET(workbook, "Active Sales")
+
+LET activeRows = (
+  FOR row IN (
+    QUERY "A1:D100" IN source WITH {
+      headers: true,
+      trimEmptyRows: true
+    }
+  )
+    FILTER row.Active == true
+    RETURN [
+      row.Name,
+      row.Department,
+      row.Score
+    ]
+)
+
+DOCUMENT::XLSX::WRITE_RANGE(output, "A1", UNION(
+  [["Name", "Department", "Score"]],
+  activeRows
+))
+DOCUMENT::XLSX::SAVE_AS(workbook, "./output/active-sales.xlsx")
+DOCUMENT::XLSX::CLOSE(workbook)
