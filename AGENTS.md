@@ -161,6 +161,7 @@ If the code configures, registers, documents, or packages the module, it belongs
 
 - This repository contains optional modules, not the Ferret core runtime.
 - Modules should integrate with Ferret as extensions rather than reimplementing core behavior.
+- Modules that read, write, create, delete, inspect, or otherwise access user-controlled filesystem paths must do so through Ferret's filesystem API (`github.com/MontFerret/ferret/v2/pkg/fs`) resolved from the execution context. Do not use direct host filesystem calls such as `os.Open`, `os.ReadFile`, `os.WriteFile`, `os.Stat`, `os.Mkdir`, or third-party path-based open/save APIs for module runtime behavior unless the access is first mediated by Ferret's filesystem policy.
 - Each module should remain independently understandable and independently releasable.
 - Repo-level tooling must continue to work both for all modules and for targeted module subsets.
 - Module discovery for repo automation is based on finding `go.mod` files under `modules/`.
