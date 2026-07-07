@@ -15,6 +15,7 @@ import (
 	"github.com/MontFerret/contrib/modules/csv"
 	dbpostgres "github.com/MontFerret/contrib/modules/db/postgres"
 	dbsqlite "github.com/MontFerret/contrib/modules/db/sqlite"
+	documentpdf "github.com/MontFerret/contrib/modules/document/pdf"
 	documentxlsx "github.com/MontFerret/contrib/modules/document/xlsx"
 	restmodule "github.com/MontFerret/contrib/modules/net/rest"
 	jwtmodule "github.com/MontFerret/contrib/modules/security/jwt"
@@ -190,6 +191,7 @@ func main() {
 			csv.New(),
 			dbpostgres.New(),
 			dbsqlite.New(),
+			documentpdf.New(),
 			documentxlsx.New(),
 			restmodule.New(),
 			jwtmodule.New(),
