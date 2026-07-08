@@ -1,4 +1,4 @@
-.PHONY: install-tools modules packages build build-cli build-packages test test-unit test-packages test-integration lint lint-packages fmt fmt-packages versions deps update-package release-major release-minor release-patch release-pre release-package-major release-package-minor release-package-patch release-package-pre
+.PHONY: install-tools modules packages build build-cli build-packages test test-unit test-packages test-integration lint lint-packages fmt fmt-packages versions deps update-package update-ferret release-major release-minor release-patch release-pre release-package-major release-package-minor release-package-patch release-package-pre
 
 DIR_BIN = ./bin
 DIR_TEST = ./tests
@@ -57,6 +57,9 @@ deps:
 
 update-package:
 	@./scripts/update-package.sh $(filter-out $@,$(MAKECMDGOALS))
+
+update-ferret:
+	@./scripts/update-ferret.sh $(filter-out $@,$(MAKECMDGOALS))
 
 release-major:
 	@./scripts/release.sh major $(filter-out $@,$(MAKECMDGOALS))

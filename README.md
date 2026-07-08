@@ -43,6 +43,12 @@ make update-package <package> <version> [module ...]
 
 If no module names are provided, only modules that already require the package are updated.
 
+The Ferret runtime dependency can be updated across all workspace `go.mod` files that require it with:
+
+```sh
+make update-ferret <version>
+```
+
 ## Release Procedure
 
 Each module is released by creating and pushing a module-specific git tag in the format:
