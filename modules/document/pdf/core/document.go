@@ -135,6 +135,36 @@ func (d *Document) Text(ctx context.Context) (string, error) {
 	return strings.Join(parts, "\n\n"), nil
 }
 
+func (d *Document) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
+	if isEmptyKey(key) {
+		return runtime.None, nil
+	}
+	if err := ctx.Err(); err != nil {
+		return runtime.None, OperationError("GET", err)
+	}
+
+	switch key.String() {
+	case "pageCount":
+		count, err := d.PageCount()
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return runtime.NewInt(count), nil
+	case "pages":
+		d.mu.RLock()
+		defer d.mu.RUnlock()
+
+		if err := d.ensureOpen(); err != nil {
+			return runtime.None, OperationError("PAGES", err)
+		}
+
+		return NewPageCollection(d), nil
+	default:
+		return runtime.None, nil
+	}
+}
+
 func (d *Document) Close() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()

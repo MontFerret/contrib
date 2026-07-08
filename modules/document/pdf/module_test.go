@@ -48,17 +48,32 @@ func TestModuleRunsPDFWorkflowFromFQL(t *testing.T) {
 
 	output, err := engine.Run(context.Background(), source.NewAnonymous(`
 		LET document = DOCUMENT::PDF::OPEN(@path)
-		LET pages = DOCUMENT::PDF::PAGES(document)
-		LET first = DOCUMENT::PDF::PAGE(document, 1)
+		LET pages = document.pages
+		LET first = pages[0]
 		LET second = pages[1]
 		LET result = {
-			count: DOCUMENT::PDF::PAGE_COUNT(document),
-			firstText: DOCUMENT::PDF::TEXT(first),
-			fullText: DOCUMENT::PDF::TEXT(document),
-			firstInfo: DOCUMENT::PDF::PAGE_INFO(first),
-			secondInfo: DOCUMENT::PDF::PAGE_INFO(second),
-			blocks: DOCUMENT::PDF::BLOCKS(first),
-			closed: DOCUMENT::PDF::CLOSE(document)
+			count: document.pageCount,
+			length: LENGTH(pages),
+			firstText: first.text,
+			combinedText: (
+				FOR page IN pages
+					RETURN page.text
+			),
+			firstInfo: {
+				number: first.number,
+				width: first.width,
+				height: first.height,
+				rotation: first.rotation
+			},
+			secondInfo: {
+				number: second.number,
+				width: second.width,
+				height: second.height,
+				rotation: second.rotation
+			},
+			blocks: first.blocks,
+			unknownDocument: document.missing,
+			unknownPage: first.missing
 		}
 		RETURN result
 	`))
@@ -67,9 +82,11 @@ func TestModuleRunsPDFWorkflowFromFQL(t *testing.T) {
 	}
 
 	var actual struct {
-		FirstText string `json:"firstText"`
-		FullText  string `json:"fullText"`
-		Blocks    []struct {
+		UnknownDocument any      `json:"unknownDocument"`
+		UnknownPage     any      `json:"unknownPage"`
+		FirstText       string   `json:"firstText"`
+		CombinedText    []string `json:"combinedText"`
+		Blocks          []struct {
 			Text   string `json:"text"`
 			Bounds struct {
 				X      float64 `json:"x"`
@@ -80,16 +97,16 @@ func TestModuleRunsPDFWorkflowFromFQL(t *testing.T) {
 		FirstInfo  info `json:"firstInfo"`
 		SecondInfo info `json:"secondInfo"`
 		Count      int  `json:"count"`
-		Closed     bool `json:"closed"`
+		Length     int  `json:"length"`
 	}
 	if err := json.Unmarshal(output.Content, &actual); err != nil {
 		t.Fatalf("failed to decode output: %v", err)
 	}
 
-	if actual.Count != 2 || !actual.Closed {
-		t.Fatalf("unexpected count/closed result: %#v", actual)
+	if actual.Count != 2 || actual.Length != 2 {
+		t.Fatalf("unexpected count/length result: %#v", actual)
 	}
-	if !strings.Contains(actual.FirstText, "Alpha") || !strings.Contains(actual.FullText, "Beta") || !strings.Contains(actual.FullText, "\n\n") {
+	if !strings.Contains(actual.FirstText, "Alpha") || len(actual.CombinedText) != 2 || !strings.Contains(actual.CombinedText[1], "Beta") {
 		t.Fatalf("unexpected extracted text: %#v", actual)
 	}
 	if actual.FirstInfo.Number != 1 || actual.FirstInfo.Width != 612 || actual.FirstInfo.Height != 792 {
@@ -101,9 +118,12 @@ func TestModuleRunsPDFWorkflowFromFQL(t *testing.T) {
 	if len(actual.Blocks) == 0 || actual.Blocks[0].Bounds.X != 72 || actual.Blocks[0].Bounds.Y != 720 || actual.Blocks[0].Bounds.Height != 24 {
 		t.Fatalf("unexpected positioned blocks: %#v", actual.Blocks)
 	}
+	if actual.UnknownDocument != nil || actual.UnknownPage != nil {
+		t.Fatalf("expected unknown properties to encode as null, got %#v", actual)
+	}
 }
 
-func TestModuleReportsWrongArgumentTypesFromFQL(t *testing.T) {
+func TestModuleReportsCapabilityErrorsFromFQL(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
@@ -126,27 +146,15 @@ func TestModuleReportsWrongArgumentTypesFromFQL(t *testing.T) {
 
 	output, err := engine.Run(context.Background(), source.NewAnonymous(`
 		LET document = DOCUMENT::PDF::OPEN(@path)
-		LET page = DOCUMENT::PDF::PAGE(document, 1)
 		LET openErr = DOCUMENT::PDF::OPEN(1) ON ERROR RETURN "open"
-		LET pageCountErr = DOCUMENT::PDF::PAGE_COUNT("x") ON ERROR RETURN "page_count"
-		LET pagesErr = DOCUMENT::PDF::PAGES("x") ON ERROR RETURN "pages"
-		LET pageDocumentErr = DOCUMENT::PDF::PAGE("x", 1) ON ERROR RETURN "page_document"
-		LET pageNumberErr = DOCUMENT::PDF::PAGE(document, "1") ON ERROR RETURN "page_number"
-		LET textErr = DOCUMENT::PDF::TEXT("x") ON ERROR RETURN "text"
-		LET pageInfoErr = DOCUMENT::PDF::PAGE_INFO(document) ON ERROR RETURN "page_info"
-		LET blocksErr = DOCUMENT::PDF::BLOCKS(document) ON ERROR RETURN "blocks"
-		LET closeErr = DOCUMENT::PDF::CLOSE(page) ON ERROR RETURN "close"
-		DOCUMENT::PDF::CLOSE(document)
+		LET missingDocument = document.missing
+		LET missingPage = document.pages[0].missing
+		LET outOfRange = document.pages[99]
 
 		RETURN openErr == "open"
-			AND pageCountErr == "page_count"
-			AND pagesErr == "pages"
-			AND pageDocumentErr == "page_document"
-			AND pageNumberErr == "page_number"
-			AND textErr == "text"
-			AND pageInfoErr == "page_info"
-			AND blocksErr == "blocks"
-			AND closeErr == "close"
+			AND missingDocument == NONE
+			AND missingPage == NONE
+			AND outOfRange == NONE
 	`))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)

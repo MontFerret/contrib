@@ -14,14 +14,5 @@ func RegisterLib(ns runtime.Namespace, options ...core.OpenOptions) {
 	}
 
 	ns.Function().A1().
-		Add("OPEN", openWithOptions(openOptions)).
-		Add("PAGE_COUNT", PageCount).
-		Add("PAGES", Pages).
-		Add("TEXT", Text).
-		Add("PAGE_INFO", PageInfo).
-		Add("BLOCKS", Blocks).
-		Add("CLOSE", Close)
-
-	ns.Function().A2().
-		Add("PAGE", Page)
+		Add("OPEN", openWithOptions(openOptions))
 }

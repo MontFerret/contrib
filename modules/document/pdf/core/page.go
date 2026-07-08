@@ -128,6 +128,59 @@ func (p *Page) Blocks(ctx context.Context) ([]TextBlock, error) {
 	return blocks, nil
 }
 
+func (p *Page) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
+	if isEmptyKey(key) {
+		return runtime.None, nil
+	}
+
+	switch key.String() {
+	case "number":
+		if err := p.ensureOpenProperty(ctx); err != nil {
+			return runtime.None, err
+		}
+
+		return runtime.NewInt(p.Number()), nil
+	case "width", "height", "rotation":
+		info, err := p.Info(ctx)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return pageInfoProperty(info, key.String()), nil
+	case "text":
+		text, err := p.Text(ctx)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return runtime.NewString(text), nil
+	case "blocks":
+		blocks, err := p.Blocks(ctx)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		return textBlocksValue(ctx, blocks)
+	default:
+		return runtime.None, nil
+	}
+}
+
+func (p *Page) ensureOpenProperty(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return OperationError("PAGE", err)
+	}
+
+	p.document.mu.RLock()
+	defer p.document.mu.RUnlock()
+
+	if err := p.document.ensureOpen(); err != nil {
+		return OperationError("PAGE", err)
+	}
+
+	return nil
+}
+
 func (p *Page) String() string {
 	return fmt.Sprintf("PDFPage(%d)", p.number)
 }

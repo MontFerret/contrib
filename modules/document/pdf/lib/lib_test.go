@@ -18,14 +18,7 @@ func TestRegisterLib(t *testing.T) {
 	}
 
 	expected := []string{
-		"DOCUMENT::PDF::BLOCKS",
-		"DOCUMENT::PDF::CLOSE",
 		"DOCUMENT::PDF::OPEN",
-		"DOCUMENT::PDF::PAGE",
-		"DOCUMENT::PDF::PAGES",
-		"DOCUMENT::PDF::PAGE_COUNT",
-		"DOCUMENT::PDF::PAGE_INFO",
-		"DOCUMENT::PDF::TEXT",
 	}
 
 	if funcs.Size() != len(expected) {
@@ -43,6 +36,21 @@ func TestRegisterLib(t *testing.T) {
 	for _, name := range names {
 		if strings.HasPrefix(name, "PDF::") {
 			t.Fatalf("unexpected top-level PDF alias %q", name)
+		}
+	}
+
+	removed := []string{
+		"DOCUMENT::PDF::BLOCKS",
+		"DOCUMENT::PDF::CLOSE",
+		"DOCUMENT::PDF::PAGE",
+		"DOCUMENT::PDF::PAGES",
+		"DOCUMENT::PDF::PAGE_COUNT",
+		"DOCUMENT::PDF::PAGE_INFO",
+		"DOCUMENT::PDF::TEXT",
+	}
+	for _, removedName := range removed {
+		if slices.Contains(names, removedName) {
+			t.Fatalf("removed function %q is still registered", removedName)
 		}
 	}
 }
