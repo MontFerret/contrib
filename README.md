@@ -1,6 +1,6 @@
 # MontFerret Contrib
 
-`contrib` is a workspace for independently versioned [MontFerret](https://github.com/MontFerret/ferret) modules. This README acts as the top-level index for the modules currently available in this repository.
+`contrib` is a workspace for independently versioned [Ferret](https://github.com/MontFerret/ferret) modules. This README acts as the top-level index for the modules currently available in this repository.
 
 ## Available Modules
 
