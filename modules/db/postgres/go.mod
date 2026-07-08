@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/MontFerret/contrib/pkg/common v0.1.1
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.25
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.30
 	github.com/jackc/pgx/v5 v5.10.0
 )
 
@@ -23,7 +23,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/wI2L/jettison v0.7.4 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 )
