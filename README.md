@@ -76,8 +76,12 @@ make release-pre xml 1.0.0-rc.1
 # Auto-bump latest matching pre-release
 make release-pre xml rc
 
-# Auto-bump latest matching pre-release for all modules
+# Auto-bump latest matching pre-release for all modules.
+# Interactive runs prompt once for a base version when modules have no initial tag.
 make release-pre-all rc
+
+# Non-interactive bulk prereleases can set the initial base version explicitly.
+RELEASE_PRE_BASE_VERSION=1.0.0 make release-pre-all rc
 ```
 
 Support packages under `pkg/` are released by creating and pushing a package-specific git tag in the format:
