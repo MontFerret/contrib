@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -211,6 +212,23 @@ func TestBufferedFallbackAndLimit(t *testing.T) {
 	}
 	if !strings.Contains(text, "Buffered") {
 		t.Fatalf("text %q does not contain fixture text", text)
+	}
+
+	hugeLimitDocument, err := Open(ctx, "buffered.pdf", OpenOptions{MaxBufferSize: math.MaxInt64})
+	if err != nil {
+		t.Fatalf("unexpected huge-limit buffered open error: %v", err)
+	}
+	if len(hugeLimitDocument.source.buffer) == 0 {
+		t.Fatal("expected huge-limit non-random-access source to be buffered")
+	}
+	t.Cleanup(func() { _ = hugeLimitDocument.Close() })
+
+	text, err = hugeLimitDocument.Text(ctx)
+	if err != nil {
+		t.Fatalf("unexpected huge-limit text error: %v", err)
+	}
+	if !strings.Contains(text, "Buffered") {
+		t.Fatalf("huge-limit text %q does not contain fixture text", text)
 	}
 
 	_, err = Open(ctx, "buffered.pdf", OpenOptions{MaxBufferSize: int64(len(data) - 1)})

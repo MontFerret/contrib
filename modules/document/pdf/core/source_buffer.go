@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 
 	ferretfs "github.com/MontFerret/ferret/v2/pkg/fs"
 )
@@ -23,7 +24,12 @@ func bufferSource(ctx context.Context, file ferretfs.ReadableFile, path string, 
 		return nil, fmt.Errorf("PDF document %q is %d bytes, which exceeds the in-memory buffer limit of %d bytes", path, size, limit)
 	}
 
-	data, err := io.ReadAll(io.LimitReader(file, limit+1))
+	readLimit := limit
+	if limit < math.MaxInt64 {
+		readLimit++
+	}
+
+	data, err := io.ReadAll(io.LimitReader(file, readLimit))
 	if err != nil {
 		return nil, fmt.Errorf("buffer PDF document %q: %w", path, err)
 	}

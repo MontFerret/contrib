@@ -25,8 +25,8 @@ func newOptions(opts []Option) options {
 
 // WithMaxBufferSize configures the maximum PDF size that may be buffered in
 // memory when Ferret's filesystem cannot provide a random-access reader.
-func WithMaxBufferSize(bytes int64) Option {
+func WithMaxBufferSize(maxBytes int64) Option {
 	return func(opts *options) {
-		opts.openOptions.MaxBufferSize = bytes
+		opts.openOptions.MaxBufferSize = maxBytes
 	}
 }
