@@ -5,13 +5,20 @@ DIR_MODULES="./modules"
 TAG_MODULES="modules"
 
 usage() {
-  echo "Usage: $0 <major|minor|patch> <module>"
-  echo "       $0 <module> <semver>"
-  echo "       $0 <module> <preid>"
+  echo "Usage:"
+  echo "  make release-major <module>"
+  echo "  make release-minor <module>"
+  echo "  make release-patch <module>"
+  echo "  make release-pre <module> <semver|preid>"
   echo "Examples:"
-  echo "  $0 patch xml"
-  echo "  $0 xml 1.0.0-rc.1"
-  echo "  $0 xml rc"
+  echo "  make release-patch xml"
+  echo "  make release-pre xml 1.0.0-rc.1"
+  echo "  make release-pre xml rc"
+  echo ""
+  echo "Direct script usage:"
+  echo "  $0 <major|minor|patch> <module>"
+  echo "  $0 <module> <semver>"
+  echo "  $0 <module> <preid>"
 }
 
 get_latest_tag() {
@@ -79,14 +86,15 @@ bump_version() {
 bump_prerelease_version() {
   local preid="$1"
   local version="$2"
+  local module="$3"
 
   if [[ "$version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-$preid\.([0-9]+)$ ]]; then
     echo "${BASH_REMATCH[1]}-$preid.$((10#${BASH_REMATCH[2]} + 1))"
     return
   fi
 
-  echo "Latest version is not a matching prerelease: v$version" >&2
-  echo "Use an explicit semantic version first, for example: $0 <module> 1.0.0-$preid.1" >&2
+  echo "Latest version for module '$module' is not a matching prerelease: v$version" >&2
+  echo "Use an explicit semantic version first, for example: make release-pre $module 1.0.0-$preid.1" >&2
   exit 1
 }
 
@@ -140,7 +148,7 @@ main() {
       ;;
     *)
       if [[ -n "${preid:-}" ]]; then
-        new_version="$(bump_prerelease_version "$preid" "$current_version")"
+        new_version="$(bump_prerelease_version "$preid" "$current_version" "$module")"
       fi
       ;;
   esac
@@ -156,6 +164,11 @@ main() {
   echo "Current version: v$current_version"
   echo "Next version:    v$new_version"
   echo "Tag:             $new_tag"
+
+  if [[ "${RELEASE_CHECK_ONLY:-}" == "1" ]]; then
+    echo "Release check passed; no tag created."
+    exit 0
+  fi
 
   git tag -a "$new_tag" -m "Release $new_tag"
   echo "Created tag: $new_tag"
