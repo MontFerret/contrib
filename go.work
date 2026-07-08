@@ -4,6 +4,7 @@ use (
 	./modules/csv
 	./modules/db/postgres
 	./modules/db/sqlite
+	./modules/document/pdf
 	./modules/document/xlsx
 	./modules/net/rest
 	./modules/security/jwt
