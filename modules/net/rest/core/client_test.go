@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	ferretnet "github.com/MontFerret/ferret/v2/pkg/net"
+	ferrethttp "github.com/MontFerret/ferret/v2/pkg/net/http"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -43,7 +45,7 @@ func TestClientQueryJSONList(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ctx := context.Background()
+	ctx := networkContext()
 	cfg := DefaultConfig()
 	cfg.BaseURL = server.URL
 	cfg.Headers.Set("Authorization", "Bearer token")
@@ -107,7 +109,7 @@ func TestClientInfersPostAndReturnsFullResponse(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ctx := context.Background()
+	ctx := networkContext()
 	cfg := DefaultConfig()
 	cfg.BaseURL = server.URL
 	client := NewClient(cfg)
@@ -152,7 +154,7 @@ func TestClientErrorModes(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ctx := context.Background()
+	ctx := networkContext()
 	cfg := DefaultConfig()
 	cfg.BaseURL = server.URL
 
@@ -195,7 +197,7 @@ func TestClientResponseEncodings(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ctx := context.Background()
+	ctx := networkContext()
 	cfg := DefaultConfig()
 	cfg.BaseURL = server.URL
 	cfg.ResponseEncoding = EncodingText
@@ -253,7 +255,7 @@ func TestClientFormRequestEncoding(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ctx := context.Background()
+	ctx := networkContext()
 	cfg := DefaultConfig()
 	cfg.BaseURL = server.URL
 	client := NewClient(cfg)
@@ -297,7 +299,8 @@ func TestClientAcceptsHTTPDialect(t *testing.T) {
 	cfg.BaseURL = server.URL
 	client := NewClient(cfg)
 
-	out, err := client.Query(context.Background(), runtime.Query{
+	ctx := networkContext()
+	out, err := client.Query(ctx, runtime.Query{
 		Kind:       runtime.NewString("http"),
 		Expression: runtime.NewString("/users"),
 	})
@@ -305,7 +308,7 @@ func TestClientAcceptsHTTPDialect(t *testing.T) {
 		t.Fatalf("unexpected query error: %v", err)
 	}
 
-	length, err := out.Length(context.Background())
+	length, err := out.Length(ctx)
 	if err != nil {
 		t.Fatalf("unexpected length error: %v", err)
 	}
@@ -332,7 +335,7 @@ func TestClientRequestTimeout(t *testing.T) {
 	cfg.Timeout = int64(10 * time.Millisecond)
 	client := NewClient(cfg)
 
-	_, err := client.QueryOne(context.Background(), runtime.Query{Expression: runtime.NewString("/slow")})
+	_, err := client.QueryOne(networkContext(), runtime.Query{Expression: runtime.NewString("/slow")})
 	if err == nil {
 		t.Fatal("expected timeout error")
 	}
@@ -367,6 +370,94 @@ func TestClientRejectsUnsupportedDialect(t *testing.T) {
 	}
 	if called.Load() {
 		t.Fatal("expected unsupported dialect to fail before request")
+	}
+}
+
+func TestClientUsesFerretHTTPClientFromContext(t *testing.T) {
+	t.Parallel()
+
+	httpClient := &recordingHTTPClient{
+		response: &ferrethttp.Response{
+			StatusCode: http.StatusOK,
+			Status:     "200 OK",
+			Headers: ferrethttp.Headers{
+				"X-Result": []string{"ok"},
+			},
+			Body: []byte(`{"ok":true}`),
+		},
+	}
+	ctx := ferretnet.WithNetwork(
+		context.Background(),
+		ferretnet.New(ferretnet.WithHTTPClient(httpClient)),
+	)
+
+	cfg := DefaultConfig()
+	cfg.BaseURL = "https://api.example.test/v1/"
+	cfg.Headers.Set("Authorization", "Bearer token")
+	client := NewClient(cfg)
+
+	out, err := client.QueryOne(ctx, runtime.Query{
+		Expression: runtime.NewString("/users"),
+		Params: object(t, map[string]runtime.Value{
+			"method": runtime.NewString("POST"),
+			"query": object(t, map[string]runtime.Value{
+				"active": runtime.True,
+			}),
+			"headers": object(t, map[string]runtime.Value{
+				"X-Request-ID": runtime.NewString("req-1"),
+			}),
+			"body": object(t, map[string]runtime.Value{
+				"name": runtime.NewString("Ada"),
+			}),
+		}),
+		Options: object(t, map[string]runtime.Value{
+			"response": runtime.NewString("full"),
+		}),
+	})
+	if err != nil {
+		t.Fatalf("unexpected query error: %v", err)
+	}
+	if got := field(t, out, "status"); got != runtime.NewInt(http.StatusOK) {
+		t.Fatalf("expected status 200, got %s", got.String())
+	}
+
+	req := httpClient.request()
+	if req == nil {
+		t.Fatal("expected HTTP client to be called")
+	}
+	if req.Method != http.MethodPost {
+		t.Fatalf("expected POST, got %s", req.Method)
+	}
+	if req.URL != "https://api.example.test/users?active=true" {
+		t.Fatalf("unexpected URL: %s", req.URL)
+	}
+	if got := req.Headers["Authorization"]; len(got) != 1 || got[0] != "Bearer token" {
+		t.Fatalf("unexpected authorization header: %v", got)
+	}
+	if got := req.Headers["X-Request-Id"]; len(got) != 1 || got[0] != "req-1" {
+		t.Fatalf("unexpected request id header: %v", got)
+	}
+	if got := req.Headers["Content-Type"]; len(got) != 1 || got[0] != "application/json" {
+		t.Fatalf("unexpected content type: %v", got)
+	}
+	if string(req.Body) != `{"name":"Ada"}` {
+		t.Fatalf("unexpected body: %s", req.Body)
+	}
+}
+
+func TestClientRequiresNetworkContext(t *testing.T) {
+	t.Parallel()
+
+	cfg := DefaultConfig()
+	cfg.BaseURL = "https://api.example.test"
+	client := NewClient(cfg)
+
+	_, err := client.QueryOne(context.Background(), runtime.Query{Expression: runtime.NewString("/users")})
+	if err == nil {
+		t.Fatal("expected missing network error")
+	}
+	if !strings.Contains(err.Error(), "network not found in context") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
@@ -412,4 +503,8 @@ func readBody(t *testing.T, r *http.Request) string {
 	}
 
 	return string(data)
+}
+
+func networkContext() context.Context {
+	return ferretnet.WithNetwork(context.Background(), ferretnet.New())
 }

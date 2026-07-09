@@ -6,23 +6,24 @@ import (
 	"net/http"
 	"strings"
 
+	ferrethttp "github.com/MontFerret/ferret/v2/pkg/net/http"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-func decodeHTTPResponse(ctx context.Context, resp *http.Response, body []byte, opts ExecutionOptions) (runtime.Value, bool, error) {
+func decodeHTTPResponse(ctx context.Context, requestURL string, resp *ferrethttp.Response, opts ExecutionOptions) (runtime.Value, bool, error) {
 	ok := resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusBadRequest
 	if !ok && opts.ErrorMode == ErrorModeRaise {
 		return runtime.None, false, fmt.Errorf("unexpected status %s", resp.Status)
 	}
 
-	decoded, err := decodeResponseBody(body, opts.ResponseEncoding)
+	decoded, err := decodeResponseBody(resp.Body, opts.ResponseEncoding)
 	if err != nil {
 		return runtime.None, false, fmt.Errorf("decode response body: %w", err)
 	}
 
 	fullResponse := opts.ResponseMode == ResponseModeFull || (!ok && opts.ErrorMode == ErrorModeResponse)
 	if fullResponse {
-		value, err := buildFullResponse(ctx, resp, decoded)
+		value, err := buildFullResponse(ctx, requestURL, resp, decoded)
 		if err != nil {
 			return runtime.None, false, err
 		}
@@ -33,15 +34,15 @@ func decodeHTTPResponse(ctx context.Context, resp *http.Response, body []byte, o
 	return decoded, true, nil
 }
 
-func buildFullResponse(ctx context.Context, resp *http.Response, body runtime.Value) (runtime.Value, error) {
+func buildFullResponse(ctx context.Context, requestURL string, resp *ferrethttp.Response, body runtime.Value) (runtime.Value, error) {
 	out := runtime.NewObjectWith(map[string]runtime.Value{
 		"ok":     runtime.NewBoolean(resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusBadRequest),
 		"status": runtime.NewInt(resp.StatusCode),
 		"body":   body,
-		"url":    runtime.NewString(resp.Request.URL.String()),
+		"url":    runtime.NewString(requestURL),
 	})
 
-	headers, err := responseHeaders(ctx, resp.Header)
+	headers, err := responseHeaders(ctx, http.Header(resp.Headers))
 	if err != nil {
 		return runtime.None, err
 	}

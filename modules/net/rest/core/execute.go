@@ -2,9 +2,9 @@ package core
 
 import (
 	"context"
-	"io"
-	"net/http"
 
+	ferretnet "github.com/MontFerret/ferret/v2/pkg/net"
+	ferrethttp "github.com/MontFerret/ferret/v2/pkg/net/http"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -33,6 +33,11 @@ func executeQuery(ctx context.Context, client *Client, q runtime.Query) (runtime
 		return runtime.None, false, OperationError("QUERY", err)
 	}
 
+	httpClient, err := ferretnet.HTTPClientFrom(ctx)
+	if err != nil {
+		return runtime.None, false, OperationError("QUERY", err)
+	}
+
 	requestCtx := ctx
 	cancel := func() {}
 
@@ -42,28 +47,22 @@ func executeQuery(ctx context.Context, client *Client, q runtime.Query) (runtime
 
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(requestCtx, requestData.Method, requestURL, body)
+	headers := mergeHeaders(client.config.Headers, requestData.Headers)
+	if contentType != "" && !hasHeader(headers, "Content-Type") {
+		headers.Set("Content-Type", contentType)
+	}
+
+	resp, err := httpClient.Do(requestCtx, &ferrethttp.Request{
+		Method:  requestData.Method,
+		URL:     requestURL,
+		Headers: ferrethttp.Headers(headers),
+		Body:    body,
+	})
 	if err != nil {
 		return runtime.None, false, OperationError("QUERY", err)
 	}
 
-	req.Header = mergeHeaders(client.config.Headers, requestData.Headers)
-	if contentType != "" && !hasHeader(req.Header, "Content-Type") {
-		req.Header.Set("Content-Type", contentType)
-	}
-
-	resp, err := client.httpClient.Do(req)
-	if err != nil {
-		return runtime.None, false, OperationError("QUERY", err)
-	}
-	defer resp.Body.Close()
-
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return runtime.None, false, OperationError("QUERY", err)
-	}
-
-	value, flatten, err := decodeHTTPResponse(ctx, resp, responseBody, options)
+	value, flatten, err := decodeHTTPResponse(ctx, requestURL, resp, options)
 	if err != nil {
 		return runtime.None, false, OperationError("QUERY", err)
 	}
