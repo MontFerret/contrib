@@ -5,14 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/url"
-	"strings"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-func encodeRequestBody(ctx context.Context, value runtime.Value, encoding Encoding) (io.Reader, string, error) {
+func encodeRequestBody(ctx context.Context, value runtime.Value, encoding Encoding) ([]byte, string, error) {
 	if runtime.TypeNone.Is(value) {
 		return nil, "", nil
 	}
@@ -29,22 +27,22 @@ func encodeRequestBody(ctx context.Context, value runtime.Value, encoding Encodi
 			return nil, "", err
 		}
 
-		return bytes.NewReader(data), "application/json", nil
+		return data, "application/json", nil
 	case EncodingText:
-		return strings.NewReader(value.String()), "text/plain; charset=utf-8", nil
+		return []byte(value.String()), "text/plain; charset=utf-8", nil
 	case EncodingBytes:
 		if binary, ok := value.(runtime.Binary); ok {
-			return bytes.NewReader(binary), "application/octet-stream", nil
+			return []byte(binary), "application/octet-stream", nil
 		}
 
-		return strings.NewReader(value.String()), "application/octet-stream", nil
+		return []byte(value.String()), "application/octet-stream", nil
 	case EncodingForm:
 		values := make(url.Values)
 		if err := appendURLValues(ctx, values, "HTTP request body", value); err != nil {
 			return nil, "", err
 		}
 
-		return strings.NewReader(values.Encode()), "application/x-www-form-urlencoded", nil
+		return []byte(values.Encode()), "application/x-www-form-urlencoded", nil
 	default:
 		return nil, "", fmt.Errorf("unsupported request encoding %q", encoding)
 	}

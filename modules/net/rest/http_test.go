@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 
 	"github.com/MontFerret/ferret/v2"
+	ferretnet "github.com/MontFerret/ferret/v2/pkg/net"
+	ferrethttp "github.com/MontFerret/ferret/v2/pkg/net/http"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/source"
 )
@@ -123,6 +126,50 @@ func TestModuleRunsQueryModifiersFromFQL(t *testing.T) {
 	}
 
 	assertOutputBool(t, output.Content, true)
+}
+
+func TestModuleHonorsFerretHTTPPolicy(t *testing.T) {
+	t.Parallel()
+
+	var called atomic.Bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called.Store(true)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	engine, err := ferret.New(
+		ferret.WithModules(New()),
+		ferret.WithRuntimeParam("baseUrl", runtime.NewString(server.URL)),
+		ferret.WithNetwork(ferretnet.New(ferretnet.WithHTTPClient(ferrethttp.New(
+			ferrethttp.WithAllowedHosts("allowed.example"),
+		)))),
+	)
+	if err != nil {
+		t.Fatalf("unexpected engine error: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := engine.Close(); err != nil {
+			t.Fatalf("unexpected engine close error: %v", err)
+		}
+	})
+
+	_, err = engine.Run(context.Background(), source.NewAnonymous(`
+		LET api = NET::REST::CLIENT({
+			baseUrl: @baseUrl,
+			encoding: "json"
+		})
+		RETURN QUERY ONE "/health" IN api
+	`))
+	if err == nil {
+		t.Fatal("expected HTTP policy error")
+	}
+	if !strings.Contains(err.Error(), "not allowed") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if called.Load() {
+		t.Fatal("expected HTTP policy to block before outbound request")
+	}
 }
 
 func assertOutputBool(t *testing.T, data []byte, expected bool) {

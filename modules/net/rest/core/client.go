@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"net/http"
 
 	commonresource "github.com/MontFerret/contrib/pkg/common/resource"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -10,17 +9,15 @@ import (
 
 // Client is an opaque HTTP API client exposed to Ferret.
 type Client struct {
-	httpClient *http.Client
-	config     Config
-	id         uint64
+	config Config
+	id     uint64
 }
 
 // NewClient creates a configured HTTP API client handle.
 func NewClient(config Config) *Client {
 	return &Client{
-		config:     config,
-		httpClient: http.DefaultClient,
-		id:         newResourceID(),
+		config: config,
+		id:     newResourceID(),
 	}
 }
 
