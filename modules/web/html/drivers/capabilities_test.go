@@ -32,17 +32,18 @@ var (
 	_ drivers.DocumentMetadataTarget = (*memory.HTMLDocument)(nil)
 	_ runtime.Queryable              = (*memory.HTMLDocument)(nil)
 
-	_ drivers.HTMLElement     = (*memory.HTMLElement)(nil)
-	_ drivers.NodeInspector   = (*memory.HTMLElement)(nil)
-	_ drivers.QueryTarget     = (*memory.HTMLElement)(nil)
-	_ drivers.ContentTarget   = (*memory.HTMLElement)(nil)
-	_ drivers.AttributeTarget = (*memory.HTMLElement)(nil)
-	_ drivers.StyleTarget     = (*memory.HTMLElement)(nil)
-	_ drivers.ValueTarget     = (*memory.HTMLElement)(nil)
-	_ drivers.RelationTarget  = (*memory.HTMLElement)(nil)
-	_ runtime.IndexRemovable  = (*memory.HTMLElement)(nil)
-	_ runtime.KeyRemovable    = (*memory.HTMLElement)(nil)
-	_ runtime.Queryable       = (*memory.HTMLElement)(nil)
+	_ drivers.HTMLElement       = (*memory.HTMLElement)(nil)
+	_ drivers.NodeInspector     = (*memory.HTMLElement)(nil)
+	_ drivers.QueryTarget       = (*memory.HTMLElement)(nil)
+	_ drivers.ContentTarget     = (*memory.HTMLElement)(nil)
+	_ drivers.AttributeTarget   = (*memory.HTMLElement)(nil)
+	_ drivers.StyleTarget       = (*memory.HTMLElement)(nil)
+	_ drivers.ValueTarget       = (*memory.HTMLElement)(nil)
+	_ drivers.RelationTarget    = (*memory.HTMLElement)(nil)
+	_ drivers.DOMPropertyTarget = (*memory.HTMLElement)(nil)
+	_ runtime.IndexRemovable    = (*memory.HTMLElement)(nil)
+	_ runtime.KeyRemovable      = (*memory.HTMLElement)(nil)
+	_ runtime.Queryable         = (*memory.HTMLElement)(nil)
 
 	_ drivers.HTMLPage             = (*cdp.HTMLPage)(nil)
 	_ drivers.PageStateTarget      = (*cdp.HTMLPage)(nil)
@@ -70,6 +71,7 @@ var (
 	_ drivers.ContentTarget     = (*cdpdom.HTMLElement)(nil)
 	_ drivers.ValueTarget       = (*cdpdom.HTMLElement)(nil)
 	_ drivers.RelationTarget    = (*cdpdom.HTMLElement)(nil)
+	_ drivers.DOMPropertyTarget = (*cdpdom.HTMLElement)(nil)
 	_ drivers.InteractionTarget = (*cdpdom.HTMLElement)(nil)
 	_ runtime.IndexRemovable    = (*cdpdom.HTMLElement)(nil)
 	_ runtime.KeyRemovable      = (*cdpdom.HTMLElement)(nil)
@@ -99,6 +101,7 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 		{name: "StyleTarget", typ: reflect.TypeOf((*drivers.StyleTarget)(nil)).Elem()},
 		{name: "ValueTarget", typ: reflect.TypeOf((*drivers.ValueTarget)(nil)).Elem()},
 		{name: "RelationTarget", typ: reflect.TypeOf((*drivers.RelationTarget)(nil)).Elem()},
+		{name: "DOMPropertyTarget", typ: reflect.TypeOf((*drivers.DOMPropertyTarget)(nil)).Elem()},
 		{name: "InteractionTarget", typ: reflect.TypeOf((*drivers.InteractionTarget)(nil)).Elem()},
 		{name: "WaitTarget", typ: reflect.TypeOf((*drivers.WaitTarget)(nil)).Elem()},
 		{name: "DocumentMetadataTarget", typ: reflect.TypeOf((*drivers.DocumentMetadataTarget)(nil)).Elem()},
@@ -138,15 +141,16 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 			name: "memory element",
 			typ:  reflect.TypeOf((*memory.HTMLElement)(nil)),
 			supported: map[string]bool{
-				"NodeInspector":   true,
-				"QueryTarget":     true,
-				"ContentTarget":   true,
-				"AttributeTarget": true,
-				"StyleTarget":     true,
-				"ValueTarget":     true,
-				"RelationTarget":  true,
-				"IndexRemovable":  true,
-				"KeyRemovable":    true,
+				"NodeInspector":     true,
+				"QueryTarget":       true,
+				"ContentTarget":     true,
+				"AttributeTarget":   true,
+				"StyleTarget":       true,
+				"ValueTarget":       true,
+				"RelationTarget":    true,
+				"DOMPropertyTarget": true,
+				"IndexRemovable":    true,
+				"KeyRemovable":      true,
 			},
 		},
 		{
@@ -181,6 +185,7 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 				"ContentTarget":     true,
 				"ValueTarget":       true,
 				"RelationTarget":    true,
+				"DOMPropertyTarget": true,
 				"InteractionTarget": true,
 				"IndexRemovable":    true,
 				"KeyRemovable":      true,

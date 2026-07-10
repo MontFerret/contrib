@@ -142,6 +142,46 @@ func TestMemoryElementRejectsNonStandardTextAliases(t *testing.T) {
 	}
 }
 
+func TestMemoryElementDOMPropertyFallback(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	doc := newMemoryDocument(t, `<html><body><select id="choices" class="picker" multiple disabled><option value="1" selected>One</option><option value="2">Two</option><optgroup><option value="3" selected>Three</option></optgroup></select></body></html>`)
+
+	choicesValue, err := doc.QuerySelector(ctx, drivers.NewCSSSelector("#choices"))
+	if err != nil {
+		t.Fatalf("resolve choices: %v", err)
+	}
+
+	choices := mustElementFromValue(t, choicesValue)
+	assertElementRead(t, ctx, choices, "id", runtime.NewString("choices"))
+	assertElementRead(t, ctx, choices, "className", runtime.NewString("picker"))
+	assertElementRead(t, ctx, choices, "disabled", runtime.True)
+	assertElementRead(t, ctx, choices, "nodeName", runtime.NewString("select"))
+
+	firstChild, err := choices.Get(ctx, runtime.NewInt(0))
+	if err != nil {
+		t.Fatalf("read first child: %v", err)
+	}
+
+	firstOption := mustElementFromValue(t, firstChild)
+	assertElementRead(t, ctx, firstOption, "value", runtime.NewString("1"))
+
+	selectedValue, err := choices.Get(ctx, runtime.NewString("selectedOptions"))
+	if err != nil {
+		t.Fatalf("read selectedOptions: %v", err)
+	}
+
+	selected, ok := selectedValue.(runtime.List)
+	if !ok {
+		t.Fatalf("expected selectedOptions list, got %T", selectedValue)
+	}
+
+	assertElementValues(t, ctx, selected, []string{"1", "3"})
+	assertElementRead(t, ctx, firstOption, "selected", runtime.True)
+	assertElementRead(t, ctx, choices, "unknownProperty", runtime.None)
+}
+
 func TestExplicitElementMutationCapabilitiesRemain(t *testing.T) {
 	t.Parallel()
 
@@ -213,5 +253,41 @@ func TestExplicitElementMutationCapabilitiesRemain(t *testing.T) {
 
 	if runtime.CompareValues(value, runtime.NewString("updated")) != 0 {
 		t.Fatalf("unexpected input value: %v", value)
+	}
+}
+
+func assertElementRead(t *testing.T, ctx context.Context, element drivers.HTMLElement, key string, expected runtime.Value) {
+	t.Helper()
+
+	value, err := element.Get(ctx, runtime.NewString(key))
+	if err != nil {
+		t.Fatalf("read %s: %v", key, err)
+	}
+
+	if runtime.CompareValues(value, expected) != 0 {
+		t.Fatalf("expected %s to be %v, got %v", key, expected, value)
+	}
+}
+
+func assertElementValues(t *testing.T, ctx context.Context, list runtime.List, expected []string) {
+	t.Helper()
+
+	length, err := list.Length(ctx)
+	if err != nil {
+		t.Fatalf("read selectedOptions length: %v", err)
+	}
+
+	if runtime.CompareValues(length, runtime.NewInt(len(expected))) != 0 {
+		t.Fatalf("expected selectedOptions length %d, got %v", len(expected), length)
+	}
+
+	for idx, expectedValue := range expected {
+		value, err := list.At(ctx, runtime.NewInt(idx))
+		if err != nil {
+			t.Fatalf("read selectedOptions[%d]: %v", idx, err)
+		}
+
+		option := mustElementFromValue(t, value)
+		assertElementRead(t, ctx, option, "value", runtime.NewString(expectedValue))
 	}
 }

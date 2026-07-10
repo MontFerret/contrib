@@ -150,6 +150,91 @@ func (el *HTMLElement) GetValue(_ context.Context) (runtime.Value, error) {
 	return runtime.EmptyString, nil
 }
 
+func (el *HTMLElement) GetDOMProperty(ctx context.Context, name runtime.String) (runtime.Value, error) {
+	prop := name.String()
+
+	switch prop {
+	case "selectedOptions":
+		return el.getSelectedOptions(ctx)
+	case "checked", "disabled", "selected", "multiple", "required", "hidden":
+		return runtime.NewBoolean(el.hasBooleanAttribute(prop)), nil
+	case "readOnly":
+		return runtime.NewBoolean(el.hasBooleanAttribute("readonly")), nil
+	case "className":
+		return el.getReflectedAttribute("class"), nil
+	case "htmlFor":
+		return el.getReflectedAttribute("for"), nil
+	}
+
+	if value, ok := el.selection.Attr(prop); ok {
+		return runtime.NewString(value), nil
+	}
+
+	if lowered := strings.ToLower(prop); lowered != prop {
+		if value, ok := el.selection.Attr(lowered); ok {
+			return runtime.NewString(value), nil
+		}
+	}
+
+	return runtime.None, nil
+}
+
+func (el *HTMLElement) getSelectedOptions(ctx context.Context) (runtime.Value, error) {
+	if goquery.NodeName(el.selection) != "select" {
+		return runtime.None, nil
+	}
+
+	options := el.selection.Find("option")
+	selected := options.FilterFunction(func(_ int, option *goquery.Selection) bool {
+		return option.Is("[selected]")
+	})
+
+	if selected.Length() == 0 && !el.hasBooleanAttribute("multiple") {
+		selected = options.First()
+	}
+
+	arr := runtime.NewArray(selected.Length())
+	var err error
+
+	selected.EachWithBreak(func(_ int, selection *goquery.Selection) bool {
+		option, e := NewHTMLElement(el.doc, selection)
+		if e != nil {
+			err = e
+
+			return false
+		}
+
+		if e := arr.Append(ctx, option); e != nil {
+			err = e
+
+			return false
+		}
+
+		return true
+	})
+
+	if err != nil {
+		return runtime.None, err
+	}
+
+	return arr, nil
+}
+
+func (el *HTMLElement) hasBooleanAttribute(name string) bool {
+	_, ok := el.selection.Attr(name)
+
+	return ok
+}
+
+func (el *HTMLElement) getReflectedAttribute(name string) runtime.Value {
+	value, ok := el.selection.Attr(name)
+	if !ok {
+		return runtime.None
+	}
+
+	return runtime.NewString(value)
+}
+
 func (el *HTMLElement) SetValue(_ context.Context, value runtime.Value) error {
 	el.selection.SetAttr("value", value.String())
 

@@ -11,6 +11,9 @@ DISPATCH "select" IN input WITH { value: ["1", "2", "4"] }
 LET result = input.selectedOptions
 
 T::EQ(output.innerText, "1, 2, 4")
-T::EQ(result, ["1","2","4"])
+T::EQ(LENGTH(result), 3)
+T::EQ(result[0].value, "1")
+T::EQ(result[1].value, "2")
+T::EQ(result[2].value, "4")
 
 RETURN NONE
