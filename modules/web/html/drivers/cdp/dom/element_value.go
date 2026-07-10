@@ -164,6 +164,14 @@ func (el *HTMLElement) GetValue(ctx context.Context) (runtime.Value, error) {
 	return el.eval.EvalValue(ctx, templates.GetValue(el.id))
 }
 
+func (el *HTMLElement) GetDOMProperty(ctx context.Context, name runtime.String) (runtime.Value, error) {
+	if el.eval == nil {
+		return runtime.None, nil
+	}
+
+	return el.eval.EvalResult(ctx, templates.GetDOMProperty(el.id, name))
+}
+
 func (el *HTMLElement) GetNodeType(ctx context.Context) (runtime.Int, error) {
 	out, err := el.nodeType.Read(ctx)
 	if err != nil {

@@ -153,7 +153,22 @@ func GetInElement(ctx context.Context, key runtime.Value, el drivers.HTMLElement
 
 		return valueOrNone(target.GetParentElement(ctx))
 	default:
-		return GetInNode(ctx, key, el)
+		value, err := GetInNode(ctx, key, el)
+		if err != nil || value != runtime.None {
+			return value, err
+		}
+
+		keyVal, ok := key.(runtime.String)
+		if !ok {
+			return runtime.None, nil
+		}
+
+		target, ok := el.(drivers.DOMPropertyTarget)
+		if !ok {
+			return runtime.None, nil
+		}
+
+		return valueOrNone(target.GetDOMProperty(ctx, keyVal))
 	}
 }
 
