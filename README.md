@@ -6,6 +6,7 @@
 
 | Module         | Description                                                                               | README                                                             |
 |----------------|-------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+| `ai/llm`       | Text generation, chat, extraction, and classification under `AI::LLM` for Ferret.        | [modules/ai/llm/README.md](./modules/ai/llm/README.md)             |
 | `csv`          | CSV module and ``CSV`` namespace helpers for Ferret.                                      | [modules/csv/README.md](./modules/csv/README.md)                   |
 | `db/postgres`  | Postgres database handles under `DB::POSTGRES` for Ferret.                                | [modules/db/postgres/README.md](./modules/db/postgres/README.md)   |
 | `db/sqlite`    | SQLite database handles under `DB::SQLITE` for Ferret.                                    | [modules/db/sqlite/README.md](./modules/db/sqlite/README.md)       |

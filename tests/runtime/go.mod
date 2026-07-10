@@ -3,6 +3,7 @@ module github.com/MontFerret/contrib/tests/runner
 go 1.26.1
 
 require (
+	github.com/MontFerret/contrib/modules/ai/llm v0.0.0
 	github.com/MontFerret/contrib/modules/csv v1.0.0-rc.6
 	github.com/MontFerret/contrib/modules/db/postgres v0.0.0-20260708151614-3ed335b5f8ad
 	github.com/MontFerret/contrib/modules/db/sqlite v1.0.0-rc.4
