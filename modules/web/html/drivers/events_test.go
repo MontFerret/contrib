@@ -80,6 +80,7 @@ func TestSupportedDispatchEvents(t *testing.T) {
 		DispatchUncheckEvent,
 		DispatchToggleEvent,
 		DispatchScrollEvent,
+		DispatchSelectEvent,
 	}
 
 	if got := SupportedDispatchEvents(); !reflect.DeepEqual(got, expected) {

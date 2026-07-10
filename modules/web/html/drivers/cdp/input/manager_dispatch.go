@@ -107,6 +107,10 @@ func (m *Manager) ResetEvent(ctx context.Context, objectID cdpruntime.RemoteObje
 	return m.exec.Eval(ctx, templates.DispatchReset(objectID))
 }
 
+func (m *Manager) SelectEvent(ctx context.Context, objectID cdpruntime.RemoteObjectID, value runtime.Value) error {
+	return m.exec.Eval(ctx, templates.DispatchSelect(objectID, value))
+}
+
 func (m *Manager) ElementScroll(ctx context.Context, objectID cdpruntime.RemoteObjectID, mode string, options drivers.ScrollOptions) error {
 	return m.exec.Eval(ctx, templates.ElementScroll(objectID, mode, options))
 }

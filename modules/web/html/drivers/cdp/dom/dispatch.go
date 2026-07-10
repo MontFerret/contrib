@@ -129,6 +129,18 @@ func dispatchHTMLElement(ctx context.Context, el *HTMLElement, event runtime.Dis
 		drivers.DispatchUncheckEvent,
 		drivers.DispatchToggleEvent:
 		return el.input.CheckEvent(ctx, el.id, eventName)
+	case drivers.DispatchSelectEvent:
+		payload, err := newDispatchPayload(event.Payload)
+		if err != nil {
+			return err
+		}
+
+		value, err := dispatchRequire(ctx, payload, "value")
+		if err != nil {
+			return err
+		}
+
+		return el.input.SelectEvent(ctx, el.id, value)
 	case drivers.DispatchScrollEvent:
 		return dispatchElementScroll(ctx, el, event.Payload)
 	default:
