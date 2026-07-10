@@ -98,11 +98,11 @@ export default class FormsPage extends React.Component {
                     onChange: this.handleSelect
                     },
                     [
-                        e("option", null, 1),
-                        e("option", null, 2),
-                        e("option", null, 3),
-                        e("option", null, 4),
-                        e("option", null, 5),
+                        e("option", { value: 1 }, 1),
+                        e("option", { value: 2 }, 2),
+                        e("option", { value: 3 }, 3),
+                        e("option", { value: 4 }, 4),
+                        e("option", { value: 5 }, 5),
                     ]
                 ),
                 e("small", {
@@ -120,11 +120,11 @@ export default class FormsPage extends React.Component {
                         onChange: this.handleMultiSelect
                     },
                     [
-                        e("option", null, 1),
-                        e("option", null, 2),
-                        e("option", null, 3),
-                        e("option", null, 4),
-                        e("option", null, 5),
+                        e("option", { value: 1 }, 1),
+                        e("option", { value: 2 }, 2),
+                        e("option", { value: 3 }, 3),
+                        e("option", { value: 4 }, 4),
+                        e("option", { value: 5 }, 5),
                     ]
                 ),
                 e("small", {
