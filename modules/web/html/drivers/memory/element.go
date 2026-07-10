@@ -160,6 +160,8 @@ func (el *HTMLElement) GetDOMProperty(ctx context.Context, name runtime.String) 
 		return runtime.NewBoolean(el.hasBooleanAttribute(prop)), nil
 	case "readOnly":
 		return runtime.NewBoolean(el.hasBooleanAttribute("readonly")), nil
+	case "id":
+		return el.getReflectedAttribute("id"), nil
 	case "className":
 		return el.getReflectedAttribute("class"), nil
 	case "htmlFor":
