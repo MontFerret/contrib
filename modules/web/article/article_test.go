@@ -7,7 +7,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/article/core"
 	"github.com/MontFerret/ferret/v2"
-	"github.com/MontFerret/ferret/v2/pkg/source"
+	"github.com/MontFerret/ferret/v2/pkg/sdk/sdktest"
 )
 
 func TestNewSmoke(t *testing.T) {
@@ -26,7 +26,7 @@ func TestRegisterInstallsSessionExtractor(t *testing.T) {
 	mod := New()
 
 	seenExtractor := false
-	engine, err := ferret.New(
+	harness := sdktest.New(t,
 		ferret.WithModules(mod),
 		ferret.WithAfterRunHook(func(ctx context.Context, err error) error {
 			if err == nil && core.ExtractorFromContext(ctx) != nil {
@@ -36,16 +36,7 @@ func TestRegisterInstallsSessionExtractor(t *testing.T) {
 			return nil
 		}),
 	)
-	if err != nil {
-		t.Fatalf("unexpected engine error: %v", err)
-	}
-	defer func() {
-		if closeErr := engine.Close(); closeErr != nil {
-			t.Fatalf("unexpected engine close error: %v", closeErr)
-		}
-	}()
-
-	output, err := engine.Run(context.Background(), source.NewAnonymous(`
+	output, err := harness.Run(context.Background(), `
 		RETURN WEB::ARTICLE::MARKDOWN("
 			<html>
 			  <body>
@@ -56,7 +47,7 @@ func TestRegisterInstallsSessionExtractor(t *testing.T) {
 			  </body>
 			</html>
 		")
-	`))
+	`)
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}

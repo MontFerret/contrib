@@ -9,24 +9,24 @@ import (
 )
 
 // Match returns effective rule-match details for the given path.
-func Match(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
+func Match(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 2, 3); err != nil {
 		return nil, err
 	}
 
-	var doc core.Document
-	if err := sdk.Decode(args[0], &doc); err != nil {
+	doc, err := sdk.DecodeArg[core.Document](ctx, args, 0)
+	if err != nil {
 		return nil, err
 	}
 
-	path, err := runtime.CastArgAt[runtime.String](args, 1)
+	path, err := sdk.DecodeArg[runtime.String](ctx, args, 1)
 	if err != nil {
 		return nil, err
 	}
 
 	userAgent := "*"
 	if len(args) > 2 {
-		raw, err := runtime.CastArgAt[runtime.String](args, 2)
+		raw, err := sdk.DecodeArg[runtime.String](ctx, args, 2)
 		if err != nil {
 			return nil, err
 		}
@@ -34,5 +34,5 @@ func Match(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 		userAgent = raw.String()
 	}
 
-	return sdk.Encode(core.Match(doc, path.String(), userAgent)), nil
+	return sdk.Encode(ctx, core.Match(doc, path.String(), userAgent))
 }

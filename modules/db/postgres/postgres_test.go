@@ -11,7 +11,7 @@ import (
 
 	"github.com/MontFerret/ferret/v2"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/MontFerret/ferret/v2/pkg/source"
+	"github.com/MontFerret/ferret/v2/pkg/sdk/sdktest"
 )
 
 func TestNewSmoke(t *testing.T) {
@@ -92,17 +92,9 @@ func runFQL(t *testing.T, query string, opts ...ferret.Option) (*ferret.Output, 
 	t.Helper()
 
 	engineOpts := append([]ferret.Option{ferret.WithModules(New())}, opts...)
-	engine, err := ferret.New(engineOpts...)
-	if err != nil {
-		t.Fatalf("unexpected engine error: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := engine.Close(); err != nil {
-			t.Fatalf("unexpected engine close error: %v", err)
-		}
-	})
+	harness := sdktest.New(t, engineOpts...)
 
-	return engine.Run(context.Background(), source.NewAnonymous(query))
+	return harness.Run(context.Background(), query)
 }
 
 func rawFQLString(value string) string {

@@ -66,7 +66,7 @@ func PDF(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 			return runtime.None, err
 		}
 
-		param, err := parsePDFParams(paramArg)
+		param, err := parsePDFParams(ctx, paramArg)
 
 		if err != nil {
 			return runtime.None, err
@@ -89,10 +89,10 @@ func PDF(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return pdf, nil
 }
 
-func parsePDFParams(values runtime.Map) (drivers.PDFParams, error) {
+func parsePDFParams(ctx context.Context, values runtime.Map) (drivers.PDFParams, error) {
 	var pdfParams drivers.PDFParams
 
-	if err := sdk.Decode(values, &pdfParams); err != nil {
+	if err := sdk.Decode(ctx, values, &pdfParams, sdk.DisallowUnknownFields()); err != nil {
 		return drivers.PDFParams{}, err
 	}
 

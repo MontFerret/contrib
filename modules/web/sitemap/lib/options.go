@@ -8,6 +8,7 @@ import (
 	"github.com/MontFerret/contrib/modules/web/sitemap/core"
 	commonobject "github.com/MontFerret/contrib/pkg/common/object"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 func parseOptions(ctx context.Context, args []runtime.Value) (core.Options, error) {
@@ -17,7 +18,7 @@ func parseOptions(ctx context.Context, args []runtime.Value) (core.Options, erro
 		return opts, nil
 	}
 
-	m, err := runtime.CastArgAt[runtime.Map](args, 1)
+	m, err := sdk.DecodeArg[runtime.Map](ctx, args, 1)
 	if err != nil {
 		return opts, err
 	}

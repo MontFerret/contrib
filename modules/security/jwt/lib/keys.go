@@ -5,6 +5,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/security/jwt/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // HMACKey creates an opaque HMAC key from secret material.
@@ -31,7 +32,7 @@ func PublicKey(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 		return nil, err
 	}
 
-	pemText, err := runtime.CastArgAt[runtime.String](args, 0)
+	pemText, err := sdk.DecodeArg[runtime.String](ctx, args, 0)
 	if err != nil {
 		return nil, core.OperationError("PUBLIC_KEY", err)
 	}
@@ -50,7 +51,7 @@ func PrivateKey(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 		return nil, err
 	}
 
-	pemText, err := runtime.CastArgAt[runtime.String](args, 0)
+	pemText, err := sdk.DecodeArg[runtime.String](ctx, args, 0)
 	if err != nil {
 		return nil, core.OperationError("PRIVATE_KEY", err)
 	}

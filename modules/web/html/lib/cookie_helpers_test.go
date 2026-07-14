@@ -7,7 +7,6 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 func TestParseCookiesValueFromSingleCookie(t *testing.T) {
@@ -46,21 +45,6 @@ func TestParseCookiesValueFromCookieCollection(t *testing.T) {
 	})
 
 	cookies, err := parseCookiesValue(context.Background(), input)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	assertParsedCookie(t, cookies, "session", "abc123")
-}
-
-func TestParseCookiesValueFromProxiedCookieCollection(t *testing.T) {
-	t.Parallel()
-
-	input := drivers.NewHTTPCookiesWith(map[string]drivers.HTTPCookie{
-		"session": {Name: "session", Value: "abc123"},
-	})
-
-	cookies, err := parseCookiesValue(context.Background(), sdk.NewProxy(input))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

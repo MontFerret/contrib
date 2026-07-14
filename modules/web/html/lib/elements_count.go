@@ -12,7 +12,7 @@ import (
 // @param {String} selector - CSS selector.
 // @return {Int} - A number of matched HTML elements by a given CSS selector.
 func ElementsCount(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	el, selector, err := queryArgs(args)
+	el, selector, err := queryArgs(ctx, args)
 
 	if err != nil {
 		return runtime.None, err

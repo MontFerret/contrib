@@ -96,7 +96,7 @@ func (resp *HTTPResponse) Get(_ context.Context, key runtime.Value) (runtime.Val
 	case "statusCode":
 		return runtime.NewInt(resp.StatusCode), nil
 	case "headers":
-		return NewHTTPHeadersProxy(resp.Headers), nil
+		return resp.Headers, nil
 	case "body":
 		return runtime.NewBinary(resp.Body), nil
 	case "responseTime":

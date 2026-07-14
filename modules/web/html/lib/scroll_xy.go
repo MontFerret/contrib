@@ -49,7 +49,7 @@ func ScrollXY(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 	opts.Top = y
 
 	if len(args) > 3 {
-		opts, err = toScrollOptions(args[3])
+		opts, err = toScrollOptions(ctx, args[3])
 
 		if err != nil {
 			return runtime.None, err

@@ -8,7 +8,7 @@ import (
 
 	"github.com/MontFerret/ferret/v2"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/MontFerret/ferret/v2/pkg/source"
+	"github.com/MontFerret/ferret/v2/pkg/sdk/sdktest"
 )
 
 func TestNewSmoke(t *testing.T) {
@@ -32,21 +32,12 @@ func TestModuleRunsPDFWorkflowFromFQL(t *testing.T) {
 		{Text: "Beta", Width: 400, Height: 500, X: 36, Y: 420, FontSize: 18},
 	})
 
-	engine, err := ferret.New(
+	harness := sdktest.New(t,
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 		ferret.WithRuntimeParam("path", runtime.NewString(path)),
 	)
-	if err != nil {
-		t.Fatalf("unexpected engine error: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := engine.Close(); err != nil {
-			t.Fatalf("unexpected engine close error: %v", err)
-		}
-	})
-
-	output, err := engine.Run(context.Background(), source.NewAnonymous(`
+	output, err := harness.Run(context.Background(), `
 		LET document = DOCUMENT::PDF::OPEN(@path)
 		LET pages = document.pages
 		LET first = pages[0]
@@ -76,7 +67,7 @@ func TestModuleRunsPDFWorkflowFromFQL(t *testing.T) {
 			unknownPage: first.missing
 		}
 		RETURN result
-	`))
+	`)
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
@@ -130,21 +121,12 @@ func TestModuleReportsCapabilityErrorsFromFQL(t *testing.T) {
 	path := "report.pdf"
 	writePDFForTest(t, root, path, []pdfTestPage{{Text: "Alpha"}})
 
-	engine, err := ferret.New(
+	harness := sdktest.New(t,
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 		ferret.WithRuntimeParam("path", runtime.NewString(path)),
 	)
-	if err != nil {
-		t.Fatalf("unexpected engine error: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := engine.Close(); err != nil {
-			t.Fatalf("unexpected engine close error: %v", err)
-		}
-	})
-
-	output, err := engine.Run(context.Background(), source.NewAnonymous(`
+	output, err := harness.Run(context.Background(), `
 		LET document = DOCUMENT::PDF::OPEN(@path)
 		LET openErr = DOCUMENT::PDF::OPEN(1) ON ERROR RETURN "open"
 		LET missingDocument = document.missing
@@ -155,7 +137,7 @@ func TestModuleReportsCapabilityErrorsFromFQL(t *testing.T) {
 			AND missingDocument == NONE
 			AND missingPage == NONE
 			AND outOfRange == NONE
-	`))
+	`)
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}

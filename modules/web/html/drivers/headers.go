@@ -24,10 +24,6 @@ func NewHTTPHeadersWith(values map[string][]string) *HTTPHeaders {
 	return &HTTPHeaders{textproto.MIMEHeader(values)}
 }
 
-func NewHTTPHeadersProxy(header *HTTPHeaders) runtime.Value {
-	return sdk.NewProxyWithType(HTTPHeadersType, header)
-}
-
 func (h *HTTPHeaders) Type() runtime.Type {
 	return HTTPHeadersType
 }

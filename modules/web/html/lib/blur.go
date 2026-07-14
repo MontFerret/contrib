@@ -27,7 +27,7 @@ func Blur(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return runtime.None, target.Blur(ctx)
 	}
 
-	selector, err := drivers.ToQuerySelector(args[1])
+	selector, err := drivers.ToQuerySelector(ctx, args[1])
 
 	if err != nil {
 		return runtime.None, err

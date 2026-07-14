@@ -13,7 +13,7 @@ import (
 // @param {String} selector - CSS selector.
 // @return {HTMLElement} - A matched HTML element
 func Element(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	el, selector, err := queryArgs(args)
+	el, selector, err := queryArgs(ctx, args)
 
 	if err != nil {
 		return runtime.None, err
@@ -22,7 +22,7 @@ func Element(ctx context.Context, args ...runtime.Value) (runtime.Value, error) 
 	return el.QuerySelector(ctx, selector)
 }
 
-func queryArgs(args []runtime.Value) (drivers.QueryTarget, drivers.QuerySelector, error) {
+func queryArgs(ctx context.Context, args []runtime.Value) (drivers.QueryTarget, drivers.QuerySelector, error) {
 	if err := runtime.ValidateArgs(args, 2, 2); err != nil {
 		return nil, drivers.QuerySelector{}, err
 	}
@@ -33,7 +33,7 @@ func queryArgs(args []runtime.Value) (drivers.QueryTarget, drivers.QuerySelector
 		return nil, drivers.QuerySelector{}, err
 	}
 
-	qs, err := drivers.ToQuerySelector(args[1])
+	qs, err := drivers.ToQuerySelector(ctx, args[1])
 
 	if err != nil {
 		return nil, drivers.QuerySelector{}, err

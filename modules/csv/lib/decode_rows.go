@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/MontFerret/contrib/modules/csv/core"
-	"github.com/MontFerret/contrib/pkg/common/bind"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // DecodeRows decodes CSV text into an array of raw row arrays.
@@ -18,12 +18,18 @@ func DecodeRows(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 		return nil, err
 	}
 
-	data, err := runtime.CastArgAt[runtime.String](args, 0)
+	data, err := sdk.DecodeArg[runtime.String](ctx, args, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	opts, err := bind.DecodeMapArgOrDefault(args, 1, core.DefaultOptions())
+	opts, err := sdk.DecodeArgOr(
+		ctx,
+		args,
+		1,
+		core.DefaultOptions(),
+		sdk.DisallowUnknownFields(),
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -9,15 +9,15 @@ import (
 )
 
 // Sitemaps returns the declared sitemap URLs from a parsed robots object.
-func Sitemaps(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
+func Sitemaps(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
 
-	var doc core.Document
-	if err := sdk.Decode(args[0], &doc); err != nil {
+	doc, err := sdk.DecodeArg[core.Document](ctx, args, 0)
+	if err != nil {
 		return nil, err
 	}
 
-	return sdk.Encode(core.SitemapValues(doc)), nil
+	return sdk.Encode(ctx, core.SitemapValues(doc))
 }

@@ -50,13 +50,13 @@ func Parse(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	var params ParseParams
 
 	if len(args) > 1 {
-		arg2, err := runtime.CastArgAt[runtime.Map](args, 1)
+		arg2, err := sdk.DecodeArg[runtime.Map](ctx, args, 1)
 
 		if err != nil {
 			return runtime.None, err
 		}
 
-		p, err := parseParseParams(content, arg2)
+		p, err := parseParseParams(ctx, content, arg2)
 
 		if err != nil {
 			return runtime.None, err
@@ -85,14 +85,14 @@ func defaultParseParams(content []byte) ParseParams {
 	}
 }
 
-func parseParseParams(content []byte, arg runtime.Value) (ParseParams, error) {
+func parseParseParams(ctx context.Context, content []byte, arg runtime.Value) (ParseParams, error) {
 	if err := runtime.AssertMap(arg); err != nil {
 		return ParseParams{}, err
 	}
 
 	res := defaultParseParams(content)
 
-	if err := sdk.Decode(arg, &res); err != nil {
+	if err := sdk.Decode(ctx, arg, &res, sdk.DisallowUnknownFields()); err != nil {
 		return ParseParams{}, err
 	}
 

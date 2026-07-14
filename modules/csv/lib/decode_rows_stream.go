@@ -4,18 +4,17 @@ import (
 	"context"
 
 	"github.com/MontFerret/contrib/modules/csv/core"
-	"github.com/MontFerret/contrib/pkg/common/bind"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // DecodeRowsStream decodes CSV content from string or binary input.
-// It returns a proxy over an iterator of row arrays keyed by the original CSV
+// It returns an iterator value over row arrays keyed by the original CSV
 // record number after parsing.
 // @param {String|Binary} data - CSV content.
 // @param {Options} [opts] - Options for decoding.
-// @return {Iterator<Any[]>} - Proxy exposing an iterator over decoded row arrays.
-func DecodeRowsStream(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
+// @return {Iterator<Any[]>} - Iterator over decoded row arrays.
+func DecodeRowsStream(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err
 	}
@@ -25,7 +24,13 @@ func DecodeRowsStream(_ context.Context, args ...runtime.Value) (runtime.Value, 
 		return nil, err
 	}
 
-	opts, err := bind.DecodeMapArgOrDefault(args, 1, core.DefaultOptions())
+	opts, err := sdk.DecodeArgOr(
+		ctx,
+		args,
+		1,
+		core.DefaultOptions(),
+		sdk.DisallowUnknownFields(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -35,5 +40,5 @@ func DecodeRowsStream(_ context.Context, args ...runtime.Value) (runtime.Value, 
 		return nil, err
 	}
 
-	return sdk.NewProxy(iter), nil
+	return sdk.NewIteratorValue(iter), nil
 }

@@ -1,7 +1,8 @@
 package drivers
 
 import (
-	"errors"
+	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -154,19 +155,19 @@ func ToPageNavigationTarget(value runtime.Value) (PageNavigationTarget, error) {
 	return toPageCapability[PageNavigationTarget](value, "page navigation")
 }
 
-func ToQuerySelector(value runtime.Value) (QuerySelector, error) {
+func ToQuerySelector(ctx context.Context, value runtime.Value) (QuerySelector, error) {
 	var qs QuerySelector
 
 	switch v := value.(type) {
 	case runtime.Map:
-		if err := sdk.Decode(value, &qs); err != nil {
-			return qs, errors.New("invalid selector map, expected keys 'Kind' and 'Value'")
+		if err := sdk.Decode(ctx, value, &qs); err != nil {
+			return qs, fmt.Errorf("invalid selector map, expected keys 'Kind' and 'Value': %w", err)
 		}
 
 		return qs, nil
 	case runtime.String:
 		return NewCSSSelector(v), nil
-	case *sdk.Proxy[QuerySelector]:
+	case *sdk.HostValue[QuerySelector]:
 		return v.Target(), nil
 	case *runtime.Box[QuerySelector]:
 		return v.Value, nil
