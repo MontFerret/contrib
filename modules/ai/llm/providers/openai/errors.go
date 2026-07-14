@@ -15,6 +15,11 @@ func normalizeError(err error) error {
 	if errors.Is(err, context.DeadlineExceeded) {
 		return core.NewError(core.ErrTimeout, "provider request timed out")
 	}
+
+	if errors.Is(err, context.Canceled) {
+		return context.Canceled
+	}
+
 	var networkError net.Error
 	if errors.As(err, &networkError) && networkError.Timeout() {
 		return core.NewError(core.ErrTimeout, "provider request timed out")

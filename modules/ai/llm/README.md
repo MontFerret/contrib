@@ -126,6 +126,20 @@ references such as `#/$defs/address` are allowed, while external `$ref` values
 are rejected. Provider output is parsed and validated locally before it is
 returned or added to session history.
 
+OpenAI structured output schemas are also checked against OpenAI's stricter
+[Structured Outputs subset](https://developers.openai.com/api/docs/guides/structured-outputs)
+before the request is sent. The root must be an object and cannot use `anyOf`;
+every object must set
+`additionalProperties: false`; and every declared property must appear in
+`required`. `oneOf`, `allOf`, `not`, dependent schemas or requirements, and
+conditional schemas are unsupported. Schemas may contain at most 10 levels of
+object nesting, 5,000 properties, 1,000 enum values, and 120,000 total
+characters across property names, definition names, string enum values, and
+string constants. A string enum with more than 250 values is additionally
+limited to 15,000 total characters. Incompatible schemas fail with
+`AI_LLM_INVALID_SCHEMA` without contacting OpenAI. These restrictions are
+OpenAI-specific and are not imposed on custom providers.
+
 ## Query API
 
 Models and sessions are queryable. An empty `USING` clause and
@@ -194,6 +208,11 @@ conversation state. A successful call commits all input messages and the
 assistant response atomically. Failed, refused, malformed, or schema-invalid
 responses do not change history. Structured assistant responses appear in
 history as their validated JSON text.
+
+For Go embedders, caller-initiated cancellation is returned as
+`context.Canceled` rather than converted to a provider error. Configured
+deadlines and provider HTTP 408 responses remain `AI_LLM_TIMEOUT_ERROR`.
+Canceled session calls do not change history.
 
 `RESET` clears history, `FORK` creates an independent copy, and `HISTORY`
 returns a copy. Sessions created by `MODEL(..., {session: true})`, `SESSION`, or

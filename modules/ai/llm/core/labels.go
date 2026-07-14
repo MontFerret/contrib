@@ -16,6 +16,7 @@ func DecodeLabels(ctx context.Context, value runtime.Value) ([]string, error) {
 
 	labels := make([]string, 0)
 	seen := make(map[string]struct{})
+
 	err := list.ForEach(ctx, func(_ context.Context, value runtime.Value, index runtime.Int) (runtime.Boolean, error) {
 		label, ok := value.(runtime.String)
 		if !ok {
@@ -26,6 +27,7 @@ func DecodeLabels(ctx context.Context, value runtime.Value) ([]string, error) {
 		if text == "" {
 			return runtime.False, NewError(ErrInvalidOptions, fmt.Sprintf("labels[%d] must not be empty", index))
 		}
+
 		if _, exists := seen[text]; exists {
 			return runtime.False, NewError(ErrInvalidOptions, "labels must be unique")
 		}
@@ -35,9 +37,11 @@ func DecodeLabels(ctx context.Context, value runtime.Value) ([]string, error) {
 
 		return runtime.True, nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
+
 	if len(labels) == 0 {
 		return nil, NewError(ErrInvalidOptions, "labels must not be empty")
 	}

@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"testing"
@@ -61,6 +62,20 @@ func TestStatelessModelSupportsConcurrentRequests(t *testing.T) {
 	}
 	if got := len(executor.Requests()); got != requests {
 		t.Fatalf("expected %d provider requests, got %d", requests, got)
+	}
+}
+
+func TestExecutePreservesCancellation(t *testing.T) {
+	executor := &fakeExecutor{generateFn: func(context.Context, Request) (Response, error) {
+		return Response{}, errors.Join(errors.New("transport wrapper"), context.Canceled)
+	}}
+
+	_, err := Execute(context.Background(), testModel(executor), OperationRequest{
+		Mode:  ModeGenerate,
+		Input: "prompt",
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context cancellation, got %v", err)
 	}
 }
 

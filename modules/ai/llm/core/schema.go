@@ -12,9 +12,8 @@ import (
 
 // Schema is a locally compiled JSON Schema document suitable for a provider.
 type Schema struct {
-	Document map[string]any
 	compiled *jsonschema.Schema
-	Raw      json.RawMessage
+	raw      json.RawMessage
 }
 
 // NewSchema copies and compiles a provider-neutral JSON Schema.
@@ -48,10 +47,25 @@ func NewSchema(document map[string]any) (Schema, error) {
 	}
 
 	return Schema{
-		Document: copied,
-		Raw:      append(json.RawMessage(nil), raw...),
+		raw:      append(json.RawMessage(nil), raw...),
 		compiled: compiled,
 	}, nil
+}
+
+// Document returns a defensive copy of the provider-neutral JSON Schema.
+func (s Schema) Document() map[string]any {
+	if len(s.raw) == 0 {
+		return nil
+	}
+
+	var document map[string]any
+	decoder := json.NewDecoder(bytes.NewReader(s.raw))
+	decoder.UseNumber()
+	if err := decoder.Decode(&document); err != nil {
+		return nil
+	}
+
+	return document
 }
 
 // ValidateJSON parses, validates, and converts structured output to a Ferret value.

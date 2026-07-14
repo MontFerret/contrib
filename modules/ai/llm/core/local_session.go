@@ -37,6 +37,7 @@ func NewLocalSession(ctx context.Context, model Model, options SessionOptions) (
 		context:      options.Context,
 		id:           newResourceID(),
 	}
+
 	if err := TrackSession(ctx, session); err != nil {
 		return nil, err
 	}
@@ -56,12 +57,14 @@ func (s *LocalSession) Generate(ctx context.Context, request Request) (Response,
 	if err != nil {
 		return Response{}, err
 	}
+
 	defer cancel()
 
 	inputs := copyMessages(request.Messages)
 	request.Messages = append(copyMessages(s.history), request.Messages...)
 	request.Instructions = joinInstructions(s.instructions, request.Instructions)
 	response, err := s.model.Generate(requestCtx, request)
+
 	if err != nil {
 		return Response{}, normalizeContextError(requestCtx, err)
 	}
@@ -86,6 +89,7 @@ func (s *LocalSession) GenerateStructured(ctx context.Context, request Structure
 	if err != nil {
 		return Response{}, err
 	}
+
 	defer cancel()
 
 	inputs := copyMessages(request.Messages)
@@ -155,6 +159,7 @@ func (s *LocalSession) Fork(ctx context.Context) (Session, error) {
 		history:      copyMessages(s.history),
 		id:           newResourceID(),
 	}
+
 	if err := TrackSession(ctx, fork); err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -38,7 +39,20 @@ func TestStableErrorCodes(t *testing.T) {
 func TestOperationErrorSanitizesUntypedErrors(t *testing.T) {
 	err := OperationError("GENERATE", errors.New("secret-api-key"))
 	requireCode(t, err, ErrProvider)
+
 	if strings.Contains(err.Error(), "secret") {
 		t.Fatalf("error leaked cause: %s", err)
+	}
+}
+
+func TestOperationErrorPreservesCancellation(t *testing.T) {
+	err := OperationError("GENERATE", errors.Join(errors.New("transport wrapper"), context.Canceled))
+
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context cancellation, got %v", err)
+	}
+
+	if _, ok := CodeOf(err); ok {
+		t.Fatalf("cancellation must remain control flow, got %v", err)
 	}
 }

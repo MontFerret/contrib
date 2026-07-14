@@ -12,6 +12,7 @@ import (
 func DecodeExecutionOptions(ctx context.Context, value runtime.Value) (ExecutionOptions, error) {
 	const label = "execution options"
 	values, err := optionValues(ctx, value, label)
+
 	if err != nil {
 		return ExecutionOptions{}, err
 	}
@@ -33,6 +34,7 @@ func decodeExecutionValues(values map[string]runtime.Value, label string) (Execu
 		if temperature < 0 || temperature > 2 {
 			return options, NewError(ErrInvalidOptions, label+".temperature must be between 0 and 2")
 		}
+
 		options.Temperature = &temperature
 	}
 
@@ -42,6 +44,7 @@ func decodeExecutionValues(values map[string]runtime.Value, label string) (Execu
 		if maxTokens <= 0 {
 			return options, NewError(ErrInvalidOptions, label+".maxOutputTokens must be positive")
 		}
+
 		options.MaxOutputTokens = maxTokens
 	}
 
@@ -51,9 +54,11 @@ func decodeExecutionValues(values map[string]runtime.Value, label string) (Execu
 		if timeout < 0 {
 			return options, NewError(ErrInvalidOptions, label+".timeout must be nonnegative")
 		}
+
 		if timeout > math.MaxInt64/int64(time.Millisecond) {
 			return options, NewError(ErrInvalidOptions, label+".timeout is too large")
 		}
+
 		options.Timeout = time.Duration(timeout) * time.Millisecond
 	}
 

@@ -278,6 +278,28 @@ func TestLocalSessionTimeoutDoesNotCommit(t *testing.T) {
 	}
 }
 
+func TestLocalSessionCancellationDoesNotCommit(t *testing.T) {
+	executor := &fakeExecutor{generateFn: func(ctx context.Context, _ Request) (Response, error) {
+		<-ctx.Done()
+
+		return Response{}, ctx.Err()
+	}}
+	session, err := NewLocalSession(context.Background(), testModel(executor), SessionOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err = Execute(ctx, session, OperationRequest{Mode: ModeGenerate, Input: "prompt"})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context cancellation, got %v", err)
+	}
+	if len(session.History()) != 0 {
+		t.Fatal("canceled request mutated history")
+	}
+}
+
 func TestLocalSessionCloseIsIdempotent(t *testing.T) {
 	session, err := NewLocalSession(context.Background(), testModel(&fakeExecutor{}), SessionOptions{})
 	if err != nil {

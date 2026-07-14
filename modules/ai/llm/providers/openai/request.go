@@ -42,14 +42,22 @@ func buildStructuredRequest(model string, request core.StructuredRequest) (respo
 		return responses.ResponseNewParams{}, err
 	}
 
+	document := request.Schema.Document()
+
+	if err := validateStructuredOutputSchema(document); err != nil {
+		return responses.ResponseNewParams{}, err
+	}
+
 	format := &responses.ResponseFormatTextJSONSchemaConfigParam{
 		Name:   request.Name,
-		Schema: request.Schema.Document,
+		Schema: document,
 		Strict: sdkopenai.Bool(true),
 	}
+
 	if request.Description != "" {
 		format.Description = sdkopenai.String(request.Description)
 	}
+
 	params.Text = responses.ResponseTextConfigParam{
 		Format: responses.ResponseFormatTextConfigUnionParam{OfJSONSchema: format},
 	}

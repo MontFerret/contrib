@@ -115,6 +115,17 @@ func TestExecutorMapsTextRequestAndResponse(t *testing.T) {
 func TestExecutorMapsStructuredTextFormat(t *testing.T) {
 	t.Parallel()
 
+	schema, err := core.NewSchema(map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"name": map[string]any{"type": "string"},
+		},
+		"required":             []any{"name"},
+		"additionalProperties": false,
+	})
+	if err != nil {
+		t.Fatalf("compile schema: %v", err)
+	}
 	fake := newFakeHTTPClient(func(context.Context, *ferrethttp.Request) (*ferrethttp.Response, error) {
 		return jsonResponse(http.StatusOK, successResponseBody(`{"name":"Ada"}`)), nil
 	})
@@ -128,14 +139,7 @@ func TestExecutorMapsStructuredTextFormat(t *testing.T) {
 		},
 		Name:        "extract_result",
 		Description: "extracted data",
-		Schema: core.Schema{Document: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"name": map[string]any{"type": "string"},
-			},
-			"required":             []any{"name"},
-			"additionalProperties": false,
-		}},
+		Schema:      schema,
 	})
 	if err != nil {
 		t.Fatalf("generate structured: %v", err)
@@ -159,8 +163,8 @@ func TestExecutorMapsStructuredTextFormat(t *testing.T) {
 	if format["description"] != "extracted data" {
 		t.Fatalf("unexpected schema description: %#v", format["description"])
 	}
-	schema, ok := format["schema"].(map[string]any)
-	if !ok || schema["additionalProperties"] != false {
+	payloadSchema, ok := format["schema"].(map[string]any)
+	if !ok || payloadSchema["additionalProperties"] != false {
 		t.Fatalf("unexpected JSON Schema: %#v", format["schema"])
 	}
 }
@@ -395,6 +399,24 @@ func TestExecutorHonorsRequestTimeout(t *testing.T) {
 	}
 }
 
+func TestExecutorPreservesCallerCancellation(t *testing.T) {
+	t.Parallel()
+
+	fake := newFakeHTTPClient(func(ctx context.Context, _ *ferrethttp.Request) (*ferrethttp.Response, error) {
+		<-ctx.Done()
+
+		return nil, ctx.Err()
+	})
+	model := newTestModel(t, "gpt-test")
+	ctx, cancel := context.WithCancel(networkContext(fake))
+	cancel()
+
+	_, err := model.Generate(ctx, core.Request{})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context cancellation, got %v", err)
+	}
+}
+
 func TestExecutorHonorsFerretNetworkPolicy(t *testing.T) {
 	t.Parallel()
 
@@ -440,5 +462,14 @@ func TestNormalizeErrorTreatsWrappedDeadlineAsTimeout(t *testing.T) {
 	err := normalizeError(errors.Join(errors.New("transport wrapper"), context.DeadlineExceeded))
 	if code := errorCode(t, err); code != core.ErrTimeout {
 		t.Fatalf("expected timeout, got %s", code)
+	}
+}
+
+func TestNormalizeErrorPreservesWrappedCancellation(t *testing.T) {
+	t.Parallel()
+
+	err := normalizeError(errors.Join(errors.New("transport wrapper"), context.Canceled))
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context cancellation, got %v", err)
 	}
 }

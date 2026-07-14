@@ -8,6 +8,10 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
+type transactionalTarget interface {
+	executeOperation(context.Context, OperationRequest) (runtime.Value, error)
+}
+
 // Execute routes every function and Queryable operation through one dispatcher.
 func Execute(ctx context.Context, target Target, operation OperationRequest) (runtime.Value, error) {
 	if target == nil {
@@ -37,6 +41,7 @@ func executeAgainst(
 	if err != nil {
 		return runtime.None, Response{}, nil, err
 	}
+
 	defer cancel()
 
 	switch operation.Mode {
@@ -45,11 +50,12 @@ func executeAgainst(
 		if err != nil {
 			return runtime.None, Response{}, nil, err
 		}
+
 		inputs := copyMessages(request.Messages)
 		request.Messages = append(copyMessages(history), request.Messages...)
 		request.Instructions = joinInstructions(persistentInstructions, request.Instructions)
-
 		response, err := target.Generate(requestCtx, request)
+
 		if err != nil {
 			return runtime.None, Response{}, nil, normalizeContextError(requestCtx, err)
 		}
@@ -60,14 +66,16 @@ func executeAgainst(
 		if err != nil {
 			return runtime.None, Response{}, nil, err
 		}
+
 		inputs := copyMessages(request.Messages)
 		request.Messages = append(copyMessages(history), request.Messages...)
 		request.Instructions = joinInstructions(persistentInstructions, request.Instructions)
-
 		response, err := target.GenerateStructured(requestCtx, request)
+
 		if err != nil {
 			return runtime.None, Response{}, nil, normalizeContextError(requestCtx, err)
 		}
+
 		value, err := request.Schema.ValidateJSON([]byte(response.Text))
 		if err != nil {
 			return runtime.None, Response{}, nil, err
@@ -83,6 +91,7 @@ func executionContext(ctx context.Context, options ExecutionOptions) (context.Co
 	if options.Timeout < 0 {
 		return nil, nil, NewError(ErrInvalidOptions, "timeout must be nonnegative")
 	}
+
 	if options.Timeout == 0 {
 		return ctx, func() {}, nil
 	}
@@ -97,9 +106,9 @@ func normalizeContextError(ctx context.Context, err error) error {
 		return NewError(ErrTimeout, "provider request timed out")
 	}
 
-	return err
-}
+	if errors.Is(ctx.Err(), context.Canceled) || errors.Is(err, context.Canceled) {
+		return context.Canceled
+	}
 
-type transactionalTarget interface {
-	executeOperation(context.Context, OperationRequest) (runtime.Value, error)
+	return err
 }

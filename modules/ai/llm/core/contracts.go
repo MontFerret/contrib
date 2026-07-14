@@ -20,41 +20,7 @@ type (
 
 	// Mode identifies an AI::LLM operation.
 	Mode string
-)
 
-const (
-	ErrProvider                ErrorCode = "AI_LLM_PROVIDER_ERROR"
-	ErrAuth                    ErrorCode = "AI_LLM_AUTH_ERROR"
-	ErrRateLimit               ErrorCode = "AI_LLM_RATE_LIMIT_ERROR"
-	ErrTimeout                 ErrorCode = "AI_LLM_TIMEOUT_ERROR"
-	ErrContextLimit            ErrorCode = "AI_LLM_CONTEXT_LIMIT_ERROR"
-	ErrUnsupportedProvider     ErrorCode = "AI_LLM_UNSUPPORTED_PROVIDER"
-	ErrUnsupportedOperation    ErrorCode = "AI_LLM_UNSUPPORTED_OPERATION"
-	ErrInvalidOptions          ErrorCode = "AI_LLM_INVALID_OPTIONS"
-	ErrInvalidSchema           ErrorCode = "AI_LLM_INVALID_SCHEMA"
-	ErrInvalidStructuredOutput ErrorCode = "AI_LLM_INVALID_STRUCTURED_OUTPUT"
-	ErrSchemaValidation        ErrorCode = "AI_LLM_SCHEMA_VALIDATION_ERROR"
-	ErrRefusal                 ErrorCode = "AI_LLM_REFUSAL"
-)
-
-const (
-	RoleSystem    Role = "system"
-	RoleDeveloper Role = "developer"
-	RoleUser      Role = "user"
-	RoleAssistant Role = "assistant"
-)
-
-const ContentText ContentType = "text"
-
-const (
-	ModeGenerate  Mode = "generate"
-	ModeChat      Mode = "chat"
-	ModeSummarize Mode = "summarize"
-	ModeExtract   Mode = "extract"
-	ModeClassify  Mode = "classify"
-)
-
-type (
 	// Content is provider-neutral message content. Version 1 supports text only.
 	Content struct {
 		Type ContentType
@@ -90,10 +56,10 @@ type (
 
 	// StructuredRequest is a provider-neutral structured-generation request.
 	StructuredRequest struct {
-		Schema      Schema
 		Name        string
 		Description string
 		Request
+		Schema Schema
 	}
 
 	// Response is a normalized provider response. Raw contains copied provider JSON.
@@ -152,46 +118,78 @@ type (
 	StructuredGenerationRequest = StructuredRequest
 	// GenerationResponse is the provider-facing name for a normalized response.
 	GenerationResponse = Response
+
+	// Generator executes provider-neutral text generation.
+	Generator interface {
+		Generate(context.Context, Request) (Response, error)
+	}
+
+	// StructuredGenerator executes provider-neutral structured generation.
+	StructuredGenerator interface {
+		GenerateStructured(context.Context, StructuredRequest) (Response, error)
+	}
+
+	// Target can execute every v1 AI::LLM operation.
+	Target interface {
+		Generator
+		StructuredGenerator
+	}
+
+	// Model is an immutable, stateless, Ferret-visible provider model.
+	Model interface {
+		runtime.Value
+		runtime.Queryable
+		Target
+		Provider() string
+		ModelName() string
+	}
+
+	// Session is a serialized, local, Ferret-visible conversation resource.
+	Session interface {
+		runtime.Value
+		runtime.Queryable
+		runtime.Resource
+		Target
+		Reset() error
+		Fork(context.Context) (Session, error)
+		History() []Message
+	}
+
+	// ProviderFactory creates explicit-credential models for one provider.
+	ProviderFactory interface {
+		Name() string
+		NewModel(context.Context, ModelOptions) (Model, error)
+	}
 )
 
-// Generator executes provider-neutral text generation.
-type Generator interface {
-	Generate(context.Context, Request) (Response, error)
-}
+const (
+	ErrProvider                ErrorCode = "AI_LLM_PROVIDER_ERROR"
+	ErrAuth                    ErrorCode = "AI_LLM_AUTH_ERROR"
+	ErrRateLimit               ErrorCode = "AI_LLM_RATE_LIMIT_ERROR"
+	ErrTimeout                 ErrorCode = "AI_LLM_TIMEOUT_ERROR"
+	ErrContextLimit            ErrorCode = "AI_LLM_CONTEXT_LIMIT_ERROR"
+	ErrUnsupportedProvider     ErrorCode = "AI_LLM_UNSUPPORTED_PROVIDER"
+	ErrUnsupportedOperation    ErrorCode = "AI_LLM_UNSUPPORTED_OPERATION"
+	ErrInvalidOptions          ErrorCode = "AI_LLM_INVALID_OPTIONS"
+	ErrInvalidSchema           ErrorCode = "AI_LLM_INVALID_SCHEMA"
+	ErrInvalidStructuredOutput ErrorCode = "AI_LLM_INVALID_STRUCTURED_OUTPUT"
+	ErrSchemaValidation        ErrorCode = "AI_LLM_SCHEMA_VALIDATION_ERROR"
+	ErrRefusal                 ErrorCode = "AI_LLM_REFUSAL"
+)
 
-// StructuredGenerator executes provider-neutral structured generation.
-type StructuredGenerator interface {
-	GenerateStructured(context.Context, StructuredRequest) (Response, error)
-}
+const (
+	RoleSystem    Role = "system"
+	RoleDeveloper Role = "developer"
+	RoleUser      Role = "user"
+	RoleAssistant Role = "assistant"
+)
 
-// Target can execute every v1 AI::LLM operation.
-type Target interface {
-	Generator
-	StructuredGenerator
-}
+const ContentText ContentType = "text"
 
-// Model is an immutable, stateless, Ferret-visible provider model.
-type Model interface {
-	runtime.Value
-	runtime.Queryable
-	Target
-	Provider() string
-	ModelName() string
-}
-
-// Session is a serialized, local, Ferret-visible conversation resource.
-type Session interface {
-	runtime.Value
-	runtime.Queryable
-	runtime.Resource
-	Target
-	Reset() error
-	Fork(context.Context) (Session, error)
-	History() []Message
-}
-
-// ProviderFactory creates explicit-credential models for one provider.
-type ProviderFactory interface {
-	Name() string
-	NewModel(context.Context, ModelOptions) (Model, error)
-}
+const (
+	ModeGenerate  Mode = "generate"
+	ModeChat      Mode = "chat"
+	ModeSummarize Mode = "summarize"
+	ModeExtract   Mode = "extract"
+	ModeClassify  Mode = "classify"
+)

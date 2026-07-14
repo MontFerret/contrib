@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -140,4 +141,19 @@ func TestExecuteQuerySeparatesWithFromOptions(t *testing.T) {
 		Options:    object(map[string]runtime.Value{"style": runtime.NewString("concise")}),
 	})
 	requireCode(t, err, ErrInvalidOptions)
+}
+
+func TestExecuteQueryPreservesCancellation(t *testing.T) {
+	executor := &fakeExecutor{generateFn: func(context.Context, Request) (Response, error) {
+		return Response{}, context.Canceled
+	}}
+	model := testModel(executor)
+
+	_, err := model.QueryOne(context.Background(), runtime.Query{
+		Kind:       runtime.NewString("generate"),
+		Expression: runtime.NewString("prompt"),
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context cancellation, got %v", err)
+	}
 }

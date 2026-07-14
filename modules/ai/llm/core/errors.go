@@ -26,8 +26,8 @@ func (e *Error) WithOperation(operation string) *Error {
 		return nil
 	}
 
-	copy := *e
-	copy.operation = operation
+	cp := *e
+	cp.operation = operation
 
-	return &copy
+	return &cp
 }
