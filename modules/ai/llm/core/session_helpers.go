@@ -16,7 +16,7 @@ func normalizeSessionOptions(options SessionOptions) (SessionOptions, error) {
 	}
 
 	if options.Context.MaxTokens < 0 {
-		return SessionOptions{}, NewError(ErrInvalidOptions, "session maxTokens must be positive")
+		return SessionOptions{}, NewError(ErrInvalidOptions, "session maxTokens must be nonnegative")
 	}
 	if options.Context.ReserveOutputTokens < 0 {
 		return SessionOptions{}, NewError(ErrInvalidOptions, "session reserveOutputTokens must be nonnegative")
