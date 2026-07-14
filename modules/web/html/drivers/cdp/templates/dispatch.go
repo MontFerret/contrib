@@ -223,6 +223,23 @@ func DispatchReset(id cdpruntime.RemoteObjectID) *eval.Function {
 		WithArgRef(id)
 }
 
+const dispatchSelect = `(el, value) => {
+%s
+	if (el.nodeName.toLowerCase() !== "select") {
+		throw new Error("element is not a <select> element");
+	}
+
+	setControlValue(el, value);
+	dispatchBubbling(el, "input");
+	dispatchBubbling(el, "change");
+}`
+
+func DispatchSelect(id cdpruntime.RemoteObjectID, value runtime.Value) *eval.Function {
+	return eval.F(fmt.Sprintf(dispatchSelect, dispatchFormHelpers)).
+		WithArgRef(id).
+		WithArgValue(value)
+}
+
 func ElementScroll(id cdpruntime.RemoteObjectID, mode string, options drivers.ScrollOptions) *eval.Function {
 	return eval.F(elementScroll).
 		WithArgRef(id).

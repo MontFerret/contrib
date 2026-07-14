@@ -33,6 +33,7 @@ const (
 	DispatchUncheckEvent     = "uncheck"
 	DispatchToggleEvent      = "toggle"
 	DispatchScrollEvent      = "scroll"
+	DispatchSelectEvent      = "select"
 )
 
 var (
@@ -73,6 +74,7 @@ var (
 		DispatchUncheckEvent,
 		DispatchToggleEvent,
 		DispatchScrollEvent,
+		DispatchSelectEvent,
 	}
 )
 

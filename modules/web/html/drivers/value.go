@@ -69,6 +69,12 @@ type (
 		GetParentElement(ctx context.Context) (runtime.Value, error)
 	}
 
+	// DOMPropertyTarget reads native DOM instance properties that are not modeled
+	// by one of the explicit element capabilities.
+	DOMPropertyTarget interface {
+		GetDOMProperty(ctx context.Context, name runtime.String) (runtime.Value, error)
+	}
+
 	InteractionTarget interface {
 		Click(ctx context.Context, count runtime.Int) error
 		ClickBySelector(ctx context.Context, selector QuerySelector, count runtime.Int) error

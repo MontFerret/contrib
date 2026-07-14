@@ -452,6 +452,7 @@ With the CDP driver, `HTMLPage`, `HTMLDocument`, and `HTMLElement` values suppor
 ```fql
 DISPATCH "click" IN button
 DISPATCH "input" IN searchBox WITH { value: "macbook" }
+DISPATCH "select" IN countrySelect WITH { value: "US" }
 DISPATCH "keydown" IN input WITH { key: "Enter" }
 DISPATCH "type" IN input WITH { text: "macbook pro", delay: 50 }
 DISPATCH "scroll" IN doc WITH { y: 1200 }
@@ -466,10 +467,10 @@ Supported CDP dispatch event names are:
 | --- | --- |
 | Mouse | `click`, `dblclick`, `mousedown`, `mouseup`, `mouseover`, `mouseout`, `mousemove` |
 | Keyboard | `keydown`, `keyup`, `keypress`, `press`, `type` |
-| Forms | `input`, `change`, `submit`, `reset`, `focus`, `blur`, `check`, `uncheck`, `toggle` |
+| Forms | `input`, `change`, `submit`, `reset`, `focus`, `blur`, `check`, `uncheck`, `toggle`, `select` |
 | Scroll | `scroll` |
 
-Mouse payloads may include `button`, `count`, `x`, and `y`. Keyboard `press` accepts `key` or `keys`; `type` accepts `text`, optional `delay`, and optional `clear`. Form `input` requires `value`; `change` may include `value`. Scroll accepts absolute coordinates via `x`/`y` or `to`, named absolute targets via `to: "top"` or `to: "bottom"`, relative coordinates via `by`, or `intoView: true`.
+Mouse payloads may include `button`, `count`, `x`, and `y`. Keyboard `press` accepts `key` or `keys`; `type` accepts `text`, optional `delay`, and optional `clear`. Form `input` and `select` require `value`; `change` may include `value`. Scroll accepts absolute coordinates via `x`/`y` or `to`, named absolute targets via `to: "top"` or `to: "bottom"`, relative coordinates via `by`, or `intoView: true`.
 
 Navigation and scrolling module functions:
 

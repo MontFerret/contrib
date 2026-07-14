@@ -24,7 +24,41 @@ func GetTextContent(id cdpruntime.RemoteObjectID) *eval.Function {
 }
 
 const getDOMProperty = `(el, name) => {
-	return el[name];
+	const value = el[name];
+
+	if (value == null) {
+		return undefined;
+	}
+
+	if (typeof value === "function") {
+		return undefined;
+	}
+
+	if (typeof value !== "object") {
+		return value;
+	}
+
+	if (typeof Node !== "undefined" && value instanceof Node) {
+		return value;
+	}
+
+	if (Array.isArray(value)) {
+		return value;
+	}
+
+	if (typeof NodeList !== "undefined" && value instanceof NodeList) {
+		return Array.from(value);
+	}
+
+	if (typeof HTMLCollection !== "undefined" && value instanceof HTMLCollection) {
+		return Array.from(value);
+	}
+
+	if (typeof value.length === "number" && typeof value.item === "function") {
+		return Array.from(value);
+	}
+
+	return undefined;
 }`
 
 func GetDOMProperty(id cdpruntime.RemoteObjectID, name runtime.String) *eval.Function {
