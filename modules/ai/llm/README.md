@@ -155,15 +155,9 @@ API. `QUERY COUNT` and `QUERY EXISTS` are deliberately unsupported because
 either modifier would otherwise cause a potentially billable, state-mutating
 provider request.
 
-Query payloads are strings. Bind member expressions before querying:
-
 ```fql
-LET body = email.body
-RETURN QUERY ONE body IN model USING summarize
+RETURN QUERY ONE email.body IN model USING summarize
 ```
-
-Direct member payloads such as `QUERY ONE email.body IN model` are not part of
-Ferret's current query-expression grammar.
 
 ## Sessions
 
