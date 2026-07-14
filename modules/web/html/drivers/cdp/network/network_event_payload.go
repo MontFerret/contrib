@@ -113,7 +113,7 @@ func headersRuntimeValue(headers *drivers.HTTPHeaders) runtime.Value {
 		return runtime.None
 	}
 
-	return drivers.NewHTTPHeadersProxy(headers)
+	return headers
 }
 
 func resourceTypesRuntimeValue(types []string) runtime.Value {

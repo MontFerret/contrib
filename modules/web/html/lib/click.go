@@ -43,7 +43,7 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		case runtime.Int:
 			return runtime.True, target.Click(ctx, arg2)
 		default:
-			selector, err := drivers.ToQuerySelector(args[1])
+			selector, err := drivers.ToQuerySelector(ctx, args[1])
 
 			if err != nil {
 				return runtime.None, err
@@ -70,7 +70,7 @@ func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	}
 
 	// CLICK(doc, selector, clicks)
-	selector, err := drivers.ToQuerySelector(args[1])
+	selector, err := drivers.ToQuerySelector(ctx, args[1])
 
 	if err != nil {
 		return runtime.None, err

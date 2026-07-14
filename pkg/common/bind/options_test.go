@@ -1,6 +1,7 @@
 package bind
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -14,13 +15,14 @@ type testOptions struct {
 }
 
 func TestDecodeMapArgOrDefault(t *testing.T) {
+	ctx := context.Background()
 	defaults := testOptions{
 		Delimiter: ",",
 		Header:    true,
 	}
 
 	t.Run("missing arg returns defaults", func(t *testing.T) {
-		got, err := DecodeMapArgOrDefault(nil, 0, defaults)
+		got, err := DecodeMapArgOrDefault(ctx, nil, 0, defaults)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -39,7 +41,7 @@ func TestDecodeMapArgOrDefault(t *testing.T) {
 			}),
 		}
 
-		got, err := DecodeMapArgOrDefault(args, 1, defaults)
+		got, err := DecodeMapArgOrDefault(ctx, args, 1, defaults)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -52,7 +54,7 @@ func TestDecodeMapArgOrDefault(t *testing.T) {
 	})
 
 	t.Run("wrong arg type", func(t *testing.T) {
-		_, err := DecodeMapArgOrDefault([]runtime.Value{runtime.NewString("bad")}, 0, defaults)
+		_, err := DecodeMapArgOrDefault(ctx, []runtime.Value{runtime.NewString("bad")}, 0, defaults)
 		if !errors.Is(err, runtime.ErrInvalidType) {
 			t.Fatalf("expected invalid type error, got %v", err)
 		}

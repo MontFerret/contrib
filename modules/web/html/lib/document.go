@@ -119,7 +119,7 @@ func newPageLoadParams(ctx context.Context, url runtime.String, arg runtime.Valu
 	case runtime.Map:
 		var input pageLoadParamsInput
 
-		if err := sdk.Decode(argt, &input); err != nil {
+		if err := sdk.Decode(ctx, argt, &input, sdk.DisallowUnknownFields()); err != nil {
 			return PageLoadParams{}, err
 		}
 

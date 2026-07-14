@@ -12,7 +12,7 @@ import (
 // @param {String} selector - CSS selector.
 // @return {HTMLElement[]} - An array of matched HTML elements.
 func Elements(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	el, selector, err := queryArgs(args)
+	el, selector, err := queryArgs(ctx, args)
 
 	if err != nil {
 		return runtime.None, err

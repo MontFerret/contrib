@@ -5,6 +5,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/security/jwt/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 func signWithConfig(cfg core.Config) func(context.Context, ...runtime.Value) (runtime.Value, error) {
@@ -13,17 +14,17 @@ func signWithConfig(cfg core.Config) func(context.Context, ...runtime.Value) (ru
 			return nil, err
 		}
 
-		claimsMap, err := runtime.CastArgAt[runtime.Map](args, 0)
+		claimsMap, err := sdk.DecodeArg[runtime.Map](ctx, args, 0)
 		if err != nil {
 			return nil, core.OperationError("SIGN", err)
 		}
 
-		optsMap, err := runtime.CastArgAt[runtime.Map](args, 2)
+		optsMap, err := sdk.DecodeArg[runtime.Map](ctx, args, 2)
 		if err != nil {
 			return nil, core.OperationError("SIGN", err)
 		}
 
-		opts, err := core.DecodeSignOptions(optsMap)
+		opts, err := core.DecodeSignOptions(ctx, optsMap)
 		if err != nil {
 			return nil, core.OperationError("SIGN", err)
 		}

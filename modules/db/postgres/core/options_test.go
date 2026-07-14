@@ -113,7 +113,7 @@ func TestOpenValidation(t *testing.T) {
 func TestDecodeOpenOptions(t *testing.T) {
 	t.Parallel()
 
-	opts, err := DecodeOpenOptions(runtime.NewObjectWith(map[string]runtime.Value{
+	opts, err := DecodeOpenOptions(t.Context(), runtime.NewObjectWith(map[string]runtime.Value{
 		"host":     runtime.NewString("localhost"),
 		"port":     runtime.NewInt(15432),
 		"database": runtime.NewString("ferret"),
@@ -135,8 +135,14 @@ func TestDecodeOpenOptions(t *testing.T) {
 		t.Fatalf("unexpected dsn: got %q, want %q", dsn, expected)
 	}
 
-	_, err = DecodeOpenOptions(runtime.NewString("invalid"))
+	_, err = DecodeOpenOptions(t.Context(), runtime.NewString("invalid"))
 	assertErrorContains(t, err, "DB::POSTGRES OPEN failed")
+
+	_, err = DecodeOpenOptions(t.Context(), runtime.NewObjectWith(map[string]runtime.Value{
+		"uri":   runtime.NewString("postgres://localhost/ferret"),
+		"extra": runtime.True,
+	}))
+	assertErrorContains(t, err, "unknown field")
 }
 
 func TestOpenWrapsValidationErrors(t *testing.T) {

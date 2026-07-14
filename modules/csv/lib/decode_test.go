@@ -2,6 +2,7 @@ package lib
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -59,6 +60,27 @@ func TestDecodeLib(t *testing.T) {
 		_, err := Decode(ctx, runtime.NewString("a,b"), runtime.NewString("not-a-map"))
 		if err == nil {
 			t.Fatal("expected error for wrong options type")
+		}
+	})
+
+	t.Run("rejects unknown options", func(t *testing.T) {
+		opts := runtime.NewObjectWith(map[string]runtime.Value{
+			"unknown": runtime.True,
+		})
+
+		_, err := Decode(ctx, runtime.NewString("name\nAlice"), opts)
+		if err == nil {
+			t.Fatal("expected unknown option error")
+		}
+	})
+
+	t.Run("propagates canceled option decoding context", func(t *testing.T) {
+		canceled, cancel := context.WithCancel(ctx)
+		cancel()
+
+		_, err := Decode(canceled, runtime.NewString("name\nAlice"), runtime.NewObject())
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("expected context cancellation, got %v", err)
 		}
 	})
 

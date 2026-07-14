@@ -13,7 +13,7 @@ import (
 	ferretnet "github.com/MontFerret/ferret/v2/pkg/net"
 	ferrethttp "github.com/MontFerret/ferret/v2/pkg/net/http"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/MontFerret/ferret/v2/pkg/source"
+	"github.com/MontFerret/ferret/v2/pkg/sdk/sdktest"
 )
 
 func TestNewSmoke(t *testing.T) {
@@ -44,27 +44,19 @@ func TestModuleRunsHTTPClientFromFQL(t *testing.T) {
 	}))
 	defer server.Close()
 
-	engine, err := ferret.New(
+	harness := sdktest.New(t,
 		ferret.WithModules(New()),
 		ferret.WithRuntimeParam("baseUrl", runtime.NewString(server.URL)),
 	)
-	if err != nil {
-		t.Fatalf("unexpected engine error: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := engine.Close(); err != nil {
-			t.Fatalf("unexpected engine close error: %v", err)
-		}
-	})
 
-	output, err := engine.Run(context.Background(), source.NewAnonymous(`
+	output, err := harness.Run(context.Background(), `
 		LET api = NET::REST::CLIENT({
 			baseUrl: @baseUrl,
 			encoding: "json"
 		})
 		LET res = QUERY ONE "/health" IN api USING http
 		RETURN res.version == "1.0.0"
-	`))
+	`)
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
@@ -94,20 +86,12 @@ func TestModuleRunsQueryModifiersFromFQL(t *testing.T) {
 	}))
 	defer server.Close()
 
-	engine, err := ferret.New(
+	harness := sdktest.New(t,
 		ferret.WithModules(New()),
 		ferret.WithRuntimeParam("baseUrl", runtime.NewString(server.URL)),
 	)
-	if err != nil {
-		t.Fatalf("unexpected engine error: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := engine.Close(); err != nil {
-			t.Fatalf("unexpected engine close error: %v", err)
-		}
-	})
 
-	output, err := engine.Run(context.Background(), source.NewAnonymous(`
+	output, err := harness.Run(context.Background(), `
 		LET api = NET::REST::CLIENT({
 			baseUrl: @baseUrl,
 			encoding: "json"
@@ -117,7 +101,7 @@ func TestModuleRunsQueryModifiersFromFQL(t *testing.T) {
 		LET count = QUERY COUNT "/users" IN api
 		LET exists = QUERY EXISTS "/users" IN api
 		RETURN users[0].name == "Ada" AND first.id == 1 AND count == 2 AND exists
-	`))
+	`)
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
@@ -138,29 +122,21 @@ func TestModuleHonorsFerretHTTPPolicy(t *testing.T) {
 	}))
 	defer server.Close()
 
-	engine, err := ferret.New(
+	harness := sdktest.New(t,
 		ferret.WithModules(New()),
 		ferret.WithRuntimeParam("baseUrl", runtime.NewString(server.URL)),
 		ferret.WithNetwork(ferretnet.New(ferretnet.WithHTTPClient(ferrethttp.New(
 			ferrethttp.WithAllowedHosts("allowed.example"),
 		)))),
 	)
-	if err != nil {
-		t.Fatalf("unexpected engine error: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := engine.Close(); err != nil {
-			t.Fatalf("unexpected engine close error: %v", err)
-		}
-	})
 
-	_, err = engine.Run(context.Background(), source.NewAnonymous(`
+	_, err := harness.Run(context.Background(), `
 		LET api = NET::REST::CLIENT({
 			baseUrl: @baseUrl,
 			encoding: "json"
 		})
 		RETURN QUERY ONE "/health" IN api
-	`))
+	`)
 	if err == nil {
 		t.Fatal("expected HTTP policy error")
 	}

@@ -1,6 +1,8 @@
 package core
 
 import (
+	"context"
+
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
@@ -30,9 +32,9 @@ type SignOptions struct {
 }
 
 // DecodeVerifyOptions decodes VERIFY options from a Ferret map.
-func DecodeVerifyOptions(value runtime.Map) (VerifyOptions, error) {
+func DecodeVerifyOptions(ctx context.Context, value runtime.Map) (VerifyOptions, error) {
 	var opts VerifyOptions
-	if err := sdk.Decode(value, &opts); err != nil {
+	if err := sdk.Decode(ctx, value, &opts, sdk.DisallowUnknownFields()); err != nil {
 		return VerifyOptions{}, wrapError(ErrInvalidToken, "invalid verify options", err)
 	}
 
@@ -40,9 +42,9 @@ func DecodeVerifyOptions(value runtime.Map) (VerifyOptions, error) {
 }
 
 // DecodeSignOptions decodes SIGN options from a Ferret map.
-func DecodeSignOptions(value runtime.Map) (SignOptions, error) {
+func DecodeSignOptions(ctx context.Context, value runtime.Map) (SignOptions, error) {
 	var opts SignOptions
-	if err := sdk.Decode(value, &opts); err != nil {
+	if err := sdk.Decode(ctx, value, &opts, sdk.DisallowUnknownFields()); err != nil {
 		return SignOptions{}, wrapError(ErrInvalidToken, "invalid sign options", err)
 	}
 

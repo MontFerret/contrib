@@ -32,7 +32,7 @@ func Pagination(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 		return runtime.None, err
 	}
 
-	selector, err := drivers.ToQuerySelector(args[1])
+	selector, err := drivers.ToQuerySelector(ctx, args[1])
 
 	if err != nil {
 		return runtime.None, err
@@ -42,7 +42,7 @@ func Pagination(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 		Str("selector", selector.String()).
 		Logger()
 
-	return sdk.NewProxy(&Paging{logger, page, selector}), nil
+	return sdk.NewIterableValue(&Paging{logger, page, selector}), nil
 }
 
 type (

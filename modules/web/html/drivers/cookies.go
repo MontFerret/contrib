@@ -52,7 +52,7 @@ func (c *HTTPCookies) Get(_ context.Context, key runtime.Value) (runtime.Value, 
 		return runtime.None, nil
 	}
 
-	return sdk.NewProxy(cookie), nil
+	return cookie, nil
 }
 
 func (c *HTTPCookies) Set(_ context.Context, key, value runtime.Value) error {

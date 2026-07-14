@@ -14,7 +14,7 @@ func Stream(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return nil, err
 	}
 
-	target, err := runtime.CastArgAt[runtime.String](args, 0)
+	target, err := sdk.DecodeArg[runtime.String](ctx, args, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -24,5 +24,5 @@ func Stream(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return nil, err
 	}
 
-	return sdk.NewProxy(core.NewURLIterator(target.String(), opts)), nil
+	return sdk.NewIteratorValue(core.NewURLIterator(target.String(), opts)), nil
 }

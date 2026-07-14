@@ -55,7 +55,7 @@ func Screenshot(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 			return runtime.None, err
 		}
 
-		parsed, err := parseScreenshotParams(values)
+		parsed, err := parseScreenshotParams(ctx, values)
 
 		if err != nil {
 			return runtime.None, err
@@ -91,10 +91,10 @@ func defaultScreenshotParams() drivers.ScreenshotParams {
 	}
 }
 
-func parseScreenshotParams(values runtime.Map) (drivers.ScreenshotParams, error) {
+func parseScreenshotParams(ctx context.Context, values runtime.Map) (drivers.ScreenshotParams, error) {
 	res := defaultScreenshotParams()
 
-	if err := sdk.Decode(values, &res); err != nil {
+	if err := sdk.Decode(ctx, values, &res, sdk.DisallowUnknownFields()); err != nil {
 		return drivers.ScreenshotParams{}, err
 	}
 

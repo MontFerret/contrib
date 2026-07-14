@@ -9,93 +9,92 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-func RegisterLib(ns runtime.Namespace) {
-	registerLibCore(ns)
+func RegisterLib(ns runtime.Namespace) error {
+	definitions := append(
+		coreFunctionDefinitions(),
+		sdk.Func("OPEN", Open),
+		sdk.Func("CAN_OPEN", PageExists),
+	)
 
-	ns.Function().Var().
-		Add("OPEN", Open).
-		Add("CAN_OPEN", PageExists)
+	return sdk.RegisterFunctions(ns, definitions...)
 }
 
-func RegisterLibLegacy(ns runtime.Namespace) {
-	registerLibCore(ns)
+func RegisterLibLegacy(ns runtime.Namespace) error {
+	definitions := append(
+		coreFunctionDefinitions(),
+		sdk.Func("DOCUMENT", Open),
+		sdk.Func("DOCUMENT_EXISTS", PageExists),
+	)
 
-	ns.Function().Var().
-		Add("DOCUMENT", Open).
-		Add("DOCUMENT_EXISTS", PageExists)
+	return sdk.RegisterFunctions(ns, definitions...)
 }
 
-func registerLibCore(ns runtime.Namespace) {
-	ns.Function().A1().
-		Add("IS_HTML_ELEMENT", IsHTMLElement).
-		Add("IS_HTML_DOCUMENT", IsHTMLDocument).
-		Add("X", XPathSelector)
-
-	ns.Function().A2().
-		Add("XPATH", XPath)
-
-	ns.Function().A3().
-		Add("FRAMES", Frames)
-
-	ns.Function().Var().
-		Add("ATTR_GET", AttributeGet).
-		Add("ATTR_QUERY", AttributeQuery).
-		Add("ATTR_REMOVE", AttributeRemove).
-		Add("ATTR_SET", AttributeSet).
-		Add("BLUR", Blur).
-		Add("COOKIE_DEL", CookieDel).
-		Add("COOKIE_GET", CookieGet).
-		Add("COOKIE_SET", CookieSet).
-		Add("CLICK", Click).
-		Add("CLICK_ALL", ClickAll).
-		Add("DOWNLOAD", Download).
-		Add("ELEMENT", Element).
-		Add("ELEMENT_EXISTS", ElementExists).
-		Add("ELEMENTS", Elements).
-		Add("ELEMENTS_COUNT", ElementsCount).
-		Add("FOCUS", Focus).
-		Add("HOVER", Hover).
-		Add("INNER_HTML", GetInnerHTML).
-		Add("INNER_HTML_SET", SetInnerHTML).
-		Add("INNER_HTML_ALL", GetInnerHTMLAll).
-		Add("INNER_TEXT", GetInnerText).
-		Add("INNER_TEXT_SET", SetInnerText).
-		Add("INNER_TEXT_ALL", GetInnerTextAll).
-		Add("INPUT", Input).
-		Add("INPUT_CLEAR", InputClear).
-		Add("MOUSE", MouseMoveXY).
-		Add("NAVIGATE", Navigate).
-		Add("NAVIGATE_BACK", NavigateBack).
-		Add("NAVIGATE_FORWARD", NavigateForward).
-		Add("PAGINATION", Pagination).
-		Add("PARSE", Parse).
-		Add("PDF", PDF).
-		Add("PRESS", Press).
-		Add("PRESS_SELECTOR", PressSelector).
-		Add("SCREENSHOT", Screenshot).
-		Add("SCROLL", ScrollXY).
-		Add("SCROLL_BOTTOM", ScrollBottom).
-		Add("SCROLL_ELEMENT", ScrollInto).
-		Add("SCROLL_TOP", ScrollTop).
-		Add("SELECT", Select).
-		Add("STYLE_GET", StyleGet).
-		Add("STYLE_REMOVE", StyleRemove).
-		Add("STYLE_SET", StyleSet).
-		Add("WAIT_ATTR", WaitAttribute).
-		Add("WAIT_NO_ATTR", WaitNoAttribute).
-		Add("WAIT_ATTR_ALL", WaitAttributeAll).
-		Add("WAIT_NO_ATTR_ALL", WaitNoAttributeAll).
-		Add("WAIT_ELEMENT", WaitElement).
-		Add("WAIT_NO_ELEMENT", WaitNoElement).
-		Add("WAIT_CLASS", WaitClass).
-		Add("WAIT_NO_CLASS", WaitNoClass).
-		Add("WAIT_CLASS_ALL", WaitClassAll).
-		Add("WAIT_NO_CLASS_ALL", WaitNoClassAll).
-		Add("WAIT_STYLE", WaitStyle).
-		Add("WAIT_NO_STYLE", WaitNoStyle).
-		Add("WAIT_STYLE_ALL", WaitStyleAll).
-		Add("WAIT_NO_STYLE_ALL", WaitNoStyleAll).
-		Add("WAIT_NAVIGATION", WaitNavigation)
+func coreFunctionDefinitions() []sdk.FunctionDef {
+	return []sdk.FunctionDef{
+		sdk.Func("IS_HTML_ELEMENT", IsHTMLElement),
+		sdk.Func("IS_HTML_DOCUMENT", IsHTMLDocument),
+		sdk.Func("X", XPathSelector),
+		sdk.Func("XPATH", XPath),
+		sdk.Func("FRAMES", Frames),
+		sdk.Func("ATTR_GET", AttributeGet),
+		sdk.Func("ATTR_QUERY", AttributeQuery),
+		sdk.Func("ATTR_REMOVE", AttributeRemove),
+		sdk.Func("ATTR_SET", AttributeSet),
+		sdk.Func("BLUR", Blur),
+		sdk.Func("COOKIE_DEL", CookieDel),
+		sdk.Func("COOKIE_GET", CookieGet),
+		sdk.Func("COOKIE_SET", CookieSet),
+		sdk.Func("CLICK", Click),
+		sdk.Func("CLICK_ALL", ClickAll),
+		sdk.Func("DOWNLOAD", Download),
+		sdk.Func("ELEMENT", Element),
+		sdk.Func("ELEMENT_EXISTS", ElementExists),
+		sdk.Func("ELEMENTS", Elements),
+		sdk.Func("ELEMENTS_COUNT", ElementsCount),
+		sdk.Func("FOCUS", Focus),
+		sdk.Func("HOVER", Hover),
+		sdk.Func("INNER_HTML", GetInnerHTML),
+		sdk.Func("INNER_HTML_SET", SetInnerHTML),
+		sdk.Func("INNER_HTML_ALL", GetInnerHTMLAll),
+		sdk.Func("INNER_TEXT", GetInnerText),
+		sdk.Func("INNER_TEXT_SET", SetInnerText),
+		sdk.Func("INNER_TEXT_ALL", GetInnerTextAll),
+		sdk.Func("INPUT", Input),
+		sdk.Func("INPUT_CLEAR", InputClear),
+		sdk.Func("MOUSE", MouseMoveXY),
+		sdk.Func("NAVIGATE", Navigate),
+		sdk.Func("NAVIGATE_BACK", NavigateBack),
+		sdk.Func("NAVIGATE_FORWARD", NavigateForward),
+		sdk.Func("PAGINATION", Pagination),
+		sdk.Func("PARSE", Parse),
+		sdk.Func("PDF", PDF),
+		sdk.Func("PRESS", Press),
+		sdk.Func("PRESS_SELECTOR", PressSelector),
+		sdk.Func("SCREENSHOT", Screenshot),
+		sdk.Func("SCROLL", ScrollXY),
+		sdk.Func("SCROLL_BOTTOM", ScrollBottom),
+		sdk.Func("SCROLL_ELEMENT", ScrollInto),
+		sdk.Func("SCROLL_TOP", ScrollTop),
+		sdk.Func("SELECT", Select),
+		sdk.Func("STYLE_GET", StyleGet),
+		sdk.Func("STYLE_REMOVE", StyleRemove),
+		sdk.Func("STYLE_SET", StyleSet),
+		sdk.Func("WAIT_ATTR", WaitAttribute),
+		sdk.Func("WAIT_NO_ATTR", WaitNoAttribute),
+		sdk.Func("WAIT_ATTR_ALL", WaitAttributeAll),
+		sdk.Func("WAIT_NO_ATTR_ALL", WaitNoAttributeAll),
+		sdk.Func("WAIT_ELEMENT", WaitElement),
+		sdk.Func("WAIT_NO_ELEMENT", WaitNoElement),
+		sdk.Func("WAIT_CLASS", WaitClass),
+		sdk.Func("WAIT_NO_CLASS", WaitNoClass),
+		sdk.Func("WAIT_CLASS_ALL", WaitClassAll),
+		sdk.Func("WAIT_NO_CLASS_ALL", WaitNoClassAll),
+		sdk.Func("WAIT_STYLE", WaitStyle),
+		sdk.Func("WAIT_NO_STYLE", WaitNoStyle),
+		sdk.Func("WAIT_STYLE_ALL", WaitStyleAll),
+		sdk.Func("WAIT_NO_STYLE_ALL", WaitNoStyleAll),
+		sdk.Func("WAIT_NAVIGATION", WaitNavigation),
+	}
 }
 
 func OpenOrCastPage(ctx context.Context, value runtime.Value) (drivers.HTMLPage, bool, error) {
@@ -128,10 +127,10 @@ func waitTimeout(ctx context.Context, value runtime.Int) (context.Context, conte
 	)
 }
 
-func toScrollOptions(value runtime.Value) (drivers.ScrollOptions, error) {
+func toScrollOptions(ctx context.Context, value runtime.Value) (drivers.ScrollOptions, error) {
 	result := drivers.ScrollOptions{}
 
-	if err := sdk.Decode(value, &result); err != nil {
+	if err := sdk.Decode(ctx, value, &result, sdk.DisallowUnknownFields()); err != nil {
 		return result, err
 	}
 

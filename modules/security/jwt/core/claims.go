@@ -18,7 +18,7 @@ func runtimeMapToClaims(ctx context.Context, value runtime.Map) (map[string]any,
 
 		var converted any
 
-		if err := sdk.Decode(item, &converted); err != nil {
+		if err := sdk.Decode(ctx, item, &converted); err != nil {
 			return false, err
 		}
 

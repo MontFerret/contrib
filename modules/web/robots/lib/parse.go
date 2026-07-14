@@ -9,12 +9,12 @@ import (
 )
 
 // Parse parses raw robots.txt content into a plain object.
-func Parse(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
+func Parse(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err
 	}
 
-	text, err := runtime.CastArgAt[runtime.String](args, 0)
+	text, err := sdk.DecodeArg[runtime.String](ctx, args, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -24,5 +24,5 @@ func Parse(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return nil, err
 	}
 
-	return sdk.Encode(doc), nil
+	return sdk.Encode(ctx, doc)
 }

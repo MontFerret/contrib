@@ -84,7 +84,7 @@ func (req *HTTPRequest) Get(_ context.Context, key runtime.Value) (runtime.Value
 	case "method":
 		return runtime.NewString(req.Method), nil
 	case "headers":
-		return NewHTTPHeadersProxy(req.Headers), nil
+		return req.Headers, nil
 	case "body":
 		return runtime.NewBinary(req.Body), nil
 	}
