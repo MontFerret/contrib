@@ -4,7 +4,7 @@ go 1.25.6
 
 require (
 	github.com/MontFerret/cssx v0.2.0
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.31
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.32
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/andybalholm/cascadia v1.3.4
 	github.com/antchfx/htmlquery v1.3.6
