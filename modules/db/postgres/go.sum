@@ -2,8 +2,8 @@ github.com/DATA-DOG/go-sqlmock v1.5.2 h1:OcvFkGmslmlZibjAjaHm3L//6LiuBgolP7Oputl
 github.com/DATA-DOG/go-sqlmock v1.5.2/go.mod h1:88MAG/4G7SMwSE3CeA0ZKzrT5CiOU3OJ+JlNzwDqpNU=
 github.com/MontFerret/contrib/pkg/common v0.1.1 h1:qA2URATIO+EVLH3BNFKYupLx97ftotyGWnKtJJhtR0Y=
 github.com/MontFerret/contrib/pkg/common v0.1.1/go.mod h1:wiMLQnE46YGci3qMzA3ExArKomQDXR5DvNSE7HnP0ik=
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.30 h1:zMTPJoEbv1H91Fe7g+pmU0chiKhMKnVcxJSCF3mk5xs=
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.30/go.mod h1:jkZZNJrQKhQ8K9v3lzkMKR5NnCyOUKRRKCTAwCOBq8A=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.31 h1:+AxBKQup/KjwvY2uPMQOLXZmlNDFSHReAziD5Sz3DU4=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.31/go.mod h1:jkZZNJrQKhQ8K9v3lzkMKR5NnCyOUKRRKCTAwCOBq8A=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

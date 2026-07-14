@@ -1,7 +1,7 @@
 github.com/MontFerret/contrib/pkg/common v0.1.1 h1:qA2URATIO+EVLH3BNFKYupLx97ftotyGWnKtJJhtR0Y=
 github.com/MontFerret/contrib/pkg/common v0.1.1/go.mod h1:wiMLQnE46YGci3qMzA3ExArKomQDXR5DvNSE7HnP0ik=
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.30 h1:zMTPJoEbv1H91Fe7g+pmU0chiKhMKnVcxJSCF3mk5xs=
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.30/go.mod h1:jkZZNJrQKhQ8K9v3lzkMKR5NnCyOUKRRKCTAwCOBq8A=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.31 h1:+AxBKQup/KjwvY2uPMQOLXZmlNDFSHReAziD5Sz3DU4=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.31/go.mod h1:jkZZNJrQKhQ8K9v3lzkMKR5NnCyOUKRRKCTAwCOBq8A=
 github.com/goccy/go-json v0.10.6 h1:p8HrPJzOakx/mn/bQtjgNjdTcN+/S6FcG2CTtQOrHVU=
 github.com/goccy/go-json v0.10.6/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
 github.com/golang-jwt/jwt/v5 v5.2.2 h1:Rl4B7itRWVtYIHFrSNd7vhTiz9UpLdi6gZhZ3wEeDy8=
