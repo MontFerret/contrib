@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/MontFerret/contrib/pkg/common v0.1.1
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.32
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.33
 	github.com/xuri/excelize/v2 v2.11.0
 )
 
