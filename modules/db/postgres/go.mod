@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/MontFerret/contrib/pkg/common v0.1.1
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.33
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.34
 	github.com/jackc/pgx/v5 v5.10.0
 )
 
