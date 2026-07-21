@@ -5,6 +5,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/security/jwt/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 func verifyWithConfig(cfg core.Config) func(context.Context, ...runtime.Value) (runtime.Value, error) {
@@ -18,12 +19,12 @@ func verifyWithConfig(cfg core.Config) func(context.Context, ...runtime.Value) (
 			return nil, core.OperationError("VERIFY", err)
 		}
 
-		optsMap, err := runtime.CastArgAt[runtime.Map](args, 2)
+		optsMap, err := sdk.DecodeArg[runtime.Map](ctx, args, 2)
 		if err != nil {
 			return nil, core.OperationError("VERIFY", err)
 		}
 
-		opts, err := core.DecodeVerifyOptions(optsMap)
+		opts, err := core.DecodeVerifyOptions(ctx, optsMap)
 		if err != nil {
 			return nil, core.OperationError("VERIFY", err)
 		}

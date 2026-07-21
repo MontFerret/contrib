@@ -40,7 +40,7 @@ func waitAttributeAllWhen(ctx context.Context, args []runtime.Value, when driver
 		return runtime.None, err
 	}
 
-	selector, err := drivers.ToQuerySelector(args[1])
+	selector, err := drivers.ToQuerySelector(ctx, args[1])
 
 	if err != nil {
 		return runtime.None, err

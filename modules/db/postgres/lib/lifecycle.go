@@ -10,7 +10,7 @@ import (
 
 // Open creates a Postgres database handle from an options object.
 func Open(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
-	options, err := core.DecodeOpenOptions(arg)
+	options, err := core.DecodeOpenOptions(ctx, arg)
 	if err != nil {
 		return runtime.None, err
 	}

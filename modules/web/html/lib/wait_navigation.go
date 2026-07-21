@@ -38,7 +38,7 @@ func WaitNavigation(ctx context.Context, args ...runtime.Value) (runtime.Value, 
 	var params WaitNavigationParams
 
 	if len(args) > 1 {
-		p, err := parseWaitNavigationParams(args[1])
+		p, err := parseWaitNavigationParams(ctx, args[1])
 
 		if err != nil {
 			return runtime.None, err
@@ -59,7 +59,7 @@ func WaitNavigation(ctx context.Context, args ...runtime.Value) (runtime.Value, 
 	return runtime.True, target.WaitForFrameNavigation(ctx, params.Frame, params.TargetURL)
 }
 
-func parseWaitNavigationParams(arg runtime.Value) (WaitNavigationParams, error) {
+func parseWaitNavigationParams(ctx context.Context, arg runtime.Value) (WaitNavigationParams, error) {
 	params := defaultWaitNavigationParams()
 
 	if err := runtime.ValidateType(arg, runtime.TypeInt, runtime.TypeObject); err != nil {
@@ -70,7 +70,7 @@ func parseWaitNavigationParams(arg runtime.Value) (WaitNavigationParams, error) 
 	case runtime.Int:
 		params.Timeout = argv
 	case runtime.Map:
-		if err := sdk.Decode(argv, &params); err != nil {
+		if err := sdk.Decode(ctx, argv, &params, sdk.DisallowUnknownFields()); err != nil {
 			return params, err
 		}
 	}

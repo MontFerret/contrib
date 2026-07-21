@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,7 +11,7 @@ import (
 )
 
 func TestStream(t *testing.T) {
-	t.Run("returns proxied iterator with sequential keys", func(t *testing.T) {
+	t.Run("returns iterator value with sequential keys and closure", func(t *testing.T) {
 		var server *httptest.Server
 		server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
@@ -28,6 +29,11 @@ func TestStream(t *testing.T) {
 		}
 
 		iter := mustIterate(t, t.Context(), value)
+		closer, ok := iter.(io.Closer)
+		if !ok {
+			t.Fatalf("expected iterator to be closable, got %T", iter)
+		}
+
 		entry, key, err := iter.Next(t.Context())
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -40,6 +46,13 @@ func TestStream(t *testing.T) {
 		obj := mustRuntimeObject(t, entry)
 		if got := mustObjectField(t, t.Context(), obj, "loc").String(); got != server.URL+"/one" {
 			t.Fatalf("unexpected loc %q", got)
+		}
+
+		if err := closer.Close(); err != nil {
+			t.Fatalf("unexpected close error: %v", err)
+		}
+		if _, _, err := iter.Next(t.Context()); err != io.EOF {
+			t.Fatalf("expected EOF after close, got %v", err)
 		}
 	})
 

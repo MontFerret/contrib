@@ -28,6 +28,28 @@ func TestGetInnerTextUsesContentCapabilityFromPage(t *testing.T) {
 	}
 }
 
+func TestPaginationExposesOnlyIterableCapability(t *testing.T) {
+	t.Parallel()
+
+	value, err := Pagination(context.Background(), newTestPage(t, `<html><body></body></html>`), runtime.NewString(".next"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, ok := value.(runtime.Iterable); !ok {
+		t.Fatalf("expected pagination to be iterable, got %T", value)
+	}
+	if _, ok := value.(runtime.Iterator); ok {
+		t.Fatalf("pagination must not expose iterator capability directly: %T", value)
+	}
+	if _, ok := value.(runtime.KeyReadable); ok {
+		t.Fatalf("pagination must not expose keyed reads: %T", value)
+	}
+	if _, ok := value.(runtime.Queryable); ok {
+		t.Fatalf("pagination must not expose query capability: %T", value)
+	}
+}
+
 func TestClickUsesInteractionCapabilityFromPage(t *testing.T) {
 	t.Parallel()
 
@@ -177,7 +199,7 @@ func TestCookieGetUsesPageCookieCapability(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cookie, ok := runtime.UnwrapAs[drivers.HTTPCookie](value)
+	cookie, ok := value.(drivers.HTTPCookie)
 	if !ok {
 		t.Fatalf("expected cookie value, got %T", value)
 	}

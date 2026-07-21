@@ -44,13 +44,13 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 			return runtime.None, errors.Wrap(err, "document")
 		}
 
-		selector, err = drivers.ToQuerySelector(args[1])
+		selector, err = drivers.ToQuerySelector(ctx, args[1])
 
 		if err != nil {
 			return runtime.None, err
 		}
 
-		o, err := toScrollOptions(args[2])
+		o, err := toScrollOptions(ctx, args[2])
 
 		if err != nil {
 			return runtime.None, errors.Wrap(err, "options")
@@ -70,7 +70,7 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 				return runtime.None, errors.Wrap(err, "document")
 			}
 
-			selector, err = drivers.ToQuerySelector(argv)
+			selector, err = drivers.ToQuerySelector(ctx, argv)
 
 			if err != nil {
 				return runtime.None, err
@@ -81,7 +81,7 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 				return runtime.None, errors.Wrap(err, "element")
 			}
 
-			o, err := toScrollOptions(args[1])
+			o, err := toScrollOptions(ctx, args[1])
 
 			if err != nil {
 				return runtime.None, errors.Wrap(err, "options")

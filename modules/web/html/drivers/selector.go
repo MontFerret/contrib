@@ -22,7 +22,7 @@ type (
 var (
 	TypeQuerySelector = runtime.NewType(reflect.TypeOf(QuerySelector{}).PkgPath(), reflect.TypeOf(QuerySelector{}).Name(), func(value runtime.Value) bool {
 		switch value.(type) {
-		case *runtime.Box[QuerySelector], *sdk.Proxy[QuerySelector]:
+		case *runtime.Box[QuerySelector], *sdk.HostValue[QuerySelector]:
 			return true
 		default:
 			return false

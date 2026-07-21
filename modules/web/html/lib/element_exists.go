@@ -11,7 +11,7 @@ import (
 // @param {String} selector - CSS selector.
 // @return {Boolean} - A boolean value indicating whether there is an element matched by selector.
 func ElementExists(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	el, selector, err := queryArgs(args)
+	el, selector, err := queryArgs(ctx, args)
 
 	if err != nil {
 		return runtime.None, err

@@ -9,7 +9,12 @@ import (
 
 func TestRegisterLib(t *testing.T) {
 	lib := runtime.NewLibrary()
-	RegisterLib(lib.Namespace("CSV"))
+	if err := RegisterLib(lib.Namespace("CSV")); err != nil {
+		t.Fatalf("unexpected registration error: %v", err)
+	}
+	if err := RegisterLib(lib.Namespace("CSV")); err == nil {
+		t.Fatal("expected duplicate registration error")
+	}
 
 	funcs, err := lib.Build()
 	if err != nil {

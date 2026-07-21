@@ -8,7 +8,7 @@ import (
 
 	"github.com/MontFerret/ferret/v2"
 	"github.com/MontFerret/ferret/v2/pkg/module"
-	"github.com/MontFerret/ferret/v2/pkg/source"
+	"github.com/MontFerret/ferret/v2/pkg/sdk/sdktest"
 )
 
 func TestNewSmoke(t *testing.T) {
@@ -67,15 +67,7 @@ func TestMemoryOnlyModuleAllowsMemoryDB(t *testing.T) {
 func runFQL(t *testing.T, mod module.Module, query string) (*ferret.Output, error) {
 	t.Helper()
 
-	engine, err := ferret.New(ferret.WithModules(mod))
-	if err != nil {
-		t.Fatalf("unexpected engine error: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := engine.Close(); err != nil {
-			t.Fatalf("unexpected engine close error: %v", err)
-		}
-	})
+	harness := sdktest.New(t, ferret.WithModules(mod))
 
-	return engine.Run(context.Background(), source.NewAnonymous(query))
+	return harness.Run(context.Background(), query)
 }

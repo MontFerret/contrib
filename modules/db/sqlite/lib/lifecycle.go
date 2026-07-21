@@ -20,7 +20,7 @@ func openWithPolicy(policy core.OpenPolicy) runtime.Function1 {
 }
 
 func open(ctx context.Context, policy core.OpenPolicy, arg runtime.Value) (runtime.Value, error) {
-	options, err := core.DecodeOpenOptions(arg)
+	options, err := core.DecodeOpenOptions(ctx, arg)
 	if err != nil {
 		return runtime.None, err
 	}

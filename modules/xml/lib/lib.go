@@ -1,19 +1,20 @@
 package lib
 
-import "github.com/MontFerret/ferret/v2/pkg/runtime"
+import (
+	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
+)
 
 // RegisterLib registers the XML namespace functions in the provided namespace.
-func RegisterLib(ns runtime.Namespace) {
-	ns.Function().A1().
-		Add("ROOT", Root).
-		Add("TEXT", Text).
-		Add("CHILDREN", Children)
-
-	ns.Function().A2().
-		Add("ATTR", Attr)
-
-	ns.Function().Var().
-		Add("DECODE", Decode).
-		Add("DECODE_STREAM", DecodeStream).
-		Add("ENCODE", Encode)
+func RegisterLib(ns runtime.Namespace) error {
+	return sdk.RegisterFunctions(
+		ns,
+		sdk.Func("ROOT", Root),
+		sdk.Func("TEXT", Text),
+		sdk.Func("CHILDREN", Children),
+		sdk.Func("ATTR", Attr),
+		sdk.Func("DECODE", Decode),
+		sdk.Func("DECODE_STREAM", DecodeStream),
+		sdk.Func("ENCODE", Encode),
+	)
 }

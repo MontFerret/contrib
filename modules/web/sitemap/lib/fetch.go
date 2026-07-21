@@ -5,6 +5,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/sitemap/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // Fetch fetches and parses a single sitemap document.
@@ -13,7 +14,7 @@ func Fetch(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		return nil, err
 	}
 
-	target, err := runtime.CastArgAt[runtime.String](args, 0)
+	target, err := sdk.DecodeArg[runtime.String](ctx, args, 0)
 	if err != nil {
 		return nil, err
 	}

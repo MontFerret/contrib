@@ -38,7 +38,7 @@ func waitElementWhen(ctx context.Context, args []runtime.Value, when drivers.Wai
 		return runtime.None, err
 	}
 
-	selector, err := drivers.ToQuerySelector(args[1])
+	selector, err := drivers.ToQuerySelector(ctx, args[1])
 
 	if err != nil {
 		return runtime.None, err

@@ -10,7 +10,7 @@ import (
 
 // DecodeStream decodes XML content lazily into normalized XML events.
 // @param {String|Binary} data - XML content.
-// @return {Iterator<Object>} - Proxy exposing an iterator over XML events.
+// @return {Iterator<Object>} - Iterator over XML events.
 func DecodeStream(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err
@@ -26,5 +26,5 @@ func DecodeStream(_ context.Context, args ...runtime.Value) (runtime.Value, erro
 		return nil, err
 	}
 
-	return sdk.NewProxy(iter), nil
+	return sdk.NewIteratorValue(iter), nil
 }

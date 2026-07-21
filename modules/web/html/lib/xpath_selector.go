@@ -12,5 +12,7 @@ import (
 // @param {String} expression - XPath expression.
 // @return {Any} - Returns QuerySelector of XPath kind.
 func XPathSelector(_ context.Context, expression runtime.Value) (runtime.Value, error) {
-	return sdk.NewProxy(drivers.NewXPathSelector(runtime.ToString(expression))), nil
+	selector := drivers.NewXPathSelector(runtime.ToString(expression))
+
+	return sdk.NewHostValueWithType(drivers.TypeQuerySelector, selector), nil
 }

@@ -9,7 +9,9 @@ import (
 
 func TestRegisterLib(t *testing.T) {
 	library := runtime.NewLibrary()
-	RegisterLib(library.Namespace("NET").Namespace("REST"))
+	if err := RegisterLib(library.Namespace("NET").Namespace("REST")); err != nil {
+		t.Fatalf("unexpected registration error: %v", err)
+	}
 
 	funcs, err := library.Build()
 	if err != nil {

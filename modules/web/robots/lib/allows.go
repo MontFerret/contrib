@@ -9,24 +9,24 @@ import (
 )
 
 // Allows returns whether the path is allowed for the given user-agent.
-func Allows(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
+func Allows(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 2, 3); err != nil {
 		return nil, err
 	}
 
-	var doc core.Document
-	if err := sdk.Decode(args[0], &doc); err != nil {
+	doc, err := sdk.DecodeArg[core.Document](ctx, args, 0)
+	if err != nil {
 		return nil, err
 	}
 
-	path, err := runtime.CastArgAt[runtime.String](args, 1)
+	path, err := sdk.DecodeArg[runtime.String](ctx, args, 1)
 	if err != nil {
 		return nil, err
 	}
 
 	userAgent := "*"
 	if len(args) > 2 {
-		raw, err := runtime.CastArgAt[runtime.String](args, 2)
+		raw, err := sdk.DecodeArg[runtime.String](ctx, args, 2)
 		if err != nil {
 			return nil, err
 		}

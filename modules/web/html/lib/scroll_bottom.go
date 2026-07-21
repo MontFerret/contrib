@@ -31,7 +31,7 @@ func ScrollBottom(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 	var opts drivers.ScrollOptions
 
 	if len(args) > 1 {
-		opts, err = toScrollOptions(args[1])
+		opts, err = toScrollOptions(ctx, args[1])
 
 		if err != nil {
 			return runtime.None, err

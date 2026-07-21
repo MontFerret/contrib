@@ -1,12 +1,14 @@
 package bind
 
 import (
+	"context"
+
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // DecodeMapArgOrDefault decodes an optional map argument into a copy of defaults.
-func DecodeMapArgOrDefault[T any](args []runtime.Value, index int, defaults T) (T, error) {
+func DecodeMapArgOrDefault[T any](ctx context.Context, args []runtime.Value, index int, defaults T) (T, error) {
 	if index >= len(args) {
 		return defaults, nil
 	}
@@ -17,7 +19,7 @@ func DecodeMapArgOrDefault[T any](args []runtime.Value, index int, defaults T) (
 	}
 
 	out := defaults
-	if err := sdk.Decode(arg, &out); err != nil {
+	if err := sdk.Decode(ctx, arg, &out); err != nil {
 		return defaults, err
 	}
 

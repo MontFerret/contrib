@@ -8,7 +8,7 @@ import (
 
 	"github.com/MontFerret/ferret/v2"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
-	"github.com/MontFerret/ferret/v2/pkg/source"
+	"github.com/MontFerret/ferret/v2/pkg/sdk/sdktest"
 )
 
 func TestNewSmoke(t *testing.T) {
@@ -25,17 +25,9 @@ func TestNewSmoke(t *testing.T) {
 func TestModuleRunsWorkbookWorkflowFromFQL(t *testing.T) {
 	t.Parallel()
 
-	engine, err := ferret.New(ferret.WithModules(New()))
-	if err != nil {
-		t.Fatalf("unexpected engine error: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := engine.Close(); err != nil {
-			t.Fatalf("unexpected engine close error: %v", err)
-		}
-	})
+	harness := sdktest.New(t, ferret.WithModules(New()))
 
-	output, err := engine.Run(context.Background(), source.NewAnonymous(`
+	output, err := harness.Run(context.Background(), `
 		LET workbook = DOCUMENT::XLSX::CREATE()
 		LET source = DOCUMENT::XLSX::SHEET(workbook, "Sheet1")
 
@@ -62,7 +54,7 @@ func TestModuleRunsWorkbookWorkflowFromFQL(t *testing.T) {
 			AND count == 2
 			AND exists
 			AND DOCUMENT::XLSX::CLOSE(workbook)
-	`))
+	`)
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
@@ -81,21 +73,12 @@ func TestModuleSavesAndReopensWorkbookFromFQL(t *testing.T) {
 
 	root := t.TempDir()
 	path := "report.xlsx"
-	engine, err := ferret.New(
+	harness := sdktest.New(t,
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 		ferret.WithRuntimeParam("path", runtime.NewString(path)),
 	)
-	if err != nil {
-		t.Fatalf("unexpected engine error: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := engine.Close(); err != nil {
-			t.Fatalf("unexpected engine close error: %v", err)
-		}
-	})
-
-	output, err := engine.Run(context.Background(), source.NewAnonymous(`
+	output, err := harness.Run(context.Background(), `
 		LET workbook = DOCUMENT::XLSX::CREATE()
 		LET sheet = DOCUMENT::XLSX::SHEET(workbook, "Sheet1")
 		DOCUMENT::XLSX::SET(sheet, "A1", "Saved")
@@ -110,7 +93,7 @@ func TestModuleSavesAndReopensWorkbookFromFQL(t *testing.T) {
 			AND DOCUMENT::XLSX::GET(reopenedSheet, "A2") == "Again"
 		DOCUMENT::XLSX::CLOSE(reopened)
 		RETURN ok
-	`))
+	`)
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
@@ -127,25 +110,17 @@ func TestModuleSavesAndReopensWorkbookFromFQL(t *testing.T) {
 func TestModuleSaveAsHonorsReadOnlyFSFromFQL(t *testing.T) {
 	t.Parallel()
 
-	engine, err := ferret.New(
+	harness := sdktest.New(t,
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(t.TempDir()),
 		ferret.WithFSReadOnly(),
 	)
-	if err != nil {
-		t.Fatalf("unexpected engine error: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := engine.Close(); err != nil {
-			t.Fatalf("unexpected engine close error: %v", err)
-		}
-	})
 
-	_, err = engine.Run(context.Background(), source.NewAnonymous(`
+	_, err := harness.Run(context.Background(), `
 		LET workbook = DOCUMENT::XLSX::CREATE()
 		DOCUMENT::XLSX::SAVE_AS(workbook, "blocked.xlsx")
 		RETURN true
-	`))
+	`)
 	if err == nil || !strings.Contains(err.Error(), "read-only") {
 		t.Fatalf("expected read-only filesystem error, got %v", err)
 	}
