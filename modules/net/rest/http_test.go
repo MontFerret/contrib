@@ -47,6 +47,7 @@ func TestModuleRunsHTTPClientFromFQL(t *testing.T) {
 	harness := sdktest.New(t,
 		ferret.WithModules(New()),
 		ferret.WithRuntimeParam("baseUrl", runtime.NewString(server.URL)),
+		ferret.WithNetwork(newTestNetwork(t, ferrethttp.WithAllowLocalhost(true))),
 	)
 
 	output, err := harness.Run(context.Background(), `
@@ -89,6 +90,7 @@ func TestModuleRunsQueryModifiersFromFQL(t *testing.T) {
 	harness := sdktest.New(t,
 		ferret.WithModules(New()),
 		ferret.WithRuntimeParam("baseUrl", runtime.NewString(server.URL)),
+		ferret.WithNetwork(newTestNetwork(t, ferrethttp.WithAllowLocalhost(true))),
 	)
 
 	output, err := harness.Run(context.Background(), `
@@ -122,15 +124,18 @@ func TestModuleHonorsFerretHTTPPolicy(t *testing.T) {
 	}))
 	defer server.Close()
 
+	fnet, err := ferretnet.New(ferretnet.WithHTTPTransport(server.Client().Transport, ferrethttp.WithAllowedHosts("allowed.example")))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
 	harness := sdktest.New(t,
 		ferret.WithModules(New()),
 		ferret.WithRuntimeParam("baseUrl", runtime.NewString(server.URL)),
-		ferret.WithNetwork(ferretnet.New(ferretnet.WithHTTPClient(ferrethttp.New(
-			ferrethttp.WithAllowedHosts("allowed.example"),
-		)))),
+		ferret.WithNetwork(fnet),
 	)
 
-	_, err := harness.Run(context.Background(), `
+	_, err = harness.Run(context.Background(), `
 		LET api = NET::REST::CLIENT({
 			baseUrl: @baseUrl,
 			encoding: "json"
@@ -158,4 +163,15 @@ func assertOutputBool(t *testing.T, data []byte, expected bool) {
 	if actual != expected {
 		t.Fatalf("expected output %v, got %v", expected, actual)
 	}
+}
+
+func newTestNetwork(t testing.TB, policies ...ferrethttp.PolicyOption) ferretnet.Network {
+	t.Helper()
+
+	network, err := ferretnet.New(ferretnet.WithHTTPPolicies(policies...))
+	if err != nil {
+		t.Fatalf("failed to create test network: %v", err)
+	}
+
+	return network
 }
