@@ -33,6 +33,8 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/compiler"
 	"github.com/MontFerret/ferret/v2/pkg/diagnostics"
 	"github.com/MontFerret/ferret/v2/pkg/logging"
+	ferretnet "github.com/MontFerret/ferret/v2/pkg/net"
+	ferrethttp "github.com/MontFerret/ferret/v2/pkg/net/http"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/source"
 
@@ -184,9 +186,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	network, err := ferretnet.New(
+		ferretnet.WithHTTPPolicies(ferrethttp.WithAllowLocalhost(true)),
+	)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	engine, e := ferret.New(
 		ferret.WithLog(console),
 		ferret.WithLogLevel(ferret.MustParseLogLevel(*logLevel)),
+		ferret.WithNetwork(network),
 		ferret.WithModules(
 			csv.New(),
 			dbpostgres.New(),

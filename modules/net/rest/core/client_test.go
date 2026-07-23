@@ -45,7 +45,7 @@ func TestClientQueryJSONList(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ctx := networkContext()
+	ctx := networkContext(t)
 	cfg := DefaultConfig()
 	cfg.BaseURL = server.URL
 	cfg.Headers.Set("Authorization", "Bearer token")
@@ -109,7 +109,7 @@ func TestClientInfersPostAndReturnsFullResponse(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ctx := networkContext()
+	ctx := networkContext(t)
 	cfg := DefaultConfig()
 	cfg.BaseURL = server.URL
 	client := NewClient(cfg)
@@ -154,7 +154,7 @@ func TestClientErrorModes(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ctx := networkContext()
+	ctx := networkContext(t)
 	cfg := DefaultConfig()
 	cfg.BaseURL = server.URL
 
@@ -197,7 +197,7 @@ func TestClientResponseEncodings(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ctx := networkContext()
+	ctx := networkContext(t)
 	cfg := DefaultConfig()
 	cfg.BaseURL = server.URL
 	cfg.ResponseEncoding = EncodingText
@@ -255,7 +255,7 @@ func TestClientFormRequestEncoding(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ctx := networkContext()
+	ctx := networkContext(t)
 	cfg := DefaultConfig()
 	cfg.BaseURL = server.URL
 	client := NewClient(cfg)
@@ -299,7 +299,7 @@ func TestClientAcceptsHTTPDialect(t *testing.T) {
 	cfg.BaseURL = server.URL
 	client := NewClient(cfg)
 
-	ctx := networkContext()
+	ctx := networkContext(t)
 	out, err := client.Query(ctx, runtime.Query{
 		Kind:       runtime.NewString("http"),
 		Expression: runtime.NewString("/users"),
@@ -335,7 +335,7 @@ func TestClientRequestTimeout(t *testing.T) {
 	cfg.Timeout = int64(10 * time.Millisecond)
 	client := NewClient(cfg)
 
-	_, err := client.QueryOne(networkContext(), runtime.Query{Expression: runtime.NewString("/slow")})
+	_, err := client.QueryOne(networkContext(t), runtime.Query{Expression: runtime.NewString("/slow")})
 	if err == nil {
 		t.Fatal("expected timeout error")
 	}
@@ -386,9 +386,13 @@ func TestClientUsesFerretHTTPClientFromContext(t *testing.T) {
 			Body: []byte(`{"ok":true}`),
 		},
 	}
+	net, err := ferretnet.New(ferretnet.WithHTTPClient(httpClient))
+	if err != nil {
+		t.Fatalf("failed to create network: %v", err)
+	}
 	ctx := ferretnet.WithNetwork(
 		context.Background(),
-		ferretnet.New(ferretnet.WithHTTPClient(httpClient)),
+		net,
 	)
 
 	cfg := DefaultConfig()
@@ -505,6 +509,15 @@ func readBody(t *testing.T, r *http.Request) string {
 	return string(data)
 }
 
-func networkContext() context.Context {
-	return ferretnet.WithNetwork(context.Background(), ferretnet.New())
+func networkContext(t testing.TB) context.Context {
+	t.Helper()
+
+	net, err := ferretnet.New(
+		ferretnet.WithHTTPPolicies(ferrethttp.WithAllowLocalhost(true)),
+	)
+	if err != nil {
+		t.Fatalf("failed to create test network: %v", err)
+	}
+
+	return ferretnet.WithNetwork(context.Background(), net)
 }
