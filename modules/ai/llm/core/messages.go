@@ -24,6 +24,7 @@ func DecodeMessages(ctx context.Context, value runtime.Value) ([]Message, error)
 		if err != nil {
 			return runtime.False, err
 		}
+
 		if err := rejectUnknown(fields, map[string]struct{}{"role": {}, "content": {}}, fmt.Sprintf("messages[%d]", index)); err != nil {
 			return runtime.False, err
 		}
@@ -32,6 +33,7 @@ func DecodeMessages(ctx context.Context, value runtime.Value) ([]Message, error)
 		if err != nil {
 			return runtime.False, err
 		}
+
 		if !found {
 			return runtime.False, NewError(ErrInvalidOptions, fmt.Sprintf("messages[%d].role is required", index))
 		}
@@ -47,6 +49,7 @@ func DecodeMessages(ctx context.Context, value runtime.Value) ([]Message, error)
 		if err != nil {
 			return runtime.False, err
 		}
+
 		if !found {
 			return runtime.False, NewError(ErrInvalidOptions, fmt.Sprintf("messages[%d].content is required", index))
 		}
@@ -55,6 +58,7 @@ func DecodeMessages(ctx context.Context, value runtime.Value) ([]Message, error)
 
 		return runtime.True, nil
 	})
+
 	if err != nil {
 		return nil, err
 	}

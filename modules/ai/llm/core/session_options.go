@@ -19,6 +19,7 @@ func DecodeSessionOptions(ctx context.Context, value runtime.Value) (SessionOpti
 	}
 
 	options := SessionOptions{Context: ContextOptions{Mode: "local", Overflow: "error"}}
+
 	if instructions, found, err := stringOption(values, "instructions", label); err != nil {
 		return SessionOptions{}, err
 	} else if found {
@@ -62,21 +63,26 @@ func DecodeSessionOptions(ctx context.Context, value runtime.Value) (SessionOpti
 	if err != nil {
 		return SessionOptions{}, err
 	}
+
 	if hasMaxTokens && maxTokens <= 0 {
 		return SessionOptions{}, NewError(ErrInvalidOptions, "SESSION options.context.maxTokens must be positive")
 	}
+
 	options.Context.MaxTokens = maxTokens
 
 	reserve, hasReserve, err := intOption(contextValues, "reserveOutputTokens", "SESSION options.context")
 	if err != nil {
 		return SessionOptions{}, err
 	}
+
 	if hasReserve && reserve < 0 {
 		return SessionOptions{}, NewError(ErrInvalidOptions, "SESSION options.context.reserveOutputTokens must be nonnegative")
 	}
+
 	if hasMaxTokens && hasReserve && reserve >= maxTokens {
 		return SessionOptions{}, NewError(ErrInvalidOptions, "SESSION output token reserve must be smaller than maxTokens")
 	}
+
 	options.Context.ReserveOutputTokens = reserve
 
 	return options, nil

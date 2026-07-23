@@ -23,6 +23,7 @@ func DecodeSchema(_ context.Context, value runtime.Value) (Schema, error) {
 	var document map[string]any
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
+
 	if err := decoder.Decode(&document); err != nil || decoderHasTrailingValue(decoder) {
 		return Schema{}, NewError(ErrInvalidSchema, "schema is not valid JSON")
 	}

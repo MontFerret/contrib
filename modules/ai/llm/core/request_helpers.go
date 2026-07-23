@@ -27,13 +27,16 @@ func validateLabels(labels []string) error {
 	}
 
 	seen := make(map[string]struct{}, len(labels))
+
 	for _, label := range labels {
 		if label == "" {
 			return NewError(ErrInvalidOptions, "labels must not contain empty strings")
 		}
+
 		if _, exists := seen[label]; exists {
 			return NewError(ErrInvalidOptions, "labels must be unique")
 		}
+
 		seen[label] = struct{}{}
 	}
 

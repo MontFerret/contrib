@@ -26,6 +26,7 @@ func NewSchema(document map[string]any) (Schema, error) {
 	var copied map[string]any
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
+
 	if err := decoder.Decode(&copied); err != nil {
 		return Schema{}, NewError(ErrInvalidSchema, "schema is not valid JSON")
 	}
@@ -37,6 +38,7 @@ func NewSchema(document map[string]any) (Schema, error) {
 	compiler := jsonschema.NewCompiler()
 	compiler.DefaultDraft(jsonschema.Draft2020)
 	const location = "urn:ai-llm:schema"
+
 	if err := compiler.AddResource(location, copied); err != nil {
 		return Schema{}, NewError(ErrInvalidSchema, "schema could not be compiled")
 	}
@@ -61,6 +63,7 @@ func (s Schema) Document() map[string]any {
 	var document map[string]any
 	decoder := json.NewDecoder(bytes.NewReader(s.raw))
 	decoder.UseNumber()
+
 	if err := decoder.Decode(&document); err != nil {
 		return nil
 	}
@@ -77,6 +80,7 @@ func (s Schema) ValidateJSON(data []byte) (runtime.Value, error) {
 	var decoded any
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.UseNumber()
+
 	if err := decoder.Decode(&decoded); err != nil || decoderHasTrailingValue(decoder) {
 		return runtime.None, NewError(ErrInvalidStructuredOutput, "provider returned malformed JSON")
 	}

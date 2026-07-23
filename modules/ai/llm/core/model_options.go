@@ -24,6 +24,7 @@ func DecodeModelOptions(ctx context.Context, value runtime.Value) (ModelOptions,
 	if err != nil {
 		return ModelOptions{}, err
 	}
+
 	if !found || strings.TrimSpace(model) == "" {
 		return ModelOptions{}, NewError(ErrInvalidOptions, "MODEL options.model must not be blank")
 	}
@@ -32,6 +33,7 @@ func DecodeModelOptions(ctx context.Context, value runtime.Value) (ModelOptions,
 	if err != nil {
 		return ModelOptions{}, err
 	}
+
 	if !found || strings.TrimSpace(apiKey) == "" {
 		return ModelOptions{}, NewError(ErrInvalidOptions, "MODEL options.apiKey must not be blank")
 	}

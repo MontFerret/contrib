@@ -17,6 +17,7 @@ func DecodeSemanticOptions(ctx context.Context, mode Mode, value runtime.Value) 
 	if err != nil {
 		return SemanticOptions{}, err
 	}
+
 	if err := rejectUnknown(values, allowed, string(mode)+" options"); err != nil {
 		return SemanticOptions{}, err
 	}
@@ -36,13 +37,17 @@ func DecodeOperationOptions(ctx context.Context, mode Mode, value runtime.Value)
 	if err != nil {
 		return SemanticOptions{}, ExecutionOptions{}, err
 	}
+
 	allAllowed := make(map[string]struct{}, len(semanticAllowed)+3)
+
 	for key := range semanticAllowed {
 		allAllowed[key] = struct{}{}
 	}
+
 	for _, key := range []string{"temperature", "maxOutputTokens", "timeout"} {
 		allAllowed[key] = struct{}{}
 	}
+
 	if err := rejectUnknown(values, allAllowed, label); err != nil {
 		return SemanticOptions{}, ExecutionOptions{}, err
 	}
@@ -53,6 +58,7 @@ func DecodeOperationOptions(ctx context.Context, mode Mode, value runtime.Value)
 			semanticValues[key] = current
 		}
 	}
+
 	executionValues := make(map[string]runtime.Value, 3)
 	for _, key := range []string{"temperature", "maxOutputTokens", "timeout"} {
 		if current, found := values[key]; found {
@@ -64,6 +70,7 @@ func DecodeOperationOptions(ctx context.Context, mode Mode, value runtime.Value)
 	if err != nil {
 		return SemanticOptions{}, ExecutionOptions{}, err
 	}
+
 	execution, err := decodeExecutionValues(executionValues, label)
 	if err != nil {
 		return SemanticOptions{}, ExecutionOptions{}, err
@@ -82,6 +89,7 @@ func functionSemanticKeys(mode Mode) (map[string]struct{}, error) {
 	for key := range allowed {
 		copy[key] = struct{}{}
 	}
+
 	delete(copy, "schema")
 	delete(copy, "labels")
 
@@ -121,6 +129,7 @@ func decodeSemanticValues(ctx context.Context, mode Mode, values map[string]runt
 			if err != nil {
 				return options, err
 			}
+
 			options.Messages = messages
 		}
 	case ModeSummarize:
@@ -129,12 +138,14 @@ func decodeSemanticValues(ctx context.Context, mode Mode, values map[string]runt
 		} else if found {
 			options.Style = style
 		}
+
 		if maxWords, found, err := intOption(values, "maxWords", "summarize options"); err != nil {
 			return options, err
 		} else if found {
 			if maxWords <= 0 {
 				return options, NewError(ErrInvalidOptions, "summarize options.maxWords must be positive")
 			}
+
 			options.MaxWords = maxWords
 		}
 	case ModeExtract:
@@ -143,6 +154,7 @@ func decodeSemanticValues(ctx context.Context, mode Mode, values map[string]runt
 			if err != nil {
 				return options, err
 			}
+
 			options.Schema = schema
 		}
 	case ModeClassify:
@@ -151,6 +163,7 @@ func decodeSemanticValues(ctx context.Context, mode Mode, values map[string]runt
 			if err != nil {
 				return options, err
 			}
+
 			options.Labels = labels
 		}
 	default:

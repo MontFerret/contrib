@@ -29,6 +29,7 @@ func optionValues(ctx context.Context, value runtime.Value, label string) (map[s
 
 		return runtime.True, nil
 	})
+
 	if err != nil {
 		return nil, err
 	}

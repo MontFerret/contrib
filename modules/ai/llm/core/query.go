@@ -23,6 +23,7 @@ func ExecuteQuery(ctx context.Context, target Target, query runtime.Query) (runt
 	if err != nil {
 		return runtime.None, OperationError("QUERY", err)
 	}
+
 	execution, err := DecodeExecutionOptions(ctx, query.Options)
 	if err != nil {
 		return runtime.None, OperationError("QUERY", err)
@@ -34,6 +35,7 @@ func ExecuteQuery(ctx context.Context, target Target, query runtime.Query) (runt
 		Semantic:  semantic,
 		Execution: execution,
 	})
+
 	if err != nil {
 		return runtime.None, OperationError("QUERY", err)
 	}

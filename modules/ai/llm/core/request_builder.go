@@ -21,12 +21,15 @@ func BuildGenerationRequest(operation OperationRequest) (Request, error) {
 	case ModeSummarize:
 		request.Messages = []Message{TextMessage(RoleUser, operation.Input)}
 		constraints := make([]string, 0, 2)
+
 		if operation.Semantic.Style != "" {
 			constraints = append(constraints, "Use this summary style: "+operation.Semantic.Style+".")
 		}
+
 		if operation.Semantic.MaxWords > 0 {
 			constraints = append(constraints, fmt.Sprintf("Use no more than %d words.", operation.Semantic.MaxWords))
 		}
+
 		request.Instructions = joinInstructions(
 			"Summarize the provided text.",
 			strings.Join(constraints, "\n"),
@@ -53,6 +56,7 @@ func BuildStructuredRequest(operation OperationRequest) (StructuredRequest, erro
 		if operation.Semantic.Schema.compiled == nil {
 			return StructuredRequest{}, NewError(ErrInvalidSchema, "extract schema is required")
 		}
+
 		request.Name = "extract_result"
 		request.Description = "Structured data extracted from the provided text."
 		request.Schema = operation.Semantic.Schema
@@ -78,9 +82,11 @@ func BuildStructuredRequest(operation OperationRequest) (StructuredRequest, erro
 			"additionalProperties": false,
 		}
 		schema, err := NewSchema(document)
+
 		if err != nil {
 			return StructuredRequest{}, err
 		}
+
 		encodedLabels, _ := json.Marshal(operation.Semantic.Labels)
 		request.Name = "classification_result"
 		request.Description = "One selected classification label."

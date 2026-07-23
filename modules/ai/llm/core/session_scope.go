@@ -30,6 +30,7 @@ func (s *SessionScope) Track(session Session) error {
 
 		return NewError(ErrProvider, "session scope is closed")
 	}
+
 	s.sessions[session.ResourceID()] = session
 	s.mu.Unlock()
 
@@ -52,11 +53,14 @@ func (s *SessionScope) Close() error {
 
 		return nil
 	}
+
 	s.closed = true
 	sessions := make([]Session, 0, len(s.sessions))
+
 	for _, session := range s.sessions {
 		sessions = append(sessions, session)
 	}
+
 	clear(s.sessions)
 	s.mu.Unlock()
 
