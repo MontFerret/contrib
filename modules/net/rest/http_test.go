@@ -122,15 +122,18 @@ func TestModuleHonorsFerretHTTPPolicy(t *testing.T) {
 	}))
 	defer server.Close()
 
+	fnet, err := ferretnet.New(ferretnet.WithHTTPTransport(server.Client().Transport, ferrethttp.WithAllowedHosts("allowed.example")))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
 	harness := sdktest.New(t,
 		ferret.WithModules(New()),
 		ferret.WithRuntimeParam("baseUrl", runtime.NewString(server.URL)),
-		ferret.WithNetwork(ferretnet.New(ferretnet.WithHTTPClient(ferrethttp.New(
-			ferrethttp.WithAllowedHosts("allowed.example"),
-		)))),
+		ferret.WithNetwork(fnet),
 	)
 
-	_, err := harness.Run(context.Background(), `
+	_, err = harness.Run(context.Background(), `
 		LET api = NET::REST::CLIENT({
 			baseUrl: @baseUrl,
 			encoding: "json"

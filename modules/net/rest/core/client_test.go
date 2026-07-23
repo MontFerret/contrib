@@ -386,9 +386,13 @@ func TestClientUsesFerretHTTPClientFromContext(t *testing.T) {
 			Body: []byte(`{"ok":true}`),
 		},
 	}
+	net, err := ferretnet.New(ferretnet.WithHTTPClient(httpClient))
+	if err != nil {
+		t.Fatalf("failed to create network: %v", err)
+	}
 	ctx := ferretnet.WithNetwork(
 		context.Background(),
-		ferretnet.New(ferretnet.WithHTTPClient(httpClient)),
+		net,
 	)
 
 	cfg := DefaultConfig()
@@ -506,5 +510,9 @@ func readBody(t *testing.T, r *http.Request) string {
 }
 
 func networkContext() context.Context {
-	return ferretnet.WithNetwork(context.Background(), ferretnet.New())
+	net, err := ferretnet.New()
+	if err != nil {
+		panic(err)
+	}
+	return ferretnet.WithNetwork(context.Background(), net)
 }

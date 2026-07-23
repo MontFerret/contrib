@@ -17,7 +17,7 @@ require (
 	github.com/MontFerret/contrib/modules/web/sitemap v1.0.0-rc.6
 	github.com/MontFerret/contrib/modules/xml v1.0.0-rc.6
 	github.com/MontFerret/contrib/modules/yaml v1.0.0-rc.6
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.34
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.35
 	github.com/rs/zerolog v1.35.1
 )
 
