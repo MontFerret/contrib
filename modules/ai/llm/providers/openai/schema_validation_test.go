@@ -49,7 +49,7 @@ func TestExecutorSendsSupportedNestedSchemaUnchanged(t *testing.T) {
 	})
 	model := newTestModel(t, "gpt-test")
 
-	_, err = model.GenerateStructured(networkContext(fake), structuredRequest(schema))
+	_, err = model.GenerateStructured(networkContext(t, fake), structuredRequest(schema))
 	if err != nil {
 		t.Fatalf("generate structured: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestExecutorRejectsUnsupportedStructuredOutputSchemasBeforeHTTP(t *testing.
 			})
 			model := newTestModel(t, "gpt-test")
 
-			_, err := model.GenerateStructured(networkContext(fake), structuredRequest(schema))
+			_, err := model.GenerateStructured(networkContext(t, fake), structuredRequest(schema))
 			if code := errorCode(t, err); code != core.ErrInvalidSchema {
 				t.Fatalf("expected %s, got %s", core.ErrInvalidSchema, code)
 			}

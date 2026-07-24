@@ -12,10 +12,17 @@ import (
 	ferrethttp "github.com/MontFerret/ferret/v2/pkg/net/http"
 )
 
-func networkContext(client ferrethttp.Client) context.Context {
+func networkContext(t testing.TB, client ferrethttp.Client) context.Context {
+	t.Helper()
+
+	network, err := ferretnet.New(ferretnet.WithHTTPClient(client))
+	if err != nil {
+		t.Fatalf("create network: %v", err)
+	}
+
 	return ferretnet.WithNetwork(
 		context.Background(),
-		ferretnet.New(ferretnet.WithHTTPClient(client)),
+		network,
 	)
 }
 

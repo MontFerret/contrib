@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"net/http"
 	"strings"
 
 	sdkopenai "github.com/openai/openai-go/v3"
@@ -43,9 +44,34 @@ func normalizeError(err error) error {
 		return core.NewError(core.ErrContextLimit, "provider context limit exceeded")
 	}
 
+	if err := normalizeInvalidOptionError(apiError); err != nil {
+		return err
+	}
+
 	return core.NewError(core.ErrProvider, "provider request failed")
 }
 
 func isContextLimitCode(code string) bool {
 	return strings.EqualFold(strings.TrimSpace(code), "context_length_exceeded")
+}
+
+func normalizeInvalidOptionError(apiError *sdkopenai.Error) error {
+	if apiError.StatusCode != http.StatusBadRequest {
+		return nil
+	}
+
+	switch strings.ToLower(strings.TrimSpace(apiError.Code)) {
+	case "unsupported_parameter", "unsupported_value":
+	default:
+		return nil
+	}
+
+	switch strings.ToLower(strings.TrimSpace(apiError.Param)) {
+	case "temperature":
+		return core.NewError(core.ErrInvalidOptions, "provider rejected the temperature option")
+	case "max_output_tokens":
+		return core.NewError(core.ErrInvalidOptions, "provider rejected the maxOutputTokens option")
+	default:
+		return nil
+	}
 }

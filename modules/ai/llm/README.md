@@ -92,6 +92,12 @@ using the [Query API](#query-api).
 | `maxOutputTokens` | Integer | Provider default | Must be positive |
 | `timeout` | Integer | `0` | Milliseconds; must be nonnegative; `0` adds no module deadline |
 
+The temperature range is provider-neutral validation, not a guarantee that
+every provider model accepts every value. Omit `temperature` to use the
+provider default when model-specific support is unknown. When OpenAI identifies
+`temperature` or `max_output_tokens` as an unsupported option, the operation
+fails with `AI_LLM_INVALID_OPTIONS` and names the rejected public option.
+
 ### `MODEL`
 
 ```fql
@@ -196,7 +202,6 @@ adds the prompt and assistant response to that session's history.
 ```fql
 RETURN AI::LLM::GENERATE(model, "Name three uses for a web crawler.", {
   instructions: "Use a numbered list.",
-  temperature: 0,
   maxOutputTokens: 200
 })
 ```
@@ -238,8 +243,7 @@ RETURN AI::LLM::CHAT(model, "What is my project called?", {
   messages: [
     {role: "user", content: "My project is called Ferret."},
     {role: "assistant", content: "I will remember that for this request."}
-  ],
-  temperature: 0
+  ]
 })
 ```
 
@@ -268,7 +272,6 @@ RETURN AI::LLM::SUMMARIZE(model, article, {
   style: "bullet points",
   maxWords: 120,
   instructions: "Preserve product names.",
-  temperature: 0,
   maxOutputTokens: 600
 })
 ```
@@ -303,8 +306,7 @@ LET product = AI::LLM::EXTRACT(model, description, {
   required: ["name", "price"],
   additionalProperties: false
 }, {
-  instructions: "Use the advertised price.",
-  temperature: 0
+  instructions: "Use the advertised price."
 })
 RETURN product
 ```
@@ -336,8 +338,7 @@ RETURN AI::LLM::CLASSIFY(
   ticket,
   ["billing", "technical", "account"],
   {
-    instructions: "Choose the primary support queue.",
-    temperature: 0
+    instructions: "Choose the primary support queue."
   }
 )
 ```
@@ -447,7 +448,7 @@ LET model = AI::LLM::MODEL("openai", {
 LET generated = QUERY ONE "Write a haiku about parsers." IN model
 LET summary = QUERY ONE article IN model USING summarize
   WITH {style: "concise", maxWords: 80}
-  OPTIONS {temperature: 0, maxOutputTokens: 300, timeout: 30000}
+  OPTIONS {maxOutputTokens: 300, timeout: 30000}
 
 RETURN {generated: generated, summary: summary}
 ```
@@ -468,14 +469,13 @@ LET product = QUERY ONE description IN model USING extract
     },
     instructions: "Use the advertised price."
   }
-  OPTIONS {temperature: 0, timeout: 30000}
+  OPTIONS {timeout: 30000}
 
 LET category = QUERY ONE ticket IN model USING classify
   WITH {
     labels: ["billing", "technical", "account"],
     instructions: "Choose the primary support queue."
   }
-  OPTIONS {temperature: 0}
 
 RETURN {product: product, category: category}
 ```
@@ -545,7 +545,7 @@ expose credentials or raw provider response bodies.
 | `AI_LLM_CONTEXT_LIMIT_ERROR` | Request exceeded the provider's model context limit |
 | `AI_LLM_UNSUPPORTED_PROVIDER` | No registered factory matches the provider identifier |
 | `AI_LLM_UNSUPPORTED_OPERATION` | Target or Query mode does not support the requested operation |
-| `AI_LLM_INVALID_OPTIONS` | Arguments, option keys, option types, or option values are invalid |
+| `AI_LLM_INVALID_OPTIONS` | Arguments or options are invalid, or OpenAI rejected a known execution option |
 | `AI_LLM_INVALID_SCHEMA` | Extraction schema is missing, malformed, externally referenced, or unsupported by the provider |
 | `AI_LLM_INVALID_STRUCTURED_OUTPUT` | Provider returned malformed or unusable structured output |
 | `AI_LLM_SCHEMA_VALIDATION_ERROR` | Parsed structured output does not satisfy the requested schema |

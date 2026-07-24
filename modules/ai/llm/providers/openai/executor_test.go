@@ -25,7 +25,7 @@ func TestExecutorMapsTextRequestAndResponse(t *testing.T) {
 	model := newTestModel(t, "  opaque/model:v1  ")
 	temperature := 0.0
 
-	response, err := model.Generate(networkContext(fake), core.Request{
+	response, err := model.Generate(networkContext(t, fake), core.Request{
 		Messages: []core.Message{
 			{Role: core.RoleSystem, Content: core.Content{Type: core.ContentText, Text: "system message"}},
 			{Role: core.RoleDeveloper, Content: core.Content{Type: core.ContentText, Text: "developer message"}},
@@ -131,7 +131,7 @@ func TestExecutorMapsStructuredTextFormat(t *testing.T) {
 	})
 	model := newTestModel(t, "gpt-test")
 
-	response, err := model.GenerateStructured(networkContext(fake), core.StructuredRequest{
+	response, err := model.GenerateStructured(networkContext(t, fake), core.StructuredRequest{
 		Request: core.Request{
 			Messages: []core.Message{
 				{Role: core.RoleUser, Content: core.Content{Type: core.ContentText, Text: "extract"}},
@@ -202,7 +202,7 @@ func TestExecutorStructuredOutputValidationUsesCoreDispatcher(t *testing.T) {
 			})
 			model := newTestModel(t, "gpt-test")
 
-			_, err := core.Execute(networkContext(fake), model, core.OperationRequest{
+			_, err := core.Execute(networkContext(t, fake), model, core.OperationRequest{
 				Mode:  core.ModeExtract,
 				Input: "Ada",
 				Semantic: core.SemanticOptions{
@@ -230,7 +230,7 @@ func TestExecutorMapsClassificationSchemaThroughCoreDispatcher(t *testing.T) {
 	})
 	model := newTestModel(t, "gpt-test")
 
-	_, err := core.Execute(networkContext(fake), model, core.OperationRequest{
+	_, err := core.Execute(networkContext(t, fake), model, core.OperationRequest{
 		Mode:  core.ModeClassify,
 		Input: "This is excellent.",
 		Semantic: core.SemanticOptions{
@@ -275,11 +275,13 @@ func TestExecutorNormalizesHTTPFailuresWithoutRetryOrDetails(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name       string
-		apiCode    string
-		apiType    string
-		expected   core.ErrorCode
-		statusCode int
+		name            string
+		apiCode         string
+		apiParam        string
+		apiType         string
+		expected        core.ErrorCode
+		expectedMessage string
+		statusCode      int
 	}{
 		{name: "unauthorized", statusCode: http.StatusUnauthorized, apiCode: "invalid_api_key", expected: core.ErrAuth},
 		{name: "forbidden", statusCode: http.StatusForbidden, apiCode: "access_denied", expected: core.ErrAuth},
@@ -287,6 +289,43 @@ func TestExecutorNormalizesHTTPFailuresWithoutRetryOrDetails(t *testing.T) {
 		{name: "request timeout", statusCode: http.StatusRequestTimeout, apiCode: "timeout", expected: core.ErrTimeout},
 		{name: "context limit", statusCode: http.StatusBadRequest, apiCode: "context_length_exceeded", expected: core.ErrContextLimit},
 		{name: "context limit type", statusCode: http.StatusBadRequest, apiType: "context_length_exceeded", expected: core.ErrContextLimit},
+		{
+			name:            "unsupported temperature value",
+			statusCode:      http.StatusBadRequest,
+			apiCode:         "unsupported_value",
+			apiParam:        "temperature",
+			expected:        core.ErrInvalidOptions,
+			expectedMessage: "provider rejected the temperature option",
+		},
+		{
+			name:            "unsupported output token parameter",
+			statusCode:      http.StatusBadRequest,
+			apiCode:         "unsupported_parameter",
+			apiParam:        "max_output_tokens",
+			expected:        core.ErrInvalidOptions,
+			expectedMessage: "provider rejected the maxOutputTokens option",
+		},
+		{
+			name:       "unrecognized unsupported parameter",
+			statusCode: http.StatusBadRequest,
+			apiCode:    "unsupported_value",
+			apiParam:   "sensitive-provider-param",
+			expected:   core.ErrProvider,
+		},
+		{
+			name:       "unrecognized bad request code",
+			statusCode: http.StatusBadRequest,
+			apiCode:    "invalid_request_error",
+			apiParam:   "temperature",
+			expected:   core.ErrProvider,
+		},
+		{
+			name:       "unsupported value outside bad request",
+			statusCode: http.StatusInternalServerError,
+			apiCode:    "unsupported_value",
+			apiParam:   "temperature",
+			expected:   core.ErrProvider,
+		},
 		{name: "provider", statusCode: http.StatusInternalServerError, apiCode: "server_error", expected: core.ErrProvider},
 	}
 
@@ -298,11 +337,15 @@ func TestExecutorNormalizesHTTPFailuresWithoutRetryOrDetails(t *testing.T) {
 			if apiType == "" {
 				apiType = "provider_type"
 			}
+			var apiParam any
+			if test.apiParam != "" {
+				apiParam = test.apiParam
+			}
 			body, err := json.Marshal(map[string]any{
 				"error": map[string]any{
 					"message": "sensitive-provider-detail",
 					"type":    apiType,
-					"param":   nil,
+					"param":   apiParam,
 					"code":    test.apiCode,
 				},
 			})
@@ -315,7 +358,7 @@ func TestExecutorNormalizesHTTPFailuresWithoutRetryOrDetails(t *testing.T) {
 			})
 			model := newTestModel(t, "gpt-test")
 
-			_, err = model.Generate(networkContext(fake), core.Request{
+			_, err = model.Generate(networkContext(t, fake), core.Request{
 				Messages: []core.Message{
 					{Role: core.RoleUser, Content: core.Content{Type: core.ContentText, Text: "hello"}},
 				},
@@ -323,13 +366,59 @@ func TestExecutorNormalizesHTTPFailuresWithoutRetryOrDetails(t *testing.T) {
 			if code := errorCode(t, err); code != test.expected {
 				t.Fatalf("expected %s, got %s", test.expected, code)
 			}
-			if strings.Contains(err.Error(), "sensitive-provider-detail") || strings.Contains(err.Error(), "explicit-secret") {
+			if test.expectedMessage != "" && !strings.Contains(err.Error(), test.expectedMessage) {
+				t.Fatalf("expected error to contain %q, got %v", test.expectedMessage, err)
+			}
+			if strings.Contains(err.Error(), "sensitive-provider-detail") ||
+				strings.Contains(err.Error(), "sensitive-provider-param") ||
+				strings.Contains(err.Error(), "explicit-secret") {
 				t.Fatalf("error exposed provider or credential details: %v", err)
 			}
 			if len(fake.Requests()) != 1 {
 				t.Fatalf("expected one request without retries, got %d", len(fake.Requests()))
 			}
 		})
+	}
+}
+
+func TestExecutorAnnotatesUnsupportedExtractOption(t *testing.T) {
+	t.Parallel()
+
+	body := []byte(`{
+		"error": {
+			"message": "sensitive-provider-detail",
+			"type": "invalid_request_error",
+			"param": "temperature",
+			"code": "unsupported_value"
+		}
+	}`)
+	fake := newFakeHTTPClient(func(context.Context, *ferrethttp.Request) (*ferrethttp.Response, error) {
+		return jsonResponse(http.StatusBadRequest, body), nil
+	})
+	model := newTestModel(t, "gpt-test")
+	temperature := 0.0
+
+	_, err := core.Execute(networkContext(t, fake), model, core.OperationRequest{
+		Mode:  core.ModeExtract,
+		Input: "Ada",
+		Semantic: core.SemanticOptions{
+			Schema: compileSchema(t, validStructuredOutputSchema()),
+		},
+		Execution: core.ExecutionOptions{Temperature: &temperature},
+	})
+	if code := errorCode(t, err); code != core.ErrInvalidOptions {
+		t.Fatalf("expected %s, got %s", core.ErrInvalidOptions, code)
+	}
+	const expected = "AI_LLM_INVALID_OPTIONS: EXTRACT: provider rejected the temperature option"
+	if err.Error() != expected {
+		t.Fatalf("expected %q, got %q", expected, err)
+	}
+	if strings.Contains(err.Error(), "sensitive-provider-detail") ||
+		strings.Contains(err.Error(), "explicit-secret") {
+		t.Fatalf("error exposed provider or credential details: %v", err)
+	}
+	if len(fake.Requests()) != 1 {
+		t.Fatalf("expected one request without retries, got %d", len(fake.Requests()))
 	}
 }
 
@@ -371,7 +460,7 @@ func TestExecutorNormalizesRefusalAndIncompleteResponses(t *testing.T) {
 				return jsonResponse(http.StatusOK, []byte(test.body)), nil
 			})
 			model := newTestModel(t, "gpt-test")
-			_, err := model.Generate(networkContext(fake), core.Request{})
+			_, err := model.Generate(networkContext(t, fake), core.Request{})
 			if code := errorCode(t, err); code != test.expected {
 				t.Fatalf("expected %s, got %s", test.expected, code)
 			}
@@ -391,7 +480,7 @@ func TestExecutorHonorsRequestTimeout(t *testing.T) {
 	})
 	model := newTestModel(t, "gpt-test")
 
-	_, err := model.Generate(networkContext(fake), core.Request{
+	_, err := model.Generate(networkContext(t, fake), core.Request{
 		Options: core.ExecutionOptions{Timeout: time.Millisecond},
 	})
 	if code := errorCode(t, err); code != core.ErrTimeout {
@@ -408,7 +497,7 @@ func TestExecutorPreservesCallerCancellation(t *testing.T) {
 		return nil, ctx.Err()
 	})
 	model := newTestModel(t, "gpt-test")
-	ctx, cancel := context.WithCancel(networkContext(fake))
+	ctx, cancel := context.WithCancel(networkContext(t, fake))
 	cancel()
 
 	_, err := model.Generate(ctx, core.Request{})
@@ -420,10 +509,13 @@ func TestExecutorPreservesCallerCancellation(t *testing.T) {
 func TestExecutorHonorsFerretNetworkPolicy(t *testing.T) {
 	t.Parallel()
 
-	client := ferrethttp.New(ferrethttp.WithBlockedHosts("api.openai.com"))
+	client, err := ferrethttp.New(ferrethttp.WithBlockedHosts("api.openai.com"))
+	if err != nil {
+		t.Fatalf("create HTTP client: %v", err)
+	}
 	model := newTestModel(t, "gpt-test")
 
-	_, err := model.Generate(networkContext(client), core.Request{})
+	_, err = model.Generate(networkContext(t, client), core.Request{})
 	if code := errorCode(t, err); code != core.ErrProvider {
 		t.Fatalf("expected sanitized provider error, got %s", code)
 	}
