@@ -15,102 +15,285 @@ engine, err := ferret.New(
 ```
 
 The module name is `ai/llm`, and its functions are registered under the
-`AI::LLM` namespace. Normal module registration installs an engine-owned
-provider registry into every Ferret run context.
+`AI::LLM` namespace.
 
-Embedders can install another provider implementation with
-`llm.WithProviderFactory(factory)`. Provider registration is case-insensitive;
-when a custom factory has the same normalized name as a built-in provider, the
-custom factory deliberately replaces that built-in. This is intended for
-controlled embedding and deterministic tests, not for passing arbitrary SDK
-options through FQL.
+## Quick start
 
-Custom integrations that invoke the `core` or `lib` packages without
-registering `llm.New()` can install and resolve a registry with
-`core.WithRegistry(ctx, registry)` and `core.RegistryFrom(ctx)`.
-`RegistryFrom` returns `core.ErrRegistryNotFound` when the context does not
-contain a non-nil registry.
-
-## Credentials and models
-
-Create an OpenAI model with an explicit model name and API key:
+Supply `openaiApiKey` as a Ferret execution parameter. Credentials are explicit:
+the module does not read provider credentials from process environment
+variables.
 
 ```fql
 LET model = AI::LLM::MODEL("openai", {
   model: "gpt-5-mini",
   apiKey: @openaiApiKey
 })
-RETURN AI::LLM::GENERATE(model, "Write a one-sentence greeting.")
-```
 
-`model` and `apiKey` must be nonblank strings. Provider identifiers are
-case-insensitive, but model names are passed to the provider unchanged. The
-module never uses credentials from process environment variables and does not
-expose credentials through value formatting, debugging, or JSON serialization.
+LET greeting = AI::LLM::GENERATE(
+  model,
+  "Write a one-sentence greeting for a new Ferret user."
+)
 
-Set `session: true` to return a default local session directly:
-
-```fql
-LET chat = AI::LLM::MODEL("openai", {
-  model: "gpt-5-mini",
-  apiKey: @openaiApiKey,
-  session: true
+LET session = AI::LLM::SESSION(model, {
+  instructions: "Answer as a concise technical guide."
 })
-RETURN AI::LLM::CHAT(chat, "Remember that my project is called Ferret.")
-```
+LET reply = AI::LLM::CHAT(session, "What can I do with AI::LLM?")
 
-## Functions
-
-| Function | Signature | Result |
-|---|---|---|
-| `MODEL` | `MODEL(provider, options)` | Stateless model, or a default session when `session: true` |
-| `SESSION` | `SESSION(model, options)` | Local session |
-| `GENERATE` | `GENERATE(target, prompt[, options])` | String |
-| `CHAT` | `CHAT(target, message[, options])` | String |
-| `SUMMARIZE` | `SUMMARIZE(target, text[, options])` | String |
-| `EXTRACT` | `EXTRACT(target, text, schema[, options])` | Schema-matching Ferret value |
-| `CLASSIFY` | `CLASSIFY(target, text, labels[, options])` | `{label: "..."}` |
-| `RESET` | `RESET(session)` | `true` |
-| `FORK` | `FORK(session)` | Independent session copied from the current history |
-| `HISTORY` | `HISTORY(session)` | Copied array of `{role, content}` objects |
-
-All unknown option keys are rejected. Common execution options for the five
-generation functions are:
-
-```fql
-{
-  temperature: 0.0,       // number in [0, 2]
-  maxOutputTokens: 1000,  // positive integer
-  timeout: 30000          // nonnegative milliseconds
+RETURN {
+  greeting: greeting,
+  reply: reply,
+  history: AI::LLM::HISTORY(session)
 }
 ```
 
-An explicit zero temperature is sent to the provider rather than treated as an
-omitted value.
+## API reference
 
-Operation-specific options are:
+All functions use the `AI::LLM` namespace. Unknown option keys are rejected.
+The operation functions accept either a stateless model or a local session as
+their `target`:
 
-- `GENERATE`: optional `instructions`.
-- `CHAT`: optional `messages` and `instructions`. `messages` is an array of
-  `{role, content}` objects; content must be a string and role must be
-  `system`, `developer`, `user`, or `assistant`. The function's message string
-  is appended as the final user message.
-- `SUMMARIZE`: optional `style`, positive `maxWords`, and `instructions`.
-- `EXTRACT`: optional `instructions`; its required schema is the third
-  positional argument.
-- `CLASSIFY`: optional `instructions`; its required labels are unique,
-  nonempty strings in the third positional argument.
+- Functions: [`MODEL`](#model), [`SESSION`](#session),
+  [`GENERATE`](#generate), [`CHAT`](#chat), [`SUMMARIZE`](#summarize),
+  [`EXTRACT`](#extract), [`CLASSIFY`](#classify), [`RESET`](#reset),
+  [`FORK`](#fork), and [`HISTORY`](#history).
+- Other APIs: [Query API](#query-api), [Error reference](#error-reference),
+  and [Go embedding API](#go-embedding-api).
 
-For example:
+- A **model** executes each request independently and has no conversation
+  history.
+- A **session** replays its existing history and commits the new input and
+  assistant response only after a successful request.
+
+### Shared value shapes
+
+| Value | Shape or source | Notes |
+|---|---|---|
+| Model | Returned by `MODEL(..., {session: false})` | Stateless and safe for concurrent requests |
+| Session | Returned by `MODEL(..., {session: true})`, `SESSION`, or `FORK` | Local to one Ferret run and serialized per session |
+| Message | `{role: string, content: string}` | Role is `system`, `developer`, `user`, or `assistant` |
+| Schema | JSON Schema object | Used by `EXTRACT`; see [Structured extraction schemas](#structured-extraction-schemas) |
+| Labels | Nonempty array of unique, nonempty strings | Used by `CLASSIFY` |
+| Classification | `{label: string}` | `label` is exactly one of the supplied labels |
+| History | Array of `{role: string, content: string}` | Returned as a copy by `HISTORY` |
+
+Models and sessions are opaque Ferret values. Their string, debug, and JSON
+representations do not expose model names, API keys, history, or provider
+configuration.
+
+### Shared execution options
+
+`GENERATE`, `CHAT`, `SUMMARIZE`, `EXTRACT`, and `CLASSIFY` accept these keys in
+their optional function options object. The same keys belong in `OPTIONS` when
+using the [Query API](#query-api).
+
+| Key | Type | Default when omitted | Validation and behavior |
+|---|---|---|---|
+| `temperature` | Number | Provider default | Must be between `0` and `2`; an explicit `0` is sent to the provider |
+| `maxOutputTokens` | Integer | Provider default | Must be positive |
+| `timeout` | Integer | `0` | Milliseconds; must be nonnegative; `0` adds no module deadline |
+
+### `MODEL`
 
 ```fql
-LET summary = AI::LLM::SUMMARIZE(model, article, {
+AI::LLM::MODEL(provider, options)
+```
+
+Creates a provider-backed model handle.
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `provider` | String | Yes | Provider identifier; trimmed and matched case-insensitively |
+| `options` | Object | Yes | Model configuration described below |
+
+| Option | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `model` | String | Yes | — | Nonblank provider model name; passed to the provider unchanged |
+| `apiKey` | String | Yes | — | Nonblank explicit provider credential |
+| `session` | Boolean | No | `false` | Return a default local session instead of a stateless model |
+
+Returns a model when `session` is omitted or `false`. With `session: true`, it
+returns the equivalent of creating a session with default session options.
+
+```fql
+LET model = AI::LLM::MODEL("openai", {
+  model: "gpt-5-mini",
+  apiKey: @openaiApiKey
+})
+RETURN model
+```
+
+Provider identifiers are case-insensitive. The module never reads credentials
+from process environment variables and does not expose credentials through
+value formatting, debugging, or JSON serialization.
+
+### `SESSION`
+
+```fql
+AI::LLM::SESSION(model, options)
+```
+
+Creates a local conversation session from a stateless model. Passing an
+existing session is rejected. The `options` argument is required, but `{}` uses
+all defaults.
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `model` | Stateless model | Yes | Model returned by `MODEL` with `session: false` |
+| `options` | Object | Yes | Session configuration described below |
+
+| Option | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `instructions` | String | No | Empty | Persistent instructions included with every session request |
+| `context` | Object | No | `{mode: "local", overflow: "error"}` | Local context metadata |
+
+The `context` object accepts:
+
+| Key | Type | Default | Validation and behavior |
+|---|---|---|---|
+| `mode` | String | `"local"` | Only `"local"` is supported |
+| `overflow` | String | `"error"` | Only `"error"` is supported |
+| `maxTokens` | Integer | `0` | Must be positive when specified; metadata only |
+| `reserveOutputTokens` | Integer | `0` | Must be nonnegative and smaller than `maxTokens` when both are specified |
+
+The module does not proactively count tokens. A configured token limit records
+the intended model context metadata; provider context-window failures are
+reported as `AI_LLM_CONTEXT_LIMIT_ERROR`.
+
+```fql
+LET session = AI::LLM::SESSION(model, {
+  instructions: "Answer as a concise technical editor.",
+  context: {
+    mode: "local",
+    overflow: "error",
+    maxTokens: 128000,
+    reserveOutputTokens: 4000
+  }
+})
+RETURN session
+```
+
+See [Sessions](#sessions) for history, transaction, cleanup, and cancellation
+behavior.
+
+### `GENERATE`
+
+```fql
+AI::LLM::GENERATE(target, prompt[, options])
+```
+
+Generates text from one prompt.
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `target` | Model or session | Yes | Provider model or local session |
+| `prompt` | String | Yes | User prompt |
+| `options` | Object | No | `instructions` plus any [shared execution options](#shared-execution-options) |
+
+`instructions` is an optional string sent separately from the user prompt.
+Returns the generated text as a string. A successful call against a session
+adds the prompt and assistant response to that session's history.
+
+```fql
+RETURN AI::LLM::GENERATE(model, "Name three uses for a web crawler.", {
+  instructions: "Use a numbered list.",
+  temperature: 0,
+  maxOutputTokens: 200
+})
+```
+
+### `CHAT`
+
+```fql
+AI::LLM::CHAT(target, message[, options])
+```
+
+Generates an assistant response to a user message.
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `target` | Model or session | Yes | Provider model or local session |
+| `message` | String | Yes | Final user message for this request |
+| `options` | Object | No | `messages`, `instructions`, and shared execution options |
+
+`messages` is an optional array of message objects:
+
+```fql
+[
+  {role: "developer", content: "Prefer short answers."},
+  {role: "user", content: "My project is called Ferret."},
+  {role: "assistant", content: "Understood."}
+]
+```
+
+Each message must contain exactly `role` and `content`. Supported roles are
+`system`, `developer`, `user`, and `assistant`. The positional `message` is
+always appended after this array as the final user message. `instructions` is
+an optional string sent separately from the message list.
+
+Returns the assistant response as a string. A successful session call commits
+the supplied messages, final user message, and assistant response atomically.
+
+```fql
+RETURN AI::LLM::CHAT(model, "What is my project called?", {
+  messages: [
+    {role: "user", content: "My project is called Ferret."},
+    {role: "assistant", content: "I will remember that for this request."}
+  ],
+  temperature: 0
+})
+```
+
+### `SUMMARIZE`
+
+```fql
+AI::LLM::SUMMARIZE(target, text[, options])
+```
+
+Summarizes the supplied text and returns the summary as a string.
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `target` | Model or session | Yes | Provider model or local session |
+| `text` | String | Yes | Text to summarize |
+| `options` | Object | No | Options described below plus shared execution options |
+
+| Option | Type | Validation and behavior |
+|---|---|---|
+| `style` | String | Requested summary style, such as `"bullet points"` |
+| `maxWords` | Integer | Must be positive; requests a maximum word count |
+| `instructions` | String | Additional summarization instructions |
+
+```fql
+RETURN AI::LLM::SUMMARIZE(model, article, {
   style: "bullet points",
   maxWords: 120,
+  instructions: "Preserve product names.",
   temperature: 0,
   maxOutputTokens: 600
 })
+```
 
+### `EXTRACT`
+
+```fql
+AI::LLM::EXTRACT(target, text, schema[, options])
+```
+
+Extracts structured data from text, parses the provider response, validates it
+against the supplied JSON Schema, and returns the matching Ferret value.
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `target` | Model or session | Yes | Provider model or local session |
+| `text` | String | Yes | Source text |
+| `schema` | Object | Yes | JSON Schema supplied as the third positional argument |
+| `options` | Object | No | `instructions` plus shared execution options |
+
+The schema cannot be placed inside the function options object. `instructions`
+is an optional string containing additional extraction guidance. A successful
+session call records the validated structured response as JSON text.
+
+```fql
 LET product = AI::LLM::EXTRACT(model, description, {
   type: "object",
   properties: {
@@ -119,14 +302,90 @@ LET product = AI::LLM::EXTRACT(model, description, {
   },
   required: ["name", "price"],
   additionalProperties: false
+}, {
+  instructions: "Use the advertised price.",
+  temperature: 0
 })
+RETURN product
+```
 
-LET category = AI::LLM::CLASSIFY(
+See [Structured extraction schemas](#structured-extraction-schemas) for local
+validation and OpenAI-specific schema restrictions.
+
+### `CLASSIFY`
+
+```fql
+AI::LLM::CLASSIFY(target, text, labels[, options])
+```
+
+Selects exactly one label for the supplied text.
+
+| Argument | Type | Required | Description |
+|---|---|---|---|
+| `target` | Model or session | Yes | Provider model or local session |
+| `text` | String | Yes | Text to classify |
+| `labels` | Array of strings | Yes | Nonempty, unique, nonempty allowed labels |
+| `options` | Object | No | `instructions` plus shared execution options |
+
+The labels cannot be placed inside the function options object. Returns
+`{label: "..."}`, where `label` is one of the supplied values.
+
+```fql
+RETURN AI::LLM::CLASSIFY(
   model,
   ticket,
-  ["billing", "technical", "account"]
+  ["billing", "technical", "account"],
+  {
+    instructions: "Choose the primary support queue.",
+    temperature: 0
+  }
 )
 ```
+
+### `RESET`
+
+```fql
+AI::LLM::RESET(session)
+```
+
+Clears all visible history from a local session and returns `true`. The
+session's model and session options remain unchanged.
+
+```fql
+LET cleared = AI::LLM::RESET(session)
+RETURN {cleared: cleared, history: AI::LLM::HISTORY(session)}
+```
+
+### `FORK`
+
+```fql
+AI::LLM::FORK(session)
+```
+
+Returns a new independent session with the same model, options, and copied
+history. Later requests and resets on either session do not affect the other.
+The fork is owned by the current Ferret run and is closed with the other
+run-scoped sessions.
+
+```fql
+LET alternate = AI::LLM::FORK(session)
+RETURN AI::LLM::CHAT(alternate, "Give me a different answer.")
+```
+
+### `HISTORY`
+
+```fql
+AI::LLM::HISTORY(session)
+```
+
+Returns a copied array of visible `{role, content}` messages. Reading or
+modifying the returned array does not mutate the session.
+
+```fql
+RETURN AI::LLM::HISTORY(session)
+```
+
+## Structured extraction schemas
 
 Extraction schemas are compiled before a provider request. Local fragment
 references such as `#/$defs/address` are allowed, while external `$ref` values
@@ -149,8 +408,35 @@ OpenAI-specific and are not imposed on custom providers.
 
 ## Query API
 
-Models and sessions are queryable. An empty `USING` clause and
-`USING generate` both perform generation:
+Models and sessions implement Ferret's Queryable contract:
+
+```fql
+QUERY [ONE] expression IN target [USING mode]
+  [WITH semanticOptions]
+  [OPTIONS executionOptions]
+```
+
+- `expression` supplies the text processed by the selected operation.
+- `target` is a model or session.
+- `USING` selects the operation. Omitting it is equivalent to
+  `USING generate`.
+- `WITH` contains only operation-specific semantic data.
+- `OPTIONS` contains only `temperature`, `maxOutputTokens`, and `timeout` from
+  [Shared execution options](#shared-execution-options).
+
+| `USING` mode | Expression meaning | Allowed `WITH` keys | Required `WITH` keys | Scalar result |
+|---|---|---|---|---|
+| Omitted or `generate` | User prompt | `instructions` | None | String |
+| `chat` | Final user message | `messages`, `instructions` | None | String |
+| `summarize` | Text to summarize | `style`, `maxWords`, `instructions` | None | String |
+| `extract` | Text to inspect | `schema`, `instructions` | `schema` | Schema-matching Ferret value |
+| `classify` | Text to classify | `labels`, `instructions` | `labels` | `{label: "..."}` |
+
+Unlike the function API, Query places the extraction schema and classification
+labels in `WITH`. Semantic keys are invalid in `OPTIONS`, and execution keys
+are invalid in `WITH`.
+
+### Text Query examples
 
 ```fql
 LET model = AI::LLM::MODEL("openai", {
@@ -166,9 +452,33 @@ LET summary = QUERY ONE article IN model USING summarize
 RETURN {generated: generated, summary: summary}
 ```
 
-`WITH` contains the operation-specific data described above; `OPTIONS`
-contains only `temperature`, `maxOutputTokens`, and `timeout`. Supported modes
-are `generate`, `chat`, `summarize`, `extract`, and `classify`.
+### Structured Query examples
+
+```fql
+LET product = QUERY ONE description IN model USING extract
+  WITH {
+    schema: {
+      type: "object",
+      properties: {
+        name: {type: "string"},
+        price: {type: "number"}
+      },
+      required: ["name", "price"],
+      additionalProperties: false
+    },
+    instructions: "Use the advertised price."
+  }
+  OPTIONS {temperature: 0, timeout: 30000}
+
+LET category = QUERY ONE ticket IN model USING classify
+  WITH {
+    labels: ["billing", "technical", "account"],
+    instructions: "Choose the primary support queue."
+  }
+  OPTIONS {temperature: 0}
+
+RETURN {product: product, category: category}
+```
 
 Plain `QUERY` returns a singleton list because Ferret's queryable contract is
 list-valued. Use `QUERY ONE` for the scalar result that matches the function
@@ -216,15 +526,98 @@ assistant response atomically. Failed, refused, malformed, or schema-invalid
 responses do not change history. Structured assistant responses appear in
 history as their validated JSON text.
 
+`RESET` clears history, `FORK` creates an independent copy, and `HISTORY`
+returns a copy. Sessions created by `MODEL(..., {session: true})`, `SESSION`, or
+`FORK` are scoped to the current Ferret execution and are closed after that run,
+including sessions nested in arrays or objects.
+
+## Error reference
+
+AI::LLM errors have stable codes. Provider errors are sanitized and do not
+expose credentials or raw provider response bodies.
+
+| Code | Meaning |
+|---|---|
+| `AI_LLM_PROVIDER_ERROR` | Generic or unclassified provider failure |
+| `AI_LLM_AUTH_ERROR` | Provider rejected the supplied credentials |
+| `AI_LLM_RATE_LIMIT_ERROR` | Provider rate limit was reached |
+| `AI_LLM_TIMEOUT_ERROR` | Configured deadline expired or the provider reported a timeout |
+| `AI_LLM_CONTEXT_LIMIT_ERROR` | Request exceeded the provider's model context limit |
+| `AI_LLM_UNSUPPORTED_PROVIDER` | No registered factory matches the provider identifier |
+| `AI_LLM_UNSUPPORTED_OPERATION` | Target or Query mode does not support the requested operation |
+| `AI_LLM_INVALID_OPTIONS` | Arguments, option keys, option types, or option values are invalid |
+| `AI_LLM_INVALID_SCHEMA` | Extraction schema is missing, malformed, externally referenced, or unsupported by the provider |
+| `AI_LLM_INVALID_STRUCTURED_OUTPUT` | Provider returned malformed or unusable structured output |
+| `AI_LLM_SCHEMA_VALIDATION_ERROR` | Parsed structured output does not satisfy the requested schema |
+| `AI_LLM_REFUSAL` | Provider explicitly refused the request |
+
 For Go embedders, caller-initiated cancellation is returned as
 `context.Canceled` rather than converted to a provider error. Configured
 deadlines and provider HTTP 408 responses remain `AI_LLM_TIMEOUT_ERROR`.
 Canceled session calls do not change history.
 
-`RESET` clears history, `FORK` creates an independent copy, and `HISTORY`
-returns a copy. Sessions created by `MODEL(..., {session: true})`, `SESSION`, or
-`FORK` are scoped to the current Ferret execution and are closed after that run,
-including sessions nested in arrays or objects.
+## Go embedding API
+
+Normal registration with `llm.New()` creates an engine-owned registry,
+registers the built-in OpenAI provider, and installs the registry into every
+Ferret run context.
+
+Install a custom provider factory as a module option:
+
+```go
+engine, err := ferret.New(
+	ferret.WithModules(
+		llm.New(
+			llm.WithProviderFactory(factory),
+		),
+	),
+)
+```
+
+Provider names are trimmed and matched case-insensitively. A custom factory
+with the same normalized name as a built-in provider deliberately replaces the
+built-in. When multiple module options provide the same name, the last factory
+wins.
+
+A provider factory implements:
+
+```go
+type ProviderFactory interface {
+	Name() string
+	NewModel(context.Context, core.ModelOptions) (core.Model, error)
+}
+```
+
+The provider receives the model name and explicit API key through
+`core.ModelOptions`. Model names remain opaque provider-specific strings.
+
+### Registry APIs
+
+| API | Behavior |
+|---|---|
+| `core.NewRegistry()` | Creates an empty provider registry |
+| `registry.Register(factory)` | Adds a factory and rejects a duplicate normalized provider name |
+| `registry.Replace(factory)` | Adds or replaces the factory under its normalized provider name |
+| `registry.NewModel(ctx, provider, options)` | Resolves a provider and creates a model |
+| `core.WithRegistry(ctx, registry)` | Returns a context carrying the registry; a nil parent context is replaced with `context.Background()` |
+| `core.RegistryFrom(ctx)` | Returns the non-nil registry stored in the context |
+| `core.ErrRegistryNotFound` | Sentinel returned when the context has no non-nil registry |
+
+Custom integrations that invoke `core` or register `lib` directly can supply
+their own context-carried registry:
+
+```go
+registry := core.NewRegistry()
+if err := registry.Register(factory); err != nil {
+	return err
+}
+
+ctx := core.WithRegistry(context.Background(), registry)
+resolved, err := core.RegistryFrom(ctx)
+```
+
+The standard `llm.New()` module always installs its engine-owned registry for a
+run, replacing any registry attached to the caller's original run context.
 
 ## Limitations
 
