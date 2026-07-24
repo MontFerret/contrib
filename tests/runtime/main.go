@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	llmmodule "github.com/MontFerret/contrib/modules/ai/llm"
 	"github.com/MontFerret/contrib/modules/csv"
 	dbpostgres "github.com/MontFerret/contrib/modules/db/postgres"
 	dbsqlite "github.com/MontFerret/contrib/modules/db/sqlite"
@@ -199,6 +200,7 @@ func main() {
 		ferret.WithLogLevel(ferret.MustParseLogLevel(*logLevel)),
 		ferret.WithNetwork(network),
 		ferret.WithModules(
+			llmmodule.New(),
 			csv.New(),
 			dbpostgres.New(),
 			dbsqlite.New(),
