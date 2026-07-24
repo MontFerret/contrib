@@ -11,6 +11,7 @@ require (
 	github.com/MontFerret/contrib/modules/document/xlsx v0.0.0-20260708151614-3ed335b5f8ad
 	github.com/MontFerret/contrib/modules/net/rest v1.0.0-rc.2
 	github.com/MontFerret/contrib/modules/security/jwt v1.0.0-rc.4
+	github.com/MontFerret/contrib/modules/security/oauth2 v0.0.0
 	github.com/MontFerret/contrib/modules/toml v1.0.0-rc.6
 	github.com/MontFerret/contrib/modules/web/article v1.0.0-rc.7
 	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.11

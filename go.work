@@ -9,6 +9,7 @@ use (
 	./modules/document/xlsx
 	./modules/net/rest
 	./modules/security/jwt
+	./modules/security/oauth2
 	./modules/toml
 	./modules/web/article
 	./modules/web/html
@@ -23,3 +24,5 @@ use (
 replace github.com/MontFerret/contrib/pkg/common v0.1.0 => ./pkg/common
 
 replace github.com/MontFerret/contrib/modules/ai/llm v0.0.0 => ./modules/ai/llm
+
+replace github.com/MontFerret/contrib/modules/security/oauth2 v0.0.0 => ./modules/security/oauth2

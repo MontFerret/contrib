@@ -31,3 +31,17 @@ paths:
             }
             {{- end }}
           ]
+  /oauth/token:
+    post:
+      summary: Issue a test OAuth token
+      operationId: issueOAuthToken
+      x-lab-mock:
+        status: 200
+        headers:
+          content-type: application/json
+        body:
+          access_token: lab-access-token
+          token_type: Bearer
+          expires_in: 3600
+          refresh_token: lab-refresh-token
+          scope: users:read
