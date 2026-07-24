@@ -20,6 +20,7 @@ import (
 	documentxlsx "github.com/MontFerret/contrib/modules/document/xlsx"
 	restmodule "github.com/MontFerret/contrib/modules/net/rest"
 	jwtmodule "github.com/MontFerret/contrib/modules/security/jwt"
+	oauth2module "github.com/MontFerret/contrib/modules/security/oauth2"
 	"github.com/MontFerret/contrib/modules/toml"
 	"github.com/MontFerret/contrib/modules/web/article"
 	"github.com/MontFerret/contrib/modules/web/html"
@@ -208,6 +209,7 @@ func main() {
 			documentxlsx.New(),
 			restmodule.New(),
 			jwtmodule.New(),
+			oauth2module.New(),
 			toml.New(),
 			xml.New(),
 			yaml.New(),
