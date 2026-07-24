@@ -52,6 +52,59 @@ func TestModuleAppliesProviderOverridesInOptionOrder(t *testing.T) {
 	}
 }
 
+func TestModuleInstallsConfiguredRegistryInRunContext(t *testing.T) {
+	var observed *core.Registry
+	callerRegistry := core.NewRegistry()
+	if err := callerRegistry.Register(newFakeProviderFactoryWithGeneration("caller factory")); err != nil {
+		t.Fatalf("unexpected caller provider registration error: %v", err)
+	}
+
+	engine, err := ferret.New(
+		ferret.WithAfterRunHook(func(ctx context.Context, _ error) error {
+			var lookupErr error
+			observed, lookupErr = core.RegistryFrom(ctx)
+
+			return lookupErr
+		}),
+		ferret.WithModules(New(
+			WithProviderFactory(newFakeProviderFactoryWithGeneration("configured factory")),
+		)),
+	)
+	if err != nil {
+		t.Fatalf("unexpected engine error: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := engine.Close(); err != nil {
+			t.Fatalf("unexpected engine close error: %v", err)
+		}
+	})
+
+	runCtx := core.WithRegistry(context.Background(), callerRegistry)
+	if _, err := engine.Run(runCtx, source.NewAnonymous("RETURN true")); err != nil {
+		t.Fatalf("unexpected run error: %v", err)
+	}
+	if observed == nil {
+		t.Fatal("expected after-run hook to observe the provider registry")
+	}
+
+	model, err := observed.NewModel(
+		context.Background(),
+		"openai",
+		core.ModelOptions{Model: "opaque/model-name", APIKey: "explicit-test-key"},
+	)
+	if err != nil {
+		t.Fatalf("unexpected model creation error: %v", err)
+	}
+
+	response, err := model.Generate(context.Background(), core.Request{})
+	if err != nil {
+		t.Fatalf("unexpected generation error: %v", err)
+	}
+	if response.Text != "configured factory" {
+		t.Fatalf("expected configured provider factory, got %q", response.Text)
+	}
+}
+
 func TestModuleRunsGenerationFunction(t *testing.T) {
 	output := runFQL(t, `
 		LET model = AI::LLM::MODEL("openai", {

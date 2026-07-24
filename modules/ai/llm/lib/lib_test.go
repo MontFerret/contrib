@@ -4,13 +4,12 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/MontFerret/contrib/modules/ai/llm/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 func TestRegisterLib(t *testing.T) {
 	library := runtime.NewLibrary()
-	RegisterLib(library.Namespace("AI").Namespace("LLM"), core.NewRegistry())
+	RegisterLib(library.Namespace("AI").Namespace("LLM"))
 
 	functions, err := library.Build()
 	if err != nil {

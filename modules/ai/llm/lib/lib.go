@@ -1,14 +1,13 @@
 package lib
 
 import (
-	"github.com/MontFerret/contrib/modules/ai/llm/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
 // RegisterLib registers the AI::LLM namespace functions.
-func RegisterLib(ns runtime.Namespace, registry *core.Registry) {
+func RegisterLib(ns runtime.Namespace) {
 	ns.Function().A2().
-		Add("MODEL", modelWithRegistry(registry)).
+		Add("MODEL", Model).
 		Add("SESSION", Session)
 
 	ns.Function().Var().

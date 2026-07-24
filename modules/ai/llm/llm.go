@@ -42,8 +42,10 @@ func (m *mod) Register(bootstrap module.Bootstrap) error {
 		}
 	}
 
-	lib.RegisterLib(bootstrap.Host().Library().Namespace("AI").Namespace("LLM"), registry)
+	lib.RegisterLib(bootstrap.Host().Library().Namespace("AI").Namespace("LLM"))
 	bootstrap.Hooks().Session().BeforeRun(func(ctx context.Context) (context.Context, error) {
+		ctx = core.WithRegistry(ctx, registry)
+
 		return core.WithSessionScope(ctx), nil
 	})
 	bootstrap.Hooks().Session().AfterRun(func(ctx context.Context, _ error) error {

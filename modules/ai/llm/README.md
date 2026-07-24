@@ -15,7 +15,8 @@ engine, err := ferret.New(
 ```
 
 The module name is `ai/llm`, and its functions are registered under the
-`AI::LLM` namespace.
+`AI::LLM` namespace. Normal module registration installs an engine-owned
+provider registry into every Ferret run context.
 
 Embedders can install another provider implementation with
 `llm.WithProviderFactory(factory)`. Provider registration is case-insensitive;
@@ -23,6 +24,12 @@ when a custom factory has the same normalized name as a built-in provider, the
 custom factory deliberately replaces that built-in. This is intended for
 controlled embedding and deterministic tests, not for passing arbitrary SDK
 options through FQL.
+
+Custom integrations that invoke the `core` or `lib` packages without
+registering `llm.New()` can install and resolve a registry with
+`core.WithRegistry(ctx, registry)` and `core.RegistryFrom(ctx)`.
+`RegistryFrom` returns `core.ErrRegistryNotFound` when the context does not
+contain a non-nil registry.
 
 ## Credentials and models
 
