@@ -2,6 +2,7 @@ package lib
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/MontFerret/contrib/modules/ai/llm/core"
@@ -48,6 +49,13 @@ func TestOperationFunctionsValidateRuntimeValues(t *testing.T) {
 	}
 	if _, err := Generate(context.Background(), target, runtime.NewInt(1)); err == nil {
 		t.Fatal("expected input conversion error")
+	} else if !errors.Is(err, runtime.ErrInvalidType) {
+		t.Fatalf("expected SDK argument type error, got %v", err)
+	}
+	if _, err := Generate(context.Background(), target, runtime.None); err == nil {
+		t.Fatal("expected none input conversion error")
+	} else if !errors.Is(err, runtime.ErrInvalidType) {
+		t.Fatalf("expected SDK argument type error for none, got %v", err)
 	}
 	if _, err := Extract(context.Background(), target, runtime.NewString("input"), runtime.NewString("not a schema")); err == nil {
 		t.Fatal("expected schema conversion error")

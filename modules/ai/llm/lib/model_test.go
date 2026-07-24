@@ -55,6 +55,22 @@ func TestModelReturnsRegistryNotFound(t *testing.T) {
 	}
 }
 
+func TestModelUsesSDKProviderDecoding(t *testing.T) {
+	for _, provider := range []runtime.Value{runtime.NewInt(1), runtime.None} {
+		value, err := Model(
+			context.Background(),
+			provider,
+			modelOptionsValue(),
+		)
+		if value != runtime.None {
+			t.Fatalf("expected none value, got %v", value)
+		}
+		if !errors.Is(err, runtime.ErrInvalidType) {
+			t.Fatalf("expected SDK argument type error for %T, got %v", provider, err)
+		}
+	}
+}
+
 func modelOptionsValue() runtime.Value {
 	return runtime.NewObjectWith(map[string]runtime.Value{
 		"model":  runtime.NewString("opaque/model-name"),

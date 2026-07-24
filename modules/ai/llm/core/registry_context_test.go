@@ -21,8 +21,8 @@ func TestRegistryContextRoundTrip(t *testing.T) {
 
 func TestRegistryFromReturnsNotFound(t *testing.T) {
 	tests := []struct {
-		name string
 		ctx  context.Context
+		name string
 	}{
 		{name: "nil context"},
 		{name: "missing value", ctx: context.Background()},

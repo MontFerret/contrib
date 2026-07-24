@@ -5,6 +5,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/ai/llm/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // Generate produces text from a prompt.
@@ -28,7 +29,7 @@ func Extract(ctx context.Context, args ...runtime.Value) (runtime.Value, error) 
 		return runtime.None, err
 	}
 
-	target, input, err := targetAndInput(args)
+	target, input, err := targetAndInput(ctx, args)
 	if err != nil {
 		return runtime.None, err
 	}
@@ -58,7 +59,7 @@ func Classify(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 		return runtime.None, err
 	}
 
-	target, input, err := targetAndInput(args)
+	target, input, err := targetAndInput(ctx, args)
 	if err != nil {
 		return runtime.None, err
 	}
@@ -87,7 +88,7 @@ func executeTextOperation(ctx context.Context, mode core.Mode, args ...runtime.V
 		return runtime.None, err
 	}
 
-	target, input, err := targetAndInput(args)
+	target, input, err := targetAndInput(ctx, args)
 	if err != nil {
 		return runtime.None, err
 	}
@@ -105,18 +106,23 @@ func executeTextOperation(ctx context.Context, mode core.Mode, args ...runtime.V
 	})
 }
 
-func targetAndInput(args []runtime.Value) (core.Target, string, error) {
+func targetAndInput(ctx context.Context, args []runtime.Value) (core.Target, string, error) {
 	target, ok := args[0].(core.Target)
 	if !ok {
 		return nil, "", core.NewError(core.ErrInvalidOptions, "expected an AI::LLM model or session")
 	}
 
-	input, err := runtime.CastString(args[1])
+	input, err := sdk.DecodeArg[string](
+		ctx,
+		args,
+		1,
+		sdk.RequireType(runtime.TypeString),
+	)
 	if err != nil {
 		return nil, "", err
 	}
 
-	return target, input.String(), nil
+	return target, input, nil
 }
 
 func decodeOperationOptions(

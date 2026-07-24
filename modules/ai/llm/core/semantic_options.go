@@ -4,11 +4,25 @@ import (
 	"context"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
+
+type semanticExecutionOptionsInput struct {
+	Schema          runtime.Value `json:"schema"`
+	Messages        runtime.Value `json:"messages"`
+	Labels          runtime.Value `json:"labels"`
+	MaxWords        *int64        `json:"maxWords"`
+	Temperature     *float64      `json:"temperature"`
+	MaxOutputTokens *int64        `json:"maxOutputTokens"`
+	Timeout         *int64        `json:"timeout"`
+	Instructions    string        `json:"instructions"`
+	Style           string        `json:"style"`
+}
 
 // DecodeSemanticOptions validates mode-specific semantic options.
 func DecodeSemanticOptions(ctx context.Context, mode Mode, value runtime.Value) (SemanticOptions, error) {
-	values, err := optionValues(ctx, value, string(mode)+" options")
+	label := string(mode) + " options"
+	value, err := snapshotOptionObject(ctx, value, label)
 	if err != nil {
 		return SemanticOptions{}, err
 	}
@@ -18,17 +32,23 @@ func DecodeSemanticOptions(ctx context.Context, mode Mode, value runtime.Value) 
 		return SemanticOptions{}, err
 	}
 
-	if err := rejectUnknown(values, allowed, string(mode)+" options"); err != nil {
+	input, err := decodeOptionObject[semanticExecutionOptionsInput](
+		ctx,
+		value,
+		label,
+		sdk.OnlyFields(allowed...),
+	)
+	if err != nil {
 		return SemanticOptions{}, err
 	}
 
-	return decodeSemanticValues(ctx, mode, values)
+	return decodeSemanticInput(ctx, mode, input)
 }
 
 // DecodeOperationOptions validates combined function semantic and execution options.
 func DecodeOperationOptions(ctx context.Context, mode Mode, value runtime.Value) (SemanticOptions, ExecutionOptions, error) {
 	const label = "function options"
-	values, err := optionValues(ctx, value, label)
+	value, err := snapshotOptionObject(ctx, value, label)
 	if err != nil {
 		return SemanticOptions{}, ExecutionOptions{}, err
 	}
@@ -38,40 +58,27 @@ func DecodeOperationOptions(ctx context.Context, mode Mode, value runtime.Value)
 		return SemanticOptions{}, ExecutionOptions{}, err
 	}
 
-	allAllowed := make(map[string]struct{}, len(semanticAllowed)+3)
-
-	for key := range semanticAllowed {
-		allAllowed[key] = struct{}{}
-	}
-
-	for _, key := range []string{"temperature", "maxOutputTokens", "timeout"} {
-		allAllowed[key] = struct{}{}
-	}
-
-	if err := rejectUnknown(values, allAllowed, label); err != nil {
-		return SemanticOptions{}, ExecutionOptions{}, err
-	}
-
-	semanticValues := make(map[string]runtime.Value, len(semanticAllowed))
-	for key := range semanticAllowed {
-		if current, found := values[key]; found {
-			semanticValues[key] = current
-		}
-	}
-
-	executionValues := make(map[string]runtime.Value, 3)
-	for _, key := range []string{"temperature", "maxOutputTokens", "timeout"} {
-		if current, found := values[key]; found {
-			executionValues[key] = current
-		}
-	}
-
-	semantic, err := decodeSemanticValues(ctx, mode, semanticValues)
+	allowed := append(semanticAllowed, "temperature", "maxOutputTokens", "timeout")
+	input, err := decodeOptionObject[semanticExecutionOptionsInput](
+		ctx,
+		value,
+		label,
+		sdk.OnlyFields(allowed...),
+	)
 	if err != nil {
 		return SemanticOptions{}, ExecutionOptions{}, err
 	}
 
-	execution, err := decodeExecutionValues(executionValues, label)
+	semantic, err := decodeSemanticInput(ctx, mode, input)
+	if err != nil {
+		return SemanticOptions{}, ExecutionOptions{}, err
+	}
+
+	execution, err := decodeExecutionInput(executionOptionsInput{
+		Temperature:     input.Temperature,
+		MaxOutputTokens: input.MaxOutputTokens,
+		Timeout:         input.Timeout,
+	}, label)
 	if err != nil {
 		return SemanticOptions{}, ExecutionOptions{}, err
 	}
@@ -79,53 +86,49 @@ func DecodeOperationOptions(ctx context.Context, mode Mode, value runtime.Value)
 	return semantic, execution, nil
 }
 
-func functionSemanticKeys(mode Mode) (map[string]struct{}, error) {
+func functionSemanticKeys(mode Mode) ([]string, error) {
 	allowed, err := semanticKeys(mode)
 	if err != nil {
 		return nil, err
 	}
 
-	copy := make(map[string]struct{}, len(allowed))
-	for key := range allowed {
-		copy[key] = struct{}{}
+	switch mode {
+	case ModeExtract:
+		return []string{"instructions"}, nil
+	case ModeClassify:
+		return []string{"instructions"}, nil
+	default:
+		return allowed, nil
 	}
-
-	delete(copy, "schema")
-	delete(copy, "labels")
-
-	return copy, nil
 }
 
-func semanticKeys(mode Mode) (map[string]struct{}, error) {
+func semanticKeys(mode Mode) ([]string, error) {
 	switch mode {
 	case ModeGenerate:
-		return map[string]struct{}{"instructions": {}}, nil
+		return []string{"instructions"}, nil
 	case ModeChat:
-		return map[string]struct{}{"messages": {}, "instructions": {}}, nil
+		return []string{"messages", "instructions"}, nil
 	case ModeSummarize:
-		return map[string]struct{}{"style": {}, "maxWords": {}, "instructions": {}}, nil
+		return []string{"style", "maxWords", "instructions"}, nil
 	case ModeExtract:
-		return map[string]struct{}{"schema": {}, "instructions": {}}, nil
+		return []string{"schema", "instructions"}, nil
 	case ModeClassify:
-		return map[string]struct{}{"labels": {}, "instructions": {}}, nil
+		return []string{"labels", "instructions"}, nil
 	default:
 		return nil, NewError(ErrUnsupportedOperation, "unsupported AI::LLM operation")
 	}
 }
 
-func decodeSemanticValues(ctx context.Context, mode Mode, values map[string]runtime.Value) (SemanticOptions, error) {
-	var options SemanticOptions
-	if instructions, found, err := stringOption(values, "instructions", string(mode)+" options"); err != nil {
-		return options, err
-	} else if found {
-		options.Instructions = instructions
+func decodeSemanticInput(ctx context.Context, mode Mode, input semanticExecutionOptionsInput) (SemanticOptions, error) {
+	options := SemanticOptions{
+		Instructions: input.Instructions,
 	}
 
 	switch mode {
 	case ModeGenerate:
 	case ModeChat:
-		if value, found := values["messages"]; found {
-			messages, err := DecodeMessages(ctx, value)
+		if input.Messages != nil {
+			messages, err := DecodeMessages(ctx, input.Messages)
 			if err != nil {
 				return options, err
 			}
@@ -133,24 +136,17 @@ func decodeSemanticValues(ctx context.Context, mode Mode, values map[string]runt
 			options.Messages = messages
 		}
 	case ModeSummarize:
-		if style, found, err := stringOption(values, "style", "summarize options"); err != nil {
-			return options, err
-		} else if found {
-			options.Style = style
-		}
-
-		if maxWords, found, err := intOption(values, "maxWords", "summarize options"); err != nil {
-			return options, err
-		} else if found {
-			if maxWords <= 0 {
+		options.Style = input.Style
+		if input.MaxWords != nil {
+			if *input.MaxWords <= 0 {
 				return options, NewError(ErrInvalidOptions, "summarize options.maxWords must be positive")
 			}
 
-			options.MaxWords = maxWords
+			options.MaxWords = *input.MaxWords
 		}
 	case ModeExtract:
-		if value, found := values["schema"]; found {
-			schema, err := DecodeSchema(ctx, value)
+		if input.Schema != nil {
+			schema, err := DecodeSchema(ctx, input.Schema)
 			if err != nil {
 				return options, err
 			}
@@ -158,8 +154,8 @@ func decodeSemanticValues(ctx context.Context, mode Mode, values map[string]runt
 			options.Schema = schema
 		}
 	case ModeClassify:
-		if value, found := values["labels"]; found {
-			labels, err := DecodeLabels(ctx, value)
+		if input.Labels != nil {
+			labels, err := DecodeLabels(ctx, input.Labels)
 			if err != nil {
 				return options, err
 			}

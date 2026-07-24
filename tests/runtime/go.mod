@@ -18,7 +18,7 @@ require (
 	github.com/MontFerret/contrib/modules/web/sitemap v1.0.0-rc.6
 	github.com/MontFerret/contrib/modules/xml v1.0.0-rc.6
 	github.com/MontFerret/contrib/modules/yaml v1.0.0-rc.6
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.35
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.36
 	github.com/rs/zerolog v1.35.1
 )
 
@@ -54,11 +54,17 @@ require (
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
+	github.com/openai/openai-go/v3 v3.41.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/richardlehane/mscfb v1.0.7 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/sethgrid/pester v1.2.0 // indirect
+	github.com/tidwall/gjson v1.18.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/tiendc/go-deepcopy v1.7.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect

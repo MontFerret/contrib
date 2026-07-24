@@ -5,11 +5,16 @@ import (
 
 	"github.com/MontFerret/contrib/modules/ai/llm/core"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
+	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
 // Model creates a provider model using the registry installed in the execution context.
 func Model(ctx context.Context, providerValue, optionsValue runtime.Value) (runtime.Value, error) {
-	provider, err := runtime.CastString(providerValue)
+	provider, err := sdk.DecodeValue[string](
+		ctx,
+		providerValue,
+		sdk.RequireType(runtime.TypeString),
+	)
 	if err != nil {
 		return runtime.None, err
 	}
@@ -24,7 +29,7 @@ func Model(ctx context.Context, providerValue, optionsValue runtime.Value) (runt
 		return runtime.None, err
 	}
 
-	model, err := registry.NewModel(ctx, provider.String(), options)
+	model, err := registry.NewModel(ctx, provider, options)
 	if err != nil {
 		return runtime.None, err
 	}

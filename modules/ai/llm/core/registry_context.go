@@ -5,12 +5,14 @@ import (
 	"errors"
 )
 
-// ErrRegistryNotFound indicates that no provider registry is available in the context.
-var ErrRegistryNotFound = errors.New("ai/llm: provider registry not found in context")
-
 type registryContextKey struct{}
 
-var registryCtxKey = registryContextKey{}
+var (
+	// ErrRegistryNotFound indicates that no provider registry is available in the context.
+	ErrRegistryNotFound = errors.New("ai/llm: provider registry not found in context")
+
+	registryCtxKey = registryContextKey{}
+)
 
 // WithRegistry adds a provider registry to the context.
 func WithRegistry(ctx context.Context, registry *Registry) context.Context {

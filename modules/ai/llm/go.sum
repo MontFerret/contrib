@@ -1,10 +1,11 @@
 github.com/MontFerret/contrib/pkg/common v0.1.1 h1:qA2URATIO+EVLH3BNFKYupLx97ftotyGWnKtJJhtR0Y=
 github.com/MontFerret/contrib/pkg/common v0.1.1/go.mod h1:wiMLQnE46YGci3qMzA3ExArKomQDXR5DvNSE7HnP0ik=
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.35 h1:f5oAuaAUxL4dWTP7DX+uTRxwmTSz55evoeMVHFnTgtQ=
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.35/go.mod h1:jkZZNJrQKhQ8K9v3lzkMKR5NnCyOUKRRKCTAwCOBq8A=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.36 h1:I+gVtOQLZNA6mmbdJE0Gu5cYmaBOkG0so1UXkZAW534=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.36/go.mod h1:jkZZNJrQKhQ8K9v3lzkMKR5NnCyOUKRRKCTAwCOBq8A=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dlclark/regexp2 v1.11.0 h1:G/nrcoOa7ZXlpoa/91N3X7mM3r8eIlMBBJZvsz/mxKI=
 github.com/dlclark/regexp2 v1.11.0/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
 github.com/gobwas/glob v0.2.3 h1:A4xDbljILXROh+kObIiy5kIaPYD8e96x1tgBhUI5J+Y=
@@ -64,5 +65,9 @@ github.com/wI2L/jettison v0.7.4/go.mod h1:O+F+T7X7ZN6kTsd167Qk4aZMC8jNrH48SMedNm
 golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f h1:W3F4c+6OLc6H2lb//N1q4WpJkhzJCK5J6kUi1NTVXfM=
 golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f/go.mod h1:J1xhfL/vlindoeF/aINzNzt2Bket5bjo9sdOYzOsU80=
 golang.org/x/sys v0.46.0 h1:noSf2Fq6F8DBgS+LysIkx7rIExoNHJsxOAtPp4rthXw=
+golang.org/x/sys v0.46.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
 golang.org/x/text v0.38.0 h1:sXmwo9DwP3OK9EZ7PqAdaooSGozfl/3a6/xJcbzPRhE=
+golang.org/x/text v0.38.0/go.mod h1:YXZt3QhHUKYT53r2lLKFIVi6Ao1jdzrTR/KQ09qyxF4=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
+gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=

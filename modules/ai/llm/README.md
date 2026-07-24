@@ -80,6 +80,10 @@ Models and sessions are opaque Ferret values. Their string, debug, and JSON
 representations do not expose model names, API keys, history, or provider
 configuration.
 
+The Ferret SDK matches tagged fields in configuration objects and messages
+case-insensitively. This reference uses the canonical spellings; JSON Schema
+keywords inside schema documents remain case-sensitive.
+
 ### Shared execution options
 
 `GENERATE`, `CHAT`, `SUMMARIZE`, `EXTRACT`, and `CLASSIFY` accept these keys in
