@@ -113,7 +113,7 @@ Creates a provider-backed model handle.
 | Argument | Type | Required | Description |
 |---|---|---|---|
 | `provider` | String | Yes | Provider identifier; trimmed and matched case-insensitively |
-| `options` | Object | Yes | Model configuration described below |
+| `Config` | Object | Yes | Model configuration described below |
 
 | Option | Type | Required | Default | Description |
 |---|---|---|---|---|
@@ -143,13 +143,13 @@ AI::LLM::SESSION(model, options)
 ```
 
 Creates a local conversation session from a stateless model. Passing an
-existing session is rejected. The `options` argument is required, but `{}` uses
+existing session is rejected. The `Config` argument is required, but `{}` uses
 all defaults.
 
 | Argument | Type | Required | Description |
 |---|---|---|---|
 | `model` | Stateless model | Yes | Model returned by `MODEL` with `session: false` |
-| `options` | Object | Yes | Session configuration described below |
+| `Config` | Object | Yes | Session configuration described below |
 
 | Option | Type | Required | Default | Description |
 |---|---|---|---|---|
@@ -197,7 +197,7 @@ Generates text from one prompt.
 |---|---|---|---|
 | `target` | Model or session | Yes | Provider model or local session |
 | `prompt` | String | Yes | User prompt |
-| `options` | Object | No | `instructions` plus any [shared execution options](#shared-execution-options) |
+| `Config` | Object | No | `instructions` plus any [shared execution options](#shared-execution-options) |
 
 `instructions` is an optional string sent separately from the user prompt.
 Returns the generated text as a string. A successful call against a session
@@ -222,7 +222,7 @@ Generates an assistant response to a user message.
 |---|---|---|---|
 | `target` | Model or session | Yes | Provider model or local session |
 | `message` | String | Yes | Final user message for this request |
-| `options` | Object | No | `messages`, `instructions`, and shared execution options |
+| `Config` | Object | No | `messages`, `instructions`, and shared execution options |
 
 `messages` is an optional array of message objects:
 
@@ -263,7 +263,7 @@ Summarizes the supplied text and returns the summary as a string.
 |---|---|---|---|
 | `target` | Model or session | Yes | Provider model or local session |
 | `text` | String | Yes | Text to summarize |
-| `options` | Object | No | Options described below plus shared execution options |
+| `Config` | Object | No | Options described below plus shared execution options |
 
 | Option | Type | Validation and behavior |
 |---|---|---|
@@ -294,7 +294,7 @@ against the supplied JSON Schema, and returns the matching Ferret value.
 | `target` | Model or session | Yes | Provider model or local session |
 | `text` | String | Yes | Source text |
 | `schema` | Object | Yes | JSON Schema supplied as the third positional argument |
-| `options` | Object | No | `instructions` plus shared execution options |
+| `Config` | Object | No | `instructions` plus shared execution options |
 
 The schema cannot be placed inside the function options object. `instructions`
 is an optional string containing additional extraction guidance. A successful
@@ -331,7 +331,7 @@ Selects exactly one label for the supplied text.
 | `target` | Model or session | Yes | Provider model or local session |
 | `text` | String | Yes | Text to classify |
 | `labels` | Array of strings | Yes | Nonempty, unique, nonempty allowed labels |
-| `options` | Object | No | `instructions` plus shared execution options |
+| `Config` | Object | No | `instructions` plus shared execution options |
 
 The labels cannot be placed inside the function options object. Returns
 `{label: "..."}`, where `label` is one of the supplied values.

@@ -9,6 +9,7 @@ import (
 	stdfs "io/fs"
 	"strings"
 
+	commonstream "github.com/MontFerret/contrib/pkg/common/stream"
 	ferretfs "github.com/MontFerret/ferret/v2/pkg/fs"
 )
 
@@ -59,6 +60,13 @@ func openSource(ctx context.Context, path string, opts OpenOptions) (*pdfSource,
 	if readerAt, ok := file.(io.ReaderAt); ok {
 		return &pdfSource{
 			reader: readerAt,
+			closer: file,
+			size:   info.Size(),
+		}, nil
+	}
+	if readSeeker, ok := file.(io.ReadSeeker); ok {
+		return &pdfSource{
+			reader: commonstream.NewReaderAt(readSeeker),
 			closer: file,
 			size:   info.Size(),
 		}, nil
