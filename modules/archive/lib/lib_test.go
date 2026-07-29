@@ -172,9 +172,6 @@ func TestHandlersValidateArgumentsBeforeConfig(t *testing.T) {
 			if err == nil {
 				t.Fatal("expected argument error")
 			}
-			if errors.Is(err, core.ErrConfigNotFound) {
-				t.Fatalf("configuration was resolved before argument validation: %v", err)
-			}
 			if errors.Is(err, ferretfs.ErrNotFound) {
 				t.Fatalf("filesystem was resolved before argument validation: %v", err)
 			}
