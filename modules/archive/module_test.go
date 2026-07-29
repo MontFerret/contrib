@@ -65,7 +65,7 @@ func TestNewRejectsNegativeLimitsAtBootstrap(t *testing.T) {
 	}
 }
 
-func TestModuleInstallsNormalizedConfigInRunContext(t *testing.T) {
+func TestModuleInstallsConfiguredLimitsInRunContext(t *testing.T) {
 	tests := []struct {
 		name     string
 		options  []Option

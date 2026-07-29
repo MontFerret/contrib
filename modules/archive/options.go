@@ -23,6 +23,11 @@ func WithMaxEntrySize(maxEntrySize int64) Option {
 
 			return
 		}
+		if maxEntrySize == 0 {
+			config.MaxEntrySize = core.DefaultConfig().MaxEntrySize
+
+			return
+		}
 
 		config.MaxEntrySize = maxEntrySize
 	}
@@ -38,6 +43,11 @@ func WithMaxZIPBufferSize(maxBytes int64) Option {
 				Value:  fmt.Sprintf("%d", maxBytes),
 				Reason: "must be non-negative",
 			})
+
+			return
+		}
+		if maxBytes == 0 {
+			config.MaxZIPBufferSize = core.DefaultConfig().MaxZIPBufferSize
 
 			return
 		}
