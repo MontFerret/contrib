@@ -1,7 +1,8 @@
-go 1.26.1
+go 1.26.5
 
 use (
 	./modules/ai/llm
+	./modules/archive
 	./modules/csv
 	./modules/db/postgres
 	./modules/db/sqlite
@@ -24,5 +25,7 @@ use (
 replace github.com/MontFerret/contrib/pkg/common v0.1.0 => ./pkg/common
 
 replace github.com/MontFerret/contrib/modules/ai/llm v0.0.0 => ./modules/ai/llm
+
+replace github.com/MontFerret/contrib/modules/archive v0.0.0 => ./modules/archive
 
 replace github.com/MontFerret/contrib/modules/security/oauth2 v0.0.0 => ./modules/security/oauth2

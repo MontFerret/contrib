@@ -159,8 +159,10 @@ func blockText(blocks []TextBlock) string {
 }
 
 type memoryFS struct {
-	files    map[string][]byte
-	failOpen bool
+	files         map[string][]byte
+	reportedSizes map[string]int64
+	newReadable   func(path string, data []byte, info memoryFileInfo) ferretfs.ReadableFile
+	failOpen      bool
 }
 
 func (m memoryFS) ReadFile(path string) ([]byte, error) {
@@ -182,7 +184,16 @@ func (m memoryFS) Open(path string) (ferretfs.ReadableFile, error) {
 		return nil, fs.ErrNotExist
 	}
 
-	return &memoryFile{reader: bytes.NewReader(data), info: memoryFileInfo{name: path, size: int64(len(data))}}, nil
+	size := int64(len(data))
+	if reportedSize, ok := m.reportedSizes[path]; ok {
+		size = reportedSize
+	}
+	info := memoryFileInfo{name: path, size: size}
+	if m.newReadable != nil {
+		return m.newReadable(path, data, info), nil
+	}
+
+	return &memoryFile{reader: bytes.NewReader(data), info: info}, nil
 }
 
 func (m memoryFS) OpenFile(string, int, fs.FileMode) (ferretfs.WritableFile, error) {
@@ -195,7 +206,16 @@ func (m memoryFS) Stat(path string) (fs.FileInfo, error) {
 		return nil, fs.ErrNotExist
 	}
 
-	return memoryFileInfo{name: path, size: int64(len(data))}, nil
+	size := int64(len(data))
+	if reportedSize, ok := m.reportedSizes[path]; ok {
+		size = reportedSize
+	}
+
+	return memoryFileInfo{name: path, size: size}, nil
+}
+
+func (m memoryFS) Lstat(path string) (fs.FileInfo, error) {
+	return m.Stat(path)
 }
 
 func (m memoryFS) Exists(path string) (bool, error) {

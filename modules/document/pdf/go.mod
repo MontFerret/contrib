@@ -3,8 +3,8 @@ module github.com/MontFerret/contrib/modules/document/pdf
 go 1.26.1
 
 require (
-	github.com/MontFerret/contrib/pkg/common v0.1.1
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.36
+	github.com/MontFerret/contrib/pkg/common v0.2.0
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.37
 	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728
 )
 

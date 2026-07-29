@@ -235,6 +235,15 @@ func TestBufferedFallbackAndLimit(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "buffer limit") {
 		t.Fatalf("expected buffer limit error, got %v", err)
 	}
+
+	underreportedCtx := ferretfs.WithFileSystem(context.Background(), memoryFS{
+		files:         map[string][]byte{"buffered.pdf": data},
+		reportedSizes: map[string]int64{"buffered.pdf": int64(len(data) - 1)},
+	})
+	_, err = Open(underreportedCtx, "buffered.pdf", OpenOptions{MaxBufferSize: int64(len(data) - 1)})
+	if err == nil || !strings.Contains(err.Error(), `PDF document "buffered.pdf" exceeds the in-memory buffer limit`) {
+		t.Fatalf("expected actual-size buffer limit error, got %v", err)
+	}
 }
 
 func TestOpenReportsFilesystemFailure(t *testing.T) {

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	llmmodule "github.com/MontFerret/contrib/modules/ai/llm"
+	archivemodule "github.com/MontFerret/contrib/modules/archive"
 	"github.com/MontFerret/contrib/modules/csv"
 	dbpostgres "github.com/MontFerret/contrib/modules/db/postgres"
 	dbsqlite "github.com/MontFerret/contrib/modules/db/sqlite"
@@ -202,6 +203,7 @@ func main() {
 		ferret.WithNetwork(network),
 		ferret.WithModules(
 			llmmodule.New(),
+			archivemodule.New(),
 			csv.New(),
 			dbpostgres.New(),
 			dbsqlite.New(),

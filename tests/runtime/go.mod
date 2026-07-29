@@ -4,6 +4,7 @@ go 1.26.1
 
 require (
 	github.com/MontFerret/contrib/modules/ai/llm v0.0.0
+	github.com/MontFerret/contrib/modules/archive v0.0.0
 	github.com/MontFerret/contrib/modules/csv v1.0.0-rc.6
 	github.com/MontFerret/contrib/modules/db/postgres v0.0.0-20260708151614-3ed335b5f8ad
 	github.com/MontFerret/contrib/modules/db/sqlite v1.0.0-rc.4
@@ -19,7 +20,7 @@ require (
 	github.com/MontFerret/contrib/modules/web/sitemap v1.0.0-rc.6
 	github.com/MontFerret/contrib/modules/xml v1.0.0-rc.6
 	github.com/MontFerret/contrib/modules/yaml v1.0.0-rc.6
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.36
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.37
 	github.com/rs/zerolog v1.35.1
 )
 
