@@ -1,0 +1,14 @@
+LET current = @lab.static.static + "/base-url.html"
+LET page = DOCUMENT(current)
+LET doc = page.document
+LET base = @lab.static.static + "/url-assets/"
+
+T::EQ(URL(page), current)
+T::EQ(URL(doc), current)
+T::EQ(BASE_URL(page), base)
+T::EQ(BASE_URL(doc), base)
+T::EQ(RESOLVE_URL(page, "images/logo.png"), base + "images/logo.png")
+T::EQ(RESOLVE_URL(doc, "/images/logo.png"), @lab.static.static + "/images/logo.png")
+T::EQ(RESOLVE_URL(page, "https://cdn.example/logo.png"), "https://cdn.example/logo.png")
+
+RETURN NONE

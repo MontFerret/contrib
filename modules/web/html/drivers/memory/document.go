@@ -203,6 +203,59 @@ func (doc *HTMLDocument) GetURL() runtime.String {
 	return doc.url
 }
 
+func (doc *HTMLDocument) GetCurrentURL(_ context.Context) (runtime.String, error) {
+	return doc.url, nil
+}
+
+func (doc *HTMLDocument) GetBaseURL(_ context.Context) (runtime.String, error) {
+	base, err := doc.baseURL()
+	if err != nil {
+		return runtime.EmptyString, err
+	}
+
+	return runtime.NewString(base.String()), nil
+}
+
+func (doc *HTMLDocument) ResolveURL(_ context.Context, value runtime.String) (runtime.String, error) {
+	base, err := doc.baseURL()
+	if err != nil {
+		return runtime.EmptyString, err
+	}
+
+	ref, err := neturl.Parse(value.String())
+	if err != nil {
+		return runtime.EmptyString, runtime.Error(err, "invalid URL")
+	}
+
+	return runtime.NewString(base.ResolveReference(ref).String()), nil
+}
+
+func (doc *HTMLDocument) baseURL() (*neturl.URL, error) {
+	fallback, err := neturl.Parse(doc.url.String())
+	if err != nil {
+		return nil, runtime.Error(err, "invalid document URL")
+	}
+
+	base := doc.doc.Find("base[href]").First()
+	if base.Length() == 0 {
+		return fallback, nil
+	}
+
+	href, _ := base.Attr("href")
+	ref, err := neturl.Parse(strings.TrimSpace(href))
+	if err != nil {
+		return fallback, nil
+	}
+
+	resolved := fallback.ResolveReference(ref)
+	switch strings.ToLower(resolved.Scheme) {
+	case "data", "javascript":
+		return fallback, nil
+	default:
+		return resolved, nil
+	}
+}
+
 func (doc *HTMLDocument) GetElement() drivers.HTMLElement {
 	return doc.element
 }

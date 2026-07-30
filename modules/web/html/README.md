@@ -724,6 +724,9 @@ RETURN {
 
 | Function | Signature | Returns | Notes |
 | --- | --- | --- | --- |
+| `URL` | `URL(pageOrDocument)` | `String` | Returns the current document URL. |
+| `BASE_URL` | `BASE_URL(pageOrDocument)` | `String` | Returns the effective document base URL, including `<base>`. |
+| `RESOLVE_URL` | `RESOLVE_URL(pageOrDocument, url)` | `String` | Resolves a URL against the effective document base URL. |
 | `COOKIE_GET` | `COOKIE_GET(page, name)` | `HTTPCookie \| None` | Reads a page cookie by name. |
 | `COOKIE_SET` | `COOKIE_SET(page, cookieOrCookies...)` | `None` | Sets page cookies. |
 | `COOKIE_DEL` | `COOKIE_DEL(page, cookieOrNames...)` | `None` | Deletes page cookies. |

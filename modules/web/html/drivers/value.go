@@ -149,6 +149,13 @@ type (
 		GetChildDocuments(ctx context.Context) (runtime.List, error)
 	}
 
+	// DocumentURLTarget reads and resolves URLs using a document's live URL state.
+	DocumentURLTarget interface {
+		GetCurrentURL(ctx context.Context) (runtime.String, error)
+		GetBaseURL(ctx context.Context) (runtime.String, error)
+		ResolveURL(ctx context.Context, url runtime.String) (runtime.String, error)
+	}
+
 	// DocumentViewportTarget controls document scrolling and the viewport cursor.
 	// Methods return false without an error when the effective target cannot change.
 	DocumentViewportTarget interface {

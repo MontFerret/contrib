@@ -105,3 +105,30 @@ func (doc *HTMLDocument) GetElement() drivers.HTMLElement {
 func (doc *HTMLDocument) GetURL() runtime.String {
 	return runtime.NewString(doc.frameTree.Frame.URL)
 }
+
+func (doc *HTMLDocument) GetCurrentURL(ctx context.Context) (runtime.String, error) {
+	value, err := doc.eval.EvalValue(ctx, templates.GetDocumentURL())
+	if err != nil {
+		return runtime.EmptyString, err
+	}
+
+	return runtime.ToString(value), nil
+}
+
+func (doc *HTMLDocument) GetBaseURL(ctx context.Context) (runtime.String, error) {
+	value, err := doc.eval.EvalValue(ctx, templates.GetBaseURL())
+	if err != nil {
+		return runtime.EmptyString, err
+	}
+
+	return runtime.ToString(value), nil
+}
+
+func (doc *HTMLDocument) ResolveURL(ctx context.Context, url runtime.String) (runtime.String, error) {
+	value, err := doc.eval.EvalValue(ctx, templates.ResolveURL(url))
+	if err != nil {
+		return runtime.EmptyString, err
+	}
+
+	return runtime.ToString(value), nil
+}

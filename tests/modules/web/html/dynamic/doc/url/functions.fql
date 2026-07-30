@@ -1,0 +1,23 @@
+LET loaded = @lab.static.static + "/base-url.html"
+LET current = @lab.static.static + "/url-current?state=1#live"
+LET page = DOCUMENT(loaded, { driver: "cdp" })
+
+WAIT_ELEMENT(page, "iframe[name='url-frame']")
+
+LET doc = page.document
+LET frame = FIRST(FRAMES(page, "name", "url-frame"))
+LET base = @lab.static.static + "/url-assets/"
+LET frameURL = @lab.static.static + "/base-url-frame.html"
+LET frameBase = @lab.static.static + "/frame-assets/"
+
+T::EQ(URL(page), current)
+T::EQ(URL(doc), current)
+T::EQ(BASE_URL(page), base)
+T::EQ(BASE_URL(doc), base)
+T::EQ(RESOLVE_URL(page, "images/logo.png"), base + "images/logo.png")
+T::EQ(RESOLVE_URL(doc, "/images/logo.png"), @lab.static.static + "/images/logo.png")
+T::EQ(URL(frame), frameURL)
+T::EQ(BASE_URL(frame), frameBase)
+T::EQ(RESOLVE_URL(frame, "frame.png"), frameBase + "frame.png")
+
+RETURN NONE

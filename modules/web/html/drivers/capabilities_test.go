@@ -30,6 +30,7 @@ var (
 	_ drivers.NodeInspector          = (*memory.HTMLDocument)(nil)
 	_ drivers.QueryTarget            = (*memory.HTMLDocument)(nil)
 	_ drivers.DocumentMetadataTarget = (*memory.HTMLDocument)(nil)
+	_ drivers.DocumentURLTarget      = (*memory.HTMLDocument)(nil)
 	_ runtime.Queryable              = (*memory.HTMLDocument)(nil)
 
 	_ drivers.HTMLElement       = (*memory.HTMLElement)(nil)
@@ -61,6 +62,7 @@ var (
 	_ drivers.NodeInspector          = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.QueryTarget            = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.DocumentMetadataTarget = (*cdpdom.HTMLDocument)(nil)
+	_ drivers.DocumentURLTarget      = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.DocumentViewportTarget = (*cdpdom.HTMLDocument)(nil)
 	_ runtime.Dispatchable           = (*cdpdom.HTMLDocument)(nil)
 	_ runtime.Queryable              = (*cdpdom.HTMLDocument)(nil)
@@ -106,6 +108,7 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 		{name: "InteractionTarget", typ: reflect.TypeOf((*drivers.InteractionTarget)(nil)).Elem()},
 		{name: "WaitTarget", typ: reflect.TypeOf((*drivers.WaitTarget)(nil)).Elem()},
 		{name: "DocumentMetadataTarget", typ: reflect.TypeOf((*drivers.DocumentMetadataTarget)(nil)).Elem()},
+		{name: "DocumentURLTarget", typ: reflect.TypeOf((*drivers.DocumentURLTarget)(nil)).Elem()},
 		{name: "DocumentViewportTarget", typ: reflect.TypeOf((*drivers.DocumentViewportTarget)(nil)).Elem()},
 		{name: "PageStateTarget", typ: reflect.TypeOf((*drivers.PageStateTarget)(nil)).Elem()},
 		{name: "PageFrameTarget", typ: reflect.TypeOf((*drivers.PageFrameTarget)(nil)).Elem()},
@@ -136,6 +139,7 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 				"NodeInspector":          true,
 				"QueryTarget":            true,
 				"DocumentMetadataTarget": true,
+				"DocumentURLTarget":      true,
 			},
 		},
 		{
@@ -174,6 +178,7 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 				"NodeInspector":          true,
 				"QueryTarget":            true,
 				"DocumentMetadataTarget": true,
+				"DocumentURLTarget":      true,
 				"DocumentViewportTarget": true,
 			},
 		},
@@ -383,6 +388,27 @@ func TestDocumentCapabilityResolversStillCoerceFromPage(t *testing.T) {
 
 	if !doc.scrolledTop {
 		t.Fatal("expected page viewport resolver to delegate to the main frame")
+	}
+}
+
+func TestDocumentURLResolverCoercesFromPage(t *testing.T) {
+	t.Parallel()
+
+	page := newMemoryPage(t, `<html><head><base href="/assets/"></head><body></body></html>`)
+	ctx := context.Background()
+
+	target, err := drivers.ToDocumentURLTarget(page)
+	if err != nil {
+		t.Fatalf("expected page URL capability: %v", err)
+	}
+
+	base, err := target.GetBaseURL(ctx)
+	if err != nil {
+		t.Fatalf("unexpected base URL error: %v", err)
+	}
+
+	if base.String() != "https://example.com/assets/" {
+		t.Fatalf("expected main frame base URL, got %q", base)
 	}
 }
 

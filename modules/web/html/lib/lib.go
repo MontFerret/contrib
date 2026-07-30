@@ -33,6 +33,9 @@ func coreFunctionDefinitions() []sdk.FunctionDef {
 	return []sdk.FunctionDef{
 		sdk.Func("IS_HTML_ELEMENT", IsHTMLElement),
 		sdk.Func("IS_HTML_DOCUMENT", IsHTMLDocument),
+		sdk.Func("URL", URL),
+		sdk.Func("BASE_URL", BaseURL),
+		sdk.Func("RESOLVE_URL", ResolveURL),
 		sdk.Func("X", XPathSelector),
 		sdk.Func("XPATH", XPath),
 		sdk.Func("FRAMES", Frames),
