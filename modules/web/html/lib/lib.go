@@ -33,6 +33,9 @@ func coreFunctionDefinitions() []sdk.FunctionDef {
 	return []sdk.FunctionDef{
 		sdk.Func("IS_HTML_ELEMENT", IsHTMLElement),
 		sdk.Func("IS_HTML_DOCUMENT", IsHTMLDocument),
+		sdk.Func("URL", URL),
+		sdk.Func("BASE_URL", BaseURL),
+		sdk.Func("RESOLVE_URL", ResolveURL),
 		sdk.Func("X", XPathSelector),
 		sdk.Func("XPATH", XPath),
 		sdk.Func("FRAMES", Frames),
@@ -53,6 +56,7 @@ func coreFunctionDefinitions() []sdk.FunctionDef {
 		sdk.Func("ELEMENTS_COUNT", ElementsCount),
 		sdk.Func("FOCUS", Focus),
 		sdk.Func("HOVER", Hover),
+		sdk.Func("UNHOVER", Unhover),
 		sdk.Func("INNER_HTML", GetInnerHTML),
 		sdk.Func("INNER_HTML_SET", SetInnerHTML),
 		sdk.Func("INNER_HTML_ALL", GetInnerHTMLAll),

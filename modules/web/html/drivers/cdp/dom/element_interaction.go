@@ -113,3 +113,11 @@ func (el *HTMLElement) Hover(ctx context.Context) error {
 func (el *HTMLElement) HoverBySelector(ctx context.Context, selector drivers.QuerySelector) error {
 	return el.input.MoveMouseBySelector(ctx, el.id, selector)
 }
+
+func (el *HTMLElement) Unhover(ctx context.Context) error {
+	return el.input.Unhover(ctx, el.id)
+}
+
+func (el *HTMLElement) UnhoverBySelector(ctx context.Context, selector drivers.QuerySelector) error {
+	return el.input.UnhoverBySelector(ctx, el.id, selector)
+}

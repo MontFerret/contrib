@@ -11,8 +11,8 @@ import (
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selector - CSS selector.
 // @return {HTMLElement[]} - An array of matched HTML elements.
-func Elements(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	el, selector, err := queryArgs(ctx, args)
+func Elements(ctx context.Context, root, selectorValue runtime.Value) (runtime.Value, error) {
+	el, selector, err := queryArgs(ctx, root, selectorValue)
 
 	if err != nil {
 		return runtime.None, err

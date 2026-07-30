@@ -434,6 +434,7 @@ PRESS(ELEMENT(page, "input[name=q]"), "Enter")
 PRESS_SELECTOR(page, "input[name=q]", "Meta+A")
 INPUT_CLEAR(page, "input[name=q]")
 HOVER(page, ".menu")
+UNHOVER(page, ".menu")
 BLUR(page, "input[name=q]")
 MOUSE(page, 100, 200)
 ```
@@ -696,7 +697,8 @@ RETURN {
 | `FOCUS` | `FOCUS(root, selector?)` | `Boolean` | Focuses a root or selected element. |
 | `BLUR` | `BLUR(root, selector?)` | `Boolean` | Blurs a root or selected element. |
 | `HOVER` | `HOVER(root, selector?)` | `Boolean` | Hovers a root or selected element. |
-| `MOUSE` | `MOUSE(pageOrDocument, x, y)` | `None` | Moves the mouse to viewport coordinates. |
+| `UNHOVER` | `UNHOVER(root, selector?)` | `Boolean` | Moves the mouse outside a root or selected element using a randomized offset. |
+| `MOUSE` | `MOUSE(pageOrDocument, x, y)` | `Boolean` | Moves the mouse to absolute viewport coordinates; returns false when it cannot move further or is already at the target. |
 
 ### Navigation, Scrolling, And Waiting
 
@@ -706,10 +708,10 @@ RETURN {
 | `NAVIGATE_BACK` | `NAVIGATE_BACK(page, skip?)` | `Boolean` | Navigates backward in browser history. |
 | `NAVIGATE_FORWARD` | `NAVIGATE_FORWARD(page, skip?)` | `Boolean` | Navigates forward in browser history. |
 | `WAIT_NAVIGATION` | `WAIT_NAVIGATION(page, paramsOrTimeout?)` | `Boolean` | Waits for page or frame navigation. |
-| `SCROLL` | `SCROLL(root, x, y, options?)` | `Boolean` | Scrolls by viewport coordinates. |
-| `SCROLL_TOP` | `SCROLL_TOP(root, options?)` | `Boolean` | Scrolls to the top. |
-| `SCROLL_BOTTOM` | `SCROLL_BOTTOM(root, options?)` | `Boolean` | Scrolls to the bottom. |
-| `SCROLL_ELEMENT` | `SCROLL_ELEMENT(root, selectorOrOptions?, options?)` | `Boolean` | Scrolls an element into view. |
+| `SCROLL` | `SCROLL(root, x, y, options?)` | `Boolean` | Scrolls to absolute viewport coordinates; returns false when already at the effective target. |
+| `SCROLL_TOP` | `SCROLL_TOP(root, options?)` | `Boolean` | Scrolls to the top; returns false when already there. |
+| `SCROLL_BOTTOM` | `SCROLL_BOTTOM(root, options?)` | `Boolean` | Scrolls to the bottom; returns false when already there. |
+| `SCROLL_ELEMENT` | `SCROLL_ELEMENT(root, selectorOrOptions?, options?)` | `Boolean` | Scrolls an element into view; selector-based calls return false when it is already fully visible. |
 | `WAIT_ELEMENT` / `WAIT_NO_ELEMENT` | `WAIT_ELEMENT(root, selector)` | `Boolean` | Waits for element presence or absence. |
 | `WAIT_ATTR` / `WAIT_NO_ATTR` | `WAIT_ATTR(root, selector?, name, value)` | `Boolean` | Waits for attribute state. |
 | `WAIT_ATTR_ALL` / `WAIT_NO_ATTR_ALL` | `WAIT_ATTR_ALL(root, selector, name, value)` | `Boolean` | Waits for all matching elements. |
@@ -722,6 +724,9 @@ RETURN {
 
 | Function | Signature | Returns | Notes |
 | --- | --- | --- | --- |
+| `URL` | `URL(pageOrDocument)` | `String` | Returns the current document URL. |
+| `BASE_URL` | `BASE_URL(pageOrDocument)` | `String` | Returns the effective document base URL, including `<base>`. |
+| `RESOLVE_URL` | `RESOLVE_URL(pageOrDocument, url)` | `String` | Resolves a URL against the effective document base URL. |
 | `COOKIE_GET` | `COOKIE_GET(page, name)` | `HTTPCookie \| None` | Reads a page cookie by name. |
 | `COOKIE_SET` | `COOKIE_SET(page, cookieOrCookies...)` | `None` | Sets page cookies. |
 | `COOKIE_DEL` | `COOKIE_DEL(page, cookieOrNames...)` | `None` | Deletes page cookies. |

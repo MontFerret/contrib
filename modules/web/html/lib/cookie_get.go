@@ -11,21 +11,17 @@ import (
 // @param {HTMLPage} page - Target page.
 // @param {String} name - Cookie or cookie name to delete.
 // @return {HTTPCookie} - Cookie if found, otherwise None.
-func CookieGet(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	if err := runtime.ValidateArgs(args, 2, 2); err != nil {
-		return runtime.None, err
-	}
-
-	target, err := drivers.ToPageCookieReader(args[0])
+func CookieGet(ctx context.Context, root, nameValue runtime.Value) (runtime.Value, error) {
+	target, err := drivers.ToPageCookieReader(root)
 	if err != nil {
 		return runtime.None, err
 	}
 
-	if err := runtime.ValidateArgTypeAt(args, 1, runtime.TypeString); err != nil {
+	if err := runtime.ValidateArgType(nameValue, 1, runtime.TypeString); err != nil {
 		return runtime.None, err
 	}
 
-	name := args[1].(runtime.String)
+	name := nameValue.(runtime.String)
 	cookies, err := target.GetCookies(ctx)
 	if err != nil {
 		return runtime.None, err

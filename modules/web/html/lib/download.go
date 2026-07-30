@@ -11,21 +11,14 @@ import (
 // Download downloads a resource from the given URL.
 // @param {String} url - URL to download.
 // @return {Binary} - A base64 encoded string in binary format.
-func Download(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
-	err := runtime.ValidateArgs(args, 1, 1)
+func Download(_ context.Context, url runtime.Value) (runtime.Value, error) {
+	err := runtime.ValidateType(url, runtime.TypeString)
 
 	if err != nil {
 		return runtime.None, err
 	}
 
-	arg1 := args[0]
-	err = runtime.ValidateType(arg1, runtime.TypeString)
-
-	if err != nil {
-		return runtime.None, err
-	}
-
-	resp, err := http.Get(arg1.String())
+	resp, err := http.Get(url.String())
 
 	if err != nil {
 		return runtime.None, err

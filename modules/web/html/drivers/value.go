@@ -94,6 +94,8 @@ type (
 		BlurBySelector(ctx context.Context, selector QuerySelector) error
 		Hover(ctx context.Context) error
 		HoverBySelector(ctx context.Context, selector QuerySelector) error
+		Unhover(ctx context.Context) error
+		UnhoverBySelector(ctx context.Context, selector QuerySelector) error
 	}
 
 	WaitTarget interface {
@@ -147,12 +149,21 @@ type (
 		GetChildDocuments(ctx context.Context) (runtime.List, error)
 	}
 
+	// DocumentURLTarget reads and resolves URLs using a document's live URL state.
+	DocumentURLTarget interface {
+		GetCurrentURL(ctx context.Context) (runtime.String, error)
+		GetBaseURL(ctx context.Context) (runtime.String, error)
+		ResolveURL(ctx context.Context, url runtime.String) (runtime.String, error)
+	}
+
+	// DocumentViewportTarget controls document scrolling and the viewport cursor.
+	// Methods return false without an error when the effective target cannot change.
 	DocumentViewportTarget interface {
-		Scroll(ctx context.Context, options ScrollOptions) error
-		ScrollTop(ctx context.Context, options ScrollOptions) error
-		ScrollBottom(ctx context.Context, options ScrollOptions) error
-		ScrollBySelector(ctx context.Context, selector QuerySelector, options ScrollOptions) error
-		MoveMouseByXY(ctx context.Context, x, y runtime.Float) error
+		Scroll(ctx context.Context, options ScrollOptions) (runtime.Boolean, error)
+		ScrollTop(ctx context.Context, options ScrollOptions) (runtime.Boolean, error)
+		ScrollBottom(ctx context.Context, options ScrollOptions) (runtime.Boolean, error)
+		ScrollBySelector(ctx context.Context, selector QuerySelector, options ScrollOptions) (runtime.Boolean, error)
+		MoveMouseByXY(ctx context.Context, x, y runtime.Float) (runtime.Boolean, error)
 	}
 
 	PageStateTarget interface {

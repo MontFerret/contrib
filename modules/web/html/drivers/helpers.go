@@ -135,6 +135,10 @@ func ToDocumentViewportTarget(value runtime.Value) (DocumentViewportTarget, erro
 	return toDocumentCapability[DocumentViewportTarget](value, "document viewport")
 }
 
+func ToDocumentURLTarget(value runtime.Value) (DocumentURLTarget, error) {
+	return toDocumentCapability[DocumentURLTarget](value, "document URL")
+}
+
 func ToPageCookieReader(value runtime.Value) (PageCookieReader, error) {
 	return toPageCapability[PageCookieReader](value, "page cookies")
 }

@@ -30,6 +30,7 @@ var (
 	_ drivers.NodeInspector          = (*memory.HTMLDocument)(nil)
 	_ drivers.QueryTarget            = (*memory.HTMLDocument)(nil)
 	_ drivers.DocumentMetadataTarget = (*memory.HTMLDocument)(nil)
+	_ drivers.DocumentURLTarget      = (*memory.HTMLDocument)(nil)
 	_ runtime.Queryable              = (*memory.HTMLDocument)(nil)
 
 	_ drivers.HTMLElement       = (*memory.HTMLElement)(nil)
@@ -61,9 +62,11 @@ var (
 	_ drivers.NodeInspector          = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.QueryTarget            = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.DocumentMetadataTarget = (*cdpdom.HTMLDocument)(nil)
+	_ drivers.DocumentURLTarget      = (*cdpdom.HTMLDocument)(nil)
 	_ drivers.DocumentViewportTarget = (*cdpdom.HTMLDocument)(nil)
 	_ runtime.Dispatchable           = (*cdpdom.HTMLDocument)(nil)
 	_ runtime.Queryable              = (*cdpdom.HTMLDocument)(nil)
+	_ drivers.DocumentViewportTarget = (*capabilityDocument)(nil)
 
 	_ drivers.HTMLElement       = (*cdpdom.HTMLElement)(nil)
 	_ drivers.NodeInspector     = (*cdpdom.HTMLElement)(nil)
@@ -105,6 +108,7 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 		{name: "InteractionTarget", typ: reflect.TypeOf((*drivers.InteractionTarget)(nil)).Elem()},
 		{name: "WaitTarget", typ: reflect.TypeOf((*drivers.WaitTarget)(nil)).Elem()},
 		{name: "DocumentMetadataTarget", typ: reflect.TypeOf((*drivers.DocumentMetadataTarget)(nil)).Elem()},
+		{name: "DocumentURLTarget", typ: reflect.TypeOf((*drivers.DocumentURLTarget)(nil)).Elem()},
 		{name: "DocumentViewportTarget", typ: reflect.TypeOf((*drivers.DocumentViewportTarget)(nil)).Elem()},
 		{name: "PageStateTarget", typ: reflect.TypeOf((*drivers.PageStateTarget)(nil)).Elem()},
 		{name: "PageFrameTarget", typ: reflect.TypeOf((*drivers.PageFrameTarget)(nil)).Elem()},
@@ -135,6 +139,7 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 				"NodeInspector":          true,
 				"QueryTarget":            true,
 				"DocumentMetadataTarget": true,
+				"DocumentURLTarget":      true,
 			},
 		},
 		{
@@ -173,6 +178,7 @@ func TestBackendCapabilityMatrix(t *testing.T) {
 				"NodeInspector":          true,
 				"QueryTarget":            true,
 				"DocumentMetadataTarget": true,
+				"DocumentURLTarget":      true,
 				"DocumentViewportTarget": true,
 			},
 		},
@@ -371,12 +377,38 @@ func TestDocumentCapabilityResolversStillCoerceFromPage(t *testing.T) {
 		t.Fatalf("expected page viewport capability: %v", err)
 	}
 
-	if err := viewport.ScrollTop(ctx, drivers.ScrollOptions{}); err != nil {
+	scrolled, err := viewport.ScrollTop(ctx, drivers.ScrollOptions{})
+	if err != nil {
 		t.Fatalf("unexpected scroll error: %v", err)
+	}
+
+	if scrolled != runtime.False {
+		t.Fatalf("expected main frame result to be propagated, got %v", scrolled)
 	}
 
 	if !doc.scrolledTop {
 		t.Fatal("expected page viewport resolver to delegate to the main frame")
+	}
+}
+
+func TestDocumentURLResolverCoercesFromPage(t *testing.T) {
+	t.Parallel()
+
+	page := newMemoryPage(t, `<html><head><base href="/assets/"></head><body></body></html>`)
+	ctx := context.Background()
+
+	target, err := drivers.ToDocumentURLTarget(page)
+	if err != nil {
+		t.Fatalf("expected page URL capability: %v", err)
+	}
+
+	base, err := target.GetBaseURL(ctx)
+	if err != nil {
+		t.Fatalf("unexpected base URL error: %v", err)
+	}
+
+	if base.String() != "https://example.com/assets/" {
+		t.Fatalf("expected main frame base URL, got %q", base)
 	}
 }
 
@@ -429,25 +461,25 @@ func (doc *capabilityDocument) GetElement() drivers.HTMLElement {
 	return doc.element
 }
 
-func (doc *capabilityDocument) Scroll(_ context.Context, _ drivers.ScrollOptions) error {
-	return nil
+func (doc *capabilityDocument) Scroll(_ context.Context, _ drivers.ScrollOptions) (runtime.Boolean, error) {
+	return runtime.True, nil
 }
 
-func (doc *capabilityDocument) ScrollTop(_ context.Context, _ drivers.ScrollOptions) error {
+func (doc *capabilityDocument) ScrollTop(_ context.Context, _ drivers.ScrollOptions) (runtime.Boolean, error) {
 	doc.scrolledTop = true
-	return nil
+	return runtime.False, nil
 }
 
-func (doc *capabilityDocument) ScrollBottom(_ context.Context, _ drivers.ScrollOptions) error {
-	return nil
+func (doc *capabilityDocument) ScrollBottom(_ context.Context, _ drivers.ScrollOptions) (runtime.Boolean, error) {
+	return runtime.True, nil
 }
 
-func (doc *capabilityDocument) ScrollBySelector(_ context.Context, _ drivers.QuerySelector, _ drivers.ScrollOptions) error {
-	return nil
+func (doc *capabilityDocument) ScrollBySelector(_ context.Context, _ drivers.QuerySelector, _ drivers.ScrollOptions) (runtime.Boolean, error) {
+	return runtime.True, nil
 }
 
-func (doc *capabilityDocument) MoveMouseByXY(_ context.Context, _, _ runtime.Float) error {
-	return nil
+func (doc *capabilityDocument) MoveMouseByXY(_ context.Context, _, _ runtime.Float) (runtime.Boolean, error) {
+	return runtime.True, nil
 }
 
 type capabilityElement struct {
@@ -528,6 +560,14 @@ func (el *capabilityElement) Hover(_ context.Context) error {
 }
 
 func (el *capabilityElement) HoverBySelector(_ context.Context, _ drivers.QuerySelector) error {
+	return nil
+}
+
+func (el *capabilityElement) Unhover(_ context.Context) error {
+	return nil
+}
+
+func (el *capabilityElement) UnhoverBySelector(_ context.Context, _ drivers.QuerySelector) error {
 	return nil
 }
 

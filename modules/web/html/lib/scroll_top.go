@@ -8,13 +8,12 @@ import (
 )
 
 // ScrollTop scrolls the document window to its top.
-// @param {HTMLDocument} document - HTML document.
-// @param {Int | Float} x - X coordinate.
-// @param {Int | Float} y - Y coordinate.
+// @param {HTMLPage | HTMLDocument} document - HTML page or document.
 // @param {Object} [params] - Scroll params.
 // @param {String} [params.behavior="instant"] - Scroll behavior
 // @param {String} [params.block="center"] - Scroll vertical alignment.
 // @param {String} [params.inline="center"] - Scroll horizontal alignment.
+// @return {Boolean} - True if scrolling was initiated, otherwise false.
 func ScrollTop(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return runtime.None, err
@@ -36,5 +35,5 @@ func ScrollTop(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 		}
 	}
 
-	return runtime.True, doc.ScrollTop(ctx, opts)
+	return doc.ScrollTop(ctx, opts)
 }

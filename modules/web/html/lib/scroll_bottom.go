@@ -8,13 +8,12 @@ import (
 )
 
 // ScrollBottom scrolls the document window to its bottom.
-// @param {HTMLDocument} document - HTML document.
-// @param {Int | Float} x - X coordinate.
-// @param {Int | Float} y - Y coordinate.
+// @param {HTMLPage | HTMLDocument} document - HTML page or document.
 // @param {Object} [params] - Scroll params.
 // @param {String} [params.behavior="instant"] - Scroll behavior
 // @param {String} [params.block="center"] - Scroll vertical alignment.
 // @param {String} [params.inline="center"] - Scroll horizontal alignment.
+// @return {Boolean} - True if scrolling was initiated, otherwise false.
 func ScrollBottom(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 1, 2)
 
@@ -38,5 +37,5 @@ func ScrollBottom(ctx context.Context, args ...runtime.Value) (runtime.Value, er
 		}
 	}
 
-	return runtime.True, doc.ScrollBottom(ctx, opts)
+	return doc.ScrollBottom(ctx, opts)
 }

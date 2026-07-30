@@ -85,7 +85,9 @@ func (target targetRef) scroll(ctx context.Context, manager *Manager, options dr
 		return runtime.Error(runtime.ErrMissedArgument, "selector")
 	}
 
-	return manager.ScrollIntoViewBySelector(ctx, target.parentID, *target.selector, options)
+	_, err := manager.ScrollIntoViewBySelector(ctx, target.parentID, *target.selector, options)
+
+	return err
 }
 
 func (target targetRef) resolve(

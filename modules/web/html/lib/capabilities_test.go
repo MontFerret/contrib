@@ -146,6 +146,64 @@ func TestScrollTopUsesViewportCapabilityFromPage(t *testing.T) {
 	}
 }
 
+func TestViewportFunctionsPropagateNoOpResult(t *testing.T) {
+	t.Parallel()
+
+	page := newTestPage(t, `<html><body><div id="target">viewport</div></body></html>`)
+	page.frame.viewportResult = runtime.False
+	ctx := context.Background()
+
+	cases := []struct {
+		call func() (runtime.Value, error)
+		name string
+	}{
+		{
+			name: "scroll",
+			call: func() (runtime.Value, error) {
+				return ScrollXY(ctx, page, runtime.NewInt(0), runtime.NewInt(100))
+			},
+		},
+		{
+			name: "scroll top",
+			call: func() (runtime.Value, error) {
+				return ScrollTop(ctx, page)
+			},
+		},
+		{
+			name: "scroll bottom",
+			call: func() (runtime.Value, error) {
+				return ScrollBottom(ctx, page)
+			},
+		},
+		{
+			name: "scroll element by selector",
+			call: func() (runtime.Value, error) {
+				return ScrollInto(ctx, page, runtime.NewString("#target"))
+			},
+		},
+		{
+			name: "mouse",
+			call: func() (runtime.Value, error) {
+				return MouseMoveXY(ctx, page, runtime.NewInt(100), runtime.NewInt(200))
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			value, err := tc.call()
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if value != runtime.False {
+				t.Fatalf("expected no-op result to be propagated, got %v", value)
+			}
+		})
+	}
+}
+
 func TestNavigateUsesPageNavigationCapability(t *testing.T) {
 	t.Parallel()
 
@@ -349,41 +407,44 @@ func (p *testPage) CaptureScreenshot(_ context.Context, _ drivers.ScreenshotPara
 
 type testDocument struct {
 	*memory.HTMLDocument
-	element     *testElement
-	scrolledTop bool
+	element        *testElement
+	viewportResult runtime.Boolean
+	scrolledTop    bool
 }
 
 func (doc *testDocument) GetElement() drivers.HTMLElement {
 	return doc.element
 }
 
-func (doc *testDocument) Scroll(_ context.Context, _ drivers.ScrollOptions) error {
-	return nil
+func (doc *testDocument) Scroll(_ context.Context, _ drivers.ScrollOptions) (runtime.Boolean, error) {
+	return doc.viewportResult, nil
 }
 
-func (doc *testDocument) ScrollTop(_ context.Context, _ drivers.ScrollOptions) error {
+func (doc *testDocument) ScrollTop(_ context.Context, _ drivers.ScrollOptions) (runtime.Boolean, error) {
 	doc.scrolledTop = true
-	return nil
+	return doc.viewportResult, nil
 }
 
-func (doc *testDocument) ScrollBottom(_ context.Context, _ drivers.ScrollOptions) error {
-	return nil
+func (doc *testDocument) ScrollBottom(_ context.Context, _ drivers.ScrollOptions) (runtime.Boolean, error) {
+	return doc.viewportResult, nil
 }
 
-func (doc *testDocument) ScrollBySelector(_ context.Context, _ drivers.QuerySelector, _ drivers.ScrollOptions) error {
-	return nil
+func (doc *testDocument) ScrollBySelector(_ context.Context, _ drivers.QuerySelector, _ drivers.ScrollOptions) (runtime.Boolean, error) {
+	return doc.viewportResult, nil
 }
 
-func (doc *testDocument) MoveMouseByXY(_ context.Context, _, _ runtime.Float) error {
-	return nil
+func (doc *testDocument) MoveMouseByXY(_ context.Context, _, _ runtime.Float) (runtime.Boolean, error) {
+	return doc.viewportResult, nil
 }
 
 type testElement struct {
 	*memory.HTMLElement
-	clickedSelector  string
-	selectedSelector string
-	waitSelector     string
-	scrolledIntoView bool
+	clickedSelector   string
+	selectedSelector  string
+	unhoveredSelector string
+	waitSelector      string
+	scrolledIntoView  bool
+	unhovered         bool
 }
 
 func (el *testElement) Click(_ context.Context, _ runtime.Int) error {
@@ -462,6 +523,16 @@ func (el *testElement) HoverBySelector(_ context.Context, _ drivers.QuerySelecto
 	return nil
 }
 
+func (el *testElement) Unhover(_ context.Context) error {
+	el.unhovered = true
+	return nil
+}
+
+func (el *testElement) UnhoverBySelector(_ context.Context, selector drivers.QuerySelector) error {
+	el.unhoveredSelector = selector.String()
+	return nil
+}
+
 func (el *testElement) WaitForElement(_ context.Context, selector drivers.QuerySelector, _ drivers.WaitEvent) error {
 	el.waitSelector = selector.String()
 	return nil
@@ -529,7 +600,8 @@ func newTestDocument(t *testing.T, markup string) *testDocument {
 	}
 
 	return &testDocument{
-		HTMLDocument: base,
+		HTMLDocument:   base,
+		viewportResult: runtime.True,
 		element: &testElement{
 			HTMLElement: element,
 		},

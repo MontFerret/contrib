@@ -12,10 +12,25 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/utils"
 )
 
-type Quad struct {
-	X float64
-	Y float64
-}
+type (
+	Quad struct {
+		X float64
+		Y float64
+	}
+
+	elementBounds struct {
+		left   float64
+		top    float64
+		right  float64
+		bottom float64
+	}
+
+	mouseMoveCandidate struct {
+		point    Quad
+		distance float64
+		viable   bool
+	}
+)
 
 func fromProtocolQuad(quad dom.Quad) []Quad {
 	return []Quad{
@@ -35,6 +50,17 @@ func fromProtocolQuad(quad dom.Quad) []Quad {
 			X: quad[6],
 			Y: quad[7],
 		},
+	}
+}
+
+func newMouseMoveCandidate(cursor, point Quad, viewportWidth, viewportHeight float64) mouseMoveCandidate {
+	xDelta := point.X - cursor.X
+	yDelta := point.Y - cursor.Y
+
+	return mouseMoveCandidate{
+		point:    point,
+		distance: xDelta*xDelta + yDelta*yDelta,
+		viable:   point.X >= 0 && point.X <= viewportWidth && point.Y >= 0 && point.Y <= viewportHeight,
 	}
 }
 
@@ -165,10 +191,105 @@ func getElementPoint(ctx context.Context, client *cdp.Client, qargs *dom.GetCont
 	return Quad{}, errors.New("node is either not visible or not an HTMLElement")
 }
 
-func GetClickablePointByObjectID(ctx context.Context, client *cdp.Client, objectID runtime.RemoteObjectID) (Quad, error) {
+func getElementBounds(ctx context.Context, client *cdp.Client, qargs *dom.GetContentQuadsArgs) (elementBounds, float64, float64, error) {
+	contentQuadsReply, err := client.DOM.GetContentQuads(ctx, qargs)
+	if err != nil {
+		return elementBounds{}, 0, 0, err
+	}
+
+	if len(contentQuadsReply.Quads) == 0 {
+		return elementBounds{}, 0, 0, errors.New("node is either not visible or not an HTMLElement")
+	}
+
+	layoutMetricsReply, err := client.Page.GetLayoutMetrics(ctx)
+	if err != nil {
+		return elementBounds{}, 0, 0, err
+	}
+
+	clientWidth, clientHeight := utils.GetLayoutViewportWH(layoutMetricsReply)
+	var bounds elementBounds
+	found := false
+
+	for _, protocolQuad := range contentQuadsReply.Quads {
+		quad := intersectQuadWithViewport(fromProtocolQuad(protocolQuad), float64(clientWidth), float64(clientHeight))
+
+		if computeQuadArea(quad) <= 1 {
+			continue
+		}
+
+		for _, point := range quad {
+			if !found {
+				bounds = elementBounds{
+					left:   point.X,
+					top:    point.Y,
+					right:  point.X,
+					bottom: point.Y,
+				}
+				found = true
+				continue
+			}
+
+			bounds.left = math.Min(bounds.left, point.X)
+			bounds.top = math.Min(bounds.top, point.Y)
+			bounds.right = math.Max(bounds.right, point.X)
+			bounds.bottom = math.Max(bounds.bottom, point.Y)
+		}
+	}
+
+	if !found {
+		return elementBounds{}, 0, 0, errors.New("node is either not visible or not an HTMLElement")
+	}
+
+	return bounds, float64(clientWidth), float64(clientHeight), nil
+}
+
+func getMouseMovePoint(bounds elementBounds, cursor Quad, viewportWidth, viewportHeight, distance float64) Quad {
+	horizontalY := math.Min(math.Max(cursor.Y, bounds.top), bounds.bottom)
+	verticalX := math.Min(math.Max(cursor.X, bounds.left), bounds.right)
+	candidates := []mouseMoveCandidate{
+		newMouseMoveCandidate(cursor, Quad{X: bounds.left - distance, Y: horizontalY}, viewportWidth, viewportHeight),
+		newMouseMoveCandidate(cursor, Quad{X: bounds.right + distance, Y: horizontalY}, viewportWidth, viewportHeight),
+		newMouseMoveCandidate(cursor, Quad{X: verticalX, Y: bounds.top - distance}, viewportWidth, viewportHeight),
+		newMouseMoveCandidate(cursor, Quad{X: verticalX, Y: bounds.bottom + distance}, viewportWidth, viewportHeight),
+	}
+
+	best := candidates[0]
+
+	for _, candidate := range candidates[1:] {
+		switch {
+		case candidate.viable && !best.viable:
+			best = candidate
+		case candidate.viable == best.viable && candidate.distance < best.distance:
+			best = candidate
+		}
+	}
+
+	return best.point
+}
+
+func getMouseMovePointByObjectID(
+	ctx context.Context,
+	client *cdp.Client,
+	objectID runtime.RemoteObjectID,
+	cursor Quad,
+	distance float64,
+) (Quad, error) {
+	bounds, viewportWidth, viewportHeight, err := getElementBounds(
+		ctx,
+		client,
+		dom.NewGetContentQuadsArgs().SetObjectID(objectID),
+	)
+	if err != nil {
+		return Quad{}, err
+	}
+
+	return getMouseMovePoint(bounds, cursor, viewportWidth, viewportHeight, distance), nil
+}
+
+func getClickablePointByObjectID(ctx context.Context, client *cdp.Client, objectID runtime.RemoteObjectID) (Quad, error) {
 	return getClickablePoint(ctx, client, dom.NewGetContentQuadsArgs().SetObjectID(objectID))
 }
 
-func GetElementPointByObjectID(ctx context.Context, client *cdp.Client, objectID runtime.RemoteObjectID, xOffset, yOffset *float64) (Quad, error) {
+func getElementPointByObjectID(ctx context.Context, client *cdp.Client, objectID runtime.RemoteObjectID, xOffset, yOffset *float64) (Quad, error) {
 	return getElementPoint(ctx, client, dom.NewGetContentQuadsArgs().SetObjectID(objectID), xOffset, yOffset)
 }

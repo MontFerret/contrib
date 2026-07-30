@@ -17,6 +17,7 @@ import (
 // @param {String} [params.behavior="instant"] - Scroll behavior
 // @param {String} [params.block="center"] - Scroll vertical alignment.
 // @param {String} [params.inline="center"] - Scroll horizontal alignment.
+// @return {Boolean} - True if scrolling was initiated, otherwise false.
 func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 1, 3)
 
@@ -100,7 +101,7 @@ func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, erro
 
 	if doc != nil {
 		if selector.String() != "" {
-			return runtime.True, doc.ScrollBySelector(ctx, selector, opts)
+			return doc.ScrollBySelector(ctx, selector, opts)
 		}
 
 		target, err = toRootInteractionTarget(args[0])
