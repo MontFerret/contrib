@@ -149,12 +149,14 @@ type (
 		GetChildDocuments(ctx context.Context) (runtime.List, error)
 	}
 
+	// DocumentViewportTarget controls document scrolling and the viewport cursor.
+	// Methods return false without an error when the effective target cannot change.
 	DocumentViewportTarget interface {
-		Scroll(ctx context.Context, options ScrollOptions) error
-		ScrollTop(ctx context.Context, options ScrollOptions) error
-		ScrollBottom(ctx context.Context, options ScrollOptions) error
-		ScrollBySelector(ctx context.Context, selector QuerySelector, options ScrollOptions) error
-		MoveMouseByXY(ctx context.Context, x, y runtime.Float) error
+		Scroll(ctx context.Context, options ScrollOptions) (runtime.Boolean, error)
+		ScrollTop(ctx context.Context, options ScrollOptions) (runtime.Boolean, error)
+		ScrollBottom(ctx context.Context, options ScrollOptions) (runtime.Boolean, error)
+		ScrollBySelector(ctx context.Context, selector QuerySelector, options ScrollOptions) (runtime.Boolean, error)
+		MoveMouseByXY(ctx context.Context, x, y runtime.Float) (runtime.Boolean, error)
 	}
 
 	PageStateTarget interface {

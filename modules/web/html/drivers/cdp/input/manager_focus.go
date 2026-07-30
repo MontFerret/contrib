@@ -9,6 +9,7 @@ import (
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/utils"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -128,7 +129,7 @@ func (m *Manager) UnhoverBySelector(ctx context.Context, id cdpruntime.RemoteObj
 	return nil
 }
 
-func (m *Manager) MoveMouseByXY(ctx context.Context, xv, yv runtime.Float) error {
+func (m *Manager) MoveMouseByXY(ctx context.Context, xv, yv runtime.Float) (runtime.Boolean, error) {
 	x := float64(xv)
 	y := float64(yv)
 
@@ -137,22 +138,32 @@ func (m *Manager) MoveMouseByXY(ctx context.Context, xv, yv runtime.Float) error
 		Float64("y", y).
 		Msg("starting to move the mouse towards an element by given coordinates")
 
-	if err := m.ScrollByXY(ctx, drivers.ScrollOptions{
-		Top:  xv,
-		Left: yv,
-	}); err != nil {
-		return err
+	layoutMetrics, err := m.client.Page.GetLayoutMetrics(ctx)
+	if err != nil {
+		m.logger.Trace().Err(err).Msg("failed to get layout viewport metrics")
+
+		return runtime.False, err
+	}
+
+	width, height := utils.GetLayoutViewportWH(layoutMetrics)
+	x = min(max(x, 0), float64(max(width-1, 0)))
+	y = min(max(y, 0), float64(max(height-1, 0)))
+
+	if x == m.mouse.x && y == m.mouse.y {
+		m.logger.Trace().Msg("mouse is already at the requested coordinates")
+
+		return runtime.False, nil
 	}
 
 	if err := m.mouse.Move(ctx, x, y); err != nil {
 		m.logger.Trace().Err(err).Msg("failed to move the mouse towards an element by given coordinates")
 
-		return err
+		return runtime.False, err
 	}
 
 	m.logger.Trace().Msg("moved the mouse")
 
-	return nil
+	return runtime.True, nil
 }
 
 func (m *Manager) Click(ctx context.Context, objectID cdpruntime.RemoteObjectID, count int) error {

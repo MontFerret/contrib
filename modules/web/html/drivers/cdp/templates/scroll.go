@@ -21,14 +21,30 @@ const (
 	);
 }`
 
-	scroll = `(opts) => {
+	scrollToPositionFragment = `function scrollToPosition(left, top, opts) {
+	const scrollingElement = document.scrollingElement || document.documentElement || document.body;
+	if (scrollingElement == null) {
+		return false;
+	}
+
+	const maxLeft = Math.max(0, scrollingElement.scrollWidth - scrollingElement.clientWidth);
+	const maxTop = Math.max(0, scrollingElement.scrollHeight - scrollingElement.clientHeight);
+	const targetLeft = Math.min(Math.max(left, 0), maxLeft);
+	const targetTop = Math.min(Math.max(top, 0), maxTop);
+
+	if (scrollingElement.scrollLeft === targetLeft && scrollingElement.scrollTop === targetTop) {
+		return false;
+	}
+
 	window.scrollTo({
-		left: opts.left,
-		top: opts.top,
+		left: targetLeft,
+		top: targetTop,
 		behavior: opts.behavior,
 		block: opts.block, 
 		inline: opts.inline
 	});
+
+	return true;
 }`
 
 	scrollBy = `(opts) => {
@@ -38,29 +54,27 @@ const (
 		behavior: opts.behavior
 	});
 }`
-
-	scrollTop = `(opts) => {
-	window.scrollTo({
-		left: 0,
-		top: 0,
-		behavior: opts.behavior,
-		block: opts.block, 
-		inline: opts.inline
-	});
-}`
-
-	scrollBottom = `(opts) => {
-	window.scrollTo({
-		left: 0,
-		top: window.document.body.scrollHeight,
-		behavior: opts.behavior,
-		block: opts.block, 
-		inline: opts.inline
-	});
-}`
 )
 
 var (
+	scroll = fmt.Sprintf(`(opts) => {
+	%s
+
+	return scrollToPosition(opts.left, opts.top, opts);
+}`, scrollToPositionFragment)
+
+	scrollTop = fmt.Sprintf(`(opts) => {
+	%s
+
+	return scrollToPosition(0, 0, opts);
+}`, scrollToPositionFragment)
+
+	scrollBottom = fmt.Sprintf(`(opts) => {
+	%s
+
+	return scrollToPosition(0, Number.MAX_SAFE_INTEGER, opts);
+}`, scrollToPositionFragment)
+
 	scrollIntoView = fmt.Sprintf(`(el, opts) => {
 	%s
 
@@ -82,13 +96,15 @@ var (
 
 		%s
 
-		if (!isInViewport(found)) {
-			found.scrollIntoView({
-				behavior: opts.behavior,
-				block: opts.block, 
-				inline: opts.inline
-  			});
+		if (isInViewport(found)) {
+			return false;
 		}
+
+		found.scrollIntoView({
+			behavior: opts.behavior,
+			block: opts.block,
+			inline: opts.inline
+		});
 
 		return true;
 }`, notFoundErrorFragment, isElementInViewportFragment)
@@ -100,13 +116,15 @@ var (
 
 		%s
 
-		if (!isInViewport(found)) {
-			found.scrollIntoView({
-				behavior: opts.behavior,
-				block: opts.block, 
-				inline: opts.inline
-  			});
+		if (isInViewport(found)) {
+			return false;
 		}
+
+		found.scrollIntoView({
+			behavior: opts.behavior,
+			block: opts.block,
+			inline: opts.inline
+		});
 
 		return true;
 }`, xpathAsElementFragment, notFoundErrorFragment, isElementInViewportFragment)

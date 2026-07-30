@@ -1,0 +1,30 @@
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET options = { behavior: "instant" }
+LET doc = DOCUMENT(url, { driver: "cdp" })
+
+WAIT_ELEMENT(doc, "#page-form")
+
+T::FALSE(SCROLL_TOP(doc, options))
+
+T::TRUE(SCROLL(doc, 0, 300, options))
+WAIT(50)
+T::GT(TO_INT(INNER_TEXT(doc, "#scroll_output")), 0)
+T::FALSE(SCROLL(doc, 0, 300, options))
+
+T::TRUE(SCROLL_BOTTOM(doc, options))
+WAIT(50)
+T::GT(TO_INT(INNER_TEXT(doc, "#scroll_output")), 300)
+T::FALSE(SCROLL_BOTTOM(doc, options))
+T::FALSE(SCROLL(doc, 0, 999999, options))
+
+T::TRUE(SCROLL_TOP(doc, options))
+WAIT(50)
+T::EQ(INNER_TEXT(doc, "#scroll_output"), "0")
+T::FALSE(SCROLL_TOP(doc, options))
+
+T::FALSE(SCROLL_ELEMENT(doc, "#text_input", options))
+T::TRUE(SCROLL_BOTTOM(doc, options))
+T::TRUE(SCROLL_ELEMENT(doc, "#text_input", options))
+T::FALSE(SCROLL_ELEMENT(doc, "#text_input", options))
+
+RETURN NONE

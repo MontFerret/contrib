@@ -7,10 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// MouseMoveXY moves the mouse by given coordinates.
-// @param {HTMLDocument} document - HTML document.
+// MouseMoveXY moves the mouse to given viewport coordinates.
+// @param {HTMLPage | HTMLDocument} document - HTML page or document.
 // @param {Int|Float} x - X coordinate.
 // @param {Int|Float} y - Y coordinate.
+// @return {Boolean} - True if the mouse was moved, otherwise false.
 func MouseMoveXY(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 3, 3)
 
@@ -48,5 +49,5 @@ func MouseMoveXY(ctx context.Context, args ...runtime.Value) (runtime.Value, err
 		return runtime.None, err
 	}
 
-	return runtime.None, doc.MoveMouseByXY(ctx, x, y)
+	return doc.MoveMouseByXY(ctx, x, y)
 }

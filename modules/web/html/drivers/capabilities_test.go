@@ -64,6 +64,7 @@ var (
 	_ drivers.DocumentViewportTarget = (*cdpdom.HTMLDocument)(nil)
 	_ runtime.Dispatchable           = (*cdpdom.HTMLDocument)(nil)
 	_ runtime.Queryable              = (*cdpdom.HTMLDocument)(nil)
+	_ drivers.DocumentViewportTarget = (*capabilityDocument)(nil)
 
 	_ drivers.HTMLElement       = (*cdpdom.HTMLElement)(nil)
 	_ drivers.NodeInspector     = (*cdpdom.HTMLElement)(nil)
@@ -371,8 +372,13 @@ func TestDocumentCapabilityResolversStillCoerceFromPage(t *testing.T) {
 		t.Fatalf("expected page viewport capability: %v", err)
 	}
 
-	if err := viewport.ScrollTop(ctx, drivers.ScrollOptions{}); err != nil {
+	scrolled, err := viewport.ScrollTop(ctx, drivers.ScrollOptions{})
+	if err != nil {
 		t.Fatalf("unexpected scroll error: %v", err)
+	}
+
+	if scrolled != runtime.False {
+		t.Fatalf("expected main frame result to be propagated, got %v", scrolled)
 	}
 
 	if !doc.scrolledTop {
@@ -429,25 +435,25 @@ func (doc *capabilityDocument) GetElement() drivers.HTMLElement {
 	return doc.element
 }
 
-func (doc *capabilityDocument) Scroll(_ context.Context, _ drivers.ScrollOptions) error {
-	return nil
+func (doc *capabilityDocument) Scroll(_ context.Context, _ drivers.ScrollOptions) (runtime.Boolean, error) {
+	return runtime.True, nil
 }
 
-func (doc *capabilityDocument) ScrollTop(_ context.Context, _ drivers.ScrollOptions) error {
+func (doc *capabilityDocument) ScrollTop(_ context.Context, _ drivers.ScrollOptions) (runtime.Boolean, error) {
 	doc.scrolledTop = true
-	return nil
+	return runtime.False, nil
 }
 
-func (doc *capabilityDocument) ScrollBottom(_ context.Context, _ drivers.ScrollOptions) error {
-	return nil
+func (doc *capabilityDocument) ScrollBottom(_ context.Context, _ drivers.ScrollOptions) (runtime.Boolean, error) {
+	return runtime.True, nil
 }
 
-func (doc *capabilityDocument) ScrollBySelector(_ context.Context, _ drivers.QuerySelector, _ drivers.ScrollOptions) error {
-	return nil
+func (doc *capabilityDocument) ScrollBySelector(_ context.Context, _ drivers.QuerySelector, _ drivers.ScrollOptions) (runtime.Boolean, error) {
+	return runtime.True, nil
 }
 
-func (doc *capabilityDocument) MoveMouseByXY(_ context.Context, _, _ runtime.Float) error {
-	return nil
+func (doc *capabilityDocument) MoveMouseByXY(_ context.Context, _, _ runtime.Float) (runtime.Boolean, error) {
+	return runtime.True, nil
 }
 
 type capabilityElement struct {
