@@ -19,20 +19,14 @@ import (
 // That allows you to keep scraping logic inside FOR loop.
 // @param {HTMLPage} page - Target html page.
 // @param {String} selector - CSS selector for a pagination on the page.
-func Pagination(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	err := runtime.ValidateArgs(args, 2, 2)
+func Pagination(ctx context.Context, root, selectorValue runtime.Value) (runtime.Value, error) {
+	page, err := drivers.ToPage(root)
 
 	if err != nil {
 		return runtime.None, err
 	}
 
-	page, err := drivers.ToPage(args[0])
-
-	if err != nil {
-		return runtime.None, err
-	}
-
-	selector, err := drivers.ToQuerySelector(ctx, args[1])
+	selector, err := drivers.ToQuerySelector(ctx, selectorValue)
 
 	if err != nil {
 		return runtime.None, err

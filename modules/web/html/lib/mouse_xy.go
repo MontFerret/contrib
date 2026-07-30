@@ -12,38 +12,32 @@ import (
 // @param {Int|Float} x - X coordinate.
 // @param {Int|Float} y - Y coordinate.
 // @return {Boolean} - True if the mouse was moved, otherwise false.
-func MouseMoveXY(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	err := runtime.ValidateArgs(args, 3, 3)
+func MouseMoveXY(ctx context.Context, root, xValue, yValue runtime.Value) (runtime.Value, error) {
+	doc, err := drivers.ToDocumentViewportTarget(root)
 
 	if err != nil {
 		return runtime.None, err
 	}
 
-	doc, err := drivers.ToDocumentViewportTarget(args[0])
+	err = runtime.ValidateType(xValue, runtime.TypeInt, runtime.TypeFloat)
 
 	if err != nil {
 		return runtime.None, err
 	}
 
-	err = runtime.ValidateType(args[1], runtime.TypeInt, runtime.TypeFloat)
+	err = runtime.ValidateType(yValue, runtime.TypeInt, runtime.TypeFloat)
 
 	if err != nil {
 		return runtime.None, err
 	}
 
-	err = runtime.ValidateType(args[2], runtime.TypeInt, runtime.TypeFloat)
+	x, err := runtime.ToFloat(ctx, xValue)
 
 	if err != nil {
 		return runtime.None, err
 	}
 
-	x, err := runtime.ToFloat(ctx, args[1])
-
-	if err != nil {
-		return runtime.None, err
-	}
-
-	y, err := runtime.ToFloat(ctx, args[2])
+	y, err := runtime.ToFloat(ctx, yValue)
 
 	if err != nil {
 		return runtime.None, err

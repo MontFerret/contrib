@@ -12,8 +12,8 @@ import (
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selector - CSS selector.
 // @return {HTMLElement} - A matched HTML element
-func Element(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	el, selector, err := queryArgs(ctx, args)
+func Element(ctx context.Context, root, selectorValue runtime.Value) (runtime.Value, error) {
+	el, selector, err := queryArgs(ctx, root, selectorValue)
 
 	if err != nil {
 		return runtime.None, err
@@ -22,18 +22,14 @@ func Element(ctx context.Context, args ...runtime.Value) (runtime.Value, error) 
 	return el.QuerySelector(ctx, selector)
 }
 
-func queryArgs(ctx context.Context, args []runtime.Value) (drivers.QueryTarget, drivers.QuerySelector, error) {
-	if err := runtime.ValidateArgs(args, 2, 2); err != nil {
-		return nil, drivers.QuerySelector{}, err
-	}
-
-	target, err := drivers.ToQueryTarget(args[0])
+func queryArgs(ctx context.Context, root, selectorValue runtime.Value) (drivers.QueryTarget, drivers.QuerySelector, error) {
+	target, err := drivers.ToQueryTarget(root)
 
 	if err != nil {
 		return nil, drivers.QuerySelector{}, err
 	}
 
-	qs, err := drivers.ToQuerySelector(ctx, args[1])
+	qs, err := drivers.ToQuerySelector(ctx, selectorValue)
 
 	if err != nil {
 		return nil, drivers.QuerySelector{}, err

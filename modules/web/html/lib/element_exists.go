@@ -10,8 +10,8 @@ import (
 // @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
 // @param {String} selector - CSS selector.
 // @return {Boolean} - A boolean value indicating whether there is an element matched by selector.
-func ElementExists(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
-	el, selector, err := queryArgs(ctx, args)
+func ElementExists(ctx context.Context, root, selectorValue runtime.Value) (runtime.Value, error) {
+	el, selector, err := queryArgs(ctx, root, selectorValue)
 
 	if err != nil {
 		return runtime.None, err
