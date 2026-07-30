@@ -17,7 +17,7 @@ func (m *Manager) MouseEvent(ctx context.Context, objectID cdpruntime.RemoteObje
 		return err
 	}
 
-	point, err := GetElementPointByObjectID(ctx, m.client, objectID, params.X, params.Y)
+	point, err := getElementPointByObjectID(ctx, m.client, objectID, params.X, params.Y)
 	if err != nil {
 		m.logger.Trace().Err(err).Msg("failed calculating dispatch mouse point")
 

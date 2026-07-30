@@ -434,6 +434,7 @@ PRESS(ELEMENT(page, "input[name=q]"), "Enter")
 PRESS_SELECTOR(page, "input[name=q]", "Meta+A")
 INPUT_CLEAR(page, "input[name=q]")
 HOVER(page, ".menu")
+UNHOVER(page, ".menu")
 BLUR(page, "input[name=q]")
 MOUSE(page, 100, 200)
 ```
@@ -696,6 +697,7 @@ RETURN {
 | `FOCUS` | `FOCUS(root, selector?)` | `Boolean` | Focuses a root or selected element. |
 | `BLUR` | `BLUR(root, selector?)` | `Boolean` | Blurs a root or selected element. |
 | `HOVER` | `HOVER(root, selector?)` | `Boolean` | Hovers a root or selected element. |
+| `UNHOVER` | `UNHOVER(root, selector?)` | `Boolean` | Moves the mouse outside a root or selected element using a randomized offset. |
 | `MOUSE` | `MOUSE(pageOrDocument, x, y)` | `None` | Moves the mouse to viewport coordinates. |
 
 ### Navigation, Scrolling, And Waiting

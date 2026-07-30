@@ -94,6 +94,8 @@ type (
 		BlurBySelector(ctx context.Context, selector QuerySelector) error
 		Hover(ctx context.Context) error
 		HoverBySelector(ctx context.Context, selector QuerySelector) error
+		Unhover(ctx context.Context) error
+		UnhoverBySelector(ctx context.Context, selector QuerySelector) error
 	}
 
 	WaitTarget interface {

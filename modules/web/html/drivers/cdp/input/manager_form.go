@@ -25,7 +25,7 @@ func (m *Manager) typeTarget(ctx context.Context, target targetRef, params TypeP
 	}
 
 	if params.Clear {
-		points, err := GetClickablePointByObjectID(ctx, m.client, objectID)
+		points, err := getClickablePointByObjectID(ctx, m.client, objectID)
 		if err != nil {
 			m.logger.Trace().Err(err).Msg("failed calculating clickable element points")
 
@@ -59,7 +59,7 @@ func (m *Manager) clearTarget(ctx context.Context, target targetRef) error {
 		return err
 	}
 
-	points, err := GetClickablePointByObjectID(ctx, m.client, objectID)
+	points, err := getClickablePointByObjectID(ctx, m.client, objectID)
 	if err != nil {
 		m.logger.Trace().Err(err).Msg("failed calculating clickable element points")
 

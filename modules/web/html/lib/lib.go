@@ -53,6 +53,7 @@ func coreFunctionDefinitions() []sdk.FunctionDef {
 		sdk.Func("ELEMENTS_COUNT", ElementsCount),
 		sdk.Func("FOCUS", Focus),
 		sdk.Func("HOVER", Hover),
+		sdk.Func("UNHOVER", Unhover),
 		sdk.Func("INNER_HTML", GetInnerHTML),
 		sdk.Func("INNER_HTML_SET", SetInnerHTML),
 		sdk.Func("INNER_HTML_ALL", GetInnerHTMLAll),

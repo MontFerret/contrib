@@ -12,92 +12,6 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-func (m *Manager) focusTarget(ctx context.Context, target targetRef) error {
-	objectID, err := m.resolveTargetID(ctx, target, interactionScrollOptions())
-	if err != nil {
-		return err
-	}
-
-	if err := m.client.DOM.Focus(ctx, dom.NewFocusArgs().SetObjectID(objectID)); err != nil {
-		m.logger.Trace().Err(err).Msg("failed focusing on an element")
-
-		return err
-	}
-
-	return nil
-}
-
-func (m *Manager) blurTarget(ctx context.Context, target targetRef) error {
-	switch {
-	case target.objectID != nil:
-		if err := m.exec.Eval(ctx, templates.Blur(*target.objectID)); err != nil {
-			m.logger.Trace().
-				Err(err).
-				Msg("failed removing focus from an element")
-
-			return err
-		}
-	case target.selector != nil:
-		if err := m.exec.Eval(ctx, templates.BlurBySelector(target.parentID, *target.selector)); err != nil {
-			m.logger.Trace().
-				Err(err).
-				Msg("failed removing focus from an element by selector")
-
-			return err
-		}
-	default:
-		return runtime.Error(runtime.ErrMissedArgument, "selector")
-	}
-
-	return nil
-}
-
-func (m *Manager) moveMouseTarget(ctx context.Context, target targetRef) error {
-	objectID, err := m.resolveTargetID(ctx, target, drivers.ScrollOptions{})
-	if err != nil {
-		return err
-	}
-
-	points, err := GetClickablePointByObjectID(ctx, m.client, objectID)
-	if err != nil {
-		m.logger.Trace().Err(err).Msg("failed calculating clickable element points")
-
-		return err
-	}
-
-	if err := m.mouse.Move(ctx, points.X, points.Y); err != nil {
-		m.logger.Trace().Err(err).Msg("failed to move the mouse")
-
-		return err
-	}
-
-	return nil
-}
-
-func (m *Manager) clickTarget(ctx context.Context, target targetRef, count int) error {
-	objectID, err := m.resolveTargetID(ctx, target, interactionScrollOptions())
-	if err != nil {
-		return err
-	}
-
-	points, err := GetClickablePointByObjectID(ctx, m.client, objectID)
-	if err != nil {
-		m.logger.Trace().Err(err).Msg("failed calculating clickable element points")
-
-		return err
-	}
-
-	delay := time.Duration(drivers.DefaultMouseDelay) * time.Millisecond
-
-	if err := m.mouse.ClickWithCount(ctx, points.X, points.Y, delay, count); err != nil {
-		m.logger.Trace().Err(err).Msg("failed to click on an element")
-
-		return err
-	}
-
-	return nil
-}
-
 func (m *Manager) Focus(ctx context.Context, objectID cdpruntime.RemoteObjectID) error {
 	m.logger.Trace().
 		Str("object_id", string(objectID)).
@@ -185,6 +99,35 @@ func (m *Manager) MoveMouseBySelector(ctx context.Context, id cdpruntime.RemoteO
 	return nil
 }
 
+func (m *Manager) Unhover(ctx context.Context, objectID cdpruntime.RemoteObjectID) error {
+	m.logger.Trace().
+		Str("object_id", string(objectID)).
+		Msg("starting to move the mouse outside an element")
+
+	if err := m.unhoverTarget(ctx, directTarget(objectID)); err != nil {
+		return err
+	}
+
+	m.logger.Trace().Msg("moved the mouse outside the element")
+
+	return nil
+}
+
+func (m *Manager) UnhoverBySelector(ctx context.Context, id cdpruntime.RemoteObjectID, selector drivers.QuerySelector) error {
+	m.logger.Trace().
+		Str("parent_object_id", string(id)).
+		Str("selector", selector.String()).
+		Msg("starting to move the mouse outside an element by selector")
+
+	if err := m.unhoverTarget(ctx, selectorTarget(id, selector)); err != nil {
+		return err
+	}
+
+	m.logger.Trace().Msg("moved the mouse outside the element")
+
+	return nil
+}
+
 func (m *Manager) MoveMouseByXY(ctx context.Context, xv, yv runtime.Float) error {
 	x := float64(xv)
 	y := float64(yv)
@@ -238,6 +181,120 @@ func (m *Manager) ClickBySelector(ctx context.Context, id cdpruntime.RemoteObjec
 	}
 
 	m.logger.Trace().Msg("clicked on an element")
+
+	return nil
+}
+
+func (m *Manager) focusTarget(ctx context.Context, target targetRef) error {
+	objectID, err := m.resolveTargetID(ctx, target, interactionScrollOptions())
+	if err != nil {
+		return err
+	}
+
+	if err := m.client.DOM.Focus(ctx, dom.NewFocusArgs().SetObjectID(objectID)); err != nil {
+		m.logger.Trace().Err(err).Msg("failed focusing on an element")
+
+		return err
+	}
+
+	return nil
+}
+
+func (m *Manager) blurTarget(ctx context.Context, target targetRef) error {
+	switch {
+	case target.objectID != nil:
+		if err := m.exec.Eval(ctx, templates.Blur(*target.objectID)); err != nil {
+			m.logger.Trace().
+				Err(err).
+				Msg("failed removing focus from an element")
+
+			return err
+		}
+	case target.selector != nil:
+		if err := m.exec.Eval(ctx, templates.BlurBySelector(target.parentID, *target.selector)); err != nil {
+			m.logger.Trace().
+				Err(err).
+				Msg("failed removing focus from an element by selector")
+
+			return err
+		}
+	default:
+		return runtime.Error(runtime.ErrMissedArgument, "selector")
+	}
+
+	return nil
+}
+
+func (m *Manager) moveMouseTarget(ctx context.Context, target targetRef) error {
+	objectID, err := m.resolveTargetID(ctx, target, drivers.ScrollOptions{})
+	if err != nil {
+		return err
+	}
+
+	points, err := getClickablePointByObjectID(ctx, m.client, objectID)
+	if err != nil {
+		m.logger.Trace().Err(err).Msg("failed calculating clickable element points")
+
+		return err
+	}
+
+	if err := m.mouse.Move(ctx, points.X, points.Y); err != nil {
+		m.logger.Trace().Err(err).Msg("failed to move the mouse")
+
+		return err
+	}
+
+	return nil
+}
+
+func (m *Manager) unhoverTarget(ctx context.Context, target targetRef) error {
+	objectID, err := m.resolveTargetID(ctx, target, drivers.ScrollOptions{})
+	if err != nil {
+		return err
+	}
+
+	point, err := getMouseMovePointByObjectID(
+		ctx,
+		m.client,
+		objectID,
+		Quad{X: m.mouse.x, Y: m.mouse.y},
+		randomMouseDistance(),
+	)
+	if err != nil {
+		m.logger.Trace().Err(err).Msg("failed calculating unhover point")
+
+		return err
+	}
+
+	if err := m.mouse.Move(ctx, point.X, point.Y); err != nil {
+		m.logger.Trace().Err(err).Msg("failed to move the mouse outside the element")
+
+		return err
+	}
+
+	return nil
+}
+
+func (m *Manager) clickTarget(ctx context.Context, target targetRef, count int) error {
+	objectID, err := m.resolveTargetID(ctx, target, interactionScrollOptions())
+	if err != nil {
+		return err
+	}
+
+	points, err := getClickablePointByObjectID(ctx, m.client, objectID)
+	if err != nil {
+		m.logger.Trace().Err(err).Msg("failed calculating clickable element points")
+
+		return err
+	}
+
+	delay := time.Duration(drivers.DefaultMouseDelay) * time.Millisecond
+
+	if err := m.mouse.ClickWithCount(ctx, points.X, points.Y, delay, count); err != nil {
+		m.logger.Trace().Err(err).Msg("failed to click on an element")
+
+		return err
+	}
 
 	return nil
 }

@@ -531,6 +531,14 @@ func (el *capabilityElement) HoverBySelector(_ context.Context, _ drivers.QueryS
 	return nil
 }
 
+func (el *capabilityElement) Unhover(_ context.Context) error {
+	return nil
+}
+
+func (el *capabilityElement) UnhoverBySelector(_ context.Context, _ drivers.QuerySelector) error {
+	return nil
+}
+
 func (el *capabilityElement) WaitForElement(_ context.Context, selector drivers.QuerySelector, _ drivers.WaitEvent) error {
 	el.waitSelector = selector.String()
 	return nil

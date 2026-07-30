@@ -1,0 +1,14 @@
+LET url = @lab.static.dynamic + "?redirect=/events"
+LET doc = DOCUMENT(url, { driver: "cdp" })
+
+WAIT_ELEMENT(doc, "#page-events")
+
+HOVER(doc, "#hoverable-btn")
+WAIT_ELEMENT(doc, "#hoverable-content")
+
+UNHOVER(doc, "#hoverable-btn")
+WAIT_NO_ELEMENT(doc, "#hoverable-content")
+
+T::FALSE(ELEMENT_EXISTS(doc, "#hoverable-content"), "element should no longer be hovered")
+
+RETURN NONE

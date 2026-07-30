@@ -380,10 +380,12 @@ func (doc *testDocument) MoveMouseByXY(_ context.Context, _, _ runtime.Float) er
 
 type testElement struct {
 	*memory.HTMLElement
-	clickedSelector  string
-	selectedSelector string
-	waitSelector     string
-	scrolledIntoView bool
+	clickedSelector   string
+	selectedSelector  string
+	unhoveredSelector string
+	waitSelector      string
+	scrolledIntoView  bool
+	unhovered         bool
 }
 
 func (el *testElement) Click(_ context.Context, _ runtime.Int) error {
@@ -459,6 +461,16 @@ func (el *testElement) Hover(_ context.Context) error {
 }
 
 func (el *testElement) HoverBySelector(_ context.Context, _ drivers.QuerySelector) error {
+	return nil
+}
+
+func (el *testElement) Unhover(_ context.Context) error {
+	el.unhovered = true
+	return nil
+}
+
+func (el *testElement) UnhoverBySelector(_ context.Context, selector drivers.QuerySelector) error {
+	el.unhoveredSelector = selector.String()
 	return nil
 }
 
