@@ -52,26 +52,48 @@ func (p *HTMLPage) String() string {
 	return p.document.GetURL().String()
 }
 
-func (p *HTMLPage) Compare(other runtime.Value) int {
-	typed, ok := other.(runtime.Typed)
+func (p *HTMLPage) Equal(ctx context.Context, other runtime.Value) (bool, error) {
+	if _, err := checkComparisonContext(ctx); err != nil {
+		return false, err
+	}
 
+	otherPage, ok := other.(*HTMLPage)
 	if !ok {
-		return 1
+		return false, nil
 	}
 
-	tc := drivers.Compare(p.Type(), typed.Type())
+	comparison, err := p.compare(ctx, otherPage)
 
-	if tc != 0 {
-		return tc
+	return comparison == runtime.Equal, err
+}
+
+func (p *HTMLPage) Compare(ctx context.Context, other runtime.Value) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
 	}
 
-	httpPage, ok := other.(*HTMLPage)
-
-	if !ok {
-		return 1
+	otherPage, ok := other.(*HTMLPage)
+	if ok {
+		return p.compare(ctx, otherPage)
 	}
 
-	return p.document.GetURL().Compare(httpPage.GetURL())
+	if _, ok := other.(drivers.HTMLPage); ok {
+		if comparison, err := checkComparisonContext(ctx); err != nil {
+			return comparison, err
+		}
+
+		return runtime.Less, nil
+	}
+
+	return invalidComparison(p, other)
+}
+
+func (p *HTMLPage) compare(ctx context.Context, other *HTMLPage) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	return runtime.CompareValues(ctx, p.document.GetURL(), other.document.GetURL())
 }
 
 func (p *HTMLPage) Unwrap() any {

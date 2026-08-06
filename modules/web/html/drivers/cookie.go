@@ -56,60 +56,99 @@ func (c HTTPCookie) String() string {
 	return fmt.Sprintf("%s=%s", c.Name, c.Value)
 }
 
-func (c HTTPCookie) Compare(other runtime.Value) int {
-	oc, ok := other.(HTTPCookie)
+func (c HTTPCookie) Equal(ctx context.Context, other runtime.Value) (bool, error) {
+	if _, err := checkComparisonContext(ctx); err != nil {
+		return false, err
+	}
 
+	oc, ok := cookieValue(other)
 	if !ok {
-		return CompareTo(HTTPCookieType, other)
+		return false, nil
+	}
+
+	comparison, err := c.compare(ctx, oc)
+
+	return comparison == runtime.Equal, err
+}
+
+func (c HTTPCookie) Compare(ctx context.Context, other runtime.Value) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	oc, ok := cookieValue(other)
+	if !ok {
+		return invalidComparison(c, other)
+	}
+
+	return c.compare(ctx, oc)
+}
+
+func (c HTTPCookie) compare(ctx context.Context, oc HTTPCookie) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
 	}
 
 	if c.Name != oc.Name {
-		return strings.Compare(c.Name, oc.Name)
+		return runtime.Ordering(strings.Compare(c.Name, oc.Name)), nil
 	}
 
 	if c.Value != oc.Value {
-		return strings.Compare(c.Value, oc.Value)
+		return runtime.Ordering(strings.Compare(c.Value, oc.Value)), nil
 	}
 
 	if c.Path != oc.Path {
-		return strings.Compare(c.Path, oc.Path)
+		return runtime.Ordering(strings.Compare(c.Path, oc.Path)), nil
 	}
 
 	if c.Domain != oc.Domain {
-		return strings.Compare(c.Domain, oc.Domain)
+		return runtime.Ordering(strings.Compare(c.Domain, oc.Domain)), nil
 	}
 
 	if c.Expires.After(oc.Expires) {
-		return 1
+		return runtime.Greater, nil
 	} else if c.Expires.Before(oc.Expires) {
-		return -1
+		return runtime.Less, nil
 	}
 
 	if c.MaxAge > oc.MaxAge {
-		return 1
+		return runtime.Greater, nil
 	} else if c.MaxAge < oc.MaxAge {
-		return -1
+		return runtime.Less, nil
 	}
 
 	if c.Secure && !oc.Secure {
-		return 1
+		return runtime.Greater, nil
 	} else if !c.Secure && oc.Secure {
-		return -1
+		return runtime.Less, nil
 	}
 
 	if c.HTTPOnly && !oc.HTTPOnly {
-		return 1
+		return runtime.Greater, nil
 	} else if !c.HTTPOnly && oc.HTTPOnly {
-		return -1
+		return runtime.Less, nil
 	}
 
 	if c.SameSite > oc.SameSite {
-		return 1
+		return runtime.Greater, nil
 	} else if c.SameSite < oc.SameSite {
-		return -1
+		return runtime.Less, nil
 	}
 
-	return 0
+	return runtime.Equal, nil
+}
+
+func cookieValue(value runtime.Value) (HTTPCookie, bool) {
+	switch cookie := value.(type) {
+	case HTTPCookie:
+		return cookie, true
+	case *HTTPCookie:
+		if cookie != nil {
+			return *cookie, true
+		}
+	}
+
+	return HTTPCookie{}, false
 }
 
 func (c HTTPCookie) Hash() uint64 {
@@ -121,7 +160,7 @@ func (c HTTPCookie) Hash() uint64 {
 	h.Write([]byte(c.Value))
 	h.Write([]byte(c.Path))
 	h.Write([]byte(c.Domain))
-	h.Write([]byte(c.Expires.String()))
+	h.Write([]byte(c.Expires.UTC().Format(time.RFC3339Nano)))
 	h.Write([]byte(strconv.Itoa(c.MaxAge)))
 	h.Write([]byte(fmt.Sprintf("%t", c.Secure)))
 	h.Write([]byte(fmt.Sprintf("%t", c.HTTPOnly)))

@@ -3,6 +3,7 @@ package drivers
 import (
 	"context"
 	"net/textproto"
+	"sort"
 	"strings"
 
 	"github.com/goccy/go-json"
@@ -28,32 +29,70 @@ func (h *HTTPHeaders) Type() runtime.Type {
 	return HTTPHeadersType
 }
 
-func (h *HTTPHeaders) Compare(other runtime.Value) int {
-	otherHeaders, ok := other.(*HTTPHeaders)
-
-	if !ok {
-		return CompareTo(HTTPHeadersType, other)
+func (h *HTTPHeaders) Equal(ctx context.Context, other runtime.Value) (bool, error) {
+	if _, err := checkComparisonContext(ctx); err != nil {
+		return false, err
 	}
 
-	return h.CompareTo(otherHeaders)
+	otherHeaders, ok := other.(*HTTPHeaders)
+	if !ok {
+		return false, nil
+	}
+
+	comparison, err := h.compare(ctx, otherHeaders)
+
+	return comparison == runtime.Equal, err
 }
 
-func (h *HTTPHeaders) CompareTo(other *HTTPHeaders) int {
-	if len(h.Data) > len(other.Data) {
-		return 1
-	} else if len(h.Data) < len(other.Data) {
-		return -1
+func (h *HTTPHeaders) Compare(ctx context.Context, other runtime.Value) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
 	}
 
-	for k := range h.Data {
-		c := strings.Compare(h.Data.Get(k), other.Data.Get(k))
+	otherHeaders, ok := other.(*HTTPHeaders)
+	if !ok {
+		return invalidComparison(h, other)
+	}
 
-		if c != 0 {
-			return c
+	return h.compare(ctx, otherHeaders)
+}
+
+func (h *HTTPHeaders) compare(ctx context.Context, other *HTTPHeaders) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	if len(h.Data) < len(other.Data) {
+		return runtime.Less, nil
+	}
+	if len(h.Data) > len(other.Data) {
+		return runtime.Greater, nil
+	}
+
+	keys := sortedHeaderKeys(h.Data)
+	otherKeys := sortedHeaderKeys(other.Data)
+	for idx, key := range keys {
+		if comparison := compareStrings(key, otherKeys[idx]); comparison != runtime.Equal {
+			return comparison, nil
+		}
+
+		values := h.Data[key]
+		otherValues := other.Data[key]
+		if len(values) < len(otherValues) {
+			return runtime.Less, nil
+		}
+		if len(values) > len(otherValues) {
+			return runtime.Greater, nil
+		}
+
+		for valueIdx, value := range values {
+			if comparison := compareStrings(value, otherValues[valueIdx]); comparison != runtime.Equal {
+				return comparison, nil
+			}
 		}
 	}
 
-	return 0
+	return runtime.Equal, nil
 }
 
 func (h *HTTPHeaders) String() string {
@@ -72,17 +111,18 @@ func (h *HTTPHeaders) String() string {
 }
 
 func (h *HTTPHeaders) Hash() uint64 {
-	var hash uint64
+	var builder strings.Builder
 
-	for k, v := range h.Data {
-		hash += runtime.String(k).Hash()
-
-		for _, vv := range v {
-			hash += runtime.String(vv).Hash()
+	for _, key := range sortedHeaderKeys(h.Data) {
+		builder.WriteString(key)
+		builder.WriteByte(0)
+		for _, value := range h.Data[key] {
+			builder.WriteString(value)
+			builder.WriteByte(0)
 		}
 	}
 
-	return hash
+	return runtime.Hash(runtime.TypeName(h.Type()), []byte(builder.String()))
 }
 
 func (h *HTTPHeaders) Copy() runtime.Value {
@@ -121,4 +161,15 @@ func (h *HTTPHeaders) Clone() *HTTPHeaders {
 	}
 
 	return &HTTPHeaders{Data: clone}
+}
+
+func sortedHeaderKeys(headers textproto.MIMEHeader) []string {
+	keys := make([]string, 0, len(headers))
+	for key := range headers {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	return keys
 }

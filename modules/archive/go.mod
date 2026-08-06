@@ -3,7 +3,8 @@ module github.com/MontFerret/contrib/modules/archive
 go 1.26.5
 
 require (
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.37
+	github.com/MontFerret/contrib/pkg/common v0.2.0
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.43
 	github.com/ziflex/go-options v1.0.0
 )
 

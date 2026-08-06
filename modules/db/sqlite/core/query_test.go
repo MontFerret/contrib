@@ -95,7 +95,12 @@ func TestConnectionQueryTypeMapping(t *testing.T) {
 	if got := objectField(t, ctx, row, "b"); got != runtime.NewInt(1) {
 		t.Fatalf("expected bool param to decode as SQLite integer 1, got %v", got)
 	}
-	if got := objectField(t, ctx, row, "blob"); runtime.CompareValues(got, runtime.NewBinary([]byte("bin"))) != 0 {
+	got := objectField(t, ctx, row, "blob")
+	equal, err := runtime.EqualValues(ctx, got, runtime.NewBinary([]byte("bin")))
+	if err != nil {
+		t.Fatalf("compare binary value: %v", err)
+	}
+	if !equal {
 		t.Fatalf("expected binary value, got %v", got)
 	}
 	if got := objectField(t, ctx, row, "n"); got != runtime.None {

@@ -2,12 +2,11 @@ package network
 
 import (
 	"context"
+	"strings"
 
 	"github.com/goccy/go-json"
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/page"
-
-	"github.com/MontFerret/contrib/modules/web/html/drivers"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/dom"
 
@@ -51,20 +50,49 @@ func (evt *NavigationEvent) String() string {
 	return evt.URL
 }
 
-func (evt *NavigationEvent) Compare(other runtime.Value) int {
+func (evt *NavigationEvent) Equal(ctx context.Context, other runtime.Value) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+
 	otherEvt, ok := other.(*NavigationEvent)
-
 	if !ok {
-		return drivers.CompareTypes(evt, other)
+		return false, nil
 	}
 
-	comp := runtime.NewString(evt.URL).Compare(runtime.NewString(otherEvt.URL))
+	comparison, err := evt.compare(ctx, otherEvt)
 
-	if comp != 0 {
-		return comp
+	return comparison == runtime.Equal, err
+}
+
+func (evt *NavigationEvent) Compare(ctx context.Context, other runtime.Value) (runtime.Ordering, error) {
+	if err := ctx.Err(); err != nil {
+		return runtime.Equal, err
 	}
 
-	return runtime.String(evt.FrameID).Compare(runtime.String(otherEvt.FrameID))
+	otherEvt, ok := other.(*NavigationEvent)
+	if !ok {
+		return runtime.Equal, runtime.Errorf(
+			runtime.ErrInvalidOperation,
+			"cannot compare %s with %s",
+			runtime.TypeName(runtime.TypeOf(evt)),
+			runtime.TypeName(runtime.TypeOf(other)),
+		)
+	}
+
+	return evt.compare(ctx, otherEvt)
+}
+
+func (evt *NavigationEvent) compare(ctx context.Context, other *NavigationEvent) (runtime.Ordering, error) {
+	if err := ctx.Err(); err != nil {
+		return runtime.Equal, err
+	}
+
+	if comparison := strings.Compare(evt.URL, other.URL); comparison != 0 {
+		return runtime.Ordering(comparison), nil
+	}
+
+	return runtime.Ordering(strings.Compare(string(evt.FrameID), string(other.FrameID))), nil
 }
 
 func (evt *NavigationEvent) Unwrap() any {
@@ -72,7 +100,10 @@ func (evt *NavigationEvent) Unwrap() any {
 }
 
 func (evt *NavigationEvent) Hash() uint64 {
-	return runtime.Parse(evt).Hash()
+	return runtime.Hash(
+		runtime.TypeName(evt.Type()),
+		[]byte(evt.URL+"\x00"+string(evt.FrameID)),
+	)
 }
 
 func (evt *NavigationEvent) Copy() runtime.Value {

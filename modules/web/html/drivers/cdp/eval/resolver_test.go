@@ -282,7 +282,7 @@ func assertListValue(
 		t.Fatalf("read list[%d]: %v", idx, err)
 	}
 
-	if ferretruntime.CompareValues(got, expected) != 0 {
+	if !valuesEqual(t, got, expected) {
 		t.Fatalf("list[%d]: expected %v, got %v", idx, expected, got)
 	}
 }
@@ -322,7 +322,7 @@ func assertObjectValue(
 		t.Fatalf("read object[%q]: %v", key, err)
 	}
 
-	if ferretruntime.CompareValues(got, expected) != 0 {
+	if !valuesEqual(t, got, expected) {
 		t.Fatalf("object[%q]: expected %v, got %v", key, expected, got)
 	}
 }

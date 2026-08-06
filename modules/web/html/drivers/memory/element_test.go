@@ -282,7 +282,7 @@ func TestElement(t *testing.T) {
 		nn, err := el.GetNodeName(ctx)
 
 		So(err, ShouldBeNil)
-		So(runtime.CompareValues(nn, runtime.NewString("body")), ShouldEqual, 0)
+		So(valuesEqual(t, nn, runtime.NewString("body")), ShouldBeTrue)
 	})
 
 	Convey(".Length", t, func() {
@@ -339,7 +339,7 @@ func TestElement(t *testing.T) {
 		v, err := target.GetValue(ctx)
 
 		So(err, ShouldBeNil)
-		So(runtime.CompareValues(v, runtime.NewString("find")), ShouldEqual, 0)
+		So(valuesEqual(t, v, runtime.NewString("find")), ShouldBeTrue)
 	})
 
 	Convey(".GetInnerText", t, func() {
@@ -370,7 +370,7 @@ func TestElement(t *testing.T) {
 		v, err := target.GetInnerText(ctx)
 
 		So(err, ShouldBeNil)
-		So(runtime.CompareValues(v, runtime.NewString("Ferret")), ShouldEqual, 0)
+		So(valuesEqual(t, v, runtime.NewString("Ferret")), ShouldBeTrue)
 	})
 
 	Convey(".InnerHtml", t, func() {
@@ -401,7 +401,7 @@ func TestElement(t *testing.T) {
 		v, err := target.GetInnerHTML(ctx)
 
 		So(err, ShouldBeNil)
-		So(runtime.CompareValues(v, runtime.NewString("<h2>Ferret</h2>")), ShouldEqual, 0)
+		So(valuesEqual(t, v, runtime.NewString("<h2>Ferret</h2>")), ShouldBeTrue)
 	})
 
 	Convey(".QuerySelector", t, func() {
@@ -426,7 +426,7 @@ func TestElement(t *testing.T) {
 		v, err := found.(drivers.HTMLNode).GetNodeName(ctx)
 
 		So(err, ShouldBeNil)
-		So(runtime.CompareValues(v, runtime.NewString("img")), ShouldEqual, 0)
+		So(valuesEqual(t, v, runtime.NewString("img")), ShouldBeTrue)
 	})
 
 	Convey(".CountBySelector", t, func() {

@@ -2,6 +2,7 @@ package drivers
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/goccy/go-json"
 
@@ -39,22 +40,59 @@ func (resp *HTTPResponse) String() string {
 	return resp.Status
 }
 
-func (resp *HTTPResponse) Compare(other runtime.Value) int {
-	otherResp, ok := other.(*HTTPResponse)
-
-	if !ok {
-		return CompareTo(HTTPResponseType, other)
+func (resp *HTTPResponse) Equal(ctx context.Context, other runtime.Value) (bool, error) {
+	if _, err := checkComparisonContext(ctx); err != nil {
+		return false, err
 	}
 
-	comp := resp.Headers.CompareTo(otherResp.Headers)
-	if comp != 0 {
-		return comp
+	otherResp, ok := other.(*HTTPResponse)
+	if !ok {
+		return false, nil
+	}
+
+	comparison, err := resp.compare(ctx, otherResp)
+
+	return comparison == runtime.Equal, err
+}
+
+func (resp *HTTPResponse) Compare(ctx context.Context, other runtime.Value) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	otherResp, ok := other.(*HTTPResponse)
+	if !ok {
+		return invalidComparison(resp, other)
+	}
+
+	return resp.compare(ctx, otherResp)
+}
+
+func (resp *HTTPResponse) compare(ctx context.Context, other *HTTPResponse) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	comparison, err := resp.Headers.Compare(ctx, other.Headers)
+	if err != nil {
+		return runtime.Equal, err
+	}
+
+	if comparison != runtime.Equal {
+		return comparison, nil
 	}
 
 	// it makes no sense to compare Status strings
 	// because they are always equal if StatusCode's are equal
-	return runtime.NewInt(resp.StatusCode).
-		Compare(runtime.NewInt(resp.StatusCode))
+	if resp.StatusCode < other.StatusCode {
+		return runtime.Less, nil
+	}
+
+	if resp.StatusCode > other.StatusCode {
+		return runtime.Greater, nil
+	}
+
+	return runtime.Equal, nil
 }
 
 func (resp *HTTPResponse) Unwrap() any {
@@ -67,7 +105,9 @@ func (resp *HTTPResponse) Copy() runtime.Value {
 }
 
 func (resp *HTTPResponse) Hash() uint64 {
-	return runtime.Parse(resp).Hash()
+	content := strconv.FormatUint(resp.Headers.Hash(), 10) + "\x00" + strconv.Itoa(resp.StatusCode)
+
+	return runtime.Hash(runtime.TypeName(resp.Type()), []byte(content))
 }
 
 func (resp *HTTPResponse) MarshalJSON() ([]byte, error) {

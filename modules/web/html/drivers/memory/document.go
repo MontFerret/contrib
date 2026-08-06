@@ -89,16 +89,51 @@ func (doc *HTMLDocument) String() string {
 	return str
 }
 
-func (doc *HTMLDocument) Compare(other runtime.Value) int {
-	switch val := other.(type) {
-	case *HTMLDocument:
-		thisURL := strings.TrimSuffix(string(doc.url), "/")
-		otherURL := strings.TrimSuffix(string(val.url), "/")
-
-		return runtime.NewString(thisURL).Compare(runtime.NewString(otherURL))
-	default:
-		return drivers.CompareTypes(doc, other)
+func (doc *HTMLDocument) Equal(ctx context.Context, other runtime.Value) (bool, error) {
+	if _, err := checkComparisonContext(ctx); err != nil {
+		return false, err
 	}
+
+	otherDocument, ok := other.(*HTMLDocument)
+	if !ok {
+		return false, nil
+	}
+
+	comparison, err := doc.compare(ctx, otherDocument)
+
+	return comparison == runtime.Equal, err
+}
+
+func (doc *HTMLDocument) Compare(ctx context.Context, other runtime.Value) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	otherDocument, ok := other.(*HTMLDocument)
+	if ok {
+		return doc.compare(ctx, otherDocument)
+	}
+
+	if _, ok := other.(drivers.HTMLDocument); ok {
+		if comparison, err := checkComparisonContext(ctx); err != nil {
+			return comparison, err
+		}
+
+		return runtime.Less, nil
+	}
+
+	return invalidComparison(doc, other)
+}
+
+func (doc *HTMLDocument) compare(ctx context.Context, other *HTMLDocument) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	thisURL := strings.TrimSuffix(string(doc.url), "/")
+	otherURL := strings.TrimSuffix(string(other.url), "/")
+
+	return compareStrings(thisURL, otherURL), nil
 }
 
 func (doc *HTMLDocument) Unwrap() any {
@@ -110,7 +145,7 @@ func (doc *HTMLDocument) Hash() uint64 {
 
 	h.Write([]byte(doc.Type().String()))
 	h.Write([]byte(":"))
-	h.Write([]byte(doc.url))
+	h.Write([]byte(strings.TrimSuffix(string(doc.url), "/")))
 
 	return h.Sum64()
 }

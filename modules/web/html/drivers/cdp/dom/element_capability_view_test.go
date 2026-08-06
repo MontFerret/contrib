@@ -200,7 +200,7 @@ func assertViewValue(t *testing.T, ctx context.Context, view runtime.KeyReadable
 		t.Fatalf("get %s: %v", key, err)
 	}
 
-	if runtime.CompareValues(got, want) != 0 {
+	if !valuesEqual(t, got, want) {
 		t.Fatalf("unexpected %s value: got %v, want %v", key, got, want)
 	}
 }

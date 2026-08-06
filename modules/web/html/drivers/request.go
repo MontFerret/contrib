@@ -2,6 +2,7 @@ package drivers
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/goccy/go-json"
 
@@ -35,27 +36,53 @@ func (req *HTTPRequest) String() string {
 	return req.URL
 }
 
-func (req *HTTPRequest) Compare(other runtime.Value) int {
+func (req *HTTPRequest) Equal(ctx context.Context, other runtime.Value) (bool, error) {
+	if _, err := checkComparisonContext(ctx); err != nil {
+		return false, err
+	}
+
 	otherReq, ok := other.(*HTTPRequest)
-
 	if !ok {
-		return CompareTo(HTTPResponseType, other)
+		return false, nil
 	}
 
-	comp := req.Headers.CompareTo(otherReq.Headers)
+	comparison, err := req.compare(ctx, otherReq)
 
-	if comp != 0 {
-		return comp
+	return comparison == runtime.Equal, err
+}
+
+func (req *HTTPRequest) Compare(ctx context.Context, other runtime.Value) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
 	}
 
-	comp = runtime.NewString(req.Method).Compare(runtime.NewString(otherReq.Method))
-
-	if comp != 0 {
-		return comp
+	otherReq, ok := other.(*HTTPRequest)
+	if !ok {
+		return invalidComparison(req, other)
 	}
 
-	return runtime.NewString(req.URL).
-		Compare(runtime.NewString(otherReq.URL))
+	return req.compare(ctx, otherReq)
+}
+
+func (req *HTTPRequest) compare(ctx context.Context, other *HTTPRequest) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	comparison, err := req.Headers.Compare(ctx, other.Headers)
+	if err != nil {
+		return runtime.Equal, err
+	}
+
+	if comparison != runtime.Equal {
+		return comparison, nil
+	}
+
+	if comparison = compareStrings(req.Method, other.Method); comparison != runtime.Equal {
+		return comparison, nil
+	}
+
+	return compareStrings(req.URL, other.URL), nil
 }
 
 func (req *HTTPRequest) Unwrap() any {
@@ -63,7 +90,9 @@ func (req *HTTPRequest) Unwrap() any {
 }
 
 func (req *HTTPRequest) Hash() uint64 {
-	return runtime.Parse(req).Hash()
+	content := strconv.FormatUint(req.Headers.Hash(), 10) + "\x00" + req.Method + "\x00" + req.URL
+
+	return runtime.Hash(runtime.TypeName(req.Type()), []byte(content))
 }
 
 func (req *HTTPRequest) Copy() runtime.Value {
