@@ -1,0 +1,28 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/llm
+namespace: AI::LLM
+version: 1.0.0-rc.3
+description: Text generation, chat, extraction, and classification under AI::LLM for Ferret.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/ai/llm/
+repository:
+  url: https://github.com/MontFerret/contrib
+  directory: modules/ai/llm
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+exports:
+  namespaces:
+    - name: AI::LLM
+      functions:
+        - MODEL
+        - SESSION
+        - GENERATE
+        - CHAT
+        - SUMMARIZE
+        - EXTRACT
+        - CLASSIFY
+        - RESET
+        - FORK
+        - HISTORY

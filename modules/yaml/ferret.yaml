@@ -1,0 +1,21 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/yaml
+namespace: YAML
+version: 1.0.0-rc.13
+description: YAML decoding and encoding helpers under YAML for Ferret.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/yaml/
+repository:
+  url: https://github.com/MontFerret/contrib
+  directory: modules/yaml
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+exports:
+  namespaces:
+    - name: YAML
+      functions:
+        - DECODE
+        - DECODE_ALL
+        - ENCODE

@@ -1,0 +1,24 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/jwt
+namespace: SECURITY::JWT
+version: 1.0.0-rc.11
+description: JWT token signing, verification, inspection, and key helpers under SECURITY::JWT for Ferret.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/security/jwt/
+repository:
+  url: https://github.com/MontFerret/contrib
+  directory: modules/security/jwt
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+exports:
+  namespaces:
+    - name: SECURITY::JWT
+      functions:
+        - INSPECT
+        - VERIFY
+        - SIGN
+        - HMAC_KEY
+        - PUBLIC_KEY
+        - PRIVATE_KEY

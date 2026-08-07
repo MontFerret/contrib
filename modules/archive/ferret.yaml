@@ -1,0 +1,21 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/archive
+namespace: ARCHIVE
+version: 1.0.0-rc.2
+description: Sandboxed ZIP, TAR, TAR.GZ, and TGZ inspection and extraction under ARCHIVE.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/archive/
+repository:
+  url: https://github.com/MontFerret/contrib
+  directory: modules/archive
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+exports:
+  namespaces:
+    - name: ARCHIVE
+      functions:
+        - LIST
+        - READ
+        - EXTRACT

@@ -1,0 +1,23 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/postgres
+namespace: DB::POSTGRES
+version: 1.0.0-rc.8
+description: Postgres database handles under DB::POSTGRES for Ferret.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/db/postgres/
+repository:
+  url: https://github.com/MontFerret/contrib
+  directory: modules/db/postgres
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+exports:
+  namespaces:
+    - name: DB::POSTGRES
+      functions:
+        - OPEN
+        - CLOSE
+        - BEGIN
+        - COMMIT
+        - ROLLBACK

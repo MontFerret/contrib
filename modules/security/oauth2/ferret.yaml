@@ -1,0 +1,33 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/oauth2
+namespace: SECURITY::OAUTH2
+version: 1.0.0-rc.2
+description: OAuth 2.0 client grants and token helpers under SECURITY::OAUTH2 for Ferret.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/security/oauth2/
+repository:
+  url: https://github.com/MontFerret/contrib
+  directory: modules/security/oauth2
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+exports:
+  namespaces:
+    - name: SECURITY::OAUTH2
+      functions:
+        - DISCOVER
+        - PROVIDER
+        - CLIENT
+        - CLIENT_CREDENTIALS
+        - REFRESH
+        - TOKEN
+        - ACCESS_TOKEN
+        - REFRESH_TOKEN
+        - ID_TOKEN
+        - TOKEN_TYPE
+        - SCOPES
+        - EXPIRES_AT
+        - EXPIRED
+        - VALID_FOR
+        - AUTH_HEADER

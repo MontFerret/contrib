@@ -1,0 +1,19 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/pdf
+namespace: DOCUMENT::PDF
+version: 1.0.0-rc.7
+description: Read-only PDF document handles under DOCUMENT::PDF for Ferret.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/document/pdf/
+repository:
+  url: https://github.com/MontFerret/contrib
+  directory: modules/document/pdf
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+exports:
+  namespaces:
+    - name: DOCUMENT::PDF
+      functions:
+        - OPEN

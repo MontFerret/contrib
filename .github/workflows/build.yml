@@ -57,6 +57,29 @@ jobs:
           echo "packages=$packages_json" >> "$GITHUB_OUTPUT"
           echo "Discovered packages: $packages_json"
 
+  validate-manifests:
+    name: Validate manifests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+          cache: true
+          cache-dependency-path: |
+            Makefile
+            tests/manifests/go.sum
+
+      - name: Install manifest validator
+        run: make install-manifest-validator
+
+      - name: Validate manifests
+        run: make validate-manifests
+
   build:
     name: Build (${{ matrix.module }})
     runs-on: ubuntu-latest

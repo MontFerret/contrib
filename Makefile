@@ -1,20 +1,29 @@
-.PHONY: install-tools modules packages build build-cli build-packages test test-unit test-packages test-integration lint lint-packages fmt fmt-packages versions deps update-package update-ferret release-major release-minor release-patch release-pre release-pre-all release-package-major release-package-minor release-package-patch release-package-pre
+.PHONY: install-tools install-manifest-validator modules packages validate-manifests build build-cli build-packages test test-unit test-packages test-integration lint lint-packages fmt fmt-packages versions deps update-package update-ferret release-major release-minor release-patch release-pre release-pre-all release-package-major release-package-minor release-package-patch release-package-pre
 
 DIR_BIN = ./bin
 DIR_TEST = ./tests
 DIR_TEST_CLI = ${DIR_TEST}/runtime
+FERRET_SPEC ?= ferret-spec
+FERRET_SPEC_VERSION ?= v1.1.0
 
-install-tools:
+install-tools: install-manifest-validator
 	go install honnef.co/go/tools/cmd/staticcheck@latest && \
 	go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@latest && \
 	go install golang.org/x/tools/cmd/goimports@latest && \
 	go install github.com/mgechev/revive@latest
+
+install-manifest-validator:
+	go install github.com/MontFerret/specs/cmd/ferret-spec@${FERRET_SPEC_VERSION}
 
 modules:
 	@./scripts/modules.sh list
 
 packages:
 	@./scripts/packages.sh list
+
+validate-manifests:
+	@${FERRET_SPEC} validate module $$(./scripts/modules.sh list | sed 's|^|modules/|; s|$$|/ferret.yaml|')
+	@cd tests/manifests && GOWORK=off go test ./...
 
 build: build-cli
 	@./scripts/modules.sh build $(filter-out $@,$(MAKECMDGOALS))

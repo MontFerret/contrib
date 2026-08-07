@@ -1,0 +1,87 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/html
+namespace: WEB::HTML
+version: 1.0.0-rc.20
+description: HTML loading, parsing, querying, interaction, and browser automation under WEB::HTML for Ferret.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/web/html/
+repository:
+  url: https://github.com/MontFerret/contrib
+  directory: modules/web/html
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+exports:
+  namespaces:
+    - name: WEB::HTML
+      functions:
+        - IS_HTML_ELEMENT
+        - IS_HTML_DOCUMENT
+        - URL
+        - BASE_URL
+        - RESOLVE_URL
+        - X
+        - XPATH
+        - FRAMES
+        - ATTR_GET
+        - ATTR_QUERY
+        - ATTR_REMOVE
+        - ATTR_SET
+        - BLUR
+        - COOKIE_DEL
+        - COOKIE_GET
+        - COOKIE_SET
+        - CLICK
+        - CLICK_ALL
+        - DOWNLOAD
+        - ELEMENT
+        - ELEMENT_EXISTS
+        - ELEMENTS
+        - ELEMENTS_COUNT
+        - FOCUS
+        - HOVER
+        - UNHOVER
+        - INNER_HTML
+        - INNER_HTML_SET
+        - INNER_HTML_ALL
+        - INNER_TEXT
+        - INNER_TEXT_SET
+        - INNER_TEXT_ALL
+        - INPUT
+        - INPUT_CLEAR
+        - MOUSE
+        - NAVIGATE
+        - NAVIGATE_BACK
+        - NAVIGATE_FORWARD
+        - PAGINATION
+        - PARSE
+        - PDF
+        - PRESS
+        - PRESS_SELECTOR
+        - SCREENSHOT
+        - SCROLL
+        - SCROLL_BOTTOM
+        - SCROLL_ELEMENT
+        - SCROLL_TOP
+        - SELECT
+        - STYLE_GET
+        - STYLE_REMOVE
+        - STYLE_SET
+        - WAIT_ATTR
+        - WAIT_NO_ATTR
+        - WAIT_ATTR_ALL
+        - WAIT_NO_ATTR_ALL
+        - WAIT_ELEMENT
+        - WAIT_NO_ELEMENT
+        - WAIT_CLASS
+        - WAIT_NO_CLASS
+        - WAIT_CLASS_ALL
+        - WAIT_NO_CLASS_ALL
+        - WAIT_STYLE
+        - WAIT_NO_STYLE
+        - WAIT_STYLE_ALL
+        - WAIT_NO_STYLE_ALL
+        - WAIT_NAVIGATION
+        - OPEN
+        - CAN_OPEN
