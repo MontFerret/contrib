@@ -1,7 +1,7 @@
 $schema: https://schemas.ferretlang.org/module/v1.json
 name: montferret/archive
 namespace: ARCHIVE
-version: 1.0.0-rc.2
+version: 1.0.0-rc.3
 description: Sandboxed ZIP, TAR, TAR.GZ, and TGZ inspection and extraction under ARCHIVE.
 license: Apache-2.0
 authors:

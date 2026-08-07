@@ -1,7 +1,7 @@
 $schema: https://schemas.ferretlang.org/module/v1.json
 name: montferret/xlsx
 namespace: DOCUMENT::XLSX
-version: 1.0.0-rc.7
+version: 1.0.0-rc.8
 description: Excel-compatible XLSX workbook handles under DOCUMENT::XLSX for Ferret.
 license: Apache-2.0
 authors:

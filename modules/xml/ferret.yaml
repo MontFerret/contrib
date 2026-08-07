@@ -1,7 +1,7 @@
 $schema: https://schemas.ferretlang.org/module/v1.json
 name: montferret/xml
 namespace: XML
-version: 1.0.0-rc.13
+version: 1.0.0-rc.14
 description: XML parsing, traversal, decoding, streaming, and encoding helpers under XML for Ferret.
 license: Apache-2.0
 authors:

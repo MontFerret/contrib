@@ -1,7 +1,7 @@
 $schema: https://schemas.ferretlang.org/module/v1.json
 name: montferret/oauth2
 namespace: SECURITY::OAUTH2
-version: 1.0.0-rc.2
+version: 1.0.0-rc.3
 description: OAuth 2.0 client grants and token helpers under SECURITY::OAUTH2 for Ferret.
 license: Apache-2.0
 authors:
