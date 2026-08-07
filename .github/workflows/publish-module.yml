@@ -1,0 +1,134 @@
+name: Publish Module to Barn
+
+on:
+  push:
+    tags:
+      - 'modules/**/v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-module-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Publish ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout released module source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Create Barn GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.FERRET_RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FERRET_RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: barn
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Checkout Barn
+        uses: actions/checkout@v6
+        with:
+          repository: MontFerret/barn
+          ref: main
+          path: barn
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: scripts/publish/go.mod
+          cache: true
+          cache-dependency-path: scripts/publish/go.sum
+
+      - name: Prepare Barn registry records
+        id: prepare
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          (
+            cd scripts/publish
+            GOWORK=off go run . \
+              --source-root ../.. \
+              --barn-root ../../barn \
+              --tag "$RELEASE_TAG"
+          )
+
+          git -C barn add -- registry/modules
+          if git -C barn diff --cached --quiet -- registry/modules; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Barn already contains this release; no PR is needed."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push publication branch
+        if: steps.prepare.outputs.changed == 'true'
+        env:
+          PUBLICATION_BRANCH: publish/contrib/${{ github.ref_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          git -C barn check-ref-format --branch "$PUBLICATION_BRANCH"
+          git -C barn config user.name "ferret-release[bot]"
+          git -C barn config \
+            user.email \
+            "ferret-release[bot]@users.noreply.github.com"
+          git -C barn switch -c "$PUBLICATION_BRANCH"
+          git -C barn commit -m "chore(registry): publish ${RELEASE_TAG}"
+
+          remote_ref="refs/heads/${PUBLICATION_BRANCH}"
+          tracking_ref="refs/remotes/origin/${PUBLICATION_BRANCH}"
+          if git -C barn ls-remote \
+            --exit-code \
+            --heads \
+            origin "$remote_ref" >/dev/null
+          then
+            git -C barn fetch origin "${remote_ref}:${tracking_ref}"
+          fi
+
+          git -C barn push \
+            --force-with-lease \
+            --set-upstream \
+            origin "HEAD:${remote_ref}"
+
+      - name: Create or reuse Barn pull request
+        if: steps.prepare.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PUBLICATION_BRANCH: publish/contrib/${{ github.ref_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          PR_BODY: >-
+            Automated Barn publication for MontFerret/contrib tag
+            `${{ github.ref_name }}`, prepared using Barn's public Go API.
+            Merge after Barn CI and review pass.
+        run: |
+          existing_pr="$(
+            gh pr list \
+              --repo MontFerret/barn \
+              --state open \
+              --head "$PUBLICATION_BRANCH" \
+              --json url \
+              --jq '.[0].url // empty'
+          )"
+
+          if [[ -n "$existing_pr" ]]; then
+            echo "Updated existing pull request: $existing_pr"
+            exit 0
+          fi
+
+          gh pr create \
+            --repo MontFerret/barn \
+            --base main \
+            --head "$PUBLICATION_BRANCH" \
+            --title "chore(registry): publish ${RELEASE_TAG}" \
+            --body "$PR_BODY"

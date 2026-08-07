@@ -101,6 +101,16 @@ make release-pre-all rc
 RELEASE_PRE_BASE_VERSION=1.0.0 make release-pre-all rc
 ```
 
+Every pushed `modules/**/v*` tag triggers the Barn publication workflow. The
+workflow uses Barn's public Go API to validate the tagged module, prepares the
+immutable registry source records, and opens one ready-for-review pull request
+in [MontFerret/barn](https://github.com/MontFerret/barn). The release appears in
+the public registry only after that pull request passes Barn CI, is reviewed,
+and is merged. Re-running the workflow updates the existing publication branch
+or succeeds without changes when the version is already published.
+
+Support-package tags under `pkg/` do not trigger Barn publication.
+
 Support packages under `pkg/` are released by creating and pushing a package-specific git tag in the format:
 
 `pkg/<package>/v<version>`

@@ -80,6 +80,28 @@ jobs:
       - name: Validate manifests
         run: make validate-manifests
 
+  test-publisher:
+    name: Test Barn publisher
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: scripts/publish/go.mod
+          cache: true
+          cache-dependency-path: scripts/publish/go.sum
+
+      - name: Test publisher
+        run: make test-publisher
+
+      - name: Vet publisher
+        working-directory: scripts/publish
+        run: GOWORK=off go vet ./...
+
   build:
     name: Build (${{ matrix.module }})
     runs-on: ubuntu-latest
