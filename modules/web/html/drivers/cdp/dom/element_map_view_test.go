@@ -2,6 +2,7 @@ package dom
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -39,7 +40,7 @@ func TestElementMapViewWritesThroughAndPreservesSnapshotSemantics(t *testing.T) 
 
 	if got, err := view.Get(ctx, runtime.NewString("fresh")); err != nil {
 		t.Fatalf("get fresh: %v", err)
-	} else if runtime.CompareValues(got, runtime.NewString("42")) != 0 {
+	} else if !valuesEqual(t, got, runtime.NewString("42")) {
 		t.Fatalf("unexpected fresh snapshot value: %v", got)
 	}
 
@@ -135,5 +136,25 @@ func TestElementMapViewNormalizesSnapshotAndWriteKeys(t *testing.T) {
 	}
 	if removes["alias"] {
 		t.Fatal("did not expect remove to use raw alias key")
+	}
+}
+
+func TestElementMapViewRemovePropagatesEqualityErrors(t *testing.T) {
+	t.Parallel()
+
+	failure := errors.New("comparison failed")
+	value := newFailingEqualityValue(failure)
+	view := newElementMapView(
+		runtime.NewObjectWith(map[string]runtime.Value{"value": value}),
+		func(_ context.Context, _, _ runtime.Value) (runtime.Value, bool, error) {
+			return runtime.None, false, nil
+		},
+		func(_ context.Context, _ runtime.Value) error {
+			return nil
+		},
+	)
+
+	if err := view.Remove(t.Context(), value); !errors.Is(err, failure) {
+		t.Fatalf("Remove() error = %v, want comparison failure", err)
 	}
 }

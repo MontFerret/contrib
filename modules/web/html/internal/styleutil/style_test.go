@@ -45,7 +45,7 @@ func TestDeserialize(t *testing.T) {
 				value, err := out.Get(ctx, s.name)
 				So(err, ShouldBeNil)
 
-				So(runtime.CompareValues(value, s.value), ShouldEqual, 0)
+				So(valuesEqual(t, value, s.value), ShouldBeTrue)
 			}
 		})
 
@@ -74,7 +74,7 @@ func TestDeserialize(t *testing.T) {
 				value, err := out.Get(ctx, s.name)
 				So(err, ShouldBeNil)
 
-				So(runtime.CompareValues(value, s.value), ShouldEqual, 0)
+				So(valuesEqual(t, value, s.value), ShouldBeTrue)
 			}
 		})
 	})

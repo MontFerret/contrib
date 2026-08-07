@@ -93,7 +93,7 @@ func assertSharedQuerySemantics(t *testing.T, ctx context.Context, target driver
 		t.Fatalf("count by selector failed: %v", err)
 	}
 
-	if runtime.CompareValues(count, runtime.NewInt(2)) != 0 {
+	if !valuesEqual(t, count, runtime.NewInt(2)) {
 		t.Fatalf("expected selector count 2, got %v", count)
 	}
 
@@ -142,7 +142,7 @@ func assertSharedQuerySemantics(t *testing.T, ctx context.Context, target driver
 		t.Fatalf("failed to read first xpath attribute result: %v", err)
 	}
 
-	if runtime.CompareValues(attrValue, runtime.NewString("Continue")) != 0 {
+	if !valuesEqual(t, attrValue, runtime.NewString("Continue")) {
 		t.Fatalf("expected xpath attribute value Continue, got %v", attrValue)
 	}
 
@@ -151,7 +151,7 @@ func assertSharedQuerySemantics(t *testing.T, ctx context.Context, target driver
 		t.Fatalf("xpath count query failed: %v", err)
 	}
 
-	if runtime.CompareValues(xpathCount, runtime.NewFloat(2)) != 0 {
+	if !valuesEqual(t, xpathCount, runtime.NewFloat(2)) {
 		t.Fatalf("expected xpath count 2, got %v", xpathCount)
 	}
 }
@@ -177,7 +177,7 @@ func assertSharedQueryModifierSemantics(t *testing.T, ctx context.Context, targe
 		t.Fatalf("query count failed: %v", err)
 	}
 
-	if runtime.CompareValues(count, runtime.NewInt(2)) != 0 {
+	if !valuesEqual(t, count, runtime.NewInt(2)) {
 		t.Fatalf("expected query count 2, got %v", count)
 	}
 
@@ -209,7 +209,7 @@ func assertSharedQueryModifierSemantics(t *testing.T, ctx context.Context, targe
 		t.Fatalf("missing query count failed: %v", err)
 	}
 
-	if runtime.CompareValues(missingCount, runtime.ZeroInt) != 0 {
+	if !valuesEqual(t, missingCount, runtime.ZeroInt) {
 		t.Fatalf("expected missing query count 0, got %v", missingCount)
 	}
 
@@ -243,7 +243,7 @@ func assertSharedReadSemantics(t *testing.T, ctx context.Context, target drivers
 		t.Fatalf("get inner text failed: %v", err)
 	}
 
-	if runtime.CompareValues(innerText, runtime.NewString("FerretBrowser automationNext")) != 0 {
+	if !valuesEqual(t, innerText, runtime.NewString("FerretBrowser automationNext")) {
 		t.Fatalf("unexpected inner text: %v", innerText)
 	}
 
@@ -252,7 +252,7 @@ func assertSharedReadSemantics(t *testing.T, ctx context.Context, target drivers
 		t.Fatalf("get inner html failed: %v", err)
 	}
 
-	if runtime.CompareValues(innerHTML, runtime.NewString(`<h1>Ferret</h1><p class="lead">Browser automation</p><a class="action" href="/next" title="Continue">Next</a><input id="search" value="find me"/>`)) != 0 {
+	if !valuesEqual(t, innerHTML, runtime.NewString(`<h1>Ferret</h1><p class="lead">Browser automation</p><a class="action" href="/next" title="Continue">Next</a><input id="search" value="find me"/>`)) {
 		t.Fatalf("unexpected inner html: %v", innerHTML)
 	}
 
@@ -274,7 +274,7 @@ func assertSharedReadSemantics(t *testing.T, ctx context.Context, target drivers
 		t.Fatalf("get attribute failed: %v", err)
 	}
 
-	if runtime.CompareValues(attrValue, runtime.NewString("hero")) != 0 {
+	if !valuesEqual(t, attrValue, runtime.NewString("hero")) {
 		t.Fatalf("unexpected data-role attribute value: %v", attrValue)
 	}
 
@@ -296,7 +296,7 @@ func assertSharedReadSemantics(t *testing.T, ctx context.Context, target drivers
 		t.Fatalf("get style failed: %v", err)
 	}
 
-	if runtime.CompareValues(styleValue, runtime.NewString("red")) != 0 {
+	if !valuesEqual(t, styleValue, runtime.NewString("red")) {
 		t.Fatalf("unexpected style value: %v", styleValue)
 	}
 
@@ -316,7 +316,7 @@ func assertSharedReadSemantics(t *testing.T, ctx context.Context, target drivers
 		t.Fatalf("get value failed: %v", err)
 	}
 
-	if runtime.CompareValues(value, runtime.NewString("find me")) != 0 {
+	if !valuesEqual(t, value, runtime.NewString("find me")) {
 		t.Fatalf("unexpected input value: %v", value)
 	}
 }
@@ -329,7 +329,7 @@ func assertElementIDs(t *testing.T, ctx context.Context, list runtime.List, expe
 		t.Fatalf("failed to read list length: %v", err)
 	}
 
-	if runtime.CompareValues(length, runtime.NewInt(len(expected))) != 0 {
+	if !valuesEqual(t, length, runtime.NewInt(len(expected))) {
 		t.Fatalf("expected %d elements, got %v", len(expected), length)
 	}
 
@@ -357,7 +357,7 @@ func assertElementID(t *testing.T, ctx context.Context, element drivers.HTMLElem
 		t.Fatalf("failed to read id attribute: %v", err)
 	}
 
-	if runtime.CompareValues(id, runtime.NewString(expected)) != 0 {
+	if !valuesEqual(t, id, runtime.NewString(expected)) {
 		t.Fatalf("expected id %q, got %v", expected, id)
 	}
 }
@@ -370,7 +370,7 @@ func assertMapStringValue(t *testing.T, ctx context.Context, value runtime.Map, 
 		t.Fatalf("failed to read map key %q: %v", key, err)
 	}
 
-	if runtime.CompareValues(actual, runtime.NewString(expected)) != 0 {
+	if !valuesEqual(t, actual, runtime.NewString(expected)) {
 		t.Fatalf("expected %q=%q, got %v", key, expected, actual)
 	}
 }

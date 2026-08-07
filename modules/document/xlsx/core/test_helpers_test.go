@@ -15,7 +15,11 @@ type closeable interface {
 func assertValue(t *testing.T, actual, expected runtime.Value) {
 	t.Helper()
 
-	if runtime.CompareValues(actual, expected) != 0 {
+	equal, err := runtime.EqualValues(t.Context(), actual, expected)
+	if err != nil {
+		t.Fatalf("compare values: %v", err)
+	}
+	if !equal {
 		t.Fatalf("expected %T(%q), got %T(%q)", expected, expected.String(), actual, actual.String())
 	}
 }

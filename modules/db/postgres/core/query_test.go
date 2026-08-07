@@ -45,7 +45,12 @@ func TestConnectionQueryRowsAndParams(t *testing.T) {
 	if got := objectField(t, ctx, row, "created_at"); got != runtime.NewDateTime(now) {
 		t.Fatalf("expected datetime %v, got %v", now, got)
 	}
-	if got := objectField(t, ctx, row, "data"); runtime.CompareValues(got, runtime.NewBinary([]byte("bin"))) != 0 {
+	got := objectField(t, ctx, row, "data")
+	equal, err := runtime.EqualValues(ctx, got, runtime.NewBinary([]byte("bin")))
+	if err != nil {
+		t.Fatalf("compare binary value: %v", err)
+	}
+	if !equal {
 		t.Fatalf("expected binary value, got %v", got)
 	}
 	if got := objectField(t, ctx, row, "note"); got != runtime.None {

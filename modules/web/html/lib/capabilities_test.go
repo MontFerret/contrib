@@ -80,7 +80,11 @@ func TestSelectUsesInteractionCapabilityFromPage(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if runtime.CompareValues(value, expected) != 0 {
+	equal, err := runtime.EqualValues(t.Context(), value, expected)
+	if err != nil {
+		t.Fatalf("compare selected values: %v", err)
+	}
+	if !equal {
 		t.Fatalf("expected select to return the chosen values, got %v", value)
 	}
 

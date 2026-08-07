@@ -103,7 +103,7 @@ func TestDocumentAndPageDotAccessDoNotExposeElementOnlyViews(t *testing.T) {
 				t.Fatalf("read innerText: %v", err)
 			}
 
-			if runtime.CompareValues(value, runtime.NewString("Text")) != 0 {
+			if !valuesEqual(t, value, runtime.NewString("Text")) {
 				t.Fatalf("expected innerText to remain readable, got %v", value)
 			}
 		})
@@ -209,7 +209,7 @@ func TestExplicitElementMutationCapabilitiesRemain(t *testing.T) {
 		t.Fatalf("get attribute: %v", err)
 	}
 
-	if runtime.CompareValues(attrValue, runtime.NewString("hero")) != 0 {
+	if !valuesEqual(t, attrValue, runtime.NewString("hero")) {
 		t.Fatalf("unexpected attribute value: %v", attrValue)
 	}
 
@@ -227,7 +227,7 @@ func TestExplicitElementMutationCapabilitiesRemain(t *testing.T) {
 		t.Fatalf("get style: %v", err)
 	}
 
-	if runtime.CompareValues(styleValue, runtime.NewString("red")) != 0 {
+	if !valuesEqual(t, styleValue, runtime.NewString("red")) {
 		t.Fatalf("unexpected style value: %v", styleValue)
 	}
 
@@ -251,7 +251,7 @@ func TestExplicitElementMutationCapabilitiesRemain(t *testing.T) {
 		t.Fatalf("get value: %v", err)
 	}
 
-	if runtime.CompareValues(value, runtime.NewString("updated")) != 0 {
+	if !valuesEqual(t, value, runtime.NewString("updated")) {
 		t.Fatalf("unexpected input value: %v", value)
 	}
 }
@@ -264,7 +264,7 @@ func assertElementRead(t *testing.T, ctx context.Context, element drivers.HTMLEl
 		t.Fatalf("read %s: %v", key, err)
 	}
 
-	if runtime.CompareValues(value, expected) != 0 {
+	if !valuesEqual(t, value, expected) {
 		t.Fatalf("expected %s to be %v, got %v", key, expected, value)
 	}
 }
@@ -277,7 +277,7 @@ func assertElementValues(t *testing.T, ctx context.Context, list runtime.List, e
 		t.Fatalf("read selectedOptions length: %v", err)
 	}
 
-	if runtime.CompareValues(length, runtime.NewInt(len(expected))) != 0 {
+	if !valuesEqual(t, length, runtime.NewInt(len(expected))) {
 		t.Fatalf("expected selectedOptions length %d, got %v", len(expected), length)
 	}
 

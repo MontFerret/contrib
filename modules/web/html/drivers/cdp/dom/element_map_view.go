@@ -57,8 +57,12 @@ func (view *elementMapView) Clone(ctx context.Context) (runtime.Cloneable, error
 	return view.snapshot.Clone(ctx)
 }
 
-func (view *elementMapView) Compare(other runtime.Value) int {
-	return view.snapshot.Compare(other)
+func (view *elementMapView) Equal(ctx context.Context, other runtime.Value) (bool, error) {
+	return view.snapshot.Equal(ctx, other)
+}
+
+func (view *elementMapView) Compare(ctx context.Context, other runtime.Value) (runtime.Ordering, error) {
+	return view.snapshot.Compare(ctx, other)
 }
 
 func (view *elementMapView) Length(ctx context.Context) (runtime.Int, error) {
@@ -127,7 +131,12 @@ func (view *elementMapView) Remove(ctx context.Context, value runtime.Value) err
 	var foundKey runtime.Value
 
 	err := view.snapshot.ForEach(ctx, func(ctx context.Context, current, key runtime.Value) (runtime.Boolean, error) {
-		if runtime.CompareValues(current, value) == 0 {
+		equal, err := runtime.EqualValues(ctx, current, value)
+		if err != nil {
+			return runtime.False, err
+		}
+
+		if equal {
 			foundKey = key
 
 			return runtime.False, nil

@@ -52,20 +52,48 @@ func (el *HTMLElement) String() string {
 	return ih.String()
 }
 
-func (el *HTMLElement) Compare(other runtime.Value) int {
-	otherElement, ok := other.(drivers.HTMLElement)
-
-	if !ok {
-		typed, ok := other.(runtime.Typed)
-
-		if !ok {
-			return 1
-		}
-
-		return drivers.Compare(el.Type(), typed.Type())
+func (el *HTMLElement) Equal(ctx context.Context, other runtime.Value) (bool, error) {
+	if _, err := checkComparisonContext(ctx); err != nil {
+		return false, err
 	}
 
-	return strings.Compare(el.String(), otherElement.String())
+	otherElement, ok := other.(*HTMLElement)
+	if !ok {
+		return false, nil
+	}
+
+	comparison, err := el.compare(ctx, otherElement)
+
+	return comparison == runtime.Equal, err
+}
+
+func (el *HTMLElement) Compare(ctx context.Context, other runtime.Value) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	otherElement, ok := other.(*HTMLElement)
+	if ok {
+		return el.compare(ctx, otherElement)
+	}
+
+	if _, ok := other.(drivers.HTMLElement); ok {
+		if comparison, err := checkComparisonContext(ctx); err != nil {
+			return comparison, err
+		}
+
+		return runtime.Less, nil
+	}
+
+	return invalidComparison(el, other)
+}
+
+func (el *HTMLElement) compare(ctx context.Context, other *HTMLElement) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	return runtime.Ordering(strings.Compare(el.String(), other.String())), nil
 }
 
 func (el *HTMLElement) Unwrap() any {

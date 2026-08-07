@@ -34,7 +34,6 @@ func (doc *HTMLDocument) Hash() uint64 {
 	h.Write([]byte(doc.Type().String()))
 	h.Write([]byte(":"))
 	h.Write([]byte(doc.frameTree.Frame.ID))
-	h.Write([]byte(doc.frameTree.Frame.URL))
 
 	return h.Sum64()
 }
@@ -43,20 +42,52 @@ func (doc *HTMLDocument) Copy() runtime.Value {
 	return runtime.None
 }
 
-func (doc *HTMLDocument) Compare(other runtime.Value) int {
-	switch value := other.(type) {
-	case *HTMLDocument:
-		thisID := runtime.NewString(string(doc.Frame().Frame.ID))
-		otherID := runtime.NewString(string(value.Frame().Frame.ID))
-
-		return thisID.Compare(otherID)
-	case drivers.HTMLDocument:
-		return runtime.NewString(doc.frameTree.Frame.URL).Compare(value.GetURL())
-	case FrameID:
-		return runtime.NewString(string(doc.frameTree.Frame.ID)).Compare(runtime.NewString(other.String()))
-	default:
-		return drivers.CompareTypes(doc, other)
+func (doc *HTMLDocument) Equal(ctx context.Context, other runtime.Value) (bool, error) {
+	if _, err := checkComparisonContext(ctx); err != nil {
+		return false, err
 	}
+
+	otherDocument, ok := other.(*HTMLDocument)
+	if !ok {
+		return false, nil
+	}
+
+	comparison, err := doc.compare(ctx, otherDocument)
+
+	return comparison == runtime.Equal, err
+}
+
+func (doc *HTMLDocument) Compare(ctx context.Context, other runtime.Value) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	otherDocument, ok := other.(*HTMLDocument)
+	if ok {
+		return doc.compare(ctx, otherDocument)
+	}
+
+	if _, ok := other.(drivers.HTMLDocument); ok {
+		if comparison, err := checkComparisonContext(ctx); err != nil {
+			return comparison, err
+		}
+
+		return runtime.Greater, nil
+	}
+
+	return invalidComparison(doc, other)
+}
+
+func (doc *HTMLDocument) compare(ctx context.Context, other *HTMLDocument) (runtime.Ordering, error) {
+	if comparison, err := checkComparisonContext(ctx); err != nil {
+		return comparison, err
+	}
+
+	return runtime.CompareValues(
+		ctx,
+		runtime.NewString(string(doc.Frame().Frame.ID)),
+		runtime.NewString(string(other.Frame().Frame.ID)),
+	)
 }
 
 func (doc *HTMLDocument) Iterate(ctx context.Context) (runtime.Iterator, error) {

@@ -22,14 +22,53 @@ func (p *HTMLPage) String() string {
 	return p.getCurrentDocument().GetURL().String()
 }
 
-func (p *HTMLPage) Compare(other runtime.Value) int {
-	cdpPage, ok := other.(*HTMLPage)
-
-	if !ok {
-		return drivers.CompareTypes(p, other)
+func (p *HTMLPage) Equal(ctx context.Context, other runtime.Value) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
 	}
 
-	return p.getCurrentDocument().GetURL().Compare(cdpPage.GetURL())
+	otherPage, ok := other.(*HTMLPage)
+	if !ok {
+		return false, nil
+	}
+
+	comparison, err := p.compare(ctx, otherPage)
+
+	return comparison == runtime.Equal, err
+}
+
+func (p *HTMLPage) Compare(ctx context.Context, other runtime.Value) (runtime.Ordering, error) {
+	if err := ctx.Err(); err != nil {
+		return runtime.Equal, err
+	}
+
+	otherPage, ok := other.(*HTMLPage)
+	if ok {
+		return p.compare(ctx, otherPage)
+	}
+
+	if _, ok := other.(drivers.HTMLPage); ok {
+		if err := ctx.Err(); err != nil {
+			return runtime.Equal, err
+		}
+
+		return runtime.Greater, nil
+	}
+
+	return runtime.Equal, runtime.Errorf(
+		runtime.ErrInvalidOperation,
+		"cannot compare %s with %s",
+		runtime.TypeName(runtime.TypeOf(p)),
+		runtime.TypeName(runtime.TypeOf(other)),
+	)
+}
+
+func (p *HTMLPage) compare(ctx context.Context, other *HTMLPage) (runtime.Ordering, error) {
+	if err := ctx.Err(); err != nil {
+		return runtime.Equal, err
+	}
+
+	return runtime.CompareValues(ctx, p.getCurrentDocument().GetURL(), other.getCurrentDocument().GetURL())
 }
 
 func (p *HTMLPage) Unwrap() any {

@@ -131,7 +131,7 @@ func assertRuntimeList(t *testing.T, list runtime.List, expected []runtime.Value
 		if err != nil {
 			t.Fatalf("read item %d: %v", idx, err)
 		}
-		if runtime.CompareValues(got, want) != 0 {
+		if !valuesEqual(t, got, want) {
 			t.Fatalf("item %d: expected %v, got %v", idx, want, got)
 		}
 	}

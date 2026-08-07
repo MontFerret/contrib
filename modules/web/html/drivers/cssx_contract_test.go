@@ -52,7 +52,7 @@ func TestCSSXContractAcrossBackends(t *testing.T) {
 				if err != nil {
 					t.Fatalf("read data-role: %v", err)
 				}
-				if runtime.CompareValues(attr, runtime.NewString("hero")) != 0 {
+				if !valuesEqual(t, attr, runtime.NewString("hero")) {
 					t.Fatalf("unexpected data-role: %v", attr)
 				}
 			},
@@ -122,7 +122,7 @@ func assertListValues(t *testing.T, ctx context.Context, list runtime.List, expe
 			t.Fatalf("list[%d]: %v", idx, err)
 		}
 
-		if runtime.CompareValues(got, want) != 0 {
+		if !valuesEqual(t, got, want) {
 			t.Fatalf("list[%d]: expected %v, got %v", idx, want, got)
 		}
 	}
