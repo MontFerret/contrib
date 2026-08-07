@@ -8,7 +8,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/MontFerret/specs/pkg/module"
+	"github.com/goccy/go-yaml"
 )
 
 const (
@@ -17,6 +17,49 @@ const (
 	expectedLicense       = "Apache-2.0"
 	expectedModuleCount   = 17
 	expectedRepositoryURL = "https://github.com/MontFerret/contrib"
+	manifestFilename      = "ferret.yaml"
+)
+
+type (
+	manifestMetadata struct {
+		Name          string                 `yaml:"name"`
+		Namespace     string                 `yaml:"namespace"`
+		License       string                 `yaml:"license"`
+		Authors       []authorMetadata       `yaml:"authors"`
+		Documentation string                 `yaml:"documentation"`
+		Repository    *repositoryMetadata    `yaml:"repository"`
+		Compatibility *compatibilityMetadata `yaml:"compatibility"`
+		Dependencies  []any                  `yaml:"dependencies"`
+		Links         map[string]string      `yaml:"links"`
+		Keywords      []string               `yaml:"keywords"`
+		Categories    []string               `yaml:"categories"`
+		Exports       *exportsMetadata       `yaml:"exports"`
+	}
+
+	authorMetadata struct {
+		Name string `yaml:"name"`
+	}
+
+	repositoryMetadata struct {
+		URL       string `yaml:"url"`
+		Directory string `yaml:"directory"`
+	}
+
+	compatibilityMetadata struct {
+		Ferret string `yaml:"ferret"`
+	}
+
+	exportsMetadata struct {
+		Namespaces []namespaceMetadata `yaml:"namespaces"`
+		Dialects   []string            `yaml:"dialects"`
+	}
+
+	namespaceMetadata struct {
+		Name      string   `yaml:"name"`
+		Functions []string `yaml:"functions"`
+		Types     []string `yaml:"types"`
+		Constants []string `yaml:"constants"`
+	}
 )
 
 var legacyManifestFilenames = map[string]struct{}{
@@ -43,7 +86,7 @@ func TestModuleManifests(t *testing.T) {
 		switch entry.Name() {
 		case "go.mod":
 			moduleDirs = append(moduleDirs, filepath.Dir(path))
-		case module.ManifestFilename:
+		case manifestFilename:
 			manifestDirs[filepath.Dir(path)] = struct{}{}
 		default:
 			if _, legacy := legacyManifestFilenames[entry.Name()]; legacy {
@@ -72,7 +115,7 @@ func TestModuleManifests(t *testing.T) {
 
 	for dir := range manifestDirs {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err != nil {
-			t.Errorf("manifest %s is not beside a go.mod", filepath.Join(dir, module.ManifestFilename))
+			t.Errorf("manifest %s is not beside a go.mod", filepath.Join(dir, manifestFilename))
 		}
 	}
 
@@ -90,16 +133,22 @@ func TestModuleManifests(t *testing.T) {
 
 		t.Run(modulePath, func(t *testing.T) {
 			if _, exists := manifestDirs[dir]; !exists {
-				t.Fatalf("missing %s", filepath.Join(dir, module.ManifestFilename))
+				t.Fatalf("missing %s", filepath.Join(dir, manifestFilename))
 			}
 
 			if _, err := os.Stat(filepath.Join(dir, "README.md")); err != nil {
 				t.Errorf("documentation target is missing: %v", err)
 			}
 
-			manifest, err := module.LoadFile(filepath.Join(dir, module.ManifestFilename))
+			data, err := os.ReadFile(filepath.Join(dir, manifestFilename))
 			if err != nil {
-				t.Fatalf("load manifest: %v", err)
+				t.Fatalf("read manifest metadata: %v", err)
+			}
+
+			var manifest manifestMetadata
+			err = yaml.Unmarshal(data, &manifest)
+			if err != nil {
+				t.Fatalf("decode manifest metadata: %v", err)
 			}
 
 			wantName := "montferret/" + filepath.Base(dir)

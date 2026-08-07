@@ -30,9 +30,11 @@ Module-specific documentation lives in each module README and will be expanded t
 
 Each module directory contains a `ferret.yaml` document conforming to
 [Ferret Module Manifest v1](https://schemas.ferretlang.org/module/v1.json).
-Validate the complete manifest inventory and its repository conventions with:
+Install the pinned manifest validator, then validate the complete manifest
+inventory and its repository conventions with:
 
 ```sh
+make install-manifest-validator
 make validate-manifests
 ```
 

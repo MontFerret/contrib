@@ -70,7 +70,12 @@ jobs:
         with:
           go-version-file: go.work
           cache: true
-          cache-dependency-path: tests/manifests/go.sum
+          cache-dependency-path: |
+            Makefile
+            tests/manifests/go.sum
+
+      - name: Install manifest validator
+        run: make install-manifest-validator
 
       - name: Validate manifests
         run: make validate-manifests
