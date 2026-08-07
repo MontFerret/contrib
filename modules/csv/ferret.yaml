@@ -7,7 +7,9 @@ license: Apache-2.0
 authors:
   - name: MontFerret Authors
 documentation: https://github.com/MontFerret/contrib/tree/main/modules/csv/
-repository: https://github.com/MontFerret/contrib/
+repository:
+  url: https://github.com/MontFerret/contrib
+  directory: modules/csv
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
 exports:

@@ -2,7 +2,7 @@ module github.com/MontFerret/contrib/tests/manifests
 
 go 1.26.5
 
-require github.com/MontFerret/specs v1.0.0
+require github.com/MontFerret/specs v1.1.0
 
 require (
 	github.com/Masterminds/semver/v3 v3.5.0 // indirect

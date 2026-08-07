@@ -16,13 +16,20 @@ const (
 	expectedCompatibility = ">=2.0.0-alpha.43 <3.0.0"
 	expectedLicense       = "Apache-2.0"
 	expectedModuleCount   = 17
-	expectedRepository    = "https://github.com/MontFerret/contrib/"
+	expectedRepositoryURL = "https://github.com/MontFerret/contrib"
 )
+
+var legacyManifestFilenames = map[string]struct{}{
+	"ferret-module.yaml": {},
+	"ferret.module.yaml": {},
+	"module.yaml":        {},
+}
 
 func TestModuleManifests(t *testing.T) {
 	modulesRoot := filepath.Join("..", "..", "modules")
 	moduleDirs := make([]string, 0, expectedModuleCount)
 	manifestDirs := make(map[string]struct{}, expectedModuleCount)
+	legacyManifests := make([]string, 0)
 
 	err := filepath.WalkDir(modulesRoot, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -36,8 +43,12 @@ func TestModuleManifests(t *testing.T) {
 		switch entry.Name() {
 		case "go.mod":
 			moduleDirs = append(moduleDirs, filepath.Dir(path))
-		case "ferret-module.yaml":
+		case module.ManifestFilename:
 			manifestDirs[filepath.Dir(path)] = struct{}{}
+		default:
+			if _, legacy := legacyManifestFilenames[entry.Name()]; legacy {
+				legacyManifests = append(legacyManifests, path)
+			}
 		}
 
 		return nil
@@ -54,10 +65,14 @@ func TestModuleManifests(t *testing.T) {
 	if len(manifestDirs) != expectedModuleCount {
 		t.Errorf("discovered %d manifests, want %d", len(manifestDirs), expectedModuleCount)
 	}
+	if len(legacyManifests) != 0 {
+		sort.Strings(legacyManifests)
+		t.Errorf("obsolete module manifests remain: %v", legacyManifests)
+	}
 
 	for dir := range manifestDirs {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err != nil {
-			t.Errorf("manifest %s is not beside a go.mod", filepath.Join(dir, "ferret-module.yaml"))
+			t.Errorf("manifest %s is not beside a go.mod", filepath.Join(dir, module.ManifestFilename))
 		}
 	}
 
@@ -75,14 +90,14 @@ func TestModuleManifests(t *testing.T) {
 
 		t.Run(modulePath, func(t *testing.T) {
 			if _, exists := manifestDirs[dir]; !exists {
-				t.Fatalf("missing %s", filepath.Join(dir, "ferret-module.yaml"))
+				t.Fatalf("missing %s", filepath.Join(dir, module.ManifestFilename))
 			}
 
 			if _, err := os.Stat(filepath.Join(dir, "README.md")); err != nil {
 				t.Errorf("documentation target is missing: %v", err)
 			}
 
-			manifest, err := module.LoadFile(filepath.Join(dir, "ferret-module.yaml"))
+			manifest, err := module.LoadFile(filepath.Join(dir, module.ManifestFilename))
 			if err != nil {
 				t.Fatalf("load manifest: %v", err)
 			}
@@ -104,8 +119,15 @@ func TestModuleManifests(t *testing.T) {
 				t.Errorf("documentation = %q, want %q", manifest.Documentation, wantDocumentation)
 			}
 
-			if manifest.Repository != expectedRepository {
-				t.Errorf("repository = %q, want %q", manifest.Repository, expectedRepository)
+			if manifest.Repository == nil {
+				t.Fatal("repository metadata is missing")
+			}
+			if manifest.Repository.URL != expectedRepositoryURL {
+				t.Errorf("repository URL = %q, want %q", manifest.Repository.URL, expectedRepositoryURL)
+			}
+			wantDirectory := "modules/" + modulePath
+			if manifest.Repository.Directory != wantDirectory {
+				t.Errorf("repository directory = %q, want %q", manifest.Repository.Directory, wantDirectory)
 			}
 
 			if manifest.License != expectedLicense {
