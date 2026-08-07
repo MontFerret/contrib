@@ -1,7 +1,7 @@
 $schema: https://schemas.ferretlang.org/module/v1.json
 name: montferret/html
 namespace: WEB::HTML
-version: 1.0.0-rc.20
+version: 1.0.0-rc.21
 description: HTML loading, parsing, querying, interaction, and browser automation under WEB::HTML for Ferret.
 license: Apache-2.0
 authors:

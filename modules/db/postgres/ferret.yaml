@@ -1,7 +1,7 @@
 $schema: https://schemas.ferretlang.org/module/v1.json
 name: montferret/postgres
 namespace: DB::POSTGRES
-version: 1.0.0-rc.8
+version: 1.0.0-rc.9
 description: Postgres database handles under DB::POSTGRES for Ferret.
 license: Apache-2.0
 authors:

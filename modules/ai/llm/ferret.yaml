@@ -1,7 +1,7 @@
 $schema: https://schemas.ferretlang.org/module/v1.json
 name: montferret/llm
 namespace: AI::LLM
-version: 1.0.0-rc.3
+version: 1.0.0-rc.4
 description: Text generation, chat, extraction, and classification under AI::LLM for Ferret.
 license: Apache-2.0
 authors:

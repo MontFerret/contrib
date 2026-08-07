@@ -1,7 +1,7 @@
 $schema: https://schemas.ferretlang.org/module/v1.json
 name: montferret/csv
 namespace: CSV
-version: 1.0.0-rc.15
+version: 1.0.0-rc.16
 description: CSV decoding, encoding, and streaming helpers under CSV for Ferret.
 license: Apache-2.0
 authors:
