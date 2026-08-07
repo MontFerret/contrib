@@ -12,6 +12,17 @@ repository:
   directory: modules/security/jwt
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - jwt
+  - tokens
+  - signing
+  - verification
+  - claims
+  - hmac
+  - public-key
+categories:
+  - security
+  - authentication
 exports:
   namespaces:
     - name: SECURITY::JWT

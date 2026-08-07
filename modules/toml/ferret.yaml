@@ -12,6 +12,14 @@ repository:
   directory: modules/toml
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - toml
+  - configuration
+  - decoding
+  - encoding
+categories:
+  - data-formats
+  - serialization
 exports:
   namespaces:
     - name: TOML

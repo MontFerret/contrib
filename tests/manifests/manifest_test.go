@@ -208,8 +208,16 @@ func TestModuleManifests(t *testing.T) {
 				t.Errorf("unexpected non-function exports: %#v", manifest.Exports)
 			}
 
-			if len(manifest.Dependencies) != 0 || len(manifest.Links) != 0 || len(manifest.Keywords) != 0 || len(manifest.Categories) != 0 {
-				t.Error("manifest contains optional catalog metadata outside the agreed v1 surface")
+			if len(manifest.Dependencies) != 0 || len(manifest.Links) != 0 {
+				t.Error("manifest contains dependencies or links outside the agreed v1 surface")
+			}
+
+			if len(manifest.Keywords) == 0 {
+				t.Error("manifest keywords must not be empty")
+			}
+
+			if len(manifest.Categories) < 2 {
+				t.Error("manifest must contain at least two categories")
 			}
 		})
 	}

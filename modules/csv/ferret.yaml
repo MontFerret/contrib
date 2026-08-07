@@ -12,6 +12,15 @@ repository:
   directory: modules/csv
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - csv
+  - tabular-data
+  - decoding
+  - encoding
+  - streaming
+categories:
+  - data-formats
+  - serialization
 exports:
   namespaces:
     - name: CSV

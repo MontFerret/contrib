@@ -12,6 +12,17 @@ repository:
   directory: modules/archive
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - archive
+  - zip
+  - tar
+  - gzip
+  - inspection
+  - extraction
+  - sandboxed-filesystem
+categories:
+  - archives
+  - files
 exports:
   namespaces:
     - name: ARCHIVE

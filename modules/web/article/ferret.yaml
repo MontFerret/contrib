@@ -12,6 +12,16 @@ repository:
   directory: modules/web/article
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - article-extraction
+  - readability
+  - html
+  - text
+  - markdown
+  - metadata
+categories:
+  - web
+  - content-extraction
 exports:
   namespaces:
     - name: WEB::ARTICLE

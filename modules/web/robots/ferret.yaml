@@ -12,6 +12,15 @@ repository:
   directory: modules/web/robots
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - robots-txt
+  - crawler-policy
+  - user-agent
+  - allow-disallow
+  - sitemaps
+categories:
+  - web
+  - web-crawling
 exports:
   namespaces:
     - name: WEB::ROBOTS

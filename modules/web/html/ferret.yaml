@@ -12,6 +12,17 @@ repository:
   directory: modules/web/html
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - html
+  - dom
+  - browser-automation
+  - web-scraping
+  - css-selectors
+  - xpath
+  - cdp
+categories:
+  - web
+  - automation
 exports:
   namespaces:
     - name: WEB::HTML

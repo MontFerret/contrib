@@ -12,6 +12,16 @@ repository:
   directory: modules/db/sqlite
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - sqlite
+  - sql
+  - embedded-database
+  - transactions
+  - in-memory
+  - filesystem
+categories:
+  - data
+  - databases
 exports:
   namespaces:
     - name: DB::SQLITE

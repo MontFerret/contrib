@@ -12,6 +12,15 @@ repository:
   directory: modules/db/postgres
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - postgres
+  - postgresql
+  - sql
+  - transactions
+  - querying
+categories:
+  - data
+  - databases
 exports:
   namespaces:
     - name: DB::POSTGRES

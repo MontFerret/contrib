@@ -12,6 +12,16 @@ repository:
   directory: modules/document/xlsx
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - xlsx
+  - excel
+  - spreadsheets
+  - workbooks
+  - worksheets
+  - cell-ranges
+categories:
+  - documents
+  - files
 exports:
   namespaces:
     - name: DOCUMENT::XLSX

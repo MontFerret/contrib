@@ -12,6 +12,16 @@ repository:
   directory: modules/security/oauth2
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - oauth2
+  - client-credentials
+  - refresh-token
+  - token-lifecycle
+  - bearer-token
+  - discovery
+categories:
+  - security
+  - authentication
 exports:
   namespaces:
     - name: SECURITY::OAUTH2

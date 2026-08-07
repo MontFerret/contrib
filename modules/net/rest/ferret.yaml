@@ -12,6 +12,16 @@ repository:
   directory: modules/net/rest
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - rest
+  - http
+  - api-client
+  - json
+  - querying
+  - endpoints
+categories:
+  - networking
+  - web
 exports:
   namespaces:
     - name: NET::REST

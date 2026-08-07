@@ -12,6 +12,15 @@ repository:
   directory: modules/yaml
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - yaml
+  - configuration
+  - decoding
+  - encoding
+  - multi-document
+categories:
+  - data-formats
+  - serialization
 exports:
   namespaces:
     - name: YAML

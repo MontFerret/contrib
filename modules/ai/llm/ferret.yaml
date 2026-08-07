@@ -12,6 +12,19 @@ repository:
   directory: modules/ai/llm
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - artificial-intelligence
+  - llm
+  - generative-ai
+  - text-generation
+  - chat
+  - summarization
+  - structured-extraction
+  - classification
+  - openai
+categories:
+  - ai
+  - text-processing
 exports:
   namespaces:
     - name: AI::LLM

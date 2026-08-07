@@ -12,6 +12,16 @@ repository:
   directory: modules/xml
 compatibility:
   ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - xml
+  - parsing
+  - traversal
+  - decoding
+  - encoding
+  - streaming
+categories:
+  - data-formats
+  - serialization
 exports:
   namespaces:
     - name: XML
