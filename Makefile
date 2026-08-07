@@ -1,4 +1,4 @@
-.PHONY: install-tools modules packages build build-cli build-packages test test-unit test-packages test-integration lint lint-packages fmt fmt-packages versions deps update-package update-ferret release-major release-minor release-patch release-pre release-pre-all release-package-major release-package-minor release-package-patch release-package-pre
+.PHONY: install-tools modules packages validate-manifests build build-cli build-packages test test-unit test-packages test-integration lint lint-packages fmt fmt-packages versions deps update-package update-ferret release-major release-minor release-patch release-pre release-pre-all release-package-major release-package-minor release-package-patch release-package-pre
 
 DIR_BIN = ./bin
 DIR_TEST = ./tests
@@ -15,6 +15,9 @@ modules:
 
 packages:
 	@./scripts/packages.sh list
+
+validate-manifests:
+	@cd tests/manifests && GOWORK=off go test ./...
 
 build: build-cli
 	@./scripts/modules.sh build $(filter-out $@,$(MAKECMDGOALS))

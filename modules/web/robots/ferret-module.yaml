@@ -1,0 +1,20 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/robots
+namespace: WEB::ROBOTS
+version: 1.0.0-rc.13
+description: Robots.txt parsing and policy helpers under WEB::ROBOTS for Ferret.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/web/robots/
+repository: https://github.com/MontFerret/contrib/
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+exports:
+  namespaces:
+    - name: WEB::ROBOTS
+      functions:
+        - PARSE
+        - ALLOWS
+        - MATCH
+        - SITEMAPS

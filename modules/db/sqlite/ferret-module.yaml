@@ -1,0 +1,21 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/sqlite
+namespace: DB::SQLITE
+version: 1.0.0-rc.11
+description: SQLite database handles under DB::SQLITE for Ferret.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/db/sqlite/
+repository: https://github.com/MontFerret/contrib/
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+exports:
+  namespaces:
+    - name: DB::SQLITE
+      functions:
+        - OPEN
+        - CLOSE
+        - BEGIN
+        - COMMIT
+        - ROLLBACK

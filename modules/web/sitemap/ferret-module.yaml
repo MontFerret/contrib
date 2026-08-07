@@ -1,0 +1,19 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/sitemap
+namespace: WEB::SITEMAP
+version: 1.0.0-rc.13
+description: Sitemap discovery helpers under WEB::SITEMAP for Ferret.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/web/sitemap/
+repository: https://github.com/MontFerret/contrib/
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+exports:
+  namespaces:
+    - name: WEB::SITEMAP
+      functions:
+        - FETCH
+        - URLS
+        - STREAM
