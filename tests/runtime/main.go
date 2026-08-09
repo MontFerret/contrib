@@ -16,6 +16,7 @@ import (
 	archivemodule "github.com/MontFerret/contrib/modules/archive"
 	"github.com/MontFerret/contrib/modules/csv"
 	dbpostgres "github.com/MontFerret/contrib/modules/db/postgres"
+	dbredis "github.com/MontFerret/contrib/modules/db/redis"
 	dbsqlite "github.com/MontFerret/contrib/modules/db/sqlite"
 	documentpdf "github.com/MontFerret/contrib/modules/document/pdf"
 	documentxlsx "github.com/MontFerret/contrib/modules/document/xlsx"
@@ -206,6 +207,7 @@ func main() {
 			archivemodule.New(),
 			csv.New(),
 			dbpostgres.New(),
+			dbredis.New(),
 			dbsqlite.New(),
 			documentpdf.New(),
 			documentxlsx.New(),

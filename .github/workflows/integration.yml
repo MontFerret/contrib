@@ -121,3 +121,35 @@ jobs:
           GOWORK: "off"
           POSTGRES_DSN: "postgres://ferret:secret@127.0.0.1:${{ job.services.postgres.ports[5432] }}/ferret?sslmode=disable"
         run: go test ./...
+
+  redis-integration:
+    name: Redis Integration (db/redis)
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:8.8-alpine
+        ports:
+          - 6379/tcp
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+          cache: true
+
+      - name: Run Redis integration tests
+        working-directory: modules/db/redis
+        env:
+          GOWORK: "off"
+          REDIS_URL: "redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/0?protocol=3"
+        run: go test ./...
