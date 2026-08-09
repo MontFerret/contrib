@@ -3,9 +3,6 @@ package core
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
-	"unicode"
 
 	goredis "github.com/redis/go-redis/v9"
 
@@ -18,12 +15,7 @@ func executeQuery(ctx context.Context, connection *Connection, q runtime.Query) 
 		return runtime.None, false, OperationError("QUERY", err)
 	}
 
-	command, err := parseCommand(q.Expression.String())
-	if err != nil {
-		return runtime.None, false, OperationError("QUERY", err)
-	}
-
-	params, err := parseParams(ctx, q.Params)
+	command, commandArgs, err := compileQueryTemplate(ctx, q.Expression.String(), q.Params)
 	if err != nil {
 		return runtime.None, false, OperationError("QUERY", err)
 	}
@@ -62,9 +54,9 @@ func executeQuery(ctx context.Context, connection *Connection, q runtime.Query) 
 		}
 	}
 
-	args := make([]any, 1, len(params)+1)
+	args := make([]any, 1, len(commandArgs)+1)
 	args[0] = command
-	args = append(args, params...)
+	args = append(args, commandArgs...)
 
 	result, err := client.Do(queryCtx, args...).Result()
 	if errors.Is(err, goredis.Nil) {
@@ -83,16 +75,4 @@ func executeQuery(ctx context.Context, connection *Connection, q runtime.Query) 
 	_, flatten := value.(runtime.List)
 
 	return value, flatten, nil
-}
-
-func parseCommand(input string) (string, error) {
-	if input == "" {
-		return "", fmt.Errorf("redis command must not be empty")
-	}
-
-	if strings.TrimSpace(input) != input || strings.IndexFunc(input, unicode.IsSpace) >= 0 {
-		return "", fmt.Errorf("redis command must be a single token; put subcommands and modifiers in WITH.params")
-	}
-
-	return input, nil
 }

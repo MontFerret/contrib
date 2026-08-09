@@ -13,16 +13,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-func TestQueryPreservesMixedArgumentOrder(t *testing.T) {
+func TestQueryTemplatePreservesArgumentOrder(t *testing.T) {
 	t.Parallel()
 
 	var got []any
 	client := &fakeClient{
-		commandFn: func(ctx context.Context) *goredis.CommandsInfoCmd {
-			return commandInfoResult(ctx, map[string]*goredis.CommandInfo{
-				"module.read": {ReadOnly: true},
-			}, nil)
-		},
 		doFn: func(ctx context.Context, args ...any) *goredis.Cmd {
 			got = append([]any(nil), args...)
 
@@ -33,14 +28,13 @@ func TestQueryPreservesMixedArgumentOrder(t *testing.T) {
 	t.Cleanup(func() { _ = connection.Close() })
 
 	out, err := connection.QueryOne(context.Background(), query(
-		"redis",
-		"MODULE.READ",
-		runtime.NewString("key"),
-		runtime.NewInt64(42),
-		runtime.NewFloat(1.5),
-		runtime.True,
-		runtime.NewBinary([]byte{0, 1, 2}),
-		runtime.NewString("NX"),
+		"redis_exec",
+		"SET session:$id $value EX $ttl NX",
+		map[string]runtime.Value{
+			"id":    runtime.NewString("abc"),
+			"value": runtime.NewString("hello world"),
+			"ttl":   runtime.NewInt(300),
+		},
 	))
 	if err != nil {
 		t.Fatalf("unexpected query error: %v", err)
@@ -49,7 +43,7 @@ func TestQueryPreservesMixedArgumentOrder(t *testing.T) {
 		t.Fatalf("unexpected result: %v", out)
 	}
 
-	want := []any{"MODULE.READ", "key", int64(42), 1.5, true, []byte{0, 1, 2}, "NX"}
+	want := []any{"SET", "session:abc", "hello world", "EX", int64(300), "NX"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("unexpected command arguments: got %#v, want %#v", got, want)
 	}
@@ -76,9 +70,11 @@ func TestReadDialectRejectsMutationBeforeExecution(t *testing.T) {
 
 	_, err := connection.Query(context.Background(), query(
 		"redis",
-		"SET",
-		runtime.NewString("key"),
-		runtime.NewString("value"),
+		"SET $key $value",
+		map[string]runtime.Value{
+			"key":   runtime.NewString("key"),
+			"value": runtime.NewString("value"),
+		},
 	))
 	assertErrorContains(t, err, `command "SET" is not marked read-only; use redis_exec`)
 	if doCalls.Load() != 0 {
@@ -105,9 +101,11 @@ func TestExecDialectDoesNotRequireMetadata(t *testing.T) {
 
 	out, err := connection.QueryOne(context.Background(), query(
 		"redis_exec",
-		"SET",
-		runtime.NewString("key"),
-		runtime.NewString("value"),
+		"SET $key $value",
+		map[string]runtime.Value{
+			"key":   runtime.NewString("key"),
+			"value": runtime.NewString("value"),
+		},
 	))
 	if err != nil || out != runtime.NewString("OK") {
 		t.Fatalf("unexpected exec result: %v, %v", out, err)
@@ -116,7 +114,9 @@ func TestExecDialectDoesNotRequireMetadata(t *testing.T) {
 		t.Fatalf("expected redis_exec to bypass metadata, got %d calls", commandCalls.Load())
 	}
 
-	_, err = connection.Query(context.Background(), query("redis", "GET", runtime.NewString("key")))
+	_, err = connection.Query(context.Background(), query("redis", "GET $key", map[string]runtime.Value{
+		"key": runtime.NewString("key"),
+	}))
 	assertErrorContains(t, err, "cannot validate command")
 }
 
@@ -144,7 +144,9 @@ func TestReadMetadataCachesAndRefreshesMissingCommand(t *testing.T) {
 	t.Cleanup(func() { _ = connection.Close() })
 
 	for range 2 {
-		if _, err := connection.QueryOne(context.Background(), query("redis", "GET", runtime.NewString("key"))); err != nil {
+		if _, err := connection.QueryOne(context.Background(), query("redis", "GET $key", map[string]runtime.Value{
+			"key": runtime.NewString("key"),
+		})); err != nil {
 			t.Fatalf("unexpected cached query error: %v", err)
 		}
 	}
@@ -203,7 +205,9 @@ func TestRedisNilBecomesNone(t *testing.T) {
 	connection := newConnection(client)
 	t.Cleanup(func() { _ = connection.Close() })
 
-	value, err := connection.QueryOne(context.Background(), query("redis_exec", "GET", runtime.NewString("missing")))
+	value, err := connection.QueryOne(context.Background(), query("redis_exec", "GET $key", map[string]runtime.Value{
+		"key": runtime.NewString("missing"),
+	}))
 	if err != nil {
 		t.Fatalf("unexpected Redis nil error: %v", err)
 	}
@@ -255,7 +259,10 @@ func TestQueryTimeoutCancelsMetadataAndExecution(t *testing.T) {
 	connection := newConnection(client)
 	t.Cleanup(func() { _ = connection.Close() })
 
-	q := query("redis_exec", "BLPOP", runtime.NewString("key"), runtime.NewInt(1))
+	q := query("redis_exec", "BLPOP $key $seconds", map[string]runtime.Value{
+		"key":     runtime.NewString("key"),
+		"seconds": runtime.NewInt(1),
+	})
 	q.Options = runtime.NewObjectWith(map[string]runtime.Value{
 		"timeout": runtime.NewString("10ms"),
 	})
@@ -287,14 +294,21 @@ func TestQueryValidation(t *testing.T) {
 			want: `unsupported dialect "sql"`,
 		},
 		{
-			name: "empty command",
+			name: "empty query",
 			q:    query("redis", ""),
-			want: "must not be empty",
+			want: "must contain a command",
 		},
 		{
-			name: "compound command",
-			q:    query("redis", "CLIENT LIST"),
-			want: "must be a single token",
+			name: "empty quoted command",
+			q:    query("redis", `"" key`),
+			want: "non-empty command",
+		},
+		{
+			name: "dynamic command",
+			q: query("redis_exec", "$command key", map[string]runtime.Value{
+				"command": runtime.NewString("GET"),
+			}),
+			want: "command must be static",
 		},
 		{
 			name: "with not object",
@@ -303,39 +317,38 @@ func TestQueryValidation(t *testing.T) {
 				Expression: runtime.NewString("PING"),
 				Params:     runtime.NewString("bad"),
 			},
-			want: "WITH must be an object",
+			want: "WITH bindings must be an object",
 		},
 		{
-			name: "unknown with field",
-			q: runtime.Query{
-				Kind:       runtime.NewString("redis_exec"),
-				Expression: runtime.NewString("GET"),
-				Params: runtime.NewObjectWith(map[string]runtime.Value{
-					"key": runtime.NewString("value"),
-				}),
-			},
-			want: "unsupported field",
+			name: "missing binding",
+			q:    query("redis_exec", "GET $key"),
+			want: `missing Redis query binding "key"`,
 		},
 		{
-			name: "params not array",
-			q: runtime.Query{
-				Kind:       runtime.NewString("redis_exec"),
-				Expression: runtime.NewString("GET"),
-				Params: runtime.NewObjectWith(map[string]runtime.Value{
-					"params": runtime.NewString("key"),
-				}),
-			},
-			want: "WITH.params must be an array",
-		},
-		{
-			name: "none argument",
-			q:    query("redis_exec", "SET", runtime.None),
+			name: "none binding",
+			q: query("redis_exec", "SET key $value", map[string]runtime.Value{
+				"value": runtime.None,
+			}),
 			want: "NONE is not a supported",
 		},
 		{
-			name: "complex argument",
-			q:    query("redis_exec", "SET", runtime.NewObject()),
+			name: "complex binding",
+			q: query("redis_exec", "SET key $value", map[string]runtime.Value{
+				"value": runtime.NewObject(),
+			}),
 			want: "unsupported Redis argument type Object",
+		},
+		{
+			name: "array without spread",
+			q: query("redis_exec", "SET key $value", map[string]runtime.Value{
+				"value": runtime.NewArray(0),
+			}),
+			want: "unsupported Redis argument type Array",
+		},
+		{
+			name: "malformed quote",
+			q:    query("redis_exec", `SET key "value`),
+			want: "unterminated quoted Redis argument",
 		},
 		{
 			name: "options not object",

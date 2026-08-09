@@ -47,64 +47,112 @@ func TestIntegrationRedisThroughFerret(t *testing.T) {
 		t.Skip("REDIS_URL is not set")
 	}
 
-	prefix := fmt.Sprintf("ferret:redis:%d", time.Now().UnixNano())
-	stringKey := prefix + ":string"
-	hashKey := prefix + ":hash"
-	listKey := prefix + ":list"
-	counterKey := prefix + ":counter"
-	missingKey := prefix + ":missing"
+	id := fmt.Sprintf("ferret:redis:%d", time.Now().UnixNano())
+	sessionKey := "session:" + id
+	profileKey := "profile:" + id
+	rolesKey := "roles:" + id
+	listKey := "list:" + id
+	counterKey := "counter:" + id
+	missingKey := "missing:" + id
+	mgetFirstKey := "mget:first:" + id
+	mgetSecondKey := "mget:second:" + id
+	quotedKey := "quoted:" + id
 
 	t.Cleanup(func() {
 		_, _ = runFQL(t, `
 			LET redis = DB::REDIS::OPEN({ url: @redisURL })
-			LET deleted = QUERY ONE "DEL" IN redis USING redis_exec WITH {
-				params: [@stringKey, @hashKey, @listKey, @counterKey, @missingKey]
+			LET deleted = QUERY ONE "DEL $keys..." IN redis USING redis_exec WITH {
+				keys: [
+					@sessionKey,
+					@profileKey,
+					@rolesKey,
+					@listKey,
+					@counterKey,
+					@missingKey,
+					@mgetFirstKey,
+					@mgetSecondKey,
+					@quotedKey
+				]
 			}
 			RETURN DB::REDIS::CLOSE(redis)
 		`,
 			ferret.WithRuntimeParam("redisURL", runtime.NewString(redisURL)),
-			ferret.WithRuntimeParam("stringKey", runtime.NewString(stringKey)),
-			ferret.WithRuntimeParam("hashKey", runtime.NewString(hashKey)),
+			ferret.WithRuntimeParam("sessionKey", runtime.NewString(sessionKey)),
+			ferret.WithRuntimeParam("profileKey", runtime.NewString(profileKey)),
+			ferret.WithRuntimeParam("rolesKey", runtime.NewString(rolesKey)),
 			ferret.WithRuntimeParam("listKey", runtime.NewString(listKey)),
 			ferret.WithRuntimeParam("counterKey", runtime.NewString(counterKey)),
 			ferret.WithRuntimeParam("missingKey", runtime.NewString(missingKey)),
+			ferret.WithRuntimeParam("mgetFirstKey", runtime.NewString(mgetFirstKey)),
+			ferret.WithRuntimeParam("mgetSecondKey", runtime.NewString(mgetSecondKey)),
+			ferret.WithRuntimeParam("quotedKey", runtime.NewString(quotedKey)),
 		)
 	})
 
 	output, err := runFQL(t, `
 		LET redis = DB::REDIS::OPEN({ url: @redisURL })
-		LET set = QUERY ONE "SET" IN redis USING redis_exec WITH {
-			params: [@stringKey, "Tim", "EX", 60, "NX"]
+		LET set = QUERY ONE "SET session:$id $value EX $ttl NX" IN redis USING redis_exec WITH {
+			id: @id,
+			value: "hello world",
+			ttl: 60
 		}
-		LET blockedSet = QUERY ONE "SET" IN redis USING redis_exec WITH {
-			params: [@stringKey, "Other", "EX", 60, "NX"]
+		LET blockedSet = QUERY ONE "SET session:$id $value EX $ttl NX" IN redis USING redis_exec WITH {
+			id: @id,
+			value: "Other",
+			ttl: 60
 		}
-		LET value = QUERY ONE "GET" IN redis USING redis WITH {
-			params: [@stringKey]
+		LET value = QUERY ONE "GET session:$id" IN redis USING redis WITH {
+			id: @id
 		}
-		LET hset = QUERY ONE "HSET" IN redis USING redis_exec WITH {
-			params: [@hashKey, "name", "Tim", "age", 42, "score", 1.5, "active", true]
+		LET hset = QUERY ONE "HSET profile:$id name $name age $age score $score active $active" IN redis USING redis_exec WITH {
+			id: @id,
+			name: "Tim",
+			age: 42,
+			score: 1.5,
+			active: true
 		}
-		LET profile = QUERY ONE "HGETALL" IN redis USING redis WITH {
-			params: [@hashKey]
+		LET profile = QUERY ONE "HGETALL profile:$id" IN redis USING redis WITH {
+			id: @id
 		}
-		LET pushed = QUERY ONE "RPUSH" IN redis USING redis_exec WITH {
-			params: [@listKey, "first", "second", "third"]
+		LET mset = QUERY ONE "MSET $pairs..." IN redis USING redis_exec WITH {
+			pairs: [@mgetFirstKey, "first", @mgetSecondKey, "second"]
 		}
-		LET items = QUERY "LRANGE" IN redis USING redis WITH {
-			params: [@listKey, 0, -1]
+		LET mget = QUERY "MGET $keys..." IN redis USING redis WITH {
+			keys: [@mgetFirstKey, @mgetSecondKey]
 		}
-		LET firstIncrement = QUERY ONE "INCR" IN redis USING redis_exec WITH {
-			params: [@counterKey]
+		LET quotedSet = QUERY ONE 'SET $key "hello quoted world"' IN redis USING redis_exec WITH {
+			key: @quotedKey
 		}
-		LET secondIncrement = QUERY ONE "INCR" IN redis USING redis_exec WITH {
-			params: [@counterKey]
+		LET quotedValue = QUERY ONE "GET $key" IN redis USING redis WITH {
+			key: @quotedKey
 		}
-		LET missing = QUERY ONE "GET" IN redis USING redis WITH {
-			params: [@missingKey]
+		LET sadd = QUERY ONE "SADD roles:$id $roles..." IN redis USING redis_exec WITH {
+			id: @id,
+			roles: ["admin", "editor"]
 		}
-		LET deleted = QUERY ONE "DEL" IN redis USING redis_exec WITH {
-			params: [@counterKey]
+		LET roleCount = QUERY ONE "SCARD roles:$id" IN redis USING redis WITH {
+			id: @id
+		}
+		LET pushed = QUERY ONE "RPUSH $key $items..." IN redis USING redis_exec WITH {
+			key: @listKey,
+			items: ["first", "second", "third"]
+		}
+		LET items = QUERY "LRANGE $key $start $stop" IN redis USING redis WITH {
+			key: @listKey,
+			start: 0,
+			stop: -1
+		}
+		LET firstIncrement = QUERY ONE "INCR $key" IN redis USING redis_exec WITH {
+			key: @counterKey
+		}
+		LET secondIncrement = QUERY ONE "INCR $key" IN redis USING redis_exec WITH {
+			key: @counterKey
+		}
+		LET missing = QUERY ONE "GET missing:$id" IN redis USING redis WITH {
+			id: @id
+		}
+		LET deleted = QUERY ONE "DEL $key" IN redis USING redis_exec WITH {
+			key: @counterKey
 		}
 		LET closed = DB::REDIS::CLOSE(redis)
 		RETURN {
@@ -113,6 +161,12 @@ func TestIntegrationRedisThroughFerret(t *testing.T) {
 			value,
 			hset,
 			profile,
+			mset,
+			mget,
+			quotedSet,
+			quotedValue,
+			sadd,
+			roleCount,
 			pushed,
 			items,
 			firstIncrement,
@@ -123,11 +177,12 @@ func TestIntegrationRedisThroughFerret(t *testing.T) {
 		}
 	`,
 		ferret.WithRuntimeParam("redisURL", runtime.NewString(redisURL)),
-		ferret.WithRuntimeParam("stringKey", runtime.NewString(stringKey)),
-		ferret.WithRuntimeParam("hashKey", runtime.NewString(hashKey)),
+		ferret.WithRuntimeParam("id", runtime.NewString(id)),
 		ferret.WithRuntimeParam("listKey", runtime.NewString(listKey)),
 		ferret.WithRuntimeParam("counterKey", runtime.NewString(counterKey)),
-		ferret.WithRuntimeParam("missingKey", runtime.NewString(missingKey)),
+		ferret.WithRuntimeParam("mgetFirstKey", runtime.NewString(mgetFirstKey)),
+		ferret.WithRuntimeParam("mgetSecondKey", runtime.NewString(mgetSecondKey)),
+		ferret.WithRuntimeParam("quotedKey", runtime.NewString(quotedKey)),
 	)
 	if err != nil {
 		t.Fatalf("unexpected Redis integration error: %v", err)
@@ -136,12 +191,12 @@ func TestIntegrationRedisThroughFerret(t *testing.T) {
 
 	_, err = runFQL(t, `
 		LET redis = DB::REDIS::OPEN({ url: @redisURL })
-		RETURN QUERY ONE "SET" IN redis USING redis WITH {
-			params: [@stringKey, "blocked"]
+		RETURN QUERY ONE "SET session:$id blocked" IN redis USING redis WITH {
+			id: @id
 		}
 	`,
 		ferret.WithRuntimeParam("redisURL", runtime.NewString(redisURL)),
-		ferret.WithRuntimeParam("stringKey", runtime.NewString(stringKey)),
+		ferret.WithRuntimeParam("id", runtime.NewString(id)),
 	)
 	assertErrorContains(t, err, "is not marked read-only; use redis_exec")
 
@@ -159,8 +214,9 @@ func TestIntegrationRedisThroughFerret(t *testing.T) {
 
 	_, err = runFQL(t, `
 		LET redis = DB::REDIS::OPEN({ url: @redisURL })
-		RETURN QUERY ONE "BLPOP" IN redis USING redis_exec WITH {
-			params: [@missingKey, 1]
+		RETURN QUERY ONE "BLPOP $key $seconds" IN redis USING redis_exec WITH {
+			key: @missingKey,
+			seconds: 1
 		} OPTIONS {
 			timeout: "10ms"
 		}
@@ -182,8 +238,14 @@ func assertIntegrationOutput(t *testing.T, output *ferret.Output) {
 		Profile         map[string]string `json:"profile"`
 		Set             string            `json:"set"`
 		Value           string            `json:"value"`
+		MSet            string            `json:"mset"`
+		MGet            []string          `json:"mget"`
+		QuotedSet       string            `json:"quotedSet"`
+		QuotedValue     string            `json:"quotedValue"`
 		Items           []string          `json:"items"`
 		HSet            int               `json:"hset"`
+		SAdd            int               `json:"sadd"`
+		RoleCount       int               `json:"roleCount"`
 		Pushed          int               `json:"pushed"`
 		FirstIncrement  int               `json:"firstIncrement"`
 		SecondIncrement int               `json:"secondIncrement"`
@@ -194,9 +256,12 @@ func assertIntegrationOutput(t *testing.T, output *ferret.Output) {
 		t.Fatalf("failed to decode Redis integration output: %v", err)
 	}
 
-	if actual.Set != "OK" || actual.BlockedSet != nil || actual.Value != "Tim" || actual.HSet != 4 ||
+	if actual.Set != "OK" || actual.BlockedSet != nil || actual.Value != "hello world" || actual.HSet != 4 ||
 		actual.Profile["name"] != "Tim" || actual.Profile["age"] != "42" ||
 		actual.Profile["score"] != "1.5" || actual.Profile["active"] != "1" ||
+		actual.MSet != "OK" || !equalStrings(actual.MGet, []string{"first", "second"}) ||
+		actual.QuotedSet != "OK" || actual.QuotedValue != "hello quoted world" ||
+		actual.SAdd != 2 || actual.RoleCount != 2 ||
 		actual.Pushed != 3 || !equalStrings(actual.Items, []string{"first", "second", "third"}) ||
 		actual.FirstIncrement != 1 || actual.SecondIncrement != 2 || actual.Missing != nil ||
 		actual.Deleted != 1 || !actual.Closed {
@@ -224,18 +289,6 @@ func runFQL(t *testing.T, query string, opts ...ferret.Option) (*ferret.Output, 
 	harness := sdktest.New(t, engineOptions...)
 
 	return harness.Run(context.Background(), query)
-}
-
-func assertOutputBool(t *testing.T, output *ferret.Output, expected bool) {
-	t.Helper()
-
-	var actual bool
-	if err := json.Unmarshal(output.Content, &actual); err != nil {
-		t.Fatalf("failed to decode output bool: %v", err)
-	}
-	if actual != expected {
-		t.Fatalf("expected output %v, got %v", expected, actual)
-	}
 }
 
 func assertErrorContains(t *testing.T, err error, expected string) {

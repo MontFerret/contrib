@@ -30,15 +30,13 @@ func commandInfoResult(
 	return cmd
 }
 
-func query(kind, command string, params ...runtime.Value) runtime.Query {
+func query(kind, template string, bindings ...map[string]runtime.Value) runtime.Query {
 	q := runtime.Query{
 		Kind:       runtime.NewString(kind),
-		Expression: runtime.NewString(command),
+		Expression: runtime.NewString(template),
 	}
-	if params != nil {
-		q.Params = runtime.NewObjectWith(map[string]runtime.Value{
-			"params": runtime.NewArrayWith(params...),
-		})
+	if len(bindings) != 0 {
+		q.Params = runtime.NewObjectWith(bindings[0])
 	}
 
 	return q

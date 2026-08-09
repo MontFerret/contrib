@@ -1,12 +1,12 @@
 # DB::REDIS
 
-The Redis module provides reusable Redis connection handles under the `DB::REDIS` namespace. It exposes Redis commands through Ferret's generic `QUERY` abstraction instead of maintaining one Ferret function per command.
+The Redis module provides reusable Redis connection handles under `DB::REDIS`. Redis commands use Ferret's generic `QUERY` syntax: the query string contains the complete Redis command template and `WITH` supplies named values.
 
-The command name is the query expression and `WITH.params` is the ordered Redis argument list. This keeps Redis command grammar—including positional keys, values, subcommands, and modifiers such as `EX`, `NX`, and `XX`—as the source of truth.
+Templates compile directly into ordered arguments for go-redis. Bound values are never interpolated into one string and split again, so a value such as `"Tim Voronov"` remains one Redis argument.
 
 ## Opening and Closing Connections
 
-Open a Redis connection with a standard `redis://` or TLS-enabled `rediss://` URL:
+Open a connection with a standard `redis://` or TLS-enabled `rediss://` URL:
 
 ```fql
 LET redis = DB::REDIS::OPEN({
@@ -16,154 +16,193 @@ LET redis = DB::REDIS::OPEN({
 RETURN DB::REDIS::CLOSE(redis)
 ```
 
-The URL can contain Redis username/password authentication and a database number:
+URLs can include username/password authentication, a database number, and go-redis query options. RESP3 is the default; use `?protocol=2` or `?protocol=3` to select a protocol explicitly.
 
-```text
-redis://user:password@localhost:6379/3
-```
+`unix://` is intentionally unsupported because user-controlled filesystem paths must go through Ferret's filesystem policy. Connections are opaque resources: explicit `CLOSE` is idempotent, and Ferret closes live resources when execution ownership ends.
 
-go-redis uses RESP3 by default. Select a protocol explicitly with `?protocol=2` or `?protocol=3` when a server or response contract requires it.
+## Query Templates and Bindings
 
-`unix://` URLs are intentionally unsupported because runtime access to user-controlled filesystem paths must go through Ferret's filesystem policy.
-
-Connections are opaque Ferret resources. Explicit `CLOSE` is idempotent, and Ferret also closes live resources when their execution ownership ends.
-
-## Reading Data
-
-Use the `redis` dialect for commands that the connected server marks as read-only:
+Use `$name` for a case-sensitive named binding:
 
 ```fql
-LET value = QUERY ONE "GET" IN redis USING redis WITH {
-    params: ["user:42"]
-}
+LET profile = QUERY ONE "HGETALL user:$id"
+    IN redis
+    USING redis
+    WITH {
+        id: 42
+    }
 ```
 
-The module loads the server's `COMMAND` metadata on the first `redis` query and caches it. A command is executed through this dialect only when Redis marks it `readonly`. Unknown commands, commands without that flag, and metadata lookup failures are rejected before command execution.
-
-The Redis account therefore needs permission to execute `COMMAND` for the read dialect. `redis_exec` remains usable when a Redis-compatible server does not expose command metadata.
-
-Hash reads use the same generic form:
+A standalone placeholder preserves its Ferret scalar as a structured Redis argument. Embedded placeholders compose one argument:
 
 ```fql
-LET profile = QUERY ONE "HGETALL" IN redis USING redis WITH {
-    params: ["user:42"]
-}
+LET value = QUERY ONE "GET tenant:$tenant:user:$id"
+    IN redis
+    USING redis
+    WITH {
+        tenant: "acme",
+        id: 42
+    }
 ```
 
-With RESP3, `HGETALL` is naturally decoded as a Ferret object. RESP2 returns the server's flat array representation instead.
+This sends `GET` and `tenant:acme:user:42` as two arguments. String, Int, Float, Boolean, and Binary bindings are supported. `NONE`, objects, and arrays without spread syntax are rejected.
 
-Sorted-set reads remain positional:
+`WITH` may be omitted when the template has no placeholders:
 
 ```fql
-LET leaders = QUERY "ZRANGE" IN redis USING redis WITH {
-    params: ["leaderboard", 0, 9, "WITHSCORES"]
-}
+LET pong = QUERY ONE "PING" IN redis USING redis_exec
 ```
 
-## Mutating Data
+Missing bindings fail before Redis execution. Extra bindings are allowed and ignored.
 
-Use `redis_exec` for commands that mutate Redis. It permits arbitrary one-shot Redis commands, including read commands, and does not require command metadata.
+## Spreading Arrays
 
-Set a value with Redis modifiers:
+Use `$name...` when an array or other Ferret list should become multiple Redis arguments:
 
 ```fql
-LET result = QUERY ONE "SET" IN redis USING redis_exec WITH {
-    params: [
-        "session:123",
-        value,
-        "EX", 300,
-        "NX"
-    ]
-}
+LET users = QUERY "MGET $keys..."
+    IN redis
+    USING redis
+    WITH {
+        keys: ["user:1", "user:2", "user:3"]
+    }
 ```
 
-Write mixed scalar values to a hash:
+An empty list contributes zero arguments. Multiple spread placeholders are expanded in their original positions. Spread syntax must occupy a complete argument; forms such as `prefix:$keys...` and `$keys...:suffix` are rejected.
+
+Set members use the same expansion:
 
 ```fql
-LET added = QUERY ONE "HSET" IN redis USING redis_exec WITH {
-    params: [
-        "user:42",
-        "name", "Tim",
-        "age", 42,
-        "score", 1.5,
-        "active", true
-    ]
-}
+LET added = QUERY ONE "SADD roles:$id $roles..."
+    IN redis
+    USING redis_exec
+    WITH {
+        id: 42,
+        roles: ["admin", "editor"]
+    }
 ```
 
-Increment and delete keys without command-specific wrappers:
+## Reads and Mutations
+
+Use `redis` only for commands the connected server marks as read-only:
 
 ```fql
-LET count = QUERY ONE "INCR" IN redis USING redis_exec WITH {
-    params: ["visits:user:42"]
-}
-
-LET deleted = QUERY ONE "DEL" IN redis USING redis_exec WITH {
-    params: ["session:123", "visits:user:42"]
-}
+LET leaders = QUERY "ZRANGE scores $start $stop WITHSCORES"
+    IN redis
+    USING redis
+    WITH {
+        start: 0,
+        stop: 9
+    }
 ```
 
-List writes follow the same contract:
+The first `redis` query lazily loads and caches the server's `COMMAND` metadata. Unknown commands, metadata failures, and commands without the read-only flag are rejected before execution. The account therefore needs permission to execute `COMMAND` for this dialect.
+
+Use `redis_exec` for mutations or when a compatible server denies command metadata access:
 
 ```fql
-LET length = QUERY ONE "RPUSH" IN redis USING redis_exec WITH {
-    params: ["jobs", "first", "second", "third"]
-}
+LET result = QUERY ONE "SET session:$id $value EX $ttl NX"
+    IN redis
+    USING redis_exec
+    WITH {
+        id: sessionId,
+        value: token,
+        ttl: 300
+    }
 ```
 
-## Query Contract
+Redis modifiers and subcommands remain literal parts of the query template. There are no command-specific wrappers or option objects.
 
-The v1 query shape is deliberately small:
+Hash writes remain generic:
 
 ```fql
-QUERY "<command>" IN redis USING redis WITH {
-    params: [<ordered command arguments>]
-} OPTIONS {
-    timeout: "2s"
-}
+LET added = QUERY ONE "HSET user:$id name $name active $active"
+    IN redis
+    USING redis_exec
+    WITH {
+        id: 42,
+        name: "Tim",
+        active: true
+    }
 ```
 
-- The command must be one non-empty token, such as `GET`, `HGETALL`, or `JSON.GET`.
-- Put Redis subcommands in `params`; for example, use command `CLIENT` with `params: ["LIST"]`, not command `"CLIENT LIST"`.
-- `WITH` may be omitted for commands with no arguments. When present, it must be an object containing only `params`, and `params` must be an array.
-- Argument order is preserved exactly. Command modifiers are normal `params` elements and are never promoted to named fields.
-- String, integer, floating-point, Boolean, and Binary Ferret values are supported as arguments.
-- `NONE`, arrays, objects, and other complex Ferret values are rejected rather than serialized implicitly.
-- `OPTIONS.timeout` accepts a duration string or Ferret duration, or a numeric millisecond value. Zero adds no query deadline; negative values and unknown options are rejected.
+Finite Stream commands also work through the same request/response path:
 
-Client-level connection, socket, pool, retry, database, and protocol options supported by go-redis can be supplied through the Redis URL. Per-query timeout remains in Ferret `OPTIONS`, not `WITH`.
+```fql
+LET eventID = QUERY ONE "XADD events:$tenant * type $type payload $payload"
+    IN redis
+    USING redis_exec
+    WITH {
+        tenant: "acme",
+        type: "created",
+        payload: data
+    }
+```
+
+## Literal Quoting and Dollar Signs
+
+Unquoted ASCII whitespace separates Redis arguments. Single- or double-quoted Redis literals preserve whitespace and may be empty. Because the Ferret query expression is itself a string, use an outer single-quoted FQL string when the Redis template needs double quotes:
+
+```fql
+LET result = QUERY ONE 'SET greeting "hello world"'
+    IN redis
+    USING redis_exec
+```
+
+Double-quoted Redis literals support `\"`, `\\`, `\$`, `\n`, `\r`, `\t`, `\b`, `\a`, and `\xHH`. Single-quoted Redis literals support `\'`, `\\`, and `\$`. Quotes must wrap the complete Redis argument; malformed quotes and escapes fail before execution.
+
+Placeholders remain active inside quoted literals. Quoting controls argument boundaries but does not turn a standalone typed binding into a string or disable a complete spread placeholder.
+
+Only `$` followed by an ASCII identifier starts a binding. Bare `$`, `$.path`, and `$[0]` remain literal, which keeps RedisJSON paths natural:
+
+```fql
+LET document = QUERY ONE "JSON.GET document:$id $.profile"
+    IN redis
+    USING redis
+    WITH {
+        id: 42
+    }
+```
+
+Use `\$name` in the Redis template when an identifier-shaped dollar token must remain literal.
+
+## Execution Options
+
+Generic execution controls stay in Ferret's `OPTIONS` clause:
+
+```fql
+LET value = QUERY ONE "GET user:$id"
+    IN redis
+    USING redis
+    WITH {
+        id: 42
+    }
+    OPTIONS {
+        timeout: "2s"
+    }
+```
+
+`OPTIONS.timeout` accepts a Ferret duration, a duration string, or numeric milliseconds. Zero adds no query deadline; negative durations and unknown option fields are rejected. The timeout applies to command metadata lookup and Redis execution.
 
 ## Result Values
 
-Redis responses are converted centrally:
+Redis nil becomes `NONE`. Strings, integers, doubles, and Booleans become matching Ferret scalars; RESP arrays and sets become Arrays; RESP3 maps with string keys become Objects. Nested aggregates are converted recursively, while Redis errors—including nested errors—surface as Ferret errors.
 
-| Redis response | Ferret value |
-| --- | --- |
-| nil | `NONE` |
-| bulk/status string | String |
-| integer | Int |
-| double | Float |
-| Boolean | Boolean |
-| array or set | Array |
-| RESP3 map with string keys | Object |
-
-Nested arrays and maps are converted recursively. Redis errors—including errors nested in aggregate RESP values—surface as Ferret errors.
-
-Ferret `QUERY` must return a result list. A top-level Redis array becomes that list directly; a scalar, object, or `NONE` response becomes a one-item list. Use `QUERY ONE` for scalar or object command responses such as `GET`, `SET`, `HGETALL` under RESP3, `INCR`, and `DEL`.
+A top-level Redis array is the `QUERY` result list. Scalar, Object, and `NONE` responses become a one-item result list, so use `QUERY ONE` for scalar or object responses such as GET, SET, HGETALL under RESP3, INCR, and DEL.
 
 ## Stateful Redis Features
 
-The v1 module sends one command at a time through a pooled go-redis client. It does not provide pipeline, transaction, Pub/Sub, or long-lived stream-consumer abstractions, and connection-scoped command sequences have no stable same-connection guarantee.
+The v1 module sends one command at a time through a pooled go-redis client. It does not define pipeline, transaction, Pub/Sub, or long-lived Stream-consumer abstractions, and connection-scoped command sequences have no same-connection guarantee.
 
-Ordinary Stream and blocking commands that work as a single request/response operation can use the generic executor. Give blocking operations an explicit `OPTIONS.timeout`.
+Ordinary finite request/response commands remain generic pass-through. Give blocking commands an explicit timeout; Pub/Sub and blocking event-consumer integration remain future work.
 
 ## Testing
 
-Unit tests do not require Redis. Live integration tests run only when `REDIS_URL` is set:
+Unit tests do not require Redis. Live integration tests run when `REDIS_URL` is set:
 
 ```sh
 REDIS_URL='redis://localhost:6379/0?protocol=3' \
 GOWORK=off go test ./...
 ```
 
-GitHub Actions runs the same live test path against a Redis service container.
+GitHub Actions runs the same live suite against Redis 8.8.
