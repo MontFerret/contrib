@@ -7,11 +7,13 @@ import (
 )
 
 func (doc *HTMLDocument) Subscribe(ctx context.Context, subscription runtime.Subscription) (runtime.Stream, error) {
-	return subscribeDOMTargetEvents(
-		ctx,
-		doc.client.Runtime,
-		doc.eval,
-		doc.element.id,
-		subscription,
-	)
+	return withDocumentResult(ctx, doc, func(state *documentState) (runtime.Stream, error) {
+		return subscribeDOMTargetEvents(
+			ctx,
+			state.client.Runtime,
+			state.eval,
+			state.element.id,
+			subscription,
+		)
+	})
 }

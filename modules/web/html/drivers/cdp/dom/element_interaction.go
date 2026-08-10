@@ -12,11 +12,11 @@ import (
 )
 
 func (el *HTMLElement) Click(ctx context.Context, count runtime.Int) error {
-	return el.input.Click(ctx, el.id, int(count))
+	return el.executor.run(ctx, func() error { return el.input.Click(ctx, el.id, int(count)) })
 }
 
 func (el *HTMLElement) ClickBySelector(ctx context.Context, selector drivers.QuerySelector, count runtime.Int) error {
-	return el.input.ClickBySelector(ctx, el.id, selector, count)
+	return el.executor.run(ctx, func() error { return el.input.ClickBySelector(ctx, el.id, selector, count) })
 }
 
 func (el *HTMLElement) ClickBySelectorAll(ctx context.Context, selector drivers.QuerySelector, count runtime.Int) error {
@@ -47,77 +47,107 @@ func (el *HTMLElement) Input(ctx context.Context, value runtime.Value, delay run
 		return runtime.Error(runtime.ErrInvalidOperation, "element is not an <input> element.")
 	}
 
-	return el.input.Type(ctx, el.id, input.TypeParams{
-		Text:  value.String(),
-		Clear: false,
-		Delay: time.Duration(delay) * time.Millisecond,
+	return el.executor.run(ctx, func() error {
+		return el.input.Type(ctx, el.id, input.TypeParams{
+			Text:  value.String(),
+			Clear: false,
+			Delay: time.Duration(delay) * time.Millisecond,
+		})
 	})
 }
 
 func (el *HTMLElement) InputBySelector(ctx context.Context, selector drivers.QuerySelector, value runtime.Value, delay runtime.Int) error {
-	return el.input.TypeBySelector(ctx, el.id, selector, input.TypeParams{
-		Text:  value.String(),
-		Clear: false,
-		Delay: time.Duration(delay) * time.Millisecond,
+	return el.executor.run(ctx, func() error {
+		return el.input.TypeBySelector(ctx, el.id, selector, input.TypeParams{
+			Text:  value.String(),
+			Clear: false,
+			Delay: time.Duration(delay) * time.Millisecond,
+		})
 	})
 }
 
 func (el *HTMLElement) Press(ctx context.Context, keys []runtime.String, count runtime.Int) error {
-	return el.input.Press(ctx, sdk.UnwrapStrings(keys), int(count))
+	return el.executor.run(ctx, func() error { return el.input.Press(ctx, sdk.UnwrapStrings(keys), int(count)) })
 }
 
 func (el *HTMLElement) PressBySelector(ctx context.Context, selector drivers.QuerySelector, keys []runtime.String, count runtime.Int) error {
-	return el.input.PressBySelector(ctx, el.id, selector, sdk.UnwrapStrings(keys), int(count))
+	return el.executor.run(ctx, func() error {
+		return el.input.PressBySelector(ctx, el.id, selector, sdk.UnwrapStrings(keys), int(count))
+	})
 }
 
 func (el *HTMLElement) Clear(ctx context.Context) error {
-	return el.input.Clear(ctx, el.id)
+	return el.executor.run(ctx, func() error { return el.input.Clear(ctx, el.id) })
 }
 
 func (el *HTMLElement) ClearBySelector(ctx context.Context, selector drivers.QuerySelector) error {
-	return el.input.ClearBySelector(ctx, el.id, selector)
+	return el.executor.run(ctx, func() error { return el.input.ClearBySelector(ctx, el.id, selector) })
 }
 
 func (el *HTMLElement) Select(ctx context.Context, value runtime.List) (runtime.List, error) {
-	return el.input.Select(ctx, el.id, value)
+	var result runtime.List
+
+	err := el.executor.run(ctx, func() error {
+		var err error
+		result, err = el.input.Select(ctx, el.id, value)
+
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (el *HTMLElement) SelectBySelector(ctx context.Context, selector drivers.QuerySelector, value runtime.List) (runtime.List, error) {
-	return el.input.SelectBySelector(ctx, el.id, selector, value)
+	var result runtime.List
+
+	err := el.executor.run(ctx, func() error {
+		var err error
+		result, err = el.input.SelectBySelector(ctx, el.id, selector, value)
+
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (el *HTMLElement) ScrollIntoView(ctx context.Context, options drivers.ScrollOptions) error {
-	return el.input.ScrollIntoView(ctx, el.id, options)
+	return el.executor.run(ctx, func() error { return el.input.ScrollIntoView(ctx, el.id, options) })
 }
 
 func (el *HTMLElement) Focus(ctx context.Context) error {
-	return el.input.Focus(ctx, el.id)
+	return el.executor.run(ctx, func() error { return el.input.Focus(ctx, el.id) })
 }
 
 func (el *HTMLElement) FocusBySelector(ctx context.Context, selector drivers.QuerySelector) error {
-	return el.input.FocusBySelector(ctx, el.id, selector)
+	return el.executor.run(ctx, func() error { return el.input.FocusBySelector(ctx, el.id, selector) })
 }
 
 func (el *HTMLElement) Blur(ctx context.Context) error {
-	return el.input.Blur(ctx, el.id)
+	return el.executor.run(ctx, func() error { return el.input.Blur(ctx, el.id) })
 }
 
 func (el *HTMLElement) BlurBySelector(ctx context.Context, selector drivers.QuerySelector) error {
-	return el.input.BlurBySelector(ctx, el.id, selector)
+	return el.executor.run(ctx, func() error { return el.input.BlurBySelector(ctx, el.id, selector) })
 }
 
 func (el *HTMLElement) Hover(ctx context.Context) error {
-	return el.input.MoveMouse(ctx, el.id)
+	return el.executor.run(ctx, func() error { return el.input.MoveMouse(ctx, el.id) })
 }
 
 func (el *HTMLElement) HoverBySelector(ctx context.Context, selector drivers.QuerySelector) error {
-	return el.input.MoveMouseBySelector(ctx, el.id, selector)
+	return el.executor.run(ctx, func() error { return el.input.MoveMouseBySelector(ctx, el.id, selector) })
 }
 
 func (el *HTMLElement) Unhover(ctx context.Context) error {
-	return el.input.Unhover(ctx, el.id)
+	return el.executor.run(ctx, func() error { return el.input.Unhover(ctx, el.id) })
 }
 
 func (el *HTMLElement) UnhoverBySelector(ctx context.Context, selector drivers.QuerySelector) error {
-	return el.input.UnhoverBySelector(ctx, el.id, selector)
+	return el.executor.run(ctx, func() error { return el.input.UnhoverBySelector(ctx, el.id, selector) })
 }

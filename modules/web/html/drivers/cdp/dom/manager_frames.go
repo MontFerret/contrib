@@ -12,16 +12,7 @@ func (m *Manager) SetMainFrame(doc *HTMLDocument) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	mainFrameID := m.mainFrame.Get()
-	if mainFrameID != "" {
-		if err := m.removeFrameRecursivelyInternal(mainFrameID); err != nil {
-			m.logger.Error().Err(err).Msg("failed to close previous main frame")
-		}
-	}
-
-	m.mainFrame.Set(doc.frameTree.Frame.ID)
-
-	m.addPreloadedFrame(doc)
+	m.installMainFrame(doc, doc.Frame())
 }
 
 func (m *Manager) AddFrame(frame page.FrameTree) {
@@ -106,13 +97,50 @@ func (m *Manager) addFrameInternal(frame page.FrameTree) {
 }
 
 func (m *Manager) addPreloadedFrame(doc *HTMLDocument) {
-	m.frames.Set(doc.frameTree.Frame.ID, Frame{
-		tree: doc.frameTree,
+	frame := doc.Frame()
+	m.frames.Set(frame.Frame.ID, Frame{
+		tree: frame,
 		node: doc,
 	})
 
-	for _, child := range doc.frameTree.ChildFrames {
+	for _, child := range frame.ChildFrames {
 		m.addFrameInternal(child)
+	}
+}
+
+func (m *Manager) installMainFrame(doc *HTMLDocument, tree page.FrameTree) {
+	previous := m.frames.ToSlice()
+	retained := collectFrameIDs(tree)
+
+	for _, frame := range previous {
+		if frame.node == nil || frame.node == doc {
+			continue
+		}
+		if _, ok := retained[frame.tree.Frame.ID]; !ok {
+			frame.node.detach()
+		}
+	}
+
+	m.frames.Clear()
+	m.mainFrame.Set(tree.Frame.ID)
+	m.addFrameTreePreservingNodes(tree, doc, previous)
+}
+
+func (m *Manager) addFrameTreePreservingNodes(tree page.FrameTree, root *HTMLDocument, previous []Frame) {
+	node := root
+	if tree.Frame.ID != root.identity {
+		node = nil
+		for _, frame := range previous {
+			if frame.tree.Frame.ID == tree.Frame.ID {
+				node = frame.node
+				break
+			}
+		}
+	}
+
+	m.frames.Set(tree.Frame.ID, Frame{tree: tree, node: node})
+	for _, child := range tree.ChildFrames {
+		m.addFrameTreePreservingNodes(child, root, previous)
 	}
 }
 

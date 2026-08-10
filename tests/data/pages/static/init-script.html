@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CDP init script fixture</title>
+  <script>
+    document.documentElement.dataset.inlineValue = String(window.__beforeDocument || "missing");
+    document.documentElement.dataset.beforeCount = String(window.__beforeCount || 0);
+
+    if (window.location.search === "?reload=once") {
+      window.setTimeout(() => window.location.replace("?reload=done"), 50);
+    }
+  </script>
+</head>
+<body>
+  <main id="content">init script fixture</main>
+</body>
+</html>

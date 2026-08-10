@@ -18,14 +18,14 @@ import (
 
 type HTMLElement struct {
 	logger     zerolog.Logger
-	client     *cdp.Client
-	dom        *Manager
-	input      *input.Manager
-	eval       *eval.Runtime
-	attributes *elementAttributes
 	styles     *elementStyles
-	classes    *elementClasses
 	dataset    *elementDataset
+	input      *input.Manager
+	executor   *elementExecutor
+	attributes *elementAttributes
+	client     *cdp.Client
+	classes    *elementClasses
+	dom        *Manager
 	wait       *elementWait
 	nodeType   *lazy.Value
 	nodeName   *lazy.Value
@@ -40,6 +40,19 @@ func NewHTMLElement(
 	exec *eval.Runtime,
 	id cdpruntime.RemoteObjectID,
 ) *HTMLElement {
+	return newHTMLElement(logger, client, domManager, input, exec, id, nil, nil)
+}
+
+func newHTMLElement(
+	logger zerolog.Logger,
+	client *cdp.Client,
+	domManager *Manager,
+	input *input.Manager,
+	exec *eval.Runtime,
+	id cdpruntime.RemoteObjectID,
+	document *HTMLDocument,
+	state *documentState,
+) *HTMLElement {
 	el := new(HTMLElement)
 	el.logger = logutil.WithComponent(logger.With(), "dom_element").
 		Str("object_id", string(id)).
@@ -47,21 +60,30 @@ func NewHTMLElement(
 	el.client = client
 	el.dom = domManager
 	el.input = input
-	el.eval = exec
 	el.id = id
-	el.attributes = newElementAttributes(exec, id)
-	el.styles = newElementStyles(exec, id)
-	el.classes = newElementClasses(exec, id)
-	el.dataset = newElementDataset(exec, id)
-	el.wait = newElementWait(exec, id)
-	el.nodeType = lazy.New(func(ctx context.Context) (runtime.Value, error) {
-		return el.eval.EvalValue(ctx, templates.GetNodeType(el.id))
-	})
-	el.nodeName = lazy.New(func(ctx context.Context) (runtime.Value, error) {
-		return el.eval.EvalValue(ctx, templates.GetNodeName(el.id))
-	})
+
+	if document == nil {
+		el.installExecutor(newElementExecutor(exec))
+	} else {
+		el.installExecutor(newStateElementExecutor(document, state))
+	}
 
 	return el
+}
+
+func (el *HTMLElement) installExecutor(executor *elementExecutor) {
+	el.executor = executor
+	el.attributes = newElementAttributes(executor, el.id)
+	el.styles = newElementStyles(executor, el.id)
+	el.classes = newElementClasses(executor, el.id)
+	el.dataset = newElementDataset(executor, el.id)
+	el.wait = newElementWait(executor, el.id)
+	el.nodeType = lazy.New(func(ctx context.Context) (runtime.Value, error) {
+		return el.executor.EvalValue(ctx, templates.GetNodeType(el.id))
+	})
+	el.nodeName = lazy.New(func(ctx context.Context) (runtime.Value, error) {
+		return el.executor.EvalValue(ctx, templates.GetNodeName(el.id))
+	})
 }
 
 func (el *HTMLElement) RemoteID() cdpruntime.RemoteObjectID {
@@ -98,6 +120,10 @@ func (el *HTMLElement) AsInteractionTarget() drivers.InteractionTarget {
 
 func (el *HTMLElement) AsWaitTarget() drivers.WaitTarget {
 	return el.wait
+}
+
+func (el *HTMLElement) bindDocument(document *HTMLDocument, state *documentState) {
+	el.installExecutor(newStateElementExecutor(document, state))
 }
 
 func (el *HTMLElement) logError(err error) *zerolog.Event {

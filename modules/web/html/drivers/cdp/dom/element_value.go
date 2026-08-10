@@ -20,7 +20,20 @@ func (el *HTMLElement) Type() runtime.Type {
 }
 
 func (el *HTMLElement) MarshalJSON() ([]byte, error) {
-	return json.Marshal(el.String())
+	ctx := context.Background()
+	var result []byte
+
+	err := el.executor.run(ctx, func() error {
+		var err error
+		result, err = json.Marshal(el.String())
+
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (el *HTMLElement) String() string {
@@ -99,11 +112,19 @@ func (el *HTMLElement) Copy() runtime.Value {
 	return runtime.None
 }
 
-func (el *HTMLElement) Iterate(_ context.Context) (runtime.Iterator, error) {
-	return data.NewIterator(el)
+func (el *HTMLElement) Iterate(ctx context.Context) (runtime.Iterator, error) {
+	return runElementResult(ctx, el.executor, func() runtime.Iterator { return nil }, func() (runtime.Iterator, error) {
+		return data.NewIterator(el)
+	})
 }
 
 func (el *HTMLElement) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
+	return runElementResult(ctx, el.executor, func() runtime.Value { return runtime.None }, func() (runtime.Value, error) {
+		return el.get(ctx, key)
+	})
+}
+
+func (el *HTMLElement) get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
 	if key == nil || key == runtime.None {
 		return runtime.None, nil
 	}
@@ -116,7 +137,7 @@ func (el *HTMLElement) Get(ctx context.Context, key runtime.Value) (runtime.Valu
 	case "innerHTML":
 		return el.GetInnerHTML(ctx)
 	case "checked", "disabled", "selected":
-		return el.eval.EvalValue(ctx, templates.GetDOMProperty(el.id, runtime.ToString(key)))
+		return el.executor.EvalValue(ctx, templates.GetDOMProperty(el.id, runtime.ToString(key)))
 	case "attributes":
 		return newAttributeView(ctx, el.attributes)
 	case "style":
@@ -131,97 +152,103 @@ func (el *HTMLElement) Get(ctx context.Context, key runtime.Value) (runtime.Valu
 }
 
 func (el *HTMLElement) Set(ctx context.Context, key, value runtime.Value) error {
-	if key == nil || key == runtime.None {
-		return runtime.Error(runtime.ErrInvalidArgument, "element property name is empty")
-	}
-
-	if value == nil {
-		value = runtime.None
-	}
-
-	name := runtime.ToString(key)
-
-	switch name {
-	case "textContent":
-		return el.SetTextContent(ctx, runtime.ToString(value))
-	case "innerText":
-		return el.SetInnerText(ctx, runtime.ToString(value))
-	case "innerHTML":
-		return el.SetInnerHTML(ctx, runtime.ToString(value))
-	case "value":
-		return el.SetValue(ctx, runtime.ToString(value))
-	case "checked", "disabled", "selected":
-		enabled, err := runtime.CastBoolean(value)
-		if err != nil {
-			return err
+	return el.executor.run(ctx, func() error {
+		if key == nil || key == runtime.None {
+			return runtime.Error(runtime.ErrInvalidArgument, "element property name is empty")
 		}
 
-		return el.eval.Eval(ctx, templates.SetDOMProperty(el.id, name, enabled))
-	case "attributes":
-		attrs, err := runtime.CastMap(value)
-		if err != nil {
-			return err
+		if value == nil {
+			value = runtime.None
 		}
 
-		return el.attributes.SetAttributes(ctx, attrs)
-	case "style":
-		styles, err := runtime.CastMap(value)
-		if err != nil {
-			return err
-		}
+		name := runtime.ToString(key)
 
-		return el.styles.SetStyles(ctx, styles)
-	case "classes":
-		classes, err := runtime.CastArray(value)
-		if err != nil {
-			return err
-		}
+		switch name {
+		case "textContent":
+			return el.SetTextContent(ctx, runtime.ToString(value))
+		case "innerText":
+			return el.SetInnerText(ctx, runtime.ToString(value))
+		case "innerHTML":
+			return el.SetInnerHTML(ctx, runtime.ToString(value))
+		case "value":
+			return el.SetValue(ctx, runtime.ToString(value))
+		case "checked", "disabled", "selected":
+			enabled, err := runtime.CastBoolean(value)
+			if err != nil {
+				return err
+			}
 
-		return el.classes.SetClasses(ctx, classes)
-	case "dataset":
-		dataset, err := runtime.CastMap(value)
-		if err != nil {
-			return err
-		}
+			return el.executor.Eval(ctx, templates.SetDOMProperty(el.id, name, enabled))
+		case "attributes":
+			attrs, err := runtime.CastMap(value)
+			if err != nil {
+				return err
+			}
 
-		return el.dataset.SetDataset(ctx, dataset)
-	default:
-		return runtime.Errorf(runtime.ErrInvalidArgument, "element property %q is not writable", name)
-	}
+			return el.attributes.SetAttributes(ctx, attrs)
+		case "style":
+			styles, err := runtime.CastMap(value)
+			if err != nil {
+				return err
+			}
+
+			return el.styles.SetStyles(ctx, styles)
+		case "classes":
+			classes, err := runtime.CastArray(value)
+			if err != nil {
+				return err
+			}
+
+			return el.classes.SetClasses(ctx, classes)
+		case "dataset":
+			dataset, err := runtime.CastMap(value)
+			if err != nil {
+				return err
+			}
+
+			return el.dataset.SetDataset(ctx, dataset)
+		default:
+			return runtime.Errorf(runtime.ErrInvalidArgument, "element property %q is not writable", name)
+		}
+	})
 }
 
 func (el *HTMLElement) GetValue(ctx context.Context) (runtime.Value, error) {
-	return el.eval.EvalValue(ctx, templates.GetValue(el.id))
+	return el.executor.EvalValue(ctx, templates.GetValue(el.id))
 }
 
 func (el *HTMLElement) GetDOMProperty(ctx context.Context, name runtime.String) (runtime.Value, error) {
-	if el.eval == nil {
+	if el.executor == nil || el.executor.state.eval == nil {
 		return runtime.None, nil
 	}
 
-	return el.eval.EvalResult(ctx, templates.GetDOMProperty(el.id, name))
+	return el.executor.EvalResult(ctx, templates.GetDOMProperty(el.id, name))
 }
 
 func (el *HTMLElement) GetNodeType(ctx context.Context) (runtime.Int, error) {
-	out, err := el.nodeType.Read(ctx)
-	if err != nil {
-		return runtime.ZeroInt, err
-	}
+	return runElementResult(ctx, el.executor, func() runtime.Int { return runtime.ZeroInt }, func() (runtime.Int, error) {
+		out, err := el.nodeType.Read(ctx)
+		if err != nil {
+			return runtime.ZeroInt, err
+		}
 
-	return runtime.ToInt(ctx, out)
+		return runtime.ToInt(ctx, out)
+	})
 }
 
 func (el *HTMLElement) GetNodeName(ctx context.Context) (runtime.String, error) {
-	out, err := el.nodeName.Read(ctx)
-	if err != nil {
-		return runtime.EmptyString, err
-	}
+	return runElementResult(ctx, el.executor, func() runtime.String { return runtime.EmptyString }, func() (runtime.String, error) {
+		out, err := el.nodeName.Read(ctx)
+		if err != nil {
+			return runtime.EmptyString, err
+		}
 
-	return runtime.ToString(out), nil
+		return runtime.ToString(out), nil
+	})
 }
 
 func (el *HTMLElement) Length(ctx context.Context) (runtime.Int, error) {
-	value, err := el.eval.EvalValue(ctx, templates.GetChildrenCount(el.id))
+	value, err := el.executor.EvalValue(ctx, templates.GetChildrenCount(el.id))
 	if err != nil {
 		el.logError(err)
 

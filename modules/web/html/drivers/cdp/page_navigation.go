@@ -25,7 +25,7 @@ func (p *HTMLPage) Navigate(ctx context.Context, url runtime.String) error {
 		return err
 	}
 
-	return p.loadMainFrame(ctx)
+	return p.loadNavigatedMainFrame(ctx)
 }
 
 func (p *HTMLPage) NavigateBack(ctx context.Context, skip runtime.Int) (runtime.Boolean, error) {
@@ -35,6 +35,14 @@ func (p *HTMLPage) NavigateBack(ctx context.Context, skip runtime.Int) (runtime.
 	ret, err := p.network.NavigateBack(ctx, skip)
 	if err != nil {
 		return runtime.False, err
+	}
+
+	if ret {
+		if err := p.loadNavigatedMainFrame(ctx); err != nil {
+			return runtime.False, err
+		}
+
+		return ret, nil
 	}
 
 	return ret, p.loadMainFrame(ctx)
@@ -47,6 +55,14 @@ func (p *HTMLPage) NavigateForward(ctx context.Context, skip runtime.Int) (runti
 	ret, err := p.network.NavigateForward(ctx, skip)
 	if err != nil {
 		return runtime.False, err
+	}
+
+	if ret {
+		if err := p.loadNavigatedMainFrame(ctx); err != nil {
+			return runtime.False, err
+		}
+
+		return ret, nil
 	}
 
 	return ret, p.loadMainFrame(ctx)

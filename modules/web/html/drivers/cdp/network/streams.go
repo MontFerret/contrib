@@ -83,7 +83,13 @@ func newResponseReceivedReader(logger zerolog.Logger, client *cdp.Client, input 
 				body = []byte(resp.Body)
 			}
 		} else {
-			logger.Warn().
+			log := logger.Warn()
+
+			if isUnavailableResponseBodyError(err) {
+				log = logger.Trace()
+			}
+
+			log.Err(err).
 				Str("url", repl.Response.URL).
 				Str("frame_id", frameID).
 				Str("request_id", string(repl.RequestID)).

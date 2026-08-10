@@ -9,11 +9,11 @@ import (
 )
 
 func (el *HTMLElement) SetValue(ctx context.Context, value runtime.Value) error {
-	return el.eval.Eval(ctx, templates.SetValue(el.id, value))
+	return el.executor.Eval(ctx, templates.SetValue(el.id, value))
 }
 
 func (el *HTMLElement) GetTextContent(ctx context.Context) (runtime.String, error) {
-	out, err := el.eval.EvalValue(ctx, templates.GetTextContent(el.id))
+	out, err := el.executor.EvalValue(ctx, templates.GetTextContent(el.id))
 	if err != nil {
 		return runtime.EmptyString, err
 	}
@@ -22,14 +22,14 @@ func (el *HTMLElement) GetTextContent(ctx context.Context) (runtime.String, erro
 }
 
 func (el *HTMLElement) SetTextContent(ctx context.Context, textContent runtime.String) error {
-	return el.eval.Eval(
+	return el.executor.Eval(
 		ctx,
 		templates.SetTextContent(el.id, textContent),
 	)
 }
 
 func (el *HTMLElement) GetInnerText(ctx context.Context) (runtime.String, error) {
-	out, err := el.eval.EvalValue(ctx, templates.GetInnerText(el.id))
+	out, err := el.executor.EvalValue(ctx, templates.GetInnerText(el.id))
 	if err != nil {
 		return runtime.EmptyString, err
 	}
@@ -38,14 +38,14 @@ func (el *HTMLElement) GetInnerText(ctx context.Context) (runtime.String, error)
 }
 
 func (el *HTMLElement) SetInnerText(ctx context.Context, innerText runtime.String) error {
-	return el.eval.Eval(
+	return el.executor.Eval(
 		ctx,
 		templates.SetInnerText(el.id, innerText),
 	)
 }
 
 func (el *HTMLElement) GetInnerTextBySelector(ctx context.Context, selector drivers.QuerySelector) (runtime.String, error) {
-	out, err := el.eval.EvalValue(ctx, templates.GetInnerTextBySelector(el.id, selector))
+	out, err := el.executor.EvalValue(ctx, templates.GetInnerTextBySelector(el.id, selector))
 	if err != nil {
 		return runtime.EmptyString, err
 	}
@@ -54,14 +54,14 @@ func (el *HTMLElement) GetInnerTextBySelector(ctx context.Context, selector driv
 }
 
 func (el *HTMLElement) SetInnerTextBySelector(ctx context.Context, selector drivers.QuerySelector, innerText runtime.String) error {
-	return el.eval.Eval(
+	return el.executor.Eval(
 		ctx,
 		templates.SetInnerTextBySelector(el.id, selector, innerText),
 	)
 }
 
 func (el *HTMLElement) GetInnerTextBySelectorAll(ctx context.Context, selector drivers.QuerySelector) (runtime.List, error) {
-	out, err := el.eval.EvalValue(ctx, templates.GetInnerTextBySelectorAll(el.id, selector))
+	out, err := el.executor.EvalValue(ctx, templates.GetInnerTextBySelectorAll(el.id, selector))
 	if err != nil {
 		return runtime.EmptyArray(), err
 	}
@@ -70,7 +70,7 @@ func (el *HTMLElement) GetInnerTextBySelectorAll(ctx context.Context, selector d
 }
 
 func (el *HTMLElement) GetInnerHTML(ctx context.Context) (runtime.String, error) {
-	out, err := el.eval.EvalValue(ctx, templates.GetInnerHTML(el.id))
+	out, err := el.executor.EvalValue(ctx, templates.GetInnerHTML(el.id))
 	if err != nil {
 		return runtime.EmptyString, err
 	}
@@ -79,11 +79,11 @@ func (el *HTMLElement) GetInnerHTML(ctx context.Context) (runtime.String, error)
 }
 
 func (el *HTMLElement) SetInnerHTML(ctx context.Context, innerHTML runtime.String) error {
-	return el.eval.Eval(ctx, templates.SetInnerHTML(el.id, innerHTML))
+	return el.executor.Eval(ctx, templates.SetInnerHTML(el.id, innerHTML))
 }
 
 func (el *HTMLElement) GetInnerHTMLBySelector(ctx context.Context, selector drivers.QuerySelector) (runtime.String, error) {
-	out, err := el.eval.EvalValue(ctx, templates.GetInnerHTMLBySelector(el.id, selector))
+	out, err := el.executor.EvalValue(ctx, templates.GetInnerHTMLBySelector(el.id, selector))
 	if err != nil {
 		return runtime.EmptyString, err
 	}
@@ -92,11 +92,11 @@ func (el *HTMLElement) GetInnerHTMLBySelector(ctx context.Context, selector driv
 }
 
 func (el *HTMLElement) SetInnerHTMLBySelector(ctx context.Context, selector drivers.QuerySelector, innerHTML runtime.String) error {
-	return el.eval.Eval(ctx, templates.SetInnerHTMLBySelector(el.id, selector, innerHTML))
+	return el.executor.Eval(ctx, templates.SetInnerHTMLBySelector(el.id, selector, innerHTML))
 }
 
 func (el *HTMLElement) GetInnerHTMLBySelectorAll(ctx context.Context, selector drivers.QuerySelector) (runtime.List, error) {
-	out, err := el.eval.EvalValue(ctx, templates.GetInnerHTMLBySelectorAll(el.id, selector))
+	out, err := el.executor.EvalValue(ctx, templates.GetInnerHTMLBySelectorAll(el.id, selector))
 	if err != nil {
 		return runtime.EmptyArray(), err
 	}

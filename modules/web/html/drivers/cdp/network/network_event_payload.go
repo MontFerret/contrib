@@ -74,7 +74,13 @@ func captureNetworkEventBody(
 
 	repl, err := event.client.Network.GetResponseBody(ctx, cdpnetwork.NewGetResponseBodyArgs(event.requestID))
 	if err != nil {
-		logger.Warn().
+		log := logger.Warn()
+
+		if isUnavailableResponseBodyError(err) {
+			log = logger.Trace()
+		}
+
+		log.
 			Err(err).
 			Str("request_id", string(event.requestID)).
 			Str("url", event.url).

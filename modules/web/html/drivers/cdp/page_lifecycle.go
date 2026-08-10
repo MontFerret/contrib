@@ -1,49 +1,62 @@
 package cdp
 
-import "context"
+import (
+	"context"
+)
 
 func (p *HTMLPage) Close() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	var url string
-	frame := p.dom.GetMainFrame()
-
-	if frame != nil {
-		url = frame.GetURL().String()
+	if p.closed {
+		return nil
 	}
 
 	p.closed = true
 
-	err := p.dom.Close()
-	if err != nil {
-		p.logger.Warn().
-			Str("url", url).
-			Err(err).
-			Msg("failed to close dom manager")
+	var url string
+	if p.dom != nil {
+		frame := p.dom.GetMainFrame()
+
+		if frame != nil {
+			url = frame.GetURL().String()
+		}
 	}
 
-	err = p.network.Close()
-	if err != nil {
-		p.logger.Warn().
-			Str("url", url).
-			Err(err).
-			Msg("failed to close network manager")
+	if p.dom != nil {
+		if err := p.dom.Close(); err != nil {
+			p.logger.Warn().
+				Str("url", url).
+				Err(err).
+				Msg("failed to close dom manager")
+		}
 	}
 
-	err = p.client.Page.Close(context.Background())
-	if err != nil {
-		p.logger.Warn().
-			Str("url", url).
-			Err(err).
-			Msg("failed to close browser page")
+	if p.network != nil {
+		if err := p.network.Close(); err != nil {
+			p.logger.Warn().
+				Str("url", url).
+				Err(err).
+				Msg("failed to close network manager")
+		}
 	}
 
-	if err := p.sessions.Close(); err != nil {
-		p.logger.Warn().
-			Str("url", url).
-			Err(err).
-			Msg("failed to close session manager")
+	if p.client != nil && p.client.Page != nil {
+		if err := p.client.Page.Close(context.Background()); err != nil {
+			p.logger.Warn().
+				Str("url", url).
+				Err(err).
+				Msg("failed to close browser page")
+		}
+	}
+
+	if p.sessions != nil {
+		if err := p.sessions.Close(); err != nil {
+			p.logger.Warn().
+				Str("url", url).
+				Err(err).
+				Msg("failed to close session manager")
+		}
 	}
 
 	return nil

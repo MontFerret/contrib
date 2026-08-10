@@ -152,6 +152,7 @@ RETURN ELEMENT(page, "#post h1").innerText
 | `ignore.resources` | `Object[]` | Resource-blocking rules with `url` glob and optional `type`. |
 | `ignore.statusCodes` | `Object[]` | HTTP status codes to allow, optionally scoped by `url` glob. |
 | `charset` | `String` | Source charset to convert to UTF-8. Applies to the memory driver. |
+| `initScript` | `Object` | CDP-only script with required `source` and optional `timing`: `afterNavigation` (default) or `beforeDocument`. |
 
 ```fql
 LET page = DOCUMENT("https://example.com/dashboard", {
@@ -164,6 +165,10 @@ LET page = DOCUMENT("https://example.com/dashboard", {
   },
   headers: {
     "X-Trace": "docs"
+  },
+  initScript: {
+    source: "window.__ferretReady = true",
+    timing: "beforeDocument"
   },
   cookies: [
     {
@@ -189,6 +194,13 @@ RETURN page.url
 ```
 
 `DOCUMENT(url, "cdp")` is also supported as a shorthand for selecting a driver by name.
+
+`afterNavigation` evaluates the script after each successful CDP-controlled initial,
+explicit, back, or forward navigation reaches Ferret's main-frame readiness point.
+`beforeDocument` uses the browser's new-document mechanism before the first real
+navigation, so same-target frames can observe it from their earliest page code,
+subject to browser target limitations, and it remains installed across redirects
+and reloads. The memory driver rejects `initScript`.
 
 ### `PARSE` Options
 

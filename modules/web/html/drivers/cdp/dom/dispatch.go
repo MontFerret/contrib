@@ -36,116 +36,120 @@ func dispatchHTMLDocument(ctx context.Context, doc *HTMLDocument, event runtime.
 		return dispatchDocumentScroll(ctx, doc, event.Payload)
 	}
 
-	return dispatchHTMLElement(ctx, doc.element, event, true)
+	return withDocumentError(ctx, doc, func(state *documentState) error {
+		return dispatchHTMLElement(ctx, state.element, event, true)
+	})
 }
 
 func dispatchHTMLElement(ctx context.Context, el *HTMLElement, event runtime.DispatchEvent, validated bool) error {
-	if !validated {
-		if err := validateDispatchEvent(event); err != nil {
-			return err
-		}
-	}
-
-	eventName := event.Name.String()
-
-	switch eventName {
-	case drivers.DispatchClickEvent,
-		drivers.DispatchDoubleClickEvent,
-		drivers.DispatchMouseDownEvent,
-		drivers.DispatchMouseUpEvent,
-		drivers.DispatchMouseOverEvent,
-		drivers.DispatchMouseOutEvent,
-		drivers.DispatchMouseMoveEvent:
-		params, err := parseDispatchMousePayload(ctx, eventName, event.Payload)
-		if err != nil {
-			return err
+	return el.executor.run(ctx, func() error {
+		if !validated {
+			if err := validateDispatchEvent(event); err != nil {
+				return err
+			}
 		}
 
-		return el.input.MouseEvent(ctx, el.id, eventName, params)
-	case drivers.DispatchKeyDownEvent,
-		drivers.DispatchKeyUpEvent,
-		drivers.DispatchKeyPressEvent:
-		key, err := parseDispatchKeyPayload(ctx, event.Payload)
-		if err != nil {
-			return err
-		}
+		eventName := event.Name.String()
 
-		return el.input.KeyEvent(ctx, el.id, eventName, key)
-	case drivers.DispatchPressEvent:
-		params, err := parseDispatchKeyboardPayload(ctx, event.Payload)
-		if err != nil {
-			return err
-		}
+		switch eventName {
+		case drivers.DispatchClickEvent,
+			drivers.DispatchDoubleClickEvent,
+			drivers.DispatchMouseDownEvent,
+			drivers.DispatchMouseUpEvent,
+			drivers.DispatchMouseOverEvent,
+			drivers.DispatchMouseOutEvent,
+			drivers.DispatchMouseMoveEvent:
+			params, err := parseDispatchMousePayload(ctx, eventName, event.Payload)
+			if err != nil {
+				return err
+			}
 
-		if err := el.Focus(ctx); err != nil {
-			return err
-		}
+			return el.input.MouseEvent(ctx, el.id, eventName, params)
+		case drivers.DispatchKeyDownEvent,
+			drivers.DispatchKeyUpEvent,
+			drivers.DispatchKeyPressEvent:
+			key, err := parseDispatchKeyPayload(ctx, event.Payload)
+			if err != nil {
+				return err
+			}
 
-		return el.input.Press(ctx, sdk.UnwrapStrings(params.Keys), int(params.Count))
-	case drivers.DispatchTypeEvent:
-		params, err := parseDispatchTypePayload(ctx, event.Payload)
-		if err != nil {
-			return err
-		}
+			return el.input.KeyEvent(ctx, el.id, eventName, key)
+		case drivers.DispatchPressEvent:
+			params, err := parseDispatchKeyboardPayload(ctx, event.Payload)
+			if err != nil {
+				return err
+			}
 
-		return el.input.Type(ctx, el.id, input.TypeParams{
-			Text:  params.Text,
-			Clear: params.Clear,
-			Delay: durationFromRuntimeInt(params.Delay),
-		})
-	case drivers.DispatchInputEvent:
-		payload, err := newDispatchPayload(event.Payload)
-		if err != nil {
-			return err
-		}
+			if err := el.Focus(ctx); err != nil {
+				return err
+			}
 
-		value, err := dispatchRequire(ctx, payload, "value")
-		if err != nil {
-			return err
-		}
+			return el.input.Press(ctx, sdk.UnwrapStrings(params.Keys), int(params.Count))
+		case drivers.DispatchTypeEvent:
+			params, err := parseDispatchTypePayload(ctx, event.Payload)
+			if err != nil {
+				return err
+			}
 
-		return el.input.InputEvent(ctx, el.id, value)
-	case drivers.DispatchChangeEvent:
-		payload, err := newDispatchPayload(event.Payload)
-		if err != nil {
-			return err
-		}
+			return el.input.Type(ctx, el.id, input.TypeParams{
+				Text:  params.Text,
+				Clear: params.Clear,
+				Delay: durationFromRuntimeInt(params.Delay),
+			})
+		case drivers.DispatchInputEvent:
+			payload, err := newDispatchPayload(event.Payload)
+			if err != nil {
+				return err
+			}
 
-		value, hasValue, err := dispatchLookup(ctx, payload, "value")
-		if err != nil {
-			return err
-		}
+			value, err := dispatchRequire(ctx, payload, "value")
+			if err != nil {
+				return err
+			}
 
-		return el.input.ChangeEvent(ctx, el.id, value, hasValue && value != runtime.None)
-	case drivers.DispatchSubmitEvent:
-		return el.input.SubmitEvent(ctx, el.id)
-	case drivers.DispatchResetEvent:
-		return el.input.ResetEvent(ctx, el.id)
-	case drivers.DispatchFocusEvent:
-		return el.Focus(ctx)
-	case drivers.DispatchBlurEvent:
-		return el.Blur(ctx)
-	case drivers.DispatchCheckEvent,
-		drivers.DispatchUncheckEvent,
-		drivers.DispatchToggleEvent:
-		return el.input.CheckEvent(ctx, el.id, eventName)
-	case drivers.DispatchSelectEvent:
-		payload, err := newDispatchPayload(event.Payload)
-		if err != nil {
-			return err
-		}
+			return el.input.InputEvent(ctx, el.id, value)
+		case drivers.DispatchChangeEvent:
+			payload, err := newDispatchPayload(event.Payload)
+			if err != nil {
+				return err
+			}
 
-		value, err := dispatchRequire(ctx, payload, "value")
-		if err != nil {
-			return err
-		}
+			value, hasValue, err := dispatchLookup(ctx, payload, "value")
+			if err != nil {
+				return err
+			}
 
-		return el.input.SelectEvent(ctx, el.id, value)
-	case drivers.DispatchScrollEvent:
-		return dispatchElementScroll(ctx, el, event.Payload)
-	default:
-		return runtime.Errorf(runtime.ErrInvalidOperation, "unknown dispatch event: %s", event.Name)
-	}
+			return el.input.ChangeEvent(ctx, el.id, value, hasValue && value != runtime.None)
+		case drivers.DispatchSubmitEvent:
+			return el.input.SubmitEvent(ctx, el.id)
+		case drivers.DispatchResetEvent:
+			return el.input.ResetEvent(ctx, el.id)
+		case drivers.DispatchFocusEvent:
+			return el.Focus(ctx)
+		case drivers.DispatchBlurEvent:
+			return el.Blur(ctx)
+		case drivers.DispatchCheckEvent,
+			drivers.DispatchUncheckEvent,
+			drivers.DispatchToggleEvent:
+			return el.input.CheckEvent(ctx, el.id, eventName)
+		case drivers.DispatchSelectEvent:
+			payload, err := newDispatchPayload(event.Payload)
+			if err != nil {
+				return err
+			}
+
+			value, err := dispatchRequire(ctx, payload, "value")
+			if err != nil {
+				return err
+			}
+
+			return el.input.SelectEvent(ctx, el.id, value)
+		case drivers.DispatchScrollEvent:
+			return dispatchElementScroll(ctx, el, event.Payload)
+		default:
+			return runtime.Errorf(runtime.ErrInvalidOperation, "unknown dispatch event: %s", event.Name)
+		}
+	})
 }
 
 func durationFromRuntimeInt(value runtime.Int) time.Duration {
@@ -160,9 +164,13 @@ func dispatchDocumentScroll(ctx context.Context, doc *HTMLDocument, payload runt
 
 	switch params.Mode {
 	case dispatchScrollModeIntoView:
-		return doc.element.ScrollIntoView(ctx, params.Options)
+		return withDocumentError(ctx, doc, func(state *documentState) error {
+			return state.element.ScrollIntoView(ctx, params.Options)
+		})
 	case dispatchScrollModeBy:
-		return doc.input.ScrollByDelta(ctx, params.Options)
+		return withDocumentError(ctx, doc, func(state *documentState) error {
+			return state.input.ScrollByDelta(ctx, params.Options)
+		})
 	case dispatchScrollModeTop:
 		_, err := doc.ScrollTop(ctx, params.Options)
 		return err

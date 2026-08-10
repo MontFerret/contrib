@@ -13,7 +13,9 @@ import (
 )
 
 func (doc *HTMLDocument) MarshalJSON() ([]byte, error) {
-	return doc.element.MarshalJSON()
+	return withDocumentResult(context.Background(), doc, func(state *documentState) ([]byte, error) {
+		return state.element.MarshalJSON()
+	})
 }
 
 func (doc *HTMLDocument) Type() runtime.Type {
@@ -21,11 +23,11 @@ func (doc *HTMLDocument) Type() runtime.Type {
 }
 
 func (doc *HTMLDocument) String() string {
-	return doc.frameTree.Frame.URL
+	return doc.Frame().Frame.URL
 }
 
 func (doc *HTMLDocument) Unwrap() any {
-	return doc.element
+	return doc.currentElement()
 }
 
 func (doc *HTMLDocument) Hash() uint64 {
@@ -33,7 +35,7 @@ func (doc *HTMLDocument) Hash() uint64 {
 
 	h.Write([]byte(doc.Type().String()))
 	h.Write([]byte(":"))
-	h.Write([]byte(doc.frameTree.Frame.ID))
+	h.Write([]byte(doc.identity))
 
 	return h.Sum64()
 }
@@ -85,13 +87,15 @@ func (doc *HTMLDocument) compare(ctx context.Context, other *HTMLDocument) (runt
 
 	return runtime.CompareValues(
 		ctx,
-		runtime.NewString(string(doc.Frame().Frame.ID)),
-		runtime.NewString(string(other.Frame().Frame.ID)),
+		runtime.NewString(string(doc.identity)),
+		runtime.NewString(string(other.identity)),
 	)
 }
 
 func (doc *HTMLDocument) Iterate(ctx context.Context) (runtime.Iterator, error) {
-	return doc.element.Iterate(ctx)
+	return withDocumentResult(ctx, doc, func(state *documentState) (runtime.Iterator, error) {
+		return state.element.Iterate(ctx)
+	})
 }
 
 func (doc *HTMLDocument) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
@@ -107,7 +111,9 @@ func (doc *HTMLDocument) GetNodeName(_ context.Context) (runtime.String, error) 
 }
 
 func (doc *HTMLDocument) GetTitle() runtime.String {
-	value, err := doc.eval.EvalValue(context.Background(), templates.GetTitle())
+	value, err := withDocumentResult(context.Background(), doc, func(state *documentState) (runtime.Value, error) {
+		return state.eval.EvalValue(context.Background(), templates.GetTitle())
+	})
 	if err != nil {
 		doc.logError(errors.Wrap(err, "failed to read document title"))
 
@@ -118,27 +124,32 @@ func (doc *HTMLDocument) GetTitle() runtime.String {
 }
 
 func (doc *HTMLDocument) GetName() runtime.String {
-	if doc.frameTree.Frame.Name != nil {
-		return runtime.NewString(*doc.frameTree.Frame.Name)
+	frame := doc.Frame().Frame
+	if frame.Name != nil {
+		return runtime.NewString(*frame.Name)
 	}
 
 	return runtime.EmptyString
 }
 
 func (doc *HTMLDocument) Length(ctx context.Context) (runtime.Int, error) {
-	return doc.element.Length(ctx)
+	return withDocumentResult(ctx, doc, func(state *documentState) (runtime.Int, error) {
+		return state.element.Length(ctx)
+	})
 }
 
 func (doc *HTMLDocument) GetElement() drivers.HTMLElement {
-	return doc.element
+	return doc.currentElement()
 }
 
 func (doc *HTMLDocument) GetURL() runtime.String {
-	return runtime.NewString(doc.frameTree.Frame.URL)
+	return runtime.NewString(doc.Frame().Frame.URL)
 }
 
 func (doc *HTMLDocument) GetCurrentURL(ctx context.Context) (runtime.String, error) {
-	value, err := doc.eval.EvalValue(ctx, templates.GetDocumentURL())
+	value, err := withDocumentResult(ctx, doc, func(state *documentState) (runtime.Value, error) {
+		return state.eval.EvalValue(ctx, templates.GetDocumentURL())
+	})
 	if err != nil {
 		return runtime.EmptyString, err
 	}
@@ -147,7 +158,9 @@ func (doc *HTMLDocument) GetCurrentURL(ctx context.Context) (runtime.String, err
 }
 
 func (doc *HTMLDocument) GetBaseURL(ctx context.Context) (runtime.String, error) {
-	value, err := doc.eval.EvalValue(ctx, templates.GetBaseURL())
+	value, err := withDocumentResult(ctx, doc, func(state *documentState) (runtime.Value, error) {
+		return state.eval.EvalValue(ctx, templates.GetBaseURL())
+	})
 	if err != nil {
 		return runtime.EmptyString, err
 	}
@@ -156,7 +169,9 @@ func (doc *HTMLDocument) GetBaseURL(ctx context.Context) (runtime.String, error)
 }
 
 func (doc *HTMLDocument) ResolveURL(ctx context.Context, url runtime.String) (runtime.String, error) {
-	value, err := doc.eval.EvalValue(ctx, templates.ResolveURL(url))
+	value, err := withDocumentResult(ctx, doc, func(state *documentState) (runtime.Value, error) {
+		return state.eval.EvalValue(ctx, templates.ResolveURL(url))
+	})
 	if err != nil {
 		return runtime.EmptyString, err
 	}

@@ -26,13 +26,19 @@ type (
 		Viewport    *drivers.Viewport    `json:"viewport"`
 		Ignore      *drivers.Ignore      `json:"ignore"`
 		Charset     *string              `json:"charset"`
+		InitScript  *drivers.InitScript  `json:"initScript"`
 	}
 )
 
 // Open loads an HTML page from a URL.
 //
 // Options may select a driver, timeout, user agent, cookie reuse, cookies,
-// headers, ignored resources or status codes, viewport, and source charset.
+// headers, ignored resources or status codes, viewport, source charset, and an
+// initScript.
+// For CDP, beforeDocument uses the browser's new-document
+// mechanism; same-target frames inherit it subject to browser target limits.
+// afterNavigation runs after Ferret's controlled navigation reaches main-frame
+// readiness.
 //
 // @param url {String} URL to load.
 // @param params {Object?} Driver and page-loading options.
@@ -128,6 +134,15 @@ func newPageLoadParams(ctx context.Context, url runtime.String, arg runtime.Valu
 
 		if input.Charset != nil {
 			res.Charset = *input.Charset
+		}
+
+		if input.InitScript != nil {
+			initScript, err := drivers.NormalizeInitScript(input.InitScript)
+			if err != nil {
+				return PageLoadParams{}, err
+			}
+
+			res.InitScript = initScript
 		}
 
 		if input.Cookies != nil && input.Cookies != runtime.None {

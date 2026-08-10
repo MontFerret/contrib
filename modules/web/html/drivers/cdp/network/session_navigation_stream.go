@@ -64,6 +64,15 @@ func (s *sessionNavigationEventStream) Read(ctx context.Context) <-chan runtime.
 					return
 				}
 
+				if repl == nil {
+					err := runtime.Error(runtime.ErrUnexpected, "within-document navigation stream returned an empty reply")
+					select {
+					case <-ctx.Done():
+					case ch <- runtime.NewErrorMessage(err):
+					}
+					return
+				}
+
 				evt := NavigationEvent{
 					URL:          repl.URL,
 					FrameID:      repl.FrameID,
@@ -93,6 +102,14 @@ func (s *sessionNavigationEventStream) Read(ctx context.Context) <-chan runtime.
 					case ch <- runtime.NewErrorMessage(err):
 					}
 					s.logger.Trace().Err(err).Msg("failed to read data from frame navigation event stream")
+					return
+				}
+				if repl == nil {
+					err := runtime.Error(runtime.ErrUnexpected, "frame navigation stream returned an empty reply")
+					select {
+					case <-ctx.Done():
+					case ch <- runtime.NewErrorMessage(err):
+					}
 					return
 				}
 

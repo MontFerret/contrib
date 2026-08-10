@@ -1,0 +1,12 @@
+LET url = @lab.static.static + "/init-script.html?reload=once"
+LET page = DOCUMENT(url, {
+  driver: "cdp",
+  initScript: {
+    source: "window.__beforeCount = Number(sessionStorage.getItem('__beforeCount') || 0) + 1; sessionStorage.setItem('__beforeCount', String(window.__beforeCount))",
+    timing: "beforeDocument"
+  }
+})
+
+WAIT(300)
+
+RETURN T::EQ(ELEMENT(page, "html").attributes["data-before-count"], "2")

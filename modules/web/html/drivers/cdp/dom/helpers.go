@@ -2,8 +2,12 @@ package dom
 
 import (
 	"bytes"
+	"context"
 	"regexp"
 	"strings"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"
 )
 
 var camelMatcher = regexp.MustCompile("[A-Za-z0-9]+")
@@ -32,4 +36,11 @@ func toCamelCase(input string) string {
 	}
 
 	return buf.String()
+}
+
+func runDocumentWait(ctx context.Context, state *documentState, fn *eval.Function) error {
+	task := events.NewEvalWaitTask(state.eval, fn, events.DefaultPolling)
+	_, err := task.Run(ctx)
+
+	return err
 }
