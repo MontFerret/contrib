@@ -11,8 +11,8 @@ import (
 
 type (
 	PageLoadParams struct {
+		Driver string `json:"driver"`
 		drivers.Params
-		Driver  string        `json:"driver"`
 		Timeout time.Duration `json:"timeout"`
 	}
 
@@ -33,7 +33,12 @@ type (
 // Open loads an HTML page from a URL.
 //
 // Options may select a driver, timeout, user agent, cookie reuse, cookies,
-// headers, ignored resources or status codes, viewport, and source charset.
+// headers, ignored resources or status codes, viewport, source charset, and an
+// initScript.
+// For CDP, beforeDocument uses the browser's new-document
+// mechanism; same-target frames inherit it subject to browser target limits.
+// afterNavigation runs after Ferret's controlled navigation reaches main-frame
+// readiness.
 //
 // @param url {String} URL to load.
 // @param params {Object?} Driver and page-loading options.

@@ -7,15 +7,20 @@ import (
 )
 
 func (el *HTMLElement) Subscribe(ctx context.Context, subscription runtime.Subscription) (runtime.Stream, error) {
-	if err := el.ensureAttached(); err != nil {
-		return nil, err
-	}
+	var stream runtime.Stream
 
-	return subscribeDOMTargetEvents(
-		ctx,
-		el.client.Runtime,
-		el.eval,
-		el.id,
-		subscription,
-	)
+	err := el.executor.run(ctx, func() error {
+		var err error
+		stream, err = subscribeDOMTargetEvents(
+			ctx,
+			el.client.Runtime,
+			el.executor,
+			el.id,
+			subscription,
+		)
+
+		return err
+	})
+
+	return stream, err
 }

@@ -21,7 +21,7 @@ type HTMLElement struct {
 	styles     *elementStyles
 	dataset    *elementDataset
 	input      *input.Manager
-	eval       *elementExecutor
+	executor   *elementExecutor
 	attributes *elementAttributes
 	client     *cdp.Client
 	classes    *elementClasses
@@ -29,9 +29,7 @@ type HTMLElement struct {
 	wait       *elementWait
 	nodeType   *lazy.Value
 	nodeName   *lazy.Value
-	document   *HTMLDocument
 	id         cdpruntime.RemoteObjectID
-	generation uint64
 }
 
 func NewHTMLElement(
@@ -42,7 +40,7 @@ func NewHTMLElement(
 	exec *eval.Runtime,
 	id cdpruntime.RemoteObjectID,
 ) *HTMLElement {
-	return newHTMLElement(logger, client, domManager, input, exec, id, nil, 0)
+	return newHTMLElement(logger, client, domManager, input, exec, id, nil, nil)
 }
 
 func newHTMLElement(
@@ -53,7 +51,7 @@ func newHTMLElement(
 	exec *eval.Runtime,
 	id cdpruntime.RemoteObjectID,
 	document *HTMLDocument,
-	generation uint64,
+	state *documentState,
 ) *HTMLElement {
 	el := new(HTMLElement)
 	el.logger = logutil.WithComponent(logger.With(), "dom_element").
@@ -62,23 +60,30 @@ func newHTMLElement(
 	el.client = client
 	el.dom = domManager
 	el.input = input
-	el.eval = newElementExecutor(exec, document, generation)
 	el.id = id
-	el.document = document
-	el.generation = generation
-	el.attributes = newElementAttributes(el.eval, id)
-	el.styles = newElementStyles(el.eval, id)
-	el.classes = newElementClasses(el.eval, id)
-	el.dataset = newElementDataset(el.eval, id)
-	el.wait = newElementWait(el.eval, id)
-	el.nodeType = lazy.New(func(ctx context.Context) (runtime.Value, error) {
-		return el.eval.EvalValue(ctx, templates.GetNodeType(el.id))
-	})
-	el.nodeName = lazy.New(func(ctx context.Context) (runtime.Value, error) {
-		return el.eval.EvalValue(ctx, templates.GetNodeName(el.id))
-	})
+
+	if document == nil {
+		el.installExecutor(newElementExecutor(exec))
+	} else {
+		el.installExecutor(newStateElementExecutor(document, state))
+	}
 
 	return el
+}
+
+func (el *HTMLElement) installExecutor(executor *elementExecutor) {
+	el.executor = executor
+	el.attributes = newElementAttributes(executor, el.id)
+	el.styles = newElementStyles(executor, el.id)
+	el.classes = newElementClasses(executor, el.id)
+	el.dataset = newElementDataset(executor, el.id)
+	el.wait = newElementWait(executor, el.id)
+	el.nodeType = lazy.New(func(ctx context.Context) (runtime.Value, error) {
+		return el.executor.EvalValue(ctx, templates.GetNodeType(el.id))
+	})
+	el.nodeName = lazy.New(func(ctx context.Context) (runtime.Value, error) {
+		return el.executor.EvalValue(ctx, templates.GetNodeName(el.id))
+	})
 }
 
 func (el *HTMLElement) RemoteID() cdpruntime.RemoteObjectID {
@@ -117,31 +122,8 @@ func (el *HTMLElement) AsWaitTarget() drivers.WaitTarget {
 	return el.wait
 }
 
-func (el *HTMLElement) ensureAttached() error {
-	if el.eval == nil {
-		return drivers.ErrDetached
-	}
-
-	return el.eval.ensureAttached()
-}
-
-func (el *HTMLElement) normalizeError(ctx context.Context, err error) error {
-	if el.eval == nil {
-		return drivers.ErrDetached
-	}
-
-	return el.eval.normalizeError(ctx, err)
-}
-
-func (el *HTMLElement) bindDocument(document *HTMLDocument, exec *eval.Runtime, generation uint64) {
-	el.document = document
-	el.generation = generation
-	el.eval = newElementExecutor(exec, document, generation)
-	el.attributes = newElementAttributes(el.eval, el.id)
-	el.styles = newElementStyles(el.eval, el.id)
-	el.classes = newElementClasses(el.eval, el.id)
-	el.dataset = newElementDataset(el.eval, el.id)
-	el.wait = newElementWait(el.eval, el.id)
+func (el *HTMLElement) bindDocument(document *HTMLDocument, state *documentState) {
+	el.installExecutor(newStateElementExecutor(document, state))
 }
 
 func (el *HTMLElement) logError(err error) *zerolog.Event {

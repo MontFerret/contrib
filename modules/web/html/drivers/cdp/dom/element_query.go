@@ -10,11 +10,11 @@ import (
 )
 
 func (el *HTMLElement) GetChildNodes(ctx context.Context) (runtime.List, error) {
-	return el.eval.EvalElements(ctx, templates.GetChildren(el.id))
+	return el.executor.EvalElements(ctx, templates.GetChildren(el.id))
 }
 
 func (el *HTMLElement) GetChildNode(ctx context.Context, idx runtime.Int) (runtime.Value, error) {
-	return el.eval.EvalElement(ctx, templates.GetChildByIndex(el.id, idx))
+	return el.executor.EvalElement(ctx, templates.GetChildByIndex(el.id, idx))
 }
 
 func (el *HTMLElement) RemoveAt(ctx context.Context, idx runtime.Int) (runtime.Value, error) {
@@ -22,7 +22,7 @@ func (el *HTMLElement) RemoveAt(ctx context.Context, idx runtime.Int) (runtime.V
 		return runtime.None, nil
 	}
 
-	return el.eval.EvalElement(ctx, templates.RemoveChildByIndex(el.id, idx))
+	return el.executor.EvalElement(ctx, templates.RemoveChildByIndex(el.id, idx))
 }
 
 func (el *HTMLElement) RemoveKey(ctx context.Context, key runtime.Value) error {
@@ -37,31 +37,31 @@ func (el *HTMLElement) RemoveKey(ctx context.Context, key runtime.Value) error {
 }
 
 func (el *HTMLElement) GetParentElement(ctx context.Context) (runtime.Value, error) {
-	return el.eval.EvalElement(ctx, templates.GetParent(el.id))
+	return el.executor.EvalElement(ctx, templates.GetParent(el.id))
 }
 
 func (el *HTMLElement) GetPreviousElementSibling(ctx context.Context) (runtime.Value, error) {
-	return el.eval.EvalElement(ctx, templates.GetPreviousElementSibling(el.id))
+	return el.executor.EvalElement(ctx, templates.GetPreviousElementSibling(el.id))
 }
 
 func (el *HTMLElement) GetNextElementSibling(ctx context.Context) (runtime.Value, error) {
-	return el.eval.EvalElement(ctx, templates.GetNextElementSibling(el.id))
+	return el.executor.EvalElement(ctx, templates.GetNextElementSibling(el.id))
 }
 
 func (el *HTMLElement) QuerySelector(ctx context.Context, selector drivers.QuerySelector) (runtime.Value, error) {
-	return el.eval.EvalElement(ctx, templates.QuerySelector(el.id, selector))
+	return el.executor.EvalElement(ctx, templates.QuerySelector(el.id, selector))
 }
 
 func (el *HTMLElement) QuerySelectorAll(ctx context.Context, selector drivers.QuerySelector) (runtime.List, error) {
-	return el.eval.EvalElements(ctx, templates.QuerySelectorAll(el.id, selector))
+	return el.executor.EvalElements(ctx, templates.QuerySelectorAll(el.id, selector))
 }
 
 func (el *HTMLElement) XPath(ctx context.Context, expression runtime.String) (result runtime.Value, err error) {
-	return el.eval.EvalValue(ctx, templates.XPath(el.id, expression))
+	return el.executor.EvalValue(ctx, templates.XPath(el.id, expression))
 }
 
 func (el *HTMLElement) CountBySelector(ctx context.Context, selector drivers.QuerySelector) (runtime.Int, error) {
-	out, err := el.eval.EvalValue(ctx, templates.CountBySelector(el.id, selector))
+	out, err := el.executor.EvalValue(ctx, templates.CountBySelector(el.id, selector))
 	if err != nil {
 		return runtime.ZeroInt, err
 	}
@@ -70,7 +70,7 @@ func (el *HTMLElement) CountBySelector(ctx context.Context, selector drivers.Que
 }
 
 func (el *HTMLElement) ExistsBySelector(ctx context.Context, selector drivers.QuerySelector) (runtime.Boolean, error) {
-	out, err := el.eval.EvalValue(ctx, templates.ExistsBySelector(el.id, selector))
+	out, err := el.executor.EvalValue(ctx, templates.ExistsBySelector(el.id, selector))
 	if err != nil {
 		return runtime.False, err
 	}
@@ -86,7 +86,7 @@ func (el *HTMLElement) Query(ctx context.Context, q runtime.Query) (runtime.List
 			return runtime.NewArray(0), err
 		}
 
-		val, err := el.eval.EvalList(ctx, fn)
+		val, err := el.executor.EvalList(ctx, fn)
 		if err != nil {
 			return runtime.NewArray(0), err
 		}
@@ -117,9 +117,9 @@ func (el *HTMLElement) QueryOne(ctx context.Context, q runtime.Query) (runtime.V
 			return runtime.None, err
 		}
 
-		return el.eval.EvalResult(ctx, fn)
+		return el.executor.EvalResult(ctx, fn)
 	case query.XPath:
-		return el.eval.EvalResult(ctx, templates.XPathOne(el.id, q.Expression))
+		return el.executor.EvalResult(ctx, templates.XPathOne(el.id, q.Expression))
 	default:
 		return runtime.None, runtime.Error(runtime.ErrInvalidArgument, "unsupported query kind")
 	}
@@ -133,14 +133,14 @@ func (el *HTMLElement) QueryCount(ctx context.Context, q runtime.Query) (runtime
 			return runtime.ZeroInt, err
 		}
 
-		out, err := el.eval.EvalValue(ctx, fn)
+		out, err := el.executor.EvalValue(ctx, fn)
 		if err != nil {
 			return runtime.ZeroInt, err
 		}
 
 		return runtime.ToInt(ctx, out)
 	case query.XPath:
-		out, err := el.eval.EvalValue(ctx, templates.XPathCount(el.id, q.Expression))
+		out, err := el.executor.EvalValue(ctx, templates.XPathCount(el.id, q.Expression))
 		if err != nil {
 			return runtime.ZeroInt, err
 		}
@@ -159,14 +159,14 @@ func (el *HTMLElement) QueryExists(ctx context.Context, q runtime.Query) (runtim
 			return runtime.False, err
 		}
 
-		out, err := el.eval.EvalValue(ctx, fn)
+		out, err := el.executor.EvalValue(ctx, fn)
 		if err != nil {
 			return runtime.False, err
 		}
 
 		return runtime.ToBoolean(out), nil
 	case query.XPath:
-		out, err := el.eval.EvalValue(ctx, templates.XPathExists(el.id, q.Expression))
+		out, err := el.executor.EvalValue(ctx, templates.XPathExists(el.id, q.Expression))
 		if err != nil {
 			return runtime.False, err
 		}

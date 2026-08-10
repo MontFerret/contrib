@@ -19,6 +19,7 @@ type HTMLDocument struct {
 	dom       *Manager
 	state     *documentState
 	identity  page.FrameID
+	fallback  documentFallback
 	mu        sync.RWMutex
 	refreshMu sync.Mutex
 }
@@ -33,25 +34,31 @@ func NewHTMLDocument(
 	frames page.FrameTree,
 ) *HTMLDocument {
 	doc := newHTMLDocument(logger, domManager, frames)
-	if rootElement != nil {
-		rootElement.bindDocument(doc, exec, 1)
-	}
-	doc.replaceState(&documentState{
+	state := &documentState{
 		client:     client,
 		input:      inputs,
 		eval:       exec,
-		element:    rootElement,
 		frameTree:  frames,
 		generation: 1,
-	})
+	}
+
+	if rootElement != nil {
+		rootElement.bindDocument(doc, state)
+	}
+
+	state.element = rootElement
+	doc.replaceState(state)
 
 	return doc
 }
 
 func newHTMLDocument(logger zerolog.Logger, manager *Manager, frame page.FrameTree) *HTMLDocument {
 	return &HTMLDocument{
-		logger:   logutil.WithComponent(logger.With(), "html_document").Logger(),
-		dom:      manager,
+		logger: logutil.WithComponent(logger.With(), "html_document").Logger(),
+		dom:    manager,
+		fallback: documentFallback{
+			frameTree: frame,
+		},
 		identity: frame.Frame.ID,
 	}
 }
@@ -63,22 +70,47 @@ func (doc *HTMLDocument) Close() error {
 }
 
 func (doc *HTMLDocument) Frame() page.FrameTree {
-	return doc.currentState().frameTree
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
+
+	if doc.state != nil {
+		return doc.state.frameTree
+	}
+
+	return doc.fallback.frameTree
 }
 
 func (doc *HTMLDocument) Eval() *eval.Runtime {
-	return doc.currentState().eval
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
+
+	if doc.state == nil {
+		return nil
+	}
+
+	return doc.state.eval
 }
 
 func (doc *HTMLDocument) snapshot() (*documentState, error) {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
 
-	if doc.state == nil || !doc.state.active {
+	if doc.state == nil {
 		return nil, drivers.ErrDetached
 	}
 
 	return doc.state, nil
+}
+
+func (doc *HTMLDocument) snapshotFrame() (page.FrameTree, error) {
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
+
+	if doc.state == nil {
+		return page.FrameTree{}, drivers.ErrDetached
+	}
+
+	return doc.state.frameTree, nil
 }
 
 func (doc *HTMLDocument) currentState() *documentState {
@@ -88,30 +120,46 @@ func (doc *HTMLDocument) currentState() *documentState {
 	return doc.state
 }
 
-func (doc *HTMLDocument) isGenerationCurrent(generation uint64) bool {
+func (doc *HTMLDocument) currentElement() *HTMLElement {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
 
-	return doc.state != nil && doc.state.active && doc.state.generation == generation
+	if doc.state != nil {
+		return doc.state.element
+	}
+
+	return doc.fallback.element
 }
 
-func (doc *HTMLDocument) generationChanged(generation uint64) bool {
+func (doc *HTMLDocument) isCurrentState(state *documentState) bool {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
 
-	return doc.state != nil && doc.state.active && doc.state.generation != generation
+	return state != nil && doc.state == state
 }
 
 func (doc *HTMLDocument) replaceState(state *documentState) {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 
-	if doc.state != nil {
-		doc.state.active = false
+	doc.state = state
+	doc.fallback.element = state.element
+	doc.fallback.frameTree = state.frameTree
+}
+
+func (doc *HTMLDocument) replaceStateIfCurrent(observedState, state *documentState) bool {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
+
+	if observedState == nil || doc.state != observedState {
+		return false
 	}
 
-	state.active = true
 	doc.state = state
+	doc.fallback.element = state.element
+	doc.fallback.frameTree = state.frameTree
+
+	return true
 }
 
 func (doc *HTMLDocument) updateFrameTree(frame page.FrameTree) {
@@ -122,21 +170,39 @@ func (doc *HTMLDocument) updateFrameTree(frame page.FrameTree) {
 		return
 	}
 
-	state := *doc.state
-	state.frameTree = frame
-	doc.state = &state
+	doc.state.frameTree = frame
+	doc.fallback.frameTree = frame
 }
 
 func (doc *HTMLDocument) detach() {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 
-	if doc.state != nil {
-		doc.state.active = false
+	if doc.state == nil {
+		return
 	}
+
+	doc.fallback.element = doc.state.element
+	doc.fallback.frameTree = doc.state.frameTree
+	doc.state = nil
 }
 
-func (doc *HTMLDocument) refresh(ctx context.Context, observedGeneration uint64) error {
+func (doc *HTMLDocument) detachIfCurrent(observedState *documentState) bool {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
+
+	if observedState == nil || doc.state != observedState {
+		return false
+	}
+
+	doc.fallback.element = doc.state.element
+	doc.fallback.frameTree = doc.state.frameTree
+	doc.state = nil
+
+	return true
+}
+
+func (doc *HTMLDocument) refresh(ctx context.Context, observedState *documentState) error {
 	doc.refreshMu.Lock()
 	defer doc.refreshMu.Unlock()
 
@@ -145,25 +211,28 @@ func (doc *HTMLDocument) refresh(ctx context.Context, observedGeneration uint64)
 		return err
 	}
 
-	if state.generation != observedGeneration {
+	if state != observedState {
 		return nil
 	}
 
-	return doc.dom.refreshDocument(ctx, doc)
+	return doc.dom.refreshDocument(ctx, doc, observedState)
 }
 
-func (doc *HTMLDocument) reload(ctx context.Context, frame page.FrameTree) error {
+func (doc *HTMLDocument) reload(ctx context.Context, frame page.FrameTree) (bool, error) {
 	doc.refreshMu.Lock()
 	defer doc.refreshMu.Unlock()
 
-	state, err := doc.dom.loadDocumentState(ctx, doc, frame)
+	observedState, err := doc.snapshot()
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	doc.replaceState(state)
+	state, err := doc.dom.loadDocumentState(ctx, doc, frame)
+	if err != nil {
+		return false, err
+	}
 
-	return nil
+	return doc.replaceStateIfCurrent(observedState, state), nil
 }
 
 func (doc *HTMLDocument) logError(err error) *zerolog.Event {

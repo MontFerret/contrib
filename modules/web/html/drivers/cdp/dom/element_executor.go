@@ -11,25 +11,33 @@ import (
 )
 
 type elementExecutor struct {
-	exec       *eval.Runtime
-	document   *HTMLDocument
-	generation uint64
+	document *HTMLDocument
+	state    *documentState
 }
 
-func newElementExecutor(exec *eval.Runtime, document *HTMLDocument, generation uint64) *elementExecutor {
+func newElementExecutor(exec *eval.Runtime) *elementExecutor {
 	return &elementExecutor{
-		exec:       exec,
-		document:   document,
-		generation: generation,
+		state: &documentState{eval: exec},
+	}
+}
+
+func newStateElementExecutor(document *HTMLDocument, state *documentState) *elementExecutor {
+	return &elementExecutor{
+		document: document,
+		state:    state,
 	}
 }
 
 func (exec *elementExecutor) ensureAttached() error {
+	if exec == nil {
+		return drivers.ErrDetached
+	}
+
 	if exec.document == nil {
 		return nil
 	}
 
-	if !exec.document.isGenerationCurrent(exec.generation) {
+	if !exec.document.isCurrentState(exec.state) {
 		return drivers.ErrDetached
 	}
 
@@ -45,7 +53,7 @@ func (exec *elementExecutor) normalizeError(ctx context.Context, err error) erro
 		return err
 	}
 
-	if refreshErr := exec.document.refresh(ctx, exec.generation); refreshErr != nil {
+	if refreshErr := exec.document.refresh(ctx, exec.state); refreshErr != nil {
 		return refreshErr
 	}
 
@@ -53,67 +61,64 @@ func (exec *elementExecutor) normalizeError(ctx context.Context, err error) erro
 }
 
 func (exec *elementExecutor) Eval(ctx context.Context, fn *eval.Function) error {
+	return exec.run(ctx, func() error {
+		return exec.state.eval.Eval(ctx, fn)
+	})
+}
+
+func (exec *elementExecutor) EvalValue(ctx context.Context, fn *eval.Function) (runtime.Value, error) {
+	return runElementResult(
+		ctx,
+		exec,
+		func() runtime.Value { return runtime.None },
+		func() (runtime.Value, error) { return exec.state.eval.EvalValue(ctx, fn) },
+	)
+}
+
+func (exec *elementExecutor) EvalResult(ctx context.Context, fn *eval.Function) (runtime.Value, error) {
+	return runElementResult(
+		ctx,
+		exec,
+		func() runtime.Value { return runtime.None },
+		func() (runtime.Value, error) { return exec.state.eval.EvalResult(ctx, fn) },
+	)
+}
+
+func (exec *elementExecutor) EvalList(ctx context.Context, fn *eval.Function) (*runtime.Array, error) {
+	return runElementResult(
+		ctx,
+		exec,
+		runtime.EmptyArray,
+		func() (*runtime.Array, error) { return exec.state.eval.EvalList(ctx, fn) },
+	)
+}
+
+func (exec *elementExecutor) EvalElement(ctx context.Context, fn *eval.Function) (runtime.Value, error) {
+	return runElementResult(
+		ctx,
+		exec,
+		func() runtime.Value { return runtime.None },
+		func() (runtime.Value, error) { return exec.state.eval.EvalElement(ctx, fn) },
+	)
+}
+
+func (exec *elementExecutor) EvalElements(ctx context.Context, fn *eval.Function) (*runtime.Array, error) {
+	return runElementResult(
+		ctx,
+		exec,
+		runtime.EmptyArray,
+		func() (*runtime.Array, error) { return exec.state.eval.EvalElements(ctx, fn) },
+	)
+}
+
+func (exec *elementExecutor) run(ctx context.Context, operation func() error) error {
 	if err := exec.ensureAttached(); err != nil {
 		return err
 	}
 
-	return exec.normalizeError(ctx, exec.exec.Eval(ctx, fn))
-}
-
-func (exec *elementExecutor) EvalValue(ctx context.Context, fn *eval.Function) (runtime.Value, error) {
-	if err := exec.ensureAttached(); err != nil {
-		return runtime.None, err
-	}
-
-	value, err := exec.exec.EvalValue(ctx, fn)
-
-	return value, exec.normalizeError(ctx, err)
-}
-
-func (exec *elementExecutor) EvalResult(ctx context.Context, fn *eval.Function) (runtime.Value, error) {
-	if err := exec.ensureAttached(); err != nil {
-		return runtime.None, err
-	}
-
-	value, err := exec.exec.EvalResult(ctx, fn)
-
-	return value, exec.normalizeError(ctx, err)
-}
-
-func (exec *elementExecutor) EvalList(ctx context.Context, fn *eval.Function) (*runtime.Array, error) {
-	if err := exec.ensureAttached(); err != nil {
-		return runtime.EmptyArray(), err
-	}
-
-	value, err := exec.exec.EvalList(ctx, fn)
-
-	return value, exec.normalizeError(ctx, err)
-}
-
-func (exec *elementExecutor) EvalElement(ctx context.Context, fn *eval.Function) (runtime.Value, error) {
-	if err := exec.ensureAttached(); err != nil {
-		return runtime.None, err
-	}
-
-	value, err := exec.exec.EvalElement(ctx, fn)
-
-	return value, exec.normalizeError(ctx, err)
-}
-
-func (exec *elementExecutor) EvalElements(ctx context.Context, fn *eval.Function) (*runtime.Array, error) {
-	if err := exec.ensureAttached(); err != nil {
-		return runtime.EmptyArray(), err
-	}
-
-	value, err := exec.exec.EvalElements(ctx, fn)
-
-	return value, exec.normalizeError(ctx, err)
-}
-
-func (exec *elementExecutor) Runtime() *eval.Runtime {
-	return exec.exec
+	return exec.normalizeError(ctx, operation())
 }
 
 func (exec *elementExecutor) ContextID() cdpruntime.ExecutionContextID {
-	return exec.exec.ContextID()
+	return exec.state.eval.ContextID()
 }

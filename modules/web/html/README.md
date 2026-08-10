@@ -196,10 +196,11 @@ RETURN page.url
 `DOCUMENT(url, "cdp")` is also supported as a shorthand for selecting a driver by name.
 
 `afterNavigation` evaluates the script after each successful CDP-controlled initial,
-explicit, back, or forward navigation. `beforeDocument` installs it before the first
-real navigation, so same-target frames can observe it from their earliest page code
-and it remains installed across redirects and reloads. The memory driver rejects
-`initScript`.
+explicit, back, or forward navigation reaches Ferret's main-frame readiness point.
+`beforeDocument` uses the browser's new-document mechanism before the first real
+navigation, so same-target frames can observe it from their earliest page code,
+subject to browser target limitations, and it remains installed across redirects
+and reloads. The memory driver rejects `initScript`.
 
 ### `PARSE` Options
 

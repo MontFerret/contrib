@@ -12,7 +12,7 @@ func TestHTMLElementRejectsNonStandardTextAliases(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	el := new(HTMLElement)
+	el := &HTMLElement{executor: newElementExecutor(nil)}
 
 	for _, name := range []string{"text", "html"} {
 		name := name
@@ -45,6 +45,7 @@ func TestHTMLElementSetSupportsAttributeMap(t *testing.T) {
 	exec := new(recordingElementEvaluator)
 	el := &HTMLElement{
 		attributes: newElementAttributes(exec, "node"),
+		executor:   newElementExecutor(nil),
 	}
 
 	attrs := runtime.NewObjectWith(map[string]runtime.Value{

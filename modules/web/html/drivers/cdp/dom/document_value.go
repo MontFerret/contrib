@@ -27,7 +27,7 @@ func (doc *HTMLDocument) String() string {
 }
 
 func (doc *HTMLDocument) Unwrap() any {
-	return doc.currentState().element
+	return doc.currentElement()
 }
 
 func (doc *HTMLDocument) Hash() uint64 {
@@ -139,7 +139,7 @@ func (doc *HTMLDocument) Length(ctx context.Context) (runtime.Int, error) {
 }
 
 func (doc *HTMLDocument) GetElement() drivers.HTMLElement {
-	return doc.currentState().element
+	return doc.currentElement()
 }
 
 func (doc *HTMLDocument) GetURL() runtime.String {

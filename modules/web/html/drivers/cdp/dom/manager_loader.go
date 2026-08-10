@@ -58,7 +58,14 @@ func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, fram
 		generation = current.generation + 1
 	}
 
-	rootElement := newHTMLElement(
+	state := &documentState{
+		client:     client,
+		input:      inputs,
+		eval:       exec,
+		frameTree:  frame,
+		generation: generation,
+	}
+	state.element = newHTMLElement(
 		m.logger,
 		client,
 		m,
@@ -66,17 +73,10 @@ func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, fram
 		exec,
 		*ref.ObjectID,
 		doc,
-		generation,
+		state,
 	)
 
-	return &documentState{
-		client:     client,
-		input:      inputs,
-		eval:       exec,
-		element:    rootElement,
-		frameTree:  frame,
-		generation: generation,
-	}, nil
+	return state, nil
 }
 
 func (m *Manager) ResolveElement(ctx context.Context, frameID page.FrameID, id cdpruntime.RemoteObjectID) (*HTMLElement, error) {
@@ -97,7 +97,7 @@ func (m *Manager) ResolveElement(ctx context.Context, frameID page.FrameID, id c
 		state.eval,
 		id,
 		doc,
-		state.generation,
+		state,
 	), nil
 }
 

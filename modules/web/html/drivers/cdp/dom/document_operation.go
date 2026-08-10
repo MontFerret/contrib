@@ -26,14 +26,15 @@ func withDocumentResult[T any](
 			return result, nil
 		}
 
-		if errors.Is(err, drivers.ErrDetached) && doc.generationChanged(state.generation) {
+		if errors.Is(err, drivers.ErrDetached) && !doc.isCurrentState(state) {
 			continue
 		}
 
 		if attempt == 0 && eval.IsStaleError(err) {
-			if refreshErr := doc.refresh(ctx, state.generation); refreshErr != nil {
+			if refreshErr := doc.refresh(ctx, state); refreshErr != nil {
 				return zero, refreshErr
 			}
+
 			continue
 		}
 

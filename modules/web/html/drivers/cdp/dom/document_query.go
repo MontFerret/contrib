@@ -44,26 +44,27 @@ func (doc *HTMLDocument) ExistsBySelector(ctx context.Context, selector drivers.
 }
 
 func (doc *HTMLDocument) GetParentDocument(ctx context.Context) (drivers.HTMLDocument, error) {
-	state, err := doc.snapshot()
+	frameTree, err := doc.snapshotFrame()
 	if err != nil {
 		return nil, err
 	}
-	if state.frameTree.Frame.ParentID == nil {
+
+	if frameTree.Frame.ParentID == nil {
 		return nil, nil
 	}
 
-	return doc.dom.GetFrameNode(ctx, *state.frameTree.Frame.ParentID)
+	return doc.dom.GetFrameNode(ctx, *frameTree.Frame.ParentID)
 }
 
 func (doc *HTMLDocument) GetChildDocuments(ctx context.Context) (runtime.List, error) {
-	state, err := doc.snapshot()
+	frameTree, err := doc.snapshotFrame()
 	if err != nil {
 		return nil, err
 	}
 
-	arr := runtime.NewArray(len(state.frameTree.ChildFrames))
+	arr := runtime.NewArray(len(frameTree.ChildFrames))
 
-	for _, childFrame := range state.frameTree.ChildFrames {
+	for _, childFrame := range frameTree.ChildFrames {
 		frame, err := doc.dom.GetFrameNode(ctx, childFrame.Frame.ID)
 		if err != nil {
 			return nil, err

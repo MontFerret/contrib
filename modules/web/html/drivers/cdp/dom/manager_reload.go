@@ -33,8 +33,15 @@ func (m *Manager) ReloadRoot(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-	} else if err := doc.reload(ctx, ftRepl.FrameTree); err != nil {
-		return err
+	} else {
+		replaced, err := doc.reload(ctx, ftRepl.FrameTree)
+		if err != nil {
+			return err
+		}
+
+		if !replaced {
+			return nil
+		}
 	}
 
 	if err := m.reloadRetainedDocuments(ctx, doc, ftRepl.FrameTree); err != nil {
@@ -96,7 +103,7 @@ func (m *Manager) reloadRetainedDocuments(ctx context.Context, root *HTMLDocumen
 			continue
 		}
 
-		if err := current.node.reload(ctx, frame); err != nil {
+		if _, err := current.node.reload(ctx, frame); err != nil {
 			return err
 		}
 	}
@@ -104,7 +111,7 @@ func (m *Manager) reloadRetainedDocuments(ctx context.Context, root *HTMLDocumen
 	return nil
 }
 
-func (m *Manager) refreshDocument(ctx context.Context, doc *HTMLDocument) error {
+func (m *Manager) refreshDocument(ctx context.Context, doc *HTMLDocument, observedState *documentState) error {
 	ftRepl, err := m.rootClient.Page.GetFrameTree(ctx)
 	if err != nil {
 		return err
@@ -116,7 +123,10 @@ func (m *Manager) refreshDocument(ctx context.Context, doc *HTMLDocument) error 
 
 	frame, found := findFrame(ftRepl.FrameTree, doc.identity)
 	if !found {
-		doc.detach()
+		if !doc.detachIfCurrent(observedState) {
+			return nil
+		}
+
 		return drivers.ErrDetached
 	}
 
@@ -125,7 +135,9 @@ func (m *Manager) refreshDocument(ctx context.Context, doc *HTMLDocument) error 
 		return err
 	}
 
-	doc.replaceState(state)
+	if !doc.replaceStateIfCurrent(observedState, state) {
+		return nil
+	}
 
 	if ftRepl.FrameTree.Frame.ID == doc.identity {
 		if err := m.reloadRetainedDocuments(ctx, doc, ftRepl.FrameTree); err != nil {
