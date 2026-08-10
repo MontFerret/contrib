@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TAG_MODULES="modules"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=release-common.sh
+source "$SCRIPT_DIR/release-common.sh"
+
 DEFAULT_RELEASE_PRE_BASE_VERSION="1.0.0"
 
 usage() {
@@ -11,30 +14,10 @@ usage() {
   echo "  make release-pre-all rc" >&2
   echo "" >&2
   echo "For modules without an initial release, interactive runs prompt for a base version." >&2
-  echo "Non-interactive runs can set RELEASE_PRE_BASE_VERSION, for example:" >&2
+  echo "Non-interactive runs can set the initial base version, for example:" >&2
   echo "  RELEASE_PRE_BASE_VERSION=1.0.0 make release-pre-all rc" >&2
   echo "" >&2
   echo "Direct script usage: $0 <semver|preid>" >&2
-}
-
-is_semver() {
-  local version="$1"
-  [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]
-}
-
-is_base_version() {
-  local version="$1"
-  [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
-}
-
-is_preid() {
-  local preid="$1"
-  [[ "$preid" =~ ^[A-Za-z][0-9A-Za-z-]*$ ]]
-}
-
-get_latest_tag() {
-  local module="$1"
-  git tag --list "$TAG_MODULES/$module/v*" --sort=-version:refname | head -n 1
 }
 
 prompt_base_version() {
@@ -48,99 +31,99 @@ prompt_base_version() {
   echo "${base_version:-$DEFAULT_RELEASE_PRE_BASE_VERSION}"
 }
 
-if [ "$#" -ne 1 ]; then
-  usage
-  exit 1
-fi
+main() {
+  if [[ $# -ne 1 ]]; then
+    usage
+    exit 1
+  fi
 
-VERSION_OR_PREID="$1"
-preid=""
-explicit_semver=0
+  local version_or_preid="$1"
+  local preid=""
+  local explicit_semver=0
+  local base_version initial_version module current_version new_version i
+  local modules=()
+  local uninitialized_modules=()
 
-if is_semver "$VERSION_OR_PREID"; then
-  explicit_semver=1
-elif is_preid "$VERSION_OR_PREID"; then
-  preid="$VERSION_OR_PREID"
-else
-  echo "Invalid version or prerelease identifier: $VERSION_OR_PREID" >&2
-  usage
-  exit 1
-fi
+  if release_is_semver "$version_or_preid"; then
+    explicit_semver=1
+  elif release_is_preid "$version_or_preid"; then
+    preid="$version_or_preid"
+  else
+    echo "Invalid version or prerelease identifier: $version_or_preid" >&2
+    usage
+    exit 1
+  fi
 
-modules=()
-while IFS= read -r module; do
-  modules+=("$module")
-done < <(make modules)
+  release_require_repository_state
 
-if [ "${#modules[@]}" -eq 0 ]; then
-  echo "No modules found" >&2
-  exit 1
-fi
+  while IFS= read -r module; do
+    modules+=("$module")
+  done < <("$SCRIPT_DIR/modules.sh" list)
 
-resolved_args=()
-uninitialized_modules=()
+  if [[ "${#modules[@]}" -eq 0 ]]; then
+    release_fail "No modules found"
+  fi
 
-if [[ "$explicit_semver" -eq 1 ]]; then
-  for _ in "${modules[@]}"; do
-    resolved_args+=("$VERSION_OR_PREID")
-  done
-else
-  for module in "${modules[@]}"; do
-    if [[ -z "$(get_latest_tag "$module")" ]]; then
-      resolved_args+=("")
-      uninitialized_modules+=("$module")
-    else
-      resolved_args+=("$VERSION_OR_PREID")
-    fi
-  done
+  if [[ "$explicit_semver" -eq 0 ]]; then
+    for module in "${modules[@]}"; do
+      if [[ "$(release_current_version "$module")" == "0.0.0" ]]; then
+        uninitialized_modules+=("$module")
+      fi
+    done
 
-  if [[ "${#uninitialized_modules[@]}" -gt 0 ]]; then
-    base_version="${RELEASE_PRE_BASE_VERSION:-}"
+    if [[ "${#uninitialized_modules[@]}" -gt 0 ]]; then
+      base_version="${RELEASE_PRE_BASE_VERSION:-}"
 
-    if [[ -z "$base_version" ]]; then
-      if [[ ! -t 0 || ! -t 1 ]]; then
-        echo "Modules without an initial release tag require an initial base version:" >&2
-        printf "  %s\n" "${uninitialized_modules[@]}" >&2
-        echo "Use RELEASE_PRE_BASE_VERSION, for example: RELEASE_PRE_BASE_VERSION=${DEFAULT_RELEASE_PRE_BASE_VERSION} make release-pre-all $preid" >&2
+      if [[ -z "$base_version" ]]; then
+        if [[ ! -t 0 || ! -t 1 ]]; then
+          echo "Modules without an initial release tag require an initial base version:" >&2
+          printf "  %s\n" "${uninitialized_modules[@]}" >&2
+          echo "Use RELEASE_PRE_BASE_VERSION, for example: RELEASE_PRE_BASE_VERSION=${DEFAULT_RELEASE_PRE_BASE_VERSION} make release-pre-all $preid" >&2
+          exit 1
+        fi
+
+        base_version="$(prompt_base_version "${uninitialized_modules[@]}")"
+      fi
+
+      if ! release_is_base_version "$base_version"; then
+        release_fail "Invalid RELEASE_PRE_BASE_VERSION: $base_version"
+        echo "Expected a base semantic version without prerelease or build metadata, for example: ${DEFAULT_RELEASE_PRE_BASE_VERSION}" >&2
         exit 1
       fi
 
-      base_version="$(prompt_base_version "${uninitialized_modules[@]}")"
+      initial_version="$base_version-$preid.1"
     fi
-
-    if ! is_base_version "$base_version"; then
-      echo "Invalid RELEASE_PRE_BASE_VERSION: $base_version" >&2
-      echo "Expected a base semantic version without prerelease or build metadata, for example: ${DEFAULT_RELEASE_PRE_BASE_VERSION}" >&2
-      exit 1
-    fi
-
-    initial_version="$base_version-$preid.1"
-
-    for i in "${!modules[@]}"; do
-      if [[ -z "${resolved_args[$i]}" ]]; then
-        resolved_args[$i]="$initial_version"
-      fi
-    done
   fi
-fi
 
-for i in "${!modules[@]}"; do
-  module="${modules[$i]}"
-  resolved_arg="${resolved_args[$i]}"
+  release_reset_plan
+  for module in "${modules[@]}"; do
+    current_version="$(release_current_version "$module")"
+    if [[ "$explicit_semver" -eq 1 ]]; then
+      new_version="$version_or_preid"
+    elif [[ "$current_version" == "0.0.0" ]]; then
+      new_version="$initial_version"
+    else
+      new_version="$(release_bump_prerelease_version "$preid" "$current_version" "$module")"
+    fi
 
-  echo "Checking module '$module' with '$resolved_arg'"
-  RELEASE_CHECK_ONLY=1 ./scripts/release.sh "$module" "$resolved_arg"
-done
+    release_add_plan_entry "$module" "$new_version"
+  done
 
-if [[ "${RELEASE_CHECK_ONLY:-}" == "1" ]]; then
-  echo "Release check passed for all modules; no tags created."
-  exit 0
-fi
+  for i in "${!RELEASE_MODULES[@]}"; do
+    echo "Module:          ${RELEASE_MODULES[$i]}"
+    echo "Next version:    v${RELEASE_VERSIONS[$i]}"
+    echo "Manifest:        ${RELEASE_MANIFESTS[$i]}"
+    echo "Tag:             ${RELEASE_TAGS[$i]}"
+    echo ""
+  done
 
-for i in "${!modules[@]}"; do
-  module="${modules[$i]}"
-  resolved_arg="${resolved_args[$i]}"
+  if [[ "${RELEASE_CHECK_ONLY:-}" == "1" ]]; then
+    release_check_plan
+    echo "Release check passed for all modules; no commit or tag created."
+    exit 0
+  fi
 
-  echo "Releasing module '$module' with '$resolved_arg'"
-  make release-pre "$module" "$resolved_arg"
-done
+  release_execute_plan "chore(release): publish module versions"
+}
+
+main "$@"

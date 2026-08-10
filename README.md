@@ -39,7 +39,8 @@ make install-manifest-validator
 make validate-manifests
 ```
 
-Manifest versions are updated explicitly as part of preparing a module release.
+The module release commands update manifest versions as part of the atomic
+release transaction described below.
 
 ## Development
 
@@ -80,7 +81,8 @@ make test <module>
 make lint <module>
 ```
 
-2. Create and push an annotated tag using the `Makefile` release targets:
+2. From a clean `main` branch synchronized with `origin/main`, run a release
+target:
 
 ```sh
 # Auto-bump from latest module tag
@@ -101,6 +103,14 @@ make release-pre-all rc
 # Non-interactive bulk prereleases can set the initial base version explicitly.
 RELEASE_PRE_BASE_VERSION=1.0.0 make release-pre-all rc
 ```
+
+A single-module release updates and validates its `ferret.yaml`, creates one
+release commit when the version changed, creates the annotated module tag at
+that commit, and atomically pushes `main` and the tag. `release-pre-all` updates
+all module manifests in one release commit and atomically pushes that commit
+with every module tag, so a failed push cannot leave a partial bulk release.
+Set `RELEASE_CHECK_ONLY=1` to validate a planned release without creating a
+commit, tag, or remote change.
 
 Every pushed `modules/**/v*` tag triggers the Barn publication workflow. The
 workflow uses Barn's public Go API to validate the tagged module, prepares the
