@@ -7,6 +7,9 @@ import (
 )
 
 // Markdown returns only the cleaned article Markdown.
+//
+// @param input {String|HTMLPage|HTMLDocument|HTMLElement} HTML content or node.
+// @return {String|None} Cleaned article Markdown or None.
 func Markdown(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	article, err := extractArticle(ctx, args...)
 	if err != nil {

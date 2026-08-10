@@ -7,22 +7,26 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// WaitStyleAll waits until a target style value appears on all matched elements with a given value.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} styleNameOrSelector - Style name or CSS selector.
-// @param {String | Any} valueOrStyleName - Style value or name.
-// @param {Any | Int} [valueOrTimeout] - Style value or wait timeout.
-// @param {Int} [timeout=5000] - Timeout.
+// WaitStyleAll waits for a style value on all matching elements.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @param name {String} Style name.
+// @param value {Any} Expected value.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the expected state is observed on every match.
 func WaitStyleAll(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitStyleAllWhen(ctx, args, drivers.WaitEventPresence)
 }
 
-// WaitNoStyleAll waits until a target style value disappears on all matched elements with a given value.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} styleNameOrSelector - Style name or CSS selector.
-// @param {String | Any} valueOrStyleName - Style value or name.
-// @param {Any | Int} [valueOrTimeout] - Style value or wait timeout.
-// @param {Int} [timeout=5000] - Timeout.
+// WaitNoStyleAll waits for a style value to disappear from all matching elements.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @param name {String} Style name.
+// @param value {Any} Expected value.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the expected state is observed on every match.
 func WaitNoStyleAll(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitStyleAllWhen(ctx, args, drivers.WaitEventAbsence)
 }

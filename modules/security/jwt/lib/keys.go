@@ -9,6 +9,9 @@ import (
 )
 
 // HMACKey creates an opaque HMAC key from secret material.
+//
+// @param secret {String|Binary} Nonempty HMAC secret.
+// @return {JWTKey} Opaque HMAC key handle.
 func HMACKey(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err
@@ -27,6 +30,9 @@ func HMACKey(ctx context.Context, args ...runtime.Value) (runtime.Value, error) 
 }
 
 // PublicKey parses a PEM-encoded public key into an opaque key handle.
+//
+// @param pem {String} PEM-encoded RSA, ECDSA, or Ed25519 public key.
+// @return {JWTKey} Opaque public key handle.
 func PublicKey(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err
@@ -46,6 +52,9 @@ func PublicKey(ctx context.Context, args ...runtime.Value) (runtime.Value, error
 }
 
 // PrivateKey parses a PEM-encoded private key into an opaque key handle.
+//
+// @param pem {String} PEM-encoded RSA, ECDSA, or Ed25519 private key.
+// @return {JWTKey} Opaque private key handle.
 func PrivateKey(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err

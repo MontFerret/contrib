@@ -8,8 +8,9 @@ import (
 )
 
 // DecodeAll decodes all YAML documents from a YAML stream.
-// @param {String|Binary} data - YAML content.
-// @return {Any[]} - Decoded YAML values, one per document.
+//
+// @param data {String|Binary} YAML content.
+// @return {Array<Any>} Decoded values in document order.
 func DecodeAll(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err

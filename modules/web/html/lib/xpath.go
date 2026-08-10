@@ -7,10 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// XPath evaluates the XPath expression.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} expression - XPath expression.
-// @return {Any} - Returns result of a given XPath expression.
+// XPath evaluates an XPath expression against an HTML root.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param expression {String} XPath expression.
+// @return {Any} XPath evaluation result.
 func XPath(ctx context.Context, arg1, arg2 runtime.Value) (runtime.Value, error) {
 	target, err := drivers.ToQueryTarget(arg1)
 

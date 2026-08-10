@@ -9,6 +9,14 @@ import (
 )
 
 // Extract writes eligible archive entries through the configured filesystem.
+//
+// Archive paths and destinations are constrained by the host's Ferret
+// filesystem policy.
+//
+// @param source {String} Sandboxed archive path.
+// @param destination {String} Sandboxed destination directory.
+// @param options {Object?} Extraction and filtering options.
+// @return {Array<Object>} Extraction results for eligible entries.
 func Extract(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 2, 3); err != nil {
 		return runtime.None, err

@@ -7,7 +7,10 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// History returns a copied array of visible text messages from a session.
+// History returns a copy of a session's visible messages.
+//
+// @param session {Session} Session whose history to read.
+// @return {Array<Object>} Copied role and content messages.
 func History(_ context.Context, value runtime.Value) (runtime.Value, error) {
 	session, err := sessionValue(value)
 	if err != nil {

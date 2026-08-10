@@ -7,10 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Encode serializes a Ferret runtime object into TOML text.
-// @param {Object} value - Ferret runtime value.
-// @param {Object} [options] - Encode options.
-// @return {String} - TOML text.
+// Encode serializes an object into TOML text.
+//
+// @param value {Object} Object to encode.
+// @param options {Object?} Encoding options.
+// @return {String} TOML text.
 func Encode(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err

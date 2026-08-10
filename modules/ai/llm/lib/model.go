@@ -8,7 +8,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// Model creates a provider model using the registry installed in the execution context.
+// Model creates a provider-backed model or session.
+//
+// @param provider {String} Provider identifier.
+// @param options {Object} Model configuration.
+// @return {Model|Session} Configured model or session.
 func Model(ctx context.Context, providerValue, optionsValue runtime.Value) (runtime.Value, error) {
 	provider, err := sdk.DecodeValue[string](
 		ctx,

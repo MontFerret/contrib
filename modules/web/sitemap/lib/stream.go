@@ -9,6 +9,10 @@ import (
 )
 
 // Stream fetches a sitemap tree and returns a lazy URL iterator.
+//
+// @param url {String} HTTP or HTTPS sitemap URL.
+// @param options {Object?} Fetching and traversal options.
+// @return {Iterator<Object>} Lazy iterator over URL entries.
 func Stream(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err

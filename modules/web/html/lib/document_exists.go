@@ -8,11 +8,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// PageExists returns a boolean value indicating whether a web page exists by a given URL.
-// @param {String} url - Target url.
-// @param {Object} [options] - Request options.
-// @param {Object} [options.headers] - Request headers.
-// @return {Boolean} - A boolean value indicating whether a web page exists by a given url.
+// PageExists reports whether a URL returns a successful HTTP response.
+//
+// @param url {String} URL to check.
+// @param options {Object?} Request options, including headers.
+// @return {Boolean} Whether the URL returned a successful response.
 func PageExists(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err

@@ -8,6 +8,12 @@ import (
 )
 
 // AccessToken intentionally returns the raw access token.
+//
+// The returned secret is no longer protected by the token handle's redacted
+// formatting and serialization.
+//
+// @param token {OAuthToken} Token set.
+// @return {String} Raw access token.
 func AccessToken(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return runtime.None, err
@@ -21,7 +27,13 @@ func AccessToken(_ context.Context, args ...runtime.Value) (runtime.Value, error
 	return runtime.NewString(token.AccessToken), nil
 }
 
-// RefreshToken intentionally returns the raw refresh token, or NONE.
+// RefreshToken intentionally returns the raw refresh token when present.
+//
+// The returned secret is no longer protected by the token handle's redacted
+// formatting and serialization.
+//
+// @param token {OAuthToken} Token set.
+// @return {String|None} Raw refresh token or None.
 func RefreshToken(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return runtime.None, err
@@ -39,7 +51,13 @@ func RefreshToken(_ context.Context, args ...runtime.Value) (runtime.Value, erro
 	return runtime.NewString(token.RefreshToken), nil
 }
 
-// IDToken intentionally returns the raw ID token, or NONE.
+// IDToken intentionally returns the raw ID token when present.
+//
+// The token is returned without parsing or validation and is no longer
+// protected by the token handle's redacted formatting and serialization.
+//
+// @param token {OAuthToken} Token set.
+// @return {String|None} Raw ID token or None.
 func IDToken(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return runtime.None, err
@@ -58,6 +76,9 @@ func IDToken(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 }
 
 // TokenType returns the provider-supplied token type.
+//
+// @param token {OAuthToken} Token set.
+// @return {String} Provider-supplied token type.
 func TokenType(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return runtime.None, err
@@ -72,6 +93,9 @@ func TokenType(_ context.Context, args ...runtime.Value) (runtime.Value, error) 
 }
 
 // Scopes returns token scopes split on ASCII spaces.
+//
+// @param token {OAuthToken} Token set.
+// @return {Array<String>} Token scopes.
 func Scopes(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return runtime.None, err
@@ -85,7 +109,10 @@ func Scopes(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return stringArray(token.Scopes()), nil
 }
 
-// ExpiresAt returns the token expiration timestamp, or NONE.
+// ExpiresAt returns the token expiration timestamp when known.
+//
+// @param token {OAuthToken} Token set.
+// @return {DateTime|None} Expiration timestamp or None.
 func ExpiresAt(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return runtime.None, err
@@ -104,6 +131,12 @@ func ExpiresAt(_ context.Context, args ...runtime.Value) (runtime.Value, error) 
 }
 
 // Expired reports whether a token is expired with an optional safety skew.
+//
+// Tokens with unknown expiration are not considered expired.
+//
+// @param token {OAuthToken} Token set.
+// @param options {Object?} Expiration safety-skew options.
+// @return {Boolean} Whether the token is expired.
 func Expired(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return runtime.None, err
@@ -129,6 +162,9 @@ func Expired(ctx context.Context, args ...runtime.Value) (runtime.Value, error) 
 }
 
 // ValidFor returns remaining token lifetime in rounded-up milliseconds.
+//
+// @param token {OAuthToken} Token set.
+// @return {Int|None} Remaining milliseconds or None when expiration is unknown.
 func ValidFor(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return runtime.None, err
@@ -148,6 +184,12 @@ func ValidFor(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 }
 
 // AuthHeader intentionally materializes a Bearer Authorization header.
+//
+// The returned object contains the raw access token and should be passed
+// directly to an HTTP client rather than logged or serialized.
+//
+// @param token {OAuthToken} Bearer token set.
+// @return {Object} Authorization header object.
 func AuthHeader(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return runtime.None, err

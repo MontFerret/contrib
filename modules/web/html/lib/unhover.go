@@ -7,10 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Unhover moves the mouse outside an element to remove its hover state.
-// If there's no element matching selector, the method returns an error.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} [selector] - If document is passed, this param must represent an element selector.
+// Unhover moves the mouse outside an HTML root or selected element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String?} Element selector.
+// @return {Boolean} Whether the mouse was moved away.
 func Unhover(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 1, 2)
 

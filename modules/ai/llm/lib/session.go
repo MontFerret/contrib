@@ -7,7 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Session creates a local session from a stateless model.
+// Session creates a local conversation session from a stateless model.
+//
+// @param model {Model} Stateless model.
+// @param options {Object} Session configuration.
+// @return {Session} Local conversation session.
 func Session(ctx context.Context, modelValue, optionsValue runtime.Value) (runtime.Value, error) {
 	model, ok := modelValue.(core.Model)
 	if !ok {
@@ -22,7 +26,10 @@ func Session(ctx context.Context, modelValue, optionsValue runtime.Value) (runti
 	return core.NewLocalSession(ctx, model, options)
 }
 
-// Reset clears the local history of a session.
+// Reset clears the visible history of a session.
+//
+// @param session {Session} Session to reset.
+// @return {Boolean} True when the history is cleared.
 func Reset(_ context.Context, value runtime.Value) (runtime.Value, error) {
 	session, err := sessionValue(value)
 	if err != nil {
@@ -36,7 +43,10 @@ func Reset(_ context.Context, value runtime.Value) (runtime.Value, error) {
 	return runtime.True, nil
 }
 
-// Fork returns an independent session copied from the current state.
+// Fork creates an independent session with copied state and history.
+//
+// @param session {Session} Session to copy.
+// @return {Session} Independent copied session.
 func Fork(ctx context.Context, value runtime.Value) (runtime.Value, error) {
 	session, err := sessionValue(value)
 	if err != nil {

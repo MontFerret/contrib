@@ -7,10 +7,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// SetInnerHTML sets the inner HTML string on a given or matched CSS selector element.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} htmlOrSelector - HTML or CSS selector.
-// @param {String} [html] - String of inner HTML.
+// SetInnerHTML sets HTML on a root or selected element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param htmlOrSelector {String} HTML content or element selector.
+// @param html {String?} HTML content when a selector is supplied.
+// @return {None} No value.
 func SetInnerHTML(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, 3)
 

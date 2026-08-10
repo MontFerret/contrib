@@ -7,6 +7,10 @@ import (
 )
 
 // Get reads a single worksheet cell.
+//
+// @param worksheet {Worksheet} Worksheet handle.
+// @param cell {String} A1 cell reference.
+// @return {String|Boolean|Int|Float|DateTime|None} Cell value.
 func Get(_ context.Context, sheetValue, cellValue runtime.Value) (runtime.Value, error) {
 	sheet, err := requireWorksheet(sheetValue, "GET")
 	if err != nil {
@@ -22,6 +26,11 @@ func Get(_ context.Context, sheetValue, cellValue runtime.Value) (runtime.Value,
 }
 
 // Set writes a single worksheet cell.
+//
+// @param worksheet {Worksheet} Worksheet handle.
+// @param cell {String} A1 cell reference.
+// @param value {String|Boolean|Int|Float|DateTime|None} Scalar value to write.
+// @return {Boolean} True when the value is written.
 func Set(_ context.Context, sheetValue, cellValue, value runtime.Value) (runtime.Value, error) {
 	sheet, err := requireWorksheet(sheetValue, "SET")
 	if err != nil {
@@ -40,6 +49,10 @@ func Set(_ context.Context, sheetValue, cellValue, value runtime.Value) (runtime
 }
 
 // Range reads a worksheet range as row arrays.
+//
+// @param worksheet {Worksheet} Worksheet handle.
+// @param range {String} A1 range reference.
+// @return {Array<Array<Any>>} Rectangular row arrays.
 func Range(ctx context.Context, sheetValue, rangeValue runtime.Value) (runtime.Value, error) {
 	sheet, err := requireWorksheet(sheetValue, "RANGE")
 	if err != nil {
@@ -55,6 +68,11 @@ func Range(ctx context.Context, sheetValue, rangeValue runtime.Value) (runtime.V
 }
 
 // WriteRange writes a rectangular matrix into a worksheet range.
+//
+// @param worksheet {Worksheet} Worksheet handle.
+// @param rangeOrCell {String} A1 range or starting-cell reference.
+// @param rows {Array<Array<Any>>} Rectangular rows to write.
+// @return {Boolean} True when the rows are written.
 func WriteRange(ctx context.Context, sheetValue, rangeValue, rowsValue runtime.Value) (runtime.Value, error) {
 	sheet, err := requireWorksheet(sheetValue, "WRITE_RANGE")
 	if err != nil {
@@ -73,6 +91,10 @@ func WriteRange(ctx context.Context, sheetValue, rangeValue, rowsValue runtime.V
 }
 
 // Append appends rows after the last populated worksheet row.
+//
+// @param worksheet {Worksheet} Worksheet handle.
+// @param rows {Array<Array<Any>>} Rectangular rows to append.
+// @return {Boolean} True when the rows are appended.
 func Append(ctx context.Context, sheetValue, rowsValue runtime.Value) (runtime.Value, error) {
 	sheet, err := requireWorksheet(sheetValue, "APPEND")
 	if err != nil {

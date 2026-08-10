@@ -8,6 +8,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
+// verifyWithConfig verifies a compact JWT signature and claims.
+//
+// @param token {String|Binary} Compact JWT.
+// @param key {JWTKey} Verification key handle.
+// @param options {Object} Verification and claim requirements.
+// @return {Object} Verified header, claims, and verification state.
 func verifyWithConfig(cfg core.Config) func(context.Context, ...runtime.Value) (runtime.Value, error) {
 	return func(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		if err := runtime.ValidateArgs(args, 3, 3); err != nil {

@@ -8,6 +8,9 @@ import (
 )
 
 // Client creates a reusable HTTP API client from a configuration object.
+//
+// @param config {Object} Client defaults and base URL.
+// @return {RESTClient} Reusable queryable HTTP client.
 func Client(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
 	config, err := core.DecodeClientConfig(ctx, arg)
 	if err != nil {

@@ -7,11 +7,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// ClickAll dispatches a click event on all matched elements.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - CSS selector.
-// @param {Int} [clicks=1] - Optional count of clicks.
-// @return {Boolean} - True if matched at least one element.
+// ClickAll clicks every element matching a selector.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @param count {Int?} Clicks per element.
+// @return {Boolean} Whether at least one element was found and clicked.
 func ClickAll(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, 3)
 

@@ -10,6 +10,13 @@ import (
 )
 
 // Discover loads OAuth authorization-server metadata for an issuer.
+//
+// Discovery uses the policy-aware HTTP client from the Ferret execution
+// context and requires HTTPS unless explicitly configured otherwise.
+//
+// @param issuer {String} Authorization-server issuer URL.
+// @param options {Object?} Discovery timeout and URL-policy options.
+// @return {OAuthProvider} Discovered provider metadata.
 func Discover(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return runtime.None, err
@@ -44,6 +51,9 @@ func Discover(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 }
 
 // Provider constructs a manually configured OAuth provider.
+//
+// @param config {Object} Provider endpoints and metadata.
+// @return {OAuthProvider} Configured provider handle.
 func Provider(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return runtime.None, err
@@ -63,6 +73,12 @@ func Provider(ctx context.Context, args ...runtime.Value) (runtime.Value, error)
 }
 
 // Client constructs an OAuth client for a provider.
+//
+// Client secrets remain hidden from formatting and serialization.
+//
+// @param provider {OAuthProvider} Provider handle.
+// @param config {Object} Client credentials and authentication method.
+// @return {OAuthClient} Configured client handle.
 func Client(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 2, 2); err != nil {
 		return runtime.None, err

@@ -7,11 +7,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// AttributeQuery finds a single or more attribute(s) by a query selector.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target node.
-// @param {String} selector - Query selector.
-// @param {String, repeated} attrName - Attr name(s).
-// @return {Object} - Key-value pairs of attribute runtime.
+// AttributeQuery returns selected attributes from the first matching element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @param names {String...} Attribute names.
+// @return {Object} Existing attribute values keyed by name.
 func AttributeQuery(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, runtime.MaxArgs)
 

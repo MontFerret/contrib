@@ -9,11 +9,13 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
 
-// PressSelector presses a keyboard key.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - CSS selector.
-// @param {String | String[]} key - Target keyboard key(s).
-// @param {Int} [presses=1] - Count of presses.
+// PressSelector sends keyboard input to a selected element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @param keys {String|Array<String>} Keyboard key or keys.
+// @param count {Int?} Number of presses.
+// @return {Boolean} True when the keys are sent.
 func PressSelector(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 3, 4)
 

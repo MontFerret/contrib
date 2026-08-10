@@ -8,8 +8,9 @@ import (
 )
 
 // Children returns the child nodes for an XML document or element.
-// @param {Object} value - XML document, element, or text node.
-// @return {Any[]} - Child nodes or an empty array for text nodes.
+//
+// @param value {Object} XML document, element, or text node.
+// @return {Array<Object>} Child nodes, or an empty array for a text node.
 func Children(ctx context.Context, value runtime.Value) (runtime.Value, error) {
 	return core.Children(ctx, value)
 }

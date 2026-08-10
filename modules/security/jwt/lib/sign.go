@@ -8,6 +8,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
+// signWithConfig creates a compact signed JWT from claims.
+//
+// @param claims {Object} JWT claims.
+// @param key {JWTKey} Signing key handle.
+// @param options {Object} Signing algorithm and claim options.
+// @return {String} Compact signed JWT.
 func signWithConfig(cfg core.Config) func(context.Context, ...runtime.Value) (runtime.Value, error) {
 	return func(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		if err := runtime.ValidateArgs(args, 3, 3); err != nil {

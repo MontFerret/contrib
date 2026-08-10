@@ -7,20 +7,22 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// WaitElement waits for an element to appear in the DOM.
-// Stops the execution until it finds an element or operation times out.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - Target element's selector.
-// @param {Int} [timeout=5000] - Wait timeout.
+// WaitElement waits for an element to appear.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the element appears.
 func WaitElement(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitElementWhen(ctx, args, drivers.WaitEventPresence)
 }
 
-// WaitNoElement waits for an element to disappear in the DOM.
-// Stops the execution until it does not find an element or operation times out.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - Target element's selector.
-// @param {Int} [timeout=5000] - Wait timeout.
+// WaitNoElement waits for an element to disappear.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the element disappears.
 func WaitNoElement(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitElementWhen(ctx, args, drivers.WaitEventAbsence)
 }

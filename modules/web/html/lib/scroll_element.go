@@ -10,14 +10,12 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
 
-// ScrollInto scrolls an element into view.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - If document is passed, this param must represent an element selector.
-// @param {Object} [params] - Scroll params.
-// @param {String} [params.behavior="instant"] - Scroll behavior
-// @param {String} [params.block="center"] - Scroll vertical alignment.
-// @param {String} [params.inline="center"] - Scroll horizontal alignment.
-// @return {Boolean} - True if scrolling was initiated, otherwise false.
+// ScrollInto scrolls an HTML root or selected element into view.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selectorOrOptions {String|Object?} Element selector or scroll options.
+// @param options {Object?} Scroll behavior and alignment options.
+// @return {Boolean} Whether scrolling was initiated.
 func ScrollInto(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 1, 3)
 

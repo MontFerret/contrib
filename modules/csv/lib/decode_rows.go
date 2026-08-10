@@ -10,9 +10,10 @@ import (
 
 // DecodeRows decodes CSV text into an array of raw row arrays.
 // It keeps header rows as data and applies decoding options to each field.
-// @param {String} data - CSV string.
-// @param {Options} [opts] - Options for decoding.
-// @return {Any[][]} - Array of row arrays.
+//
+// @param data {String} CSV text.
+// @param opts {Object?} Decoding options.
+// @return {Array<Array<Any>>} Decoded row arrays.
 func DecodeRows(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err

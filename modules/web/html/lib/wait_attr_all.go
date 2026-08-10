@@ -7,22 +7,26 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// WaitAttributeAll waits for an attribute to appear on all matched elements with a given value.
-// Stops the execution until the navigation ends or operation times out.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - String of CSS selector.
-// @param {String} class - String of target CSS class.
-// @param {Int} [timeout=5000] - Wait timeout.
+// WaitAttributeAll waits for an attribute value on all matching elements.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @param name {String} Attribute name.
+// @param value {Any} Expected value.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the expected state is observed on every match.
 func WaitAttributeAll(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitAttributeAllWhen(ctx, args, drivers.WaitEventPresence)
 }
 
-// WaitNoAttributeAll waits for an attribute to disappear on all matched elements by a given value.
-// Stops the execution until the navigation ends or operation times out.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - String of CSS selector.
-// @param {String} class - String of target CSS class.
-// @param {Int} [timeout=5000] - Wait timeout.
+// WaitNoAttributeAll waits for an attribute value to disappear from all matching elements.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @param name {String} Attribute name.
+// @param value {Any} Expected value.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the expected state is observed on every match.
 func WaitNoAttributeAll(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitAttributeAllWhen(ctx, args, drivers.WaitEventAbsence)
 }

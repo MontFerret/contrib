@@ -7,10 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// GetInnerHTMLAll returns an array of inner HTML strings of matched elements.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - String of CSS selector.
-// @return {String[]} - An array of inner HTML strings if all matched elements, otherwise empty array.
+// GetInnerHTMLAll returns HTML from every matching element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @return {Array<String>} Inner HTML values in match order.
 func GetInnerHTMLAll(ctx context.Context, root, selectorValue runtime.Value) (runtime.Value, error) {
 	target, err := toRootContentTarget(root)
 

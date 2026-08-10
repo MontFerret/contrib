@@ -14,20 +14,13 @@ type ParseParams struct {
 	drivers.ParseParams
 }
 
-// Parse loads an HTML page from a given string or byte array.
-// @param {String} html - HTML string to parse.
-// @param {Object} [params] - An object containing the following properties:
-// @param {String} [params.driver] - Name of a driver to parse with.
-// @param {Boolean} [params.keepCookies=False] - Boolean value indicating whether to use cookies from previous sessions i.e. not to open a page in the Incognito mode.
-// @param {HTTPCookies} [params.cookies] - Set of HTTP cookies to use during page loading.
-// @param {HTTPHeaders} [params.headers] - Set of HTTP headers to use during page loading.
-// @param {Object} [params.viewport] - Viewport params.
-// @param {Int} [params.viewport.height] - Viewport height.
-// @param {Int} [params.viewport.width] - Viewport width.
-// @param {Float} [params.viewport.scaleFactor] - Viewport scale factor.
-// @param {Boolean} [params.viewport.mobile] - Value that indicates whether to emulate mobile device.
-// @param {Boolean} [params.viewport.landscape] - Value that indicates whether to render a page in landscape position.
-// @return {HTMLPage} - Returns parsed and loaded HTML page.
+// Parse loads an HTML page from string or binary content.
+//
+// Options may select a driver, cookie reuse, cookies, headers, and viewport.
+//
+// @param html {String|Binary} HTML content.
+// @param params {Object?} Driver and parsing options.
+// @return {HTMLPage} Parsed page.
 func Parse(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return runtime.None, err

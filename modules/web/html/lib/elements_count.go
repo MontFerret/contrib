@@ -6,11 +6,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// ElementsCount returns the number of found HTML elements by a given CSS selector.
-// Returns an empty array if element not found.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - CSS selector.
-// @return {Int} - A number of matched HTML elements by a given CSS selector.
+// ElementsCount returns the number of elements matching a selector.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @return {Int} Number of matching elements.
 func ElementsCount(ctx context.Context, root, selectorValue runtime.Value) (runtime.Value, error) {
 	el, selector, err := queryArgs(ctx, root, selectorValue)
 

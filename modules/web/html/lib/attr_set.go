@@ -8,10 +8,12 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/internal/styleutil"
 )
 
-// AttributeSet sets or updates a single or more attribute(s) of a given element.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target node.
-// @param {String | Object} nameOrObj - Attribute name or an object representing a key-value pair of attributes.
-// @param {String} value - If a second parameter is a string value, this parameter represent an attribute value.
+// AttributeSet sets one or more attributes on an HTML root.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param nameOrAttributes {String|Object} Attribute name or attribute map.
+// @param value {String|Object?} Attribute value when a name is supplied.
+// @return {None} No value.
 func AttributeSet(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, runtime.MaxArgs)
 

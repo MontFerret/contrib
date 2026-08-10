@@ -14,14 +14,13 @@ type WaitNavigationParams struct {
 	Timeout   runtime.Int          `json:"timeout"`
 }
 
-// WaitNavigation waits for a given page to navigate to a new URL.
-// Stops the execution until the navigation ends or operation times out.
-// @param {HTMLPage} page - Target page.
-// @param {Int} [timeout=5000] - Navigation timeout.
-// @param {Object} [params=None] - Navigation parameters.
-// @param {Int} [params.timeout=5000] - Navigation timeout.
-// @param {String} [params.target] - Navigation target url.
-// @param {HTMLDocument} [params.frame] - Navigation frame.
+// WaitNavigation waits for page or frame navigation.
+//
+// Navigation options may specify timeout, target URL, and frame.
+//
+// @param page {HTMLPage} Target page.
+// @param paramsOrTimeout {Int|Object?} Timeout or navigation options.
+// @return {Boolean} True when navigation completes.
 func WaitNavigation(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 1, 2)
 

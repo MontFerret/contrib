@@ -6,9 +6,10 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// IsHTMLElement checks whether a value is an HTMLElement value.
-// @param {Any} value - Input value of arbitrary type.
-// @return {Boolean} - Returns true if value is HTMLElement, otherwise false.
+// IsHTMLElement reports whether a value is an HTML element.
+//
+// @param value {Any} Value to inspect.
+// @return {Boolean} Whether the value is an HTMLElement.
 func IsHTMLElement(_ context.Context, arg runtime.Value) (runtime.Value, error) {
 	//err := runtime.ValidateArgs(args, 1, 1)
 	//

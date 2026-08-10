@@ -7,10 +7,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// SetInnerText sets the inner text string on a given or matched CSS selector element.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} textOrCssSelector - String of CSS selector.
-// @param {String} [text] - String of inner text.
+// SetInnerText sets text on a root or selected element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param textOrSelector {String} Text content or element selector.
+// @param text {String?} Text content when a selector is supplied.
+// @return {None} No value.
 func SetInnerText(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, 3)
 

@@ -29,39 +29,14 @@ type (
 	}
 )
 
-// Open opens an HTML page by a given URL.
-// By default, loads a page by http call - resulted page does not support any interactions.
-// @param {Object} [params] - An object containing the following properties :
-// @param {String} [params.driver] - Driver name to use.
-// @param {Int} [params.timeout=60000] - Page load timeout.
-// @param {String} [params.userAgent] - Custom user agent.
-// @param {Boolean} [params.keepCookies=False] - Boolean value indicating whether to use cookies from previous sessions i.e. not to open a page in the Incognito mode.
-// @param {Object[] | Object} [params.cookies] - Set of HTTP cookies to use during page loading.
-// @param {String} params.cookies.*.name - Cookie name.
-// @param {String} params.cookies.*.value - Cookie value.
-// @param {String} params.cookies.*.path - Cookie path.
-// @param {String} params.cookies.*.domain - Cookie domain.
-// @param {Int} [params.cookies.*.maxAge] - Cookie max age.
-// @param {String|DateTime} [params.cookies.*.expires] - Cookie expiration date time.
-// @param {String} [params.cookies.*.sameSite] - Cookie cross-origin policy.
-// @param {Boolean} [params.cookies.*.httpOnly=false] - Cookie cannot be accessed through client side script.
-// @param {Boolean} [params.cookies.*.secure=false] - Cookie sent to the server only with an encrypted request over the HTTPS protocol.
-// @param {Object} [params.headers] - Set of HTTP headers to use during page loading.
-// @param {Object} [params.ignore] - Set of parameters to ignore some page functionality or behavior.
-// @param {Object[]} [params.ignore.resources] - Collection of rules to ignore resources during page load and navigation.
-// @param {String} [params.ignore.resources.*.url] - Resource url pattern. If set, requests for matching urls will be blocked. Wildcards ('*' -> zero or more, '?' -> exactly one) are allowed. Escape character is backslash. Omitting is equivalent to "*".
-// @param {String} [params.ignore.resources.*.type] - Resource type. If set, requests for matching resource types will be blocked.
-// @param {Object[]} [params.ignore.statusCodes] - Collection of rules to ignore certain HTTP codes that can cause failures.
-// @param {String} [params.ignore.statusCodes.*.url] - Url pattern. If set, codes for matching urls will be ignored. Wildcards ('*' -> zero or more, '?' -> exactly one) are allowed. Escape character is backslash. Omitting is equivalent to "*".
-// @param {Int} [params.ignore.statusCodes.*.code] - HTTP code to ignore.
-// @param {Object} [params.viewport] - Viewport params.
-// @param {Int} [params.viewport.height] - Viewport height.
-// @param {Int} [params.viewport.width] - Viewport width.
-// @param {Float} [params.viewport.scaleFactor] - Viewport scale factor.
-// @param {Boolean} [params.viewport.mobile] - Value that indicates whether to emulate mobile device.
-// @param {Boolean} [params.viewport.landscape] - Value that indicates whether to render a page in landscape position.
-// @param {String} [params.charset] - (only HTTPDriver) Source charset content to convert UTF-8.
-// @return {HTMLPage} - Loaded HTML page.
+// Open loads an HTML page from a URL.
+//
+// Options may select a driver, timeout, user agent, cookie reuse, cookies,
+// headers, ignored resources or status codes, viewport, and source charset.
+//
+// @param url {String} URL to load.
+// @param params {Object?} Driver and page-loading options.
+// @return {HTMLPage} Loaded page.
 func Open(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return runtime.None, err

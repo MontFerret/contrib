@@ -9,7 +9,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// Read returns one regular archive entry.
+// Read reads the first matching regular file from an archive.
+//
+// @param source {String} Sandboxed archive path.
+// @param name {String} Archive entry name.
+// @param options {Object?} Format, output, and missing-entry options.
+// @return {String|Binary|None} Entry content, or None when configured for a missing entry.
 func Read(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 2, 3); err != nil {
 		return runtime.None, err

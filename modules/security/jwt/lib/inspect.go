@@ -7,6 +7,10 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
+// inspectWithConfig decodes a compact JWT without verifying its signature.
+//
+// @param token {String|Binary} Compact JWT.
+// @return {Object} Decoded header, claims, raw segments, and verification state.
 func inspectWithConfig(cfg core.Config) func(context.Context, ...runtime.Value) (runtime.Value, error) {
 	return func(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		if err := runtime.ValidateArgs(args, 1, 1); err != nil {

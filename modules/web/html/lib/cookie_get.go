@@ -7,10 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// CookieGet gets a cookie from a given page by name.
-// @param {HTMLPage} page - Target page.
-// @param {String} name - Cookie or cookie name to delete.
-// @return {HTTPCookie} - Cookie if found, otherwise None.
+// CookieGet returns a named page cookie when present.
+//
+// @param page {HTMLPage} Target page.
+// @param name {String} Cookie name.
+// @return {HTTPCookie|None} Cookie value or None.
 func CookieGet(ctx context.Context, root, nameValue runtime.Value) (runtime.Value, error) {
 	target, err := drivers.ToPageCookieReader(root)
 	if err != nil {

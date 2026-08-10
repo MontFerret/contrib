@@ -8,11 +8,15 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Open creates a SQLite database handle from an options object.
+// Open creates a SQLite database handle from connection options.
 func Open(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
 	return open(ctx, core.DefaultOpenPolicy(), arg)
 }
 
+// openWithPolicy creates a SQLite database handle under the configured policy.
+//
+// @param options {Object} SQLite connection options.
+// @return {SQLiteDatabase} Open database handle.
 func openWithPolicy(policy core.OpenPolicy) runtime.Function1 {
 	return func(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
 		return open(ctx, policy, arg)
@@ -30,6 +34,9 @@ func open(ctx context.Context, policy core.OpenPolicy, arg runtime.Value) (runti
 
 // Close closes a SQLite database handle. Closing an already closed database is
 // idempotent.
+//
+// @param database {SQLiteDatabase} Database handle to close.
+// @return {Boolean} True when the handle is closed.
 func Close(_ context.Context, arg runtime.Value) (runtime.Value, error) {
 	db, ok := arg.(*core.Connection)
 	if !ok {
@@ -44,6 +51,9 @@ func Close(_ context.Context, arg runtime.Value) (runtime.Value, error) {
 }
 
 // Begin starts a SQLite transaction and returns a transaction handle.
+//
+// @param database {SQLiteDatabase} Database handle.
+// @return {SQLiteTransaction} Open transaction handle.
 func Begin(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
 	db, ok := arg.(*core.Connection)
 	if !ok {
@@ -54,6 +64,9 @@ func Begin(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
 }
 
 // Commit commits a SQLite transaction handle.
+//
+// @param transaction {SQLiteTransaction} Transaction to commit.
+// @return {Boolean} True when the transaction is committed.
 func Commit(_ context.Context, arg runtime.Value) (runtime.Value, error) {
 	tx, ok := arg.(*core.Transaction)
 	if !ok {
@@ -68,6 +81,9 @@ func Commit(_ context.Context, arg runtime.Value) (runtime.Value, error) {
 }
 
 // Rollback rolls back a SQLite transaction handle.
+//
+// @param transaction {SQLiteTransaction} Transaction to roll back.
+// @return {Boolean} True when the transaction is rolled back.
 func Rollback(_ context.Context, arg runtime.Value) (runtime.Value, error) {
 	tx, ok := arg.(*core.Transaction)
 	if !ok {

@@ -7,22 +7,26 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// WaitAttribute waits until a target attribute value appears.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} attrNameOrSelector - String of an attr name or CSS selector.
-// @param {String | Any} attrValueOrAttrName - Attr value or name.
-// @param {Any | Int} [attrValueOrTimeout] - Attr value or a timeout.
-// @param {Int} [timeout=5000] - Wait timeout.
+// WaitAttribute waits for an attribute value to appear.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selectorOrName {String} Element selector or attribute name.
+// @param nameOrValue {Any} Attribute name or expected value.
+// @param valueOrTimeout {Any?} Expected value or timeout.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the expected state is observed.
 func WaitAttribute(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitAttributeWhen(ctx, args, drivers.WaitEventPresence)
 }
 
-// WaitNoAttribute waits until a target attribute value disappears.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} attrNameOrSelector - String of an attr name or CSS selector.
-// @param {String | Any} attrValueOrAttrName - Attr value or name.
-// @param {Any | Int} [attrValueOrTimeout] - Attr value or wait timeout.
-// @param {Int} [timeout=5000] - Wait timeout.
+// WaitNoAttribute waits for an attribute value to disappear.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selectorOrName {String} Element selector or attribute name.
+// @param nameOrValue {Any} Attribute name or expected value.
+// @param valueOrTimeout {Any?} Expected value or timeout.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the expected state is observed.
 func WaitNoAttribute(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitAttributeWhen(ctx, args, drivers.WaitEventAbsence)
 }

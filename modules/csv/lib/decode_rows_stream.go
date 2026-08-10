@@ -11,9 +11,10 @@ import (
 // DecodeRowsStream decodes CSV content from string or binary input.
 // It returns an iterator value over row arrays keyed by the original CSV
 // record number after parsing.
-// @param {String|Binary} data - CSV content.
-// @param {Options} [opts] - Options for decoding.
-// @return {Iterator<Any[]>} - Iterator over decoded row arrays.
+//
+// @param data {String|Binary} CSV content.
+// @param opts {Object?} Decoding options.
+// @return {Iterator<Array<Any>>} Iterator over decoded row arrays.
 func DecodeRowsStream(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err

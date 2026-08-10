@@ -7,6 +7,9 @@ import (
 )
 
 // Text returns only the cleaned article text.
+//
+// @param input {String|HTMLPage|HTMLDocument|HTMLElement} HTML content or node.
+// @return {String|None} Cleaned article text or None.
 func Text(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	article, err := extractArticle(ctx, args...)
 	if err != nil {

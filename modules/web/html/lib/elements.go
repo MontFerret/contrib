@@ -6,11 +6,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Elements finds HTML elements by a given CSS selector.
-// Returns an empty array if element not found.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - CSS selector.
-// @return {HTMLElement[]} - An array of matched HTML elements.
+// Elements returns all elements matching a selector.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @return {Array<HTMLElement>} Matching elements.
 func Elements(ctx context.Context, root, selectorValue runtime.Value) (runtime.Value, error) {
 	el, selector, err := queryArgs(ctx, root, selectorValue)
 

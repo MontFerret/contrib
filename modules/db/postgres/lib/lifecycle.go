@@ -8,7 +8,10 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Open creates a Postgres database handle from an options object.
+// Open creates a Postgres database handle from connection options.
+//
+// @param options {Object} Postgres connection options.
+// @return {PostgresDatabase} Open database handle.
 func Open(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
 	options, err := core.DecodeOpenOptions(ctx, arg)
 	if err != nil {
@@ -20,6 +23,9 @@ func Open(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
 
 // Close closes a Postgres database handle. Closing an already closed database
 // is idempotent.
+//
+// @param database {PostgresDatabase} Database handle to close.
+// @return {Boolean} True when the handle is closed.
 func Close(_ context.Context, arg runtime.Value) (runtime.Value, error) {
 	db, ok := arg.(*core.Connection)
 	if !ok {
@@ -34,6 +40,9 @@ func Close(_ context.Context, arg runtime.Value) (runtime.Value, error) {
 }
 
 // Begin starts a Postgres transaction and returns a transaction handle.
+//
+// @param database {PostgresDatabase} Database handle.
+// @return {PostgresTransaction} Open transaction handle.
 func Begin(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
 	db, ok := arg.(*core.Connection)
 	if !ok {
@@ -44,6 +53,9 @@ func Begin(ctx context.Context, arg runtime.Value) (runtime.Value, error) {
 }
 
 // Commit commits a Postgres transaction handle.
+//
+// @param transaction {PostgresTransaction} Transaction to commit.
+// @return {Boolean} True when the transaction is committed.
 func Commit(_ context.Context, arg runtime.Value) (runtime.Value, error) {
 	tx, ok := arg.(*core.Transaction)
 	if !ok {
@@ -58,6 +70,9 @@ func Commit(_ context.Context, arg runtime.Value) (runtime.Value, error) {
 }
 
 // Rollback rolls back a Postgres transaction handle.
+//
+// @param transaction {PostgresTransaction} Transaction to roll back.
+// @return {Boolean} True when the transaction is rolled back.
 func Rollback(_ context.Context, arg runtime.Value) (runtime.Value, error) {
 	tx, ok := arg.(*core.Transaction)
 	if !ok {

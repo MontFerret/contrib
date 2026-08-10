@@ -7,10 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Decode decodes a TOML document into a Ferret runtime object.
-// @param {String|Binary} data - TOML content.
-// @param {Object} [options] - Decode options.
-// @return {Object} - Decoded TOML object.
+// Decode decodes a TOML document into an object.
+//
+// @param data {String|Binary} TOML content.
+// @param options {Object?} Decoding options.
+// @return {Object} Decoded TOML object.
 func Decode(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err

@@ -7,22 +7,26 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// WaitStyle waits until a target style value appears.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} styleNameOrSelector - Style name or CSS selector.
-// @param {String | Any} valueOrStyleName - Style value or name.
-// @param {Any | Int} [valueOrTimeout] - Style value or wait timeout.
-// @param {Int} [timeout=5000] - Wait timeout.
+// WaitStyle waits for a style value to appear.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selectorOrName {String} Element selector or style name.
+// @param nameOrValue {Any} Style name or expected value.
+// @param valueOrTimeout {Any?} Expected value or timeout.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the expected state is observed.
 func WaitStyle(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitStyleWhen(ctx, args, drivers.WaitEventPresence)
 }
 
-// WaitNoStyle waits until a target style value disappears.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} styleNameOrSelector - Style name or CSS selector.
-// @param {String | Any} valueOrStyleName - Style value or name.
-// @param {Any | Int} [valueOrTimeout] - Style value or wait timeout.
-// @param {Int} [timeout=5000] - Wait timeout.
+// WaitNoStyle waits for a style value to disappear.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selectorOrName {String} Element selector or style name.
+// @param nameOrValue {Any} Style name or expected value.
+// @param valueOrTimeout {Any?} Expected value or timeout.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the expected state is observed.
 func WaitNoStyle(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitStyleWhen(ctx, args, drivers.WaitEventAbsence)
 }

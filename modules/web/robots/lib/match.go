@@ -9,6 +9,11 @@ import (
 )
 
 // Match returns effective rule-match details for the given path.
+//
+// @param robots {Object} Parsed robots.txt object.
+// @param path {String} URL path to evaluate.
+// @param userAgent {String?} Crawler product token, defaulting to *.
+// @return {Object} Effective rule-match details.
 func Match(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 2, 3); err != nil {
 		return nil, err

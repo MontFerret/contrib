@@ -7,11 +7,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Select selects a value from an underlying select element.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String | String[]} valueOrSelector - Selector or a an array of strings as a value.
-// @param {String[]} value - Target value. Optional.
-// @return {String[]} - Array of selected values.
+// Select selects values in a select element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param valuesOrSelector {String|Array<String>} Values or element selector.
+// @param values {String|Array<String>?} Values when a selector is supplied.
+// @return {Array<String>} Selected values.
 func Select(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, 4)
 

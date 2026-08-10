@@ -7,11 +7,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// MouseMoveXY moves the mouse to given viewport coordinates.
-// @param {HTMLPage | HTMLDocument} document - HTML page or document.
-// @param {Int|Float} x - X coordinate.
-// @param {Int|Float} y - Y coordinate.
-// @return {Boolean} - True if the mouse was moved, otherwise false.
+// MouseMoveXY moves the mouse to absolute viewport coordinates.
+//
+// @param root {HTMLPage|HTMLDocument} Page or document.
+// @param x {Number} Horizontal coordinate.
+// @param y {Number} Vertical coordinate.
+// @return {Boolean} Whether the mouse position changed.
 func MouseMoveXY(ctx context.Context, root, xValue, yValue runtime.Value) (runtime.Value, error) {
 	doc, err := drivers.ToDocumentViewportTarget(root)
 

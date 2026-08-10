@@ -8,8 +8,9 @@ import (
 )
 
 // Decode decodes XML content into a normalized document object.
-// @param {String|Binary} data - XML content.
-// @return {Object} - Normalized XML document.
+//
+// @param data {String|Binary} XML content.
+// @return {Object} Normalized XML document.
 func Decode(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err

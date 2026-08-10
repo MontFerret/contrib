@@ -7,10 +7,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// Press presses a keyboard key.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String | String[]} key - Target keyboard key(s).
-// @param {Int} [presses=1] - Count of presses.
+// Press sends keyboard input to an HTML root.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param keys {String|Array<String>} Keyboard key or keys.
+// @param count {Int?} Number of presses.
+// @return {Boolean} True when the keys are sent.
 func Press(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, 3)
 

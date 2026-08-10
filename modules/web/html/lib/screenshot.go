@@ -9,16 +9,13 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// Screenshot takes a screenshot of a given page.
-// @param {HTMLPage|String} target - Target page or url.
-// @param {Object} [params] - An object containing the following properties :
-// @param {Float | Int} [params.x=0] - X position of the viewport.
-// @param {Float | Int} [params.y=0] - Y position of the viewport.
-// @param {Float | Int} [params.width] - Width of the viewport.
-// @param {Float | Int} [params.height] - Height of the viewport.
-// @param {String} [params.format="jpeg"] - Either "jpeg" or "png".
-// @param {Int} [params.quality=100] - Quality, in [0, 100], only for jpeg format.
-// @return {Binary} - Screenshot in binary format.
+// Screenshot captures a screenshot of a page or URL.
+//
+// The format is JPEG or PNG; quality applies only to JPEG.
+//
+// @param target {HTMLPage|String} Page or URL to capture.
+// @param params {Object?} Capture bounds, format, and quality options.
+// @return {Binary} Screenshot bytes.
 func Screenshot(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 1, 2)
 

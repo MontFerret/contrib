@@ -7,10 +7,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Click dispatches a click event on a given element.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String | Int} [cssSelectorOrClicks] - CSS selector or count of clicks.
-// @param {Int} [clicks=1] - Count of clicks.
+// Click clicks an HTML root or selected element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selectorOrCount {String|Int?} Element selector or click count.
+// @param count {Int?} Click count for a selected element.
+// @return {Boolean} Whether the target was found and clicked.
 func Click(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 3); err != nil {
 		return runtime.False, err

@@ -8,9 +8,10 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// XPathSelector returns a query selector of XPath kind.
-// @param {String} expression - XPath expression.
-// @return {Any} - Returns QuerySelector of XPath kind.
+// XPathSelector creates a reusable XPath query selector.
+//
+// @param expression {String} XPath expression.
+// @return {QuerySelector} XPath query selector.
 func XPathSelector(_ context.Context, expression runtime.Value) (runtime.Value, error) {
 	selector := drivers.NewXPathSelector(runtime.ToString(expression))
 

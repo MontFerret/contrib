@@ -7,22 +7,24 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// WaitClass waits for a class to appear on a given element.
-// Stops the execution until the navigation ends or operation times out.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selectorOrClass - If document is passed, this param must represent an element selector. Otherwise target class.
-// @param {String | Int} [classOrTimeout] - If document is passed, this param must represent target class name. Otherwise timeout.
-// @param {Int} [timeout] - If document is passed, this param must represent timeout. Otherwise not passed.
+// WaitClass waits for a class to appear.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selectorOrClass {String} Element selector or class name.
+// @param classOrTimeout {String|Int?} Class name or timeout.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the class appears.
 func WaitClass(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitClassWhen(ctx, args, drivers.WaitEventPresence)
 }
 
-// WaitNoClass waits for a class to disappear on a given element.
-// Stops the execution until the navigation ends or operation times out.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selectorOrClass - If document is passed, this param must represent an element selector. Otherwise target class.
-// @param {String | Int} [classOrTimeout] - If document is passed, this param must represent target class name. Otherwise timeout.
-// @param {Int} [timeout] - If document is passed, this param must represent timeout. Otherwise not passed.
+// WaitNoClass waits for a class to disappear.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selectorOrClass {String} Element selector or class name.
+// @param classOrTimeout {String|Int?} Class name or timeout.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the class disappears.
 func WaitNoClass(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitClassWhen(ctx, args, drivers.WaitEventAbsence)
 }

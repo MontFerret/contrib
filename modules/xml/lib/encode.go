@@ -8,8 +8,9 @@ import (
 )
 
 // Encode serializes a normalized XML document or element into XML text.
-// @param {Object} value - Normalized XML document or element.
-// @return {String} - XML text.
+//
+// @param value {Object} Normalized XML document or element.
+// @return {String} XML text.
 func Encode(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err

@@ -7,9 +7,10 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Encode serializes a Ferret runtime value into YAML text.
-// @param {Any} value - Ferret runtime value.
-// @return {String} - YAML text.
+// Encode serializes a value into YAML text.
+//
+// @param value {Any} Value to encode.
+// @return {String} YAML text.
 func Encode(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err

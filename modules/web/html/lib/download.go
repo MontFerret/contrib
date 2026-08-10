@@ -8,9 +8,10 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Download downloads a resource from the given URL.
-// @param {String} url - URL to download.
-// @return {Binary} - A base64 encoded string in binary format.
+// Download downloads a resource from a URL.
+//
+// @param url {String} Resource URL.
+// @return {Binary} Downloaded bytes.
 func Download(_ context.Context, url runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateType(url, runtime.TypeString)
 

@@ -7,10 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Hover fetches an element with a selector, scrolls it into view if needed, and hovers over its center.
-// If there's no element matching selector, the method returns an error.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} [selector] - If document is passed, this param must represent an element selector.
+// Hover moves the mouse over an HTML root or selected element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String?} Element selector.
+// @return {Boolean} Whether the target was hovered.
 func Hover(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 1, 2)
 

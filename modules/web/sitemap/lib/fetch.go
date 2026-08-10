@@ -9,6 +9,10 @@ import (
 )
 
 // Fetch fetches and parses a single sitemap document.
+//
+// @param url {String} HTTP or HTTPS sitemap URL.
+// @param options {Object?} Fetching and traversal options.
+// @return {Object} Parsed URL set or sitemap index.
 func Fetch(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err

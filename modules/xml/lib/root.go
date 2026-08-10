@@ -8,8 +8,9 @@ import (
 )
 
 // Root returns the root element for a document or the element itself.
-// @param {Object} value - XML document, element, or text node.
-// @return {Object|None} - Root or element node, or None for text nodes.
+//
+// @param value {Object} XML document, element, or text node.
+// @return {Object|None} Root or element node, or None for a text node.
 func Root(ctx context.Context, value runtime.Value) (runtime.Value, error) {
 	return core.Root(ctx, value)
 }

@@ -8,9 +8,10 @@ import (
 )
 
 // Attr returns the named attribute value for an XML element-like node.
-// @param {Object} value - XML document, element, or text node.
-// @param {String} name - Attribute name.
-// @return {String|None} - Attribute value or None.
+//
+// @param value {Object} XML document, element, or text node.
+// @param name {String} Attribute name.
+// @return {String|None} Attribute value or None.
 func Attr(ctx context.Context, value, name runtime.Value) (runtime.Value, error) {
 	attrName, ok := name.(runtime.String)
 	if !ok {

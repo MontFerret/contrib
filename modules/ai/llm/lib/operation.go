@@ -9,21 +9,45 @@ import (
 )
 
 // Generate produces text from a prompt.
+//
+// @param target {Model|Session} Model or session to execute against.
+// @param prompt {String} User prompt.
+// @param options {Object?} Generation and execution options.
+// @return {String} Generated text.
 func Generate(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return executeTextOperation(ctx, core.ModeGenerate, args...)
 }
 
-// Chat appends a user message and produces an assistant response.
+// Chat produces an assistant response to a user message.
+//
+// A successful session call commits the supplied messages and response to the
+// session history.
+//
+// @param target {Model|Session} Model or session to execute against.
+// @param message {String} Final user message.
+// @param options {Object?} Messages, instructions, and execution options.
+// @return {String} Assistant response.
 func Chat(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return executeTextOperation(ctx, core.ModeChat, args...)
 }
 
 // Summarize produces a summary of the input text.
+//
+// @param target {Model|Session} Model or session to execute against.
+// @param text {String} Text to summarize.
+// @param options {Object?} Summarization and execution options.
+// @return {String} Generated summary.
 func Summarize(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return executeTextOperation(ctx, core.ModeSummarize, args...)
 }
 
-// Extract produces and validates a value against a JSON Schema.
+// Extract produces structured data and validates it against a JSON Schema.
+//
+// @param target {Model|Session} Model or session to execute against.
+// @param text {String} Source text.
+// @param schema {Object} JSON Schema for the result.
+// @param options {Object?} Extraction and execution options.
+// @return {Any} Validated structured value.
 func Extract(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 3, 4); err != nil {
 		return runtime.None, err
@@ -53,7 +77,13 @@ func Extract(ctx context.Context, args ...runtime.Value) (runtime.Value, error) 
 	})
 }
 
-// Classify selects one label for the input text.
+// Classify selects one allowed label for the input text.
+//
+// @param target {Model|Session} Model or session to execute against.
+// @param text {String} Text to classify.
+// @param labels {Array<String>} Allowed labels.
+// @param options {Object?} Classification and execution options.
+// @return {Object} Object containing the selected label.
 func Classify(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 3, 4); err != nil {
 		return runtime.None, err

@@ -7,22 +7,24 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// WaitClassAll waits for a class to appear on all matched elements.
-// Stops the execution until the navigation ends or operation times out.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - String of CSS selector.
-// @param {String} class - String of target CSS class.
-// @param {Int} [timeout=5000] - Wait timeout.
+// WaitClassAll waits for a class on all matching elements.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @param class {String} Class name.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the class appears on every match.
 func WaitClassAll(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitClassAllWhen(ctx, args, drivers.WaitEventPresence)
 }
 
-// WaitNoClassAll waits for a class to disappear on all matched elements.
-// Stops the execution until the navigation ends or operation times out.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} selector - String of CSS selector.
-// @param {String} class - String of target CSS class.
-// @param {Int} [timeout=5000] - Wait timeout.
+// WaitNoClassAll waits for a class to disappear from all matching elements.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String} Element selector.
+// @param class {String} Class name.
+// @param timeout {Int?} Wait timeout in milliseconds.
+// @return {Boolean} True when the class disappears from every match.
 func WaitNoClassAll(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	return waitClassAllWhen(ctx, args, drivers.WaitEventAbsence)
 }

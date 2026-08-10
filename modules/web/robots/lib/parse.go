@@ -9,6 +9,9 @@ import (
 )
 
 // Parse parses raw robots.txt content into a plain object.
+//
+// @param text {String} Robots.txt content.
+// @return {Object} Parsed groups, sitemaps, and host metadata.
 func Parse(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err

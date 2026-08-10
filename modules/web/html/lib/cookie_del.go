@@ -7,9 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// CookieDel deletes cookies from a given page.
-// @param {HTMLPage} page - Target page.
-// @param {HTTPCookie, repeated | String, repeated} cookiesOrNames - Cookie or cookie name to delete.
+// CookieDel deletes cookies from a page.
+//
+// @param page {HTMLPage} Target page.
+// @param cookiesOrNames {Any...} Cookie values or cookie names to delete.
+// @return {None} No value.
 func CookieDel(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 2, runtime.MaxArgs); err != nil {
 		return runtime.None, err

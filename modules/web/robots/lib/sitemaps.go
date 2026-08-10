@@ -9,6 +9,9 @@ import (
 )
 
 // Sitemaps returns the declared sitemap URLs from a parsed robots object.
+//
+// @param robots {Object} Parsed robots.txt object.
+// @return {Array<String>} Declared sitemap URLs.
 func Sitemaps(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err

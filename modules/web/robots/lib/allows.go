@@ -9,6 +9,11 @@ import (
 )
 
 // Allows returns whether the path is allowed for the given user-agent.
+//
+// @param robots {Object} Parsed robots.txt object.
+// @param path {String} URL path to evaluate.
+// @param userAgent {String?} Crawler product token, defaulting to *.
+// @return {Boolean} Whether the path is allowed.
 func Allows(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 2, 3); err != nil {
 		return nil, err

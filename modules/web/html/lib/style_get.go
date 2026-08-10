@@ -7,10 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// StyleGet gets single or more style attribute value(s) of a given element.
-// @param {HTMLElement} element - Target html element.
-// @param {String, repeated} names - Style name(s).
-// @return {Object} - Collection of key-value pairs of style runtime.
+// StyleGet returns selected style values from an element.
+//
+// @param element {HTMLElement} Target element.
+// @param names {String...} Style names.
+// @return {Object} Existing style values keyed by name.
 func StyleGet(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, runtime.MaxArgs)
 

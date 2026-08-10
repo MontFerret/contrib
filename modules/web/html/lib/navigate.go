@@ -7,12 +7,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Navigate navigates a given page to a new resource.
-// The operation blocks the execution until the page gets loaded.
-// Which means there is no need in WAIT_NAVIGATION function.
-// @param {HTMLPage} page - Target page.
-// @param {String} url - Target url to navigate.
-// @param {Int} [timeout=5000] - Navigation timeout.
+// Navigate loads a URL in a page and waits for navigation to finish.
+//
+// @param page {HTMLPage} Target page.
+// @param url {String} Destination URL.
+// @param timeout {Int?} Navigation timeout in milliseconds.
+// @return {Boolean} True when navigation succeeds.
 func Navigate(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, 3)
 

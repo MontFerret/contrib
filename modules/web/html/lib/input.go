@@ -7,12 +7,13 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Input types a value into an underlying input element.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} valueOrSelector - CSS selector or a value.
-// @param {String} value - Target value.
-// @param {Int} [delay] - Target value.
-// @return {Boolean} - Returns true if an element was found.
+// Input types a value into an HTML root or selected input element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param valueOrSelector {Any} Input value or element selector.
+// @param valueOrDelay {Any?} Input value or keyboard delay.
+// @param delay {Int?} Keyboard delay in milliseconds.
+// @return {Boolean} Whether the target was found and received input.
 func Input(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, 4)
 

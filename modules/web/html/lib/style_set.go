@@ -7,10 +7,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// StyleSet sets or updates a single or more style attribute value of a given element.
-// @param {HTMLElement} element - Target html element.
-// @param {String | Object} nameOrObj - Style name or an object representing a key-value pair of attributes.
-// @param {String} value - If a second parameter is a string value, this parameter represent a style value.
+// StyleSet sets one or more style values on an element.
+//
+// @param element {HTMLElement} Target element.
+// @param nameOrStyles {String|Object} Style name or style map.
+// @param value {Any?} Style value when a name is supplied.
+// @return {None} No value.
 func StyleSet(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, 3)
 

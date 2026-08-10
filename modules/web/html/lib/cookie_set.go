@@ -7,9 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// CookieSet sets cookies on a given page.
-// @param {HTMLPage} page - Target page.
-// @param {HTTPCookie, repeated} cookies - Target cookies.
+// CookieSet sets cookies on a page.
+//
+// @param page {HTMLPage} Target page.
+// @param cookies {Any...} Cookie values to set.
+// @return {None} No value.
 func CookieSet(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 2, runtime.MaxArgs); err != nil {
 		return runtime.None, err

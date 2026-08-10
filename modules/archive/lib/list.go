@@ -8,7 +8,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-// List returns archive entry metadata.
+// List returns metadata for every entry in an archive.
+//
+// @param source {String} Sandboxed archive path.
+// @param options {Object?} Archive format options.
+// @return {Array<Object>} Archive entry metadata.
 func List(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return runtime.None, err

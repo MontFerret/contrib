@@ -7,9 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Blur calls blur on the element.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target node.
-// @param {String} [selector] - CSS selector.
+// Blur removes focus from an HTML root or selected element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String?} Element selector.
+// @return {Boolean} Whether the target was blurred.
 func Blur(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 1, 2)
 

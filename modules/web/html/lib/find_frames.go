@@ -8,12 +8,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// Frames finds HTML frames by a given property selector.
-// Returns an empty array if frames not found.
-// @param {HTMLPage} page - HTML page.
-// @param {String} property - Property selector.
-// @param {String} exp - Regular expression to match property value.
-// @return {HTMLDocument[]} - Returns an array of found HTML frames.
+// Frames returns page frames whose property matches a regular expression.
+//
+// @param page {HTMLPage} Page whose frames to search.
+// @param property {String} Frame property name.
+// @param expression {String} Regular expression for the property value.
+// @return {Array<HTMLDocument>} Matching frame documents.
 func Frames(ctx context.Context, arg1, arg2, arg3 runtime.Value) (runtime.Value, error) {
 	page, err := drivers.ToPage(arg1)
 

@@ -7,10 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// GetInnerText returns the inner text string of a given or matched CSS selector element.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target html node.
-// @param {String} [selector] - String of CSS selector.
-// @return {String} - Inner text if a matched element, otherwise empty string.
+// GetInnerText returns text from a root or selected element.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param selector {String?} Element selector.
+// @return {String} Inner text, or an empty string when no element matches.
 func GetInnerText(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 1, 2)
 

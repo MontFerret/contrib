@@ -7,13 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// ScrollBottom scrolls the document window to its bottom.
-// @param {HTMLPage | HTMLDocument} document - HTML page or document.
-// @param {Object} [params] - Scroll params.
-// @param {String} [params.behavior="instant"] - Scroll behavior
-// @param {String} [params.block="center"] - Scroll vertical alignment.
-// @param {String} [params.inline="center"] - Scroll horizontal alignment.
-// @return {Boolean} - True if scrolling was initiated, otherwise false.
+// ScrollBottom scrolls a page or document to the bottom.
+//
+// @param root {HTMLPage|HTMLDocument} Page or document.
+// @param options {Object?} Scroll behavior and alignment options.
+// @return {Boolean} Whether scrolling was initiated.
 func ScrollBottom(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 1, 2)
 

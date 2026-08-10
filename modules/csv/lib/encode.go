@@ -10,9 +10,10 @@ import (
 
 // Encode encodes an array of objects or row arrays into CSV text.
 // Object input can emit a header row depending on opts.header and opts.columns.
-// @param {Any[]} data - Array of objects or arrays.
-// @param {Options} [opts] - Options for encoding.
-// @return {String} - CSV text.
+//
+// @param data {Array<Any>} Objects or row arrays to encode.
+// @param opts {Object?} Encoding options.
+// @return {String} CSV text.
 func Encode(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err

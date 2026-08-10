@@ -7,9 +7,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// StyleRemove removes single or more style attribute value(s) of a given element.
-// @param {HTMLElement} element - Target html element.
-// @param {String, repeated} names - Style name(s).
+// StyleRemove removes style values from an element.
+//
+// @param element {HTMLElement} Target element.
+// @param names {String...} Style names to remove.
+// @return {None} No value.
 func StyleRemove(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, runtime.MaxArgs)
 

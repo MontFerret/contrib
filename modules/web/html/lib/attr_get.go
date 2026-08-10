@@ -8,10 +8,11 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// AttributeGet gets single or more attribute(s) of a given element.
-// @param {HTMLPage | HTMLDocument | HTMLElement} node - Target node.
-// @param {String, repeated} attrNames - Attribute name(s).
-// @return {Object} - Key-value pairs of attribute runtime.
+// AttributeGet returns selected attributes from an HTML root.
+//
+// @param root {HTMLPage|HTMLDocument|HTMLElement} HTML root.
+// @param names {String...} Attribute names.
+// @return {Object} Existing attribute values keyed by name.
 func AttributeGet(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 2, runtime.MaxArgs)
 

@@ -9,6 +9,10 @@ import (
 )
 
 // URLs fetches a sitemap tree and returns flattened URL entries.
+//
+// @param url {String} HTTP or HTTPS sitemap URL.
+// @param options {Object?} Fetching and traversal options.
+// @return {Array<Object>} Flattened URL entries.
 func URLs(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return nil, err

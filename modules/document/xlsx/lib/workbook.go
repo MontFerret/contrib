@@ -9,11 +9,16 @@ import (
 )
 
 // Create creates a new in-memory XLSX workbook.
+//
+// @return {Workbook} New workbook handle.
 func Create(context.Context) (runtime.Value, error) {
 	return core.Create(), nil
 }
 
-// Open opens an existing XLSX workbook.
+// Open opens an existing XLSX workbook through the configured filesystem.
+//
+// @param path {String} Sandboxed workbook path.
+// @return {Workbook} Open workbook handle.
 func Open(ctx context.Context, pathValue runtime.Value) (runtime.Value, error) {
 	path, ok := pathValue.(runtime.String)
 	if !ok {
@@ -24,6 +29,9 @@ func Open(ctx context.Context, pathValue runtime.Value) (runtime.Value, error) {
 }
 
 // Sheets returns worksheet names in workbook order.
+//
+// @param workbook {Workbook} Workbook handle.
+// @return {Array<String>} Worksheet names in workbook order.
 func Sheets(ctx context.Context, workbookValue runtime.Value) (runtime.Value, error) {
 	workbook, err := requireWorkbook(workbookValue, "SHEETS")
 	if err != nil {
@@ -46,6 +54,10 @@ func Sheets(ctx context.Context, workbookValue runtime.Value) (runtime.Value, er
 }
 
 // Sheet returns a worksheet handle by name.
+//
+// @param workbook {Workbook} Workbook handle.
+// @param name {String} Worksheet name.
+// @return {Worksheet} Worksheet handle.
 func Sheet(_ context.Context, workbookValue, nameValue runtime.Value) (runtime.Value, error) {
 	workbook, err := requireWorkbook(workbookValue, "SHEET")
 	if err != nil {
@@ -61,6 +73,10 @@ func Sheet(_ context.Context, workbookValue, nameValue runtime.Value) (runtime.V
 }
 
 // AddSheet creates a worksheet and returns its handle.
+//
+// @param workbook {Workbook} Workbook handle.
+// @param name {String} New worksheet name.
+// @return {Worksheet} Created worksheet handle.
 func AddSheet(_ context.Context, workbookValue, nameValue runtime.Value) (runtime.Value, error) {
 	workbook, err := requireWorkbook(workbookValue, "ADD_SHEET")
 	if err != nil {
@@ -75,7 +91,11 @@ func AddSheet(_ context.Context, workbookValue, nameValue runtime.Value) (runtim
 	return workbook.AddSheet(name)
 }
 
-// DeleteSheet deletes a worksheet.
+// DeleteSheet deletes a worksheet and invalidates its existing handles.
+//
+// @param workbook {Workbook} Workbook handle.
+// @param name {String} Worksheet name.
+// @return {Boolean} True when the worksheet is deleted.
 func DeleteSheet(_ context.Context, workbookValue, nameValue runtime.Value) (runtime.Value, error) {
 	workbook, err := requireWorkbook(workbookValue, "DELETE_SHEET")
 	if err != nil {
@@ -95,6 +115,9 @@ func DeleteSheet(_ context.Context, workbookValue, nameValue runtime.Value) (run
 }
 
 // Save saves a workbook to its current path.
+//
+// @param workbook {Workbook} Workbook handle.
+// @return {Boolean} True when the workbook is saved.
 func Save(ctx context.Context, workbookValue runtime.Value) (runtime.Value, error) {
 	workbook, err := requireWorkbook(workbookValue, "SAVE")
 	if err != nil {
@@ -107,7 +130,11 @@ func Save(ctx context.Context, workbookValue runtime.Value) (runtime.Value, erro
 	return runtime.True, nil
 }
 
-// SaveAs saves a workbook to a supplied path.
+// SaveAs saves a workbook to a supplied sandboxed path.
+//
+// @param workbook {Workbook} Workbook handle.
+// @param path {String} Sandboxed destination path.
+// @return {Boolean} True when the workbook is saved.
 func SaveAs(ctx context.Context, workbookValue, pathValue runtime.Value) (runtime.Value, error) {
 	workbook, err := requireWorkbook(workbookValue, "SAVE_AS")
 	if err != nil {
@@ -125,7 +152,11 @@ func SaveAs(ctx context.Context, workbookValue, pathValue runtime.Value) (runtim
 	return runtime.True, nil
 }
 
-// Close releases workbook resources.
+// Close releases workbook resources. Closing an already closed workbook is
+// idempotent.
+//
+// @param workbook {Workbook} Workbook handle to close.
+// @return {Boolean} True when the workbook is closed.
 func Close(_ context.Context, workbookValue runtime.Value) (runtime.Value, error) {
 	workbook, err := requireWorkbook(workbookValue, "CLOSE")
 	if err != nil {

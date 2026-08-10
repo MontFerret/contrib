@@ -9,6 +9,10 @@ import (
 )
 
 // ClientCredentials performs an OAuth client_credentials grant.
+//
+// @param client {OAuthClient} OAuth client handle.
+// @param options {Object?} Scope, audience, parameters, and timeout.
+// @return {OAuthToken} Acquired token set.
 func ClientCredentials(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 2); err != nil {
 		return runtime.None, err
@@ -43,6 +47,10 @@ func ClientCredentials(ctx context.Context, args ...runtime.Value) (runtime.Valu
 }
 
 // Refresh performs an OAuth refresh_token grant.
+//
+// @param client {OAuthClient} OAuth client handle.
+// @param tokenOrOptions {OAuthToken|Object} Existing token set or refresh-token options.
+// @return {OAuthToken} Refreshed token set.
 func Refresh(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 2, 2); err != nil {
 		return runtime.None, err
@@ -79,6 +87,10 @@ func Refresh(ctx context.Context, args ...runtime.Value) (runtime.Value, error) 
 }
 
 // Token performs an OAuth extension grant.
+//
+// @param client {OAuthClient} OAuth client handle.
+// @param parameters {Object} Extension-grant parameters.
+// @return {OAuthToken} Acquired token set.
 func Token(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 2, 2); err != nil {
 		return runtime.None, err

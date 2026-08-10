@@ -14,11 +14,13 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
 )
 
-// Pagination creates an iterator that goes through pages using a CSS selector.
-// The iterator starts from the current page i.e. it does not change the page on 1st iteration.
-// That allows you to keep scraping logic inside FOR loop.
-// @param {HTMLPage} page - Target html page.
-// @param {String} selector - CSS selector for a pagination on the page.
+// Pagination returns an iterator that advances by clicking a selector.
+//
+// The first iteration yields the current page without clicking.
+//
+// @param page {HTMLPage} Page to paginate.
+// @param selector {String} Next-page selector.
+// @return {Iterator<Int>} Iterator over zero-based page positions.
 func Pagination(ctx context.Context, root, selectorValue runtime.Value) (runtime.Value, error) {
 	page, err := drivers.ToPage(root)
 

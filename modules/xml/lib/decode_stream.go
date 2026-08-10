@@ -9,8 +9,9 @@ import (
 )
 
 // DecodeStream decodes XML content lazily into normalized XML events.
-// @param {String|Binary} data - XML content.
-// @return {Iterator<Object>} - Iterator over XML events.
+//
+// @param data {String|Binary} XML content.
+// @return {Iterator<Object>} Iterator over normalized XML events.
 func DecodeStream(_ context.Context, args ...runtime.Value) (runtime.Value, error) {
 	if err := runtime.ValidateArgs(args, 1, 1); err != nil {
 		return nil, err

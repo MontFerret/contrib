@@ -7,13 +7,12 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-// NavigateBack navigates a given page back within its navigation history.
-// The operation blocks the execution until the page gets loaded.
-// If the history is empty, the function returns FALSE.
-// @param {HTMLPage} page - Target page.
-// @param {Int} [entry=1] - An integer value indicating how many pages to skip.
-// @param {Int} [timeout=5000] - Navigation timeout.
-// @return {Boolean} - True if history exists and the operation succeeded, otherwise false.
+// NavigateBack moves backward through page history.
+//
+// @param page {HTMLPage} Target page.
+// @param skip {Int?} Number of history entries to skip.
+// @param timeout {Int?} Navigation timeout in milliseconds.
+// @return {Boolean} Whether history existed and navigation succeeded.
 func NavigateBack(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 	err := runtime.ValidateArgs(args, 1, 3)
 
