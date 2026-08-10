@@ -129,6 +129,7 @@ func (api *refreshPageAPI) GetFrameTree(ctx context.Context) (*page.GetFrameTree
 	api.mu.Lock()
 	api.frameCalls++
 	api.mu.Unlock()
+
 	if api.frameStarted != nil {
 		close(api.frameStarted)
 	}
@@ -420,6 +421,42 @@ func TestElementExecutorPropagatesRefreshFailure(t *testing.T) {
 	err := element.executor.run(ctx, func() error { return stale })
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("refresh failure = %v, want cancellation", err)
+	}
+}
+
+func TestManagedElementExecutorPreservesUnrelatedError(t *testing.T) {
+	doc, state, pageAPI := testRefreshDocument(t, false)
+	element := testStateElement(doc, state, "root")
+	state.element = element
+	doc.replaceState(state)
+	want := errors.New("unrelated protocol failure")
+
+	err := element.executor.run(context.Background(), func() error { return want })
+	if !errors.Is(err, want) {
+		t.Fatalf("operation error = %v, want %v", err, want)
+	}
+
+	if pageAPI.frameCalls != 0 {
+		t.Fatalf("refresh calls = %d, want 0", pageAPI.frameCalls)
+	}
+}
+
+func TestUnmanagedElementExecutorPreservesStaleError(t *testing.T) {
+	executor := newElementExecutor(nil)
+	want := &rpcc.ResponseError{Code: -32000, Message: "Execution context was destroyed."}
+	calls := 0
+
+	err := executor.run(context.Background(), func() error {
+		calls++
+
+		return want
+	})
+	if !errors.Is(err, want) {
+		t.Fatalf("operation error = %v, want %v", err, want)
+	}
+
+	if calls != 1 {
+		t.Fatalf("operation calls = %d, want 1", calls)
 	}
 }
 
