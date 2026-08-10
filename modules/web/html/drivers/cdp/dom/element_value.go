@@ -20,6 +20,10 @@ func (el *HTMLElement) Type() runtime.Type {
 }
 
 func (el *HTMLElement) MarshalJSON() ([]byte, error) {
+	if err := el.ensureAttached(); err != nil {
+		return nil, err
+	}
+
 	return json.Marshal(el.String())
 }
 
@@ -100,10 +104,20 @@ func (el *HTMLElement) Copy() runtime.Value {
 }
 
 func (el *HTMLElement) Iterate(_ context.Context) (runtime.Iterator, error) {
+	if err := el.ensureAttached(); err != nil {
+		return nil, err
+	}
+
 	return data.NewIterator(el)
 }
 
 func (el *HTMLElement) Get(ctx context.Context, key runtime.Value) (runtime.Value, error) {
+	if el.document != nil {
+		if err := el.ensureAttached(); err != nil {
+			return runtime.None, err
+		}
+	}
+
 	if key == nil || key == runtime.None {
 		return runtime.None, nil
 	}
@@ -131,6 +145,12 @@ func (el *HTMLElement) Get(ctx context.Context, key runtime.Value) (runtime.Valu
 }
 
 func (el *HTMLElement) Set(ctx context.Context, key, value runtime.Value) error {
+	if el.document != nil {
+		if err := el.ensureAttached(); err != nil {
+			return err
+		}
+	}
+
 	if key == nil || key == runtime.None {
 		return runtime.Error(runtime.ErrInvalidArgument, "element property name is empty")
 	}
@@ -203,6 +223,10 @@ func (el *HTMLElement) GetDOMProperty(ctx context.Context, name runtime.String) 
 }
 
 func (el *HTMLElement) GetNodeType(ctx context.Context) (runtime.Int, error) {
+	if err := el.ensureAttached(); err != nil {
+		return runtime.ZeroInt, err
+	}
+
 	out, err := el.nodeType.Read(ctx)
 	if err != nil {
 		return runtime.ZeroInt, err
@@ -212,6 +236,10 @@ func (el *HTMLElement) GetNodeType(ctx context.Context) (runtime.Int, error) {
 }
 
 func (el *HTMLElement) GetNodeName(ctx context.Context) (runtime.String, error) {
+	if err := el.ensureAttached(); err != nil {
+		return runtime.EmptyString, err
+	}
+
 	out, err := el.nodeName.Read(ctx)
 	if err != nil {
 		return runtime.EmptyString, err

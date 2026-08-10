@@ -11,8 +11,8 @@ import (
 
 type (
 	PageLoadParams struct {
-		Driver string `json:"driver"`
 		drivers.Params
+		Driver  string        `json:"driver"`
 		Timeout time.Duration `json:"timeout"`
 	}
 
@@ -26,6 +26,7 @@ type (
 		Viewport    *drivers.Viewport    `json:"viewport"`
 		Ignore      *drivers.Ignore      `json:"ignore"`
 		Charset     *string              `json:"charset"`
+		InitScript  *drivers.InitScript  `json:"initScript"`
 	}
 )
 
@@ -128,6 +129,15 @@ func newPageLoadParams(ctx context.Context, url runtime.String, arg runtime.Valu
 
 		if input.Charset != nil {
 			res.Charset = *input.Charset
+		}
+
+		if input.InitScript != nil {
+			initScript, err := drivers.NormalizeInitScript(input.InitScript)
+			if err != nil {
+				return PageLoadParams{}, err
+			}
+
+			res.InitScript = initScript
 		}
 
 		if input.Cookies != nil && input.Cookies != runtime.None {

@@ -25,6 +25,18 @@ func (m *Manager) LoadRootDocument(ctx context.Context) (*HTMLDocument, error) {
 }
 
 func (m *Manager) LoadDocument(ctx context.Context, frame page.FrameTree) (*HTMLDocument, error) {
+	doc := newHTMLDocument(m.logger, m, frame)
+	state, err := m.loadDocumentState(ctx, doc, frame)
+	if err != nil {
+		return nil, err
+	}
+
+	doc.replaceState(state)
+
+	return doc, nil
+}
+
+func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, frame page.FrameTree) (*documentState, error) {
 	client := m.clientForFrame(frame.Frame.ID)
 
 	exec, err := eval.Create(ctx, m.logger, client, frame.Frame.ID)
@@ -41,24 +53,30 @@ func (m *Manager) LoadDocument(ctx context.Context, frame page.FrameTree) (*HTML
 
 	exec.SetLoader(NewNodeLoader(m))
 
-	rootElement := NewHTMLElement(
+	generation := uint64(1)
+	if current := doc.currentState(); current != nil {
+		generation = current.generation + 1
+	}
+
+	rootElement := newHTMLElement(
 		m.logger,
 		client,
 		m,
 		inputs,
 		exec,
 		*ref.ObjectID,
+		doc,
+		generation,
 	)
 
-	return NewHTMLDocument(
-		m.logger,
-		client,
-		m,
-		inputs,
-		exec,
-		rootElement,
-		frame,
-	), nil
+	return &documentState{
+		client:     client,
+		input:      inputs,
+		eval:       exec,
+		element:    rootElement,
+		frameTree:  frame,
+		generation: generation,
+	}, nil
 }
 
 func (m *Manager) ResolveElement(ctx context.Context, frameID page.FrameID, id cdpruntime.RemoteObjectID) (*HTMLElement, error) {
@@ -66,14 +84,20 @@ func (m *Manager) ResolveElement(ctx context.Context, frameID page.FrameID, id c
 	if err != nil {
 		return nil, err
 	}
+	state, err := doc.snapshot()
+	if err != nil {
+		return nil, err
+	}
 
-	return NewHTMLElement(
+	return newHTMLElement(
 		m.logger,
-		doc.client,
+		state.client,
 		m,
-		doc.input,
-		doc.eval,
+		state.input,
+		state.eval,
 		id,
+		doc,
+		state.generation,
 	), nil
 }
 

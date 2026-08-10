@@ -23,13 +23,14 @@ type (
 	HTMLPageEvent string
 
 	HTMLPage struct {
-		logger   zerolog.Logger
-		client   *cdp.Client
-		sessions *cdpsession.Manager
-		network  *cdpnet.Manager
-		dom      *dom.Manager
-		mu       sync.Mutex
-		closed   runtime.Boolean
+		logger     zerolog.Logger
+		client     *cdp.Client
+		sessions   *cdpsession.Manager
+		network    *cdpnet.Manager
+		dom        *dom.Manager
+		initScript *drivers.InitScript
+		mu         sync.Mutex
+		closed     runtime.Boolean
 	}
 )
 
@@ -44,6 +45,10 @@ func LoadHTMLPage(
 	params drivers.Params,
 ) (p *HTMLPage, err error) {
 	logger := logging.From(ctx)
+	initScript, err := drivers.NormalizeInitScript(params.InitScript)
+	if err != nil {
+		return nil, err
+	}
 
 	if sessions == nil {
 		return nil, runtime.Error(runtime.ErrMissedArgument, "sessions")
@@ -55,12 +60,28 @@ func LoadHTMLPage(
 	}
 
 	client := root.CDP
-	if err := enableFeatures(ctx, client, params); err != nil {
-		return nil, err
-	}
+	var netManager *cdpnet.Manager
+	var domManager *dom.Manager
 
 	defer func() {
 		if err != nil {
+			if p != nil {
+				_ = p.Close()
+				return
+			}
+
+			if domManager != nil {
+				if closeErr := domManager.Close(); closeErr != nil {
+					logger.Error().Err(closeErr).Msg("failed to close DOM manager")
+				}
+			}
+
+			if netManager != nil {
+				if closeErr := netManager.Close(); closeErr != nil {
+					logger.Error().Err(closeErr).Msg("failed to close network manager")
+				}
+			}
+
 			if err := client.Page.Close(context.Background()); err != nil {
 				logger.Error().Err(err).Msg("failed to close page")
 			}
@@ -70,6 +91,10 @@ func LoadHTMLPage(
 			}
 		}
 	}()
+
+	if err = enableFeatures(ctx, client, params); err != nil {
+		return nil, err
+	}
 
 	netOpts := cdpnet.Options{
 		Headers: params.Headers,
@@ -86,7 +111,7 @@ func LoadHTMLPage(
 		}
 	}
 
-	netManager, err := cdpnet.New(
+	netManager, err = cdpnet.New(
 		logger,
 		client,
 		sessions,
@@ -100,7 +125,7 @@ func LoadHTMLPage(
 	mouse := input.NewMouse(client)
 	keyboard := input.NewKeyboard(client)
 
-	domManager, err := dom.New(
+	domManager, err = dom.New(
 		logger,
 		client,
 		mouse,
@@ -118,6 +143,11 @@ func LoadHTMLPage(
 		netManager,
 		domManager,
 	)
+	p.initScript = initScript
+
+	if err = p.registerInitScript(ctx); err != nil {
+		return p, err
+	}
 
 	if params.URL != BlankPageURL && params.URL != "" {
 		err = p.Navigate(ctx, runtime.NewString(params.URL))

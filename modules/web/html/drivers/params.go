@@ -1,6 +1,13 @@
 package drivers
 
 type (
+	InitScriptTiming string
+
+	InitScript struct {
+		Source string           `json:"source"`
+		Timing InitScriptTiming `json:"timing"`
+	}
+
 	ResourceFilter struct {
 		URL  string `json:"url"`
 		Type string `json:"type"`
@@ -29,6 +36,7 @@ type (
 		Headers     *HTTPHeaders `json:"headers"`
 		Viewport    *Viewport    `json:"viewport"`
 		Ignore      *Ignore      `json:"ignore"`
+		InitScript  *InitScript  `json:"initScript"`
 		URL         string       `json:"url"`
 		UserAgent   string       `json:"userAgent"`
 		Charset     string       `json:"charset"`

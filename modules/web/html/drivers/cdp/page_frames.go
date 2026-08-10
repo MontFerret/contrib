@@ -40,6 +40,18 @@ func (p *HTMLPage) loadMainFrame(ctx context.Context) error {
 	return p.dom.ReloadRoot(ctx)
 }
 
+func (p *HTMLPage) loadNavigatedMainFrame(ctx context.Context) error {
+	if err := p.waitForMainFrameReady(ctx); err != nil {
+		return err
+	}
+
+	if err := p.evaluateInitScript(ctx); err != nil {
+		return err
+	}
+
+	return p.dom.ReloadRoot(ctx)
+}
+
 func (p *HTMLPage) getCurrentDocument() *dom.HTMLDocument {
 	return p.dom.GetMainFrame()
 }
@@ -55,7 +67,7 @@ func (p *HTMLPage) loadFrames(ctx context.Context) (runtime.List, error) {
 	}
 
 	for attempt := 0; attempt < maxFrameRefreshAttempts; attempt++ {
-		if err := p.dom.ReloadRoot(ctx); err != nil {
+		if err := p.dom.RefreshFrames(ctx); err != nil {
 			return nil, err
 		}
 

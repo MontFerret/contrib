@@ -15,6 +15,10 @@ type (
 		fun     Function
 		polling time.Duration
 	}
+
+	ValueEvaluator interface {
+		EvalValue(ctx context.Context, fn *eval.Function) (runtime.Value, error)
+	}
 )
 
 const DefaultPolling = time.Millisecond * time.Duration(200)
@@ -55,7 +59,7 @@ func (task *WaitTask) Run(ctx context.Context) (runtime.Value, error) {
 }
 
 func NewEvalWaitTask(
-	ec *eval.Runtime,
+	ec ValueEvaluator,
 	fn *eval.Function,
 	polling time.Duration,
 ) *WaitTask {

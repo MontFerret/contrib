@@ -115,6 +115,13 @@ func (fc *AtomicFrameCollection) Remove(key page.FrameID) {
 	delete(fc.value, key)
 }
 
+func (fc *AtomicFrameCollection) Clear() {
+	fc.mu.Lock()
+	defer fc.mu.Unlock()
+
+	fc.value = make(map[page.FrameID]Frame)
+}
+
 func (fc *AtomicFrameCollection) ToSlice() []Frame {
 	fc.mu.Lock()
 	defer fc.mu.Unlock()

@@ -87,6 +87,10 @@ func (drv *Driver) Name() string {
 }
 
 func (drv *Driver) Open(ctx context.Context, params drivers.Params) (drivers.HTMLPage, error) {
+	if params.InitScript != nil {
+		return nil, runtime.Error(runtime.ErrNotSupported, "initScript is only supported by the CDP driver")
+	}
+
 	req, err := http.NewRequest(http.MethodGet, params.URL, nil)
 	if err != nil {
 		return nil, err

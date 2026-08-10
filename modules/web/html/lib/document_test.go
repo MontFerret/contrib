@@ -2,12 +2,63 @@ package lib
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
+
+func TestNewPageLoadParamsInitScript(t *testing.T) {
+	ctx := context.Background()
+	url := runtime.NewString("https://example.com")
+
+	t.Run("defaults timing", func(t *testing.T) {
+		params, err := newPageLoadParams(ctx, url, runtime.NewObjectWith(map[string]runtime.Value{
+			"initScript": runtime.NewObjectWith(map[string]runtime.Value{
+				"source": runtime.NewString("window.ready = true"),
+			}),
+		}))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if params.InitScript == nil || params.InitScript.Timing != drivers.InitScriptAfterNavigation {
+			t.Fatalf("unexpected initScript: %#v", params.InitScript)
+		}
+	})
+
+	for _, tt := range []struct {
+		script map[string]runtime.Value
+		name   string
+	}{
+		{name: "missing source", script: map[string]runtime.Value{"timing": runtime.NewString("beforeDocument")}},
+		{name: "blank source", script: map[string]runtime.Value{"source": runtime.NewString("  ")}},
+		{name: "invalid timing", script: map[string]runtime.Value{"source": runtime.NewString("true"), "timing": runtime.NewString("beforeLoad")}},
+		{name: "unknown nested field", script: map[string]runtime.Value{"source": runtime.NewString("true"), "evaluateArgs": runtime.NewArray(0)}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := newPageLoadParams(ctx, url, runtime.NewObjectWith(map[string]runtime.Value{
+				"initScript": runtime.NewObjectWith(tt.script),
+			}))
+			if err == nil {
+				t.Fatal("expected decoding or validation error")
+			}
+		})
+	}
+
+	t.Run("evaluateArgs alias is rejected", func(t *testing.T) {
+		_, err := newPageLoadParams(ctx, url, runtime.NewObjectWith(map[string]runtime.Value{
+			"evaluateArgs": runtime.NewArray(0),
+		}))
+		if err == nil {
+			t.Fatal("expected unknown field error")
+		}
+		if errors.Is(err, runtime.ErrNotSupported) {
+			t.Fatalf("expected strict decoding error, got %v", err)
+		}
+	})
+}
 
 func TestDocument(t *testing.T) {
 	defaultTimeout := drivers.DefaultPageLoadTimeout * time.Millisecond

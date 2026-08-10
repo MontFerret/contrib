@@ -1,0 +1,22 @@
+LET first = @lab.static.static + "/init-script.html"
+LET second = @lab.static.static + "/simple.html"
+LET source = "window.__afterCount = Number(sessionStorage.getItem('__afterCount') || 0) + 1; sessionStorage.setItem('__afterCount', String(window.__afterCount)); document.documentElement.dataset.afterCount = String(window.__afterCount)"
+LET page = DOCUMENT(first, {
+  driver: "cdp",
+  initScript: {
+    source: source,
+    timing: "afterNavigation"
+  }
+})
+
+T::EQ(ELEMENT(page, "html").attributes["data-after-count"], "1")
+
+NAVIGATE(page, second)
+T::EQ(ELEMENT(page, "html").attributes["data-after-count"], "2")
+
+NAVIGATE_BACK(page)
+T::EQ(ELEMENT(page, "html").attributes["data-after-count"], "3")
+
+NAVIGATE_FORWARD(page)
+
+RETURN T::EQ(ELEMENT(page, "html").attributes["data-after-count"], "4")

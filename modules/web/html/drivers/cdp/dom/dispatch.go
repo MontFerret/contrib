@@ -36,10 +36,15 @@ func dispatchHTMLDocument(ctx context.Context, doc *HTMLDocument, event runtime.
 		return dispatchDocumentScroll(ctx, doc, event.Payload)
 	}
 
-	return dispatchHTMLElement(ctx, doc.element, event, true)
+	return withDocumentError(ctx, doc, func(state *documentState) error {
+		return dispatchHTMLElement(ctx, state.element, event, true)
+	})
 }
 
 func dispatchHTMLElement(ctx context.Context, el *HTMLElement, event runtime.DispatchEvent, validated bool) error {
+	if err := el.ensureAttached(); err != nil {
+		return err
+	}
 	if !validated {
 		if err := validateDispatchEvent(event); err != nil {
 			return err
@@ -61,7 +66,7 @@ func dispatchHTMLElement(ctx context.Context, el *HTMLElement, event runtime.Dis
 			return err
 		}
 
-		return el.input.MouseEvent(ctx, el.id, eventName, params)
+		return el.normalizeError(ctx, el.input.MouseEvent(ctx, el.id, eventName, params))
 	case drivers.DispatchKeyDownEvent,
 		drivers.DispatchKeyUpEvent,
 		drivers.DispatchKeyPressEvent:
@@ -70,7 +75,7 @@ func dispatchHTMLElement(ctx context.Context, el *HTMLElement, event runtime.Dis
 			return err
 		}
 
-		return el.input.KeyEvent(ctx, el.id, eventName, key)
+		return el.normalizeError(ctx, el.input.KeyEvent(ctx, el.id, eventName, key))
 	case drivers.DispatchPressEvent:
 		params, err := parseDispatchKeyboardPayload(ctx, event.Payload)
 		if err != nil {
@@ -81,18 +86,18 @@ func dispatchHTMLElement(ctx context.Context, el *HTMLElement, event runtime.Dis
 			return err
 		}
 
-		return el.input.Press(ctx, sdk.UnwrapStrings(params.Keys), int(params.Count))
+		return el.normalizeError(ctx, el.input.Press(ctx, sdk.UnwrapStrings(params.Keys), int(params.Count)))
 	case drivers.DispatchTypeEvent:
 		params, err := parseDispatchTypePayload(ctx, event.Payload)
 		if err != nil {
 			return err
 		}
 
-		return el.input.Type(ctx, el.id, input.TypeParams{
+		return el.normalizeError(ctx, el.input.Type(ctx, el.id, input.TypeParams{
 			Text:  params.Text,
 			Clear: params.Clear,
 			Delay: durationFromRuntimeInt(params.Delay),
-		})
+		}))
 	case drivers.DispatchInputEvent:
 		payload, err := newDispatchPayload(event.Payload)
 		if err != nil {
@@ -104,7 +109,7 @@ func dispatchHTMLElement(ctx context.Context, el *HTMLElement, event runtime.Dis
 			return err
 		}
 
-		return el.input.InputEvent(ctx, el.id, value)
+		return el.normalizeError(ctx, el.input.InputEvent(ctx, el.id, value))
 	case drivers.DispatchChangeEvent:
 		payload, err := newDispatchPayload(event.Payload)
 		if err != nil {
@@ -116,11 +121,11 @@ func dispatchHTMLElement(ctx context.Context, el *HTMLElement, event runtime.Dis
 			return err
 		}
 
-		return el.input.ChangeEvent(ctx, el.id, value, hasValue && value != runtime.None)
+		return el.normalizeError(ctx, el.input.ChangeEvent(ctx, el.id, value, hasValue && value != runtime.None))
 	case drivers.DispatchSubmitEvent:
-		return el.input.SubmitEvent(ctx, el.id)
+		return el.normalizeError(ctx, el.input.SubmitEvent(ctx, el.id))
 	case drivers.DispatchResetEvent:
-		return el.input.ResetEvent(ctx, el.id)
+		return el.normalizeError(ctx, el.input.ResetEvent(ctx, el.id))
 	case drivers.DispatchFocusEvent:
 		return el.Focus(ctx)
 	case drivers.DispatchBlurEvent:
@@ -128,7 +133,7 @@ func dispatchHTMLElement(ctx context.Context, el *HTMLElement, event runtime.Dis
 	case drivers.DispatchCheckEvent,
 		drivers.DispatchUncheckEvent,
 		drivers.DispatchToggleEvent:
-		return el.input.CheckEvent(ctx, el.id, eventName)
+		return el.normalizeError(ctx, el.input.CheckEvent(ctx, el.id, eventName))
 	case drivers.DispatchSelectEvent:
 		payload, err := newDispatchPayload(event.Payload)
 		if err != nil {
@@ -140,7 +145,7 @@ func dispatchHTMLElement(ctx context.Context, el *HTMLElement, event runtime.Dis
 			return err
 		}
 
-		return el.input.SelectEvent(ctx, el.id, value)
+		return el.normalizeError(ctx, el.input.SelectEvent(ctx, el.id, value))
 	case drivers.DispatchScrollEvent:
 		return dispatchElementScroll(ctx, el, event.Payload)
 	default:
@@ -160,9 +165,13 @@ func dispatchDocumentScroll(ctx context.Context, doc *HTMLDocument, payload runt
 
 	switch params.Mode {
 	case dispatchScrollModeIntoView:
-		return doc.element.ScrollIntoView(ctx, params.Options)
+		return withDocumentError(ctx, doc, func(state *documentState) error {
+			return state.element.ScrollIntoView(ctx, params.Options)
+		})
 	case dispatchScrollModeBy:
-		return doc.input.ScrollByDelta(ctx, params.Options)
+		return withDocumentError(ctx, doc, func(state *documentState) error {
+			return state.input.ScrollByDelta(ctx, params.Options)
+		})
 	case dispatchScrollModeTop:
 		_, err := doc.ScrollTop(ctx, params.Options)
 		return err
@@ -185,5 +194,5 @@ func dispatchElementScroll(ctx context.Context, el *HTMLElement, payload runtime
 		return el.ScrollIntoView(ctx, params.Options)
 	}
 
-	return el.input.ElementScroll(ctx, el.id, string(params.Mode), params.Options)
+	return el.normalizeError(ctx, el.input.ElementScroll(ctx, el.id, string(params.Mode), params.Options))
 }

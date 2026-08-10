@@ -18,18 +18,20 @@ import (
 
 type HTMLElement struct {
 	logger     zerolog.Logger
-	client     *cdp.Client
-	dom        *Manager
-	input      *input.Manager
-	eval       *eval.Runtime
-	attributes *elementAttributes
 	styles     *elementStyles
-	classes    *elementClasses
 	dataset    *elementDataset
+	input      *input.Manager
+	eval       *elementExecutor
+	attributes *elementAttributes
+	client     *cdp.Client
+	classes    *elementClasses
+	dom        *Manager
 	wait       *elementWait
 	nodeType   *lazy.Value
 	nodeName   *lazy.Value
+	document   *HTMLDocument
 	id         cdpruntime.RemoteObjectID
+	generation uint64
 }
 
 func NewHTMLElement(
@@ -40,6 +42,19 @@ func NewHTMLElement(
 	exec *eval.Runtime,
 	id cdpruntime.RemoteObjectID,
 ) *HTMLElement {
+	return newHTMLElement(logger, client, domManager, input, exec, id, nil, 0)
+}
+
+func newHTMLElement(
+	logger zerolog.Logger,
+	client *cdp.Client,
+	domManager *Manager,
+	input *input.Manager,
+	exec *eval.Runtime,
+	id cdpruntime.RemoteObjectID,
+	document *HTMLDocument,
+	generation uint64,
+) *HTMLElement {
 	el := new(HTMLElement)
 	el.logger = logutil.WithComponent(logger.With(), "dom_element").
 		Str("object_id", string(id)).
@@ -47,13 +62,15 @@ func NewHTMLElement(
 	el.client = client
 	el.dom = domManager
 	el.input = input
-	el.eval = exec
+	el.eval = newElementExecutor(exec, document, generation)
 	el.id = id
-	el.attributes = newElementAttributes(exec, id)
-	el.styles = newElementStyles(exec, id)
-	el.classes = newElementClasses(exec, id)
-	el.dataset = newElementDataset(exec, id)
-	el.wait = newElementWait(exec, id)
+	el.document = document
+	el.generation = generation
+	el.attributes = newElementAttributes(el.eval, id)
+	el.styles = newElementStyles(el.eval, id)
+	el.classes = newElementClasses(el.eval, id)
+	el.dataset = newElementDataset(el.eval, id)
+	el.wait = newElementWait(el.eval, id)
 	el.nodeType = lazy.New(func(ctx context.Context) (runtime.Value, error) {
 		return el.eval.EvalValue(ctx, templates.GetNodeType(el.id))
 	})
@@ -98,6 +115,33 @@ func (el *HTMLElement) AsInteractionTarget() drivers.InteractionTarget {
 
 func (el *HTMLElement) AsWaitTarget() drivers.WaitTarget {
 	return el.wait
+}
+
+func (el *HTMLElement) ensureAttached() error {
+	if el.eval == nil {
+		return drivers.ErrDetached
+	}
+
+	return el.eval.ensureAttached()
+}
+
+func (el *HTMLElement) normalizeError(ctx context.Context, err error) error {
+	if el.eval == nil {
+		return drivers.ErrDetached
+	}
+
+	return el.eval.normalizeError(ctx, err)
+}
+
+func (el *HTMLElement) bindDocument(document *HTMLDocument, exec *eval.Runtime, generation uint64) {
+	el.document = document
+	el.generation = generation
+	el.eval = newElementExecutor(exec, document, generation)
+	el.attributes = newElementAttributes(el.eval, el.id)
+	el.styles = newElementStyles(el.eval, el.id)
+	el.classes = newElementClasses(el.eval, el.id)
+	el.dataset = newElementDataset(el.eval, el.id)
+	el.wait = newElementWait(el.eval, el.id)
 }
 
 func (el *HTMLElement) logError(err error) *zerolog.Event {

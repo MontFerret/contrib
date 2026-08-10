@@ -1,0 +1,9 @@
+LET first = @lab.static.static + "/overview.html"
+LET second = @lab.static.static + "/simple.html"
+LET page = DOCUMENT(first, { driver: "cdp" })
+LET document = FIRST(page.frames)
+LET old = ELEMENT(document, "body")
+
+NAVIGATE(page, second)
+
+RETURN INNER_TEXT(old)

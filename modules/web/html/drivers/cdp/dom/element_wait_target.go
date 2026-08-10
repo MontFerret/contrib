@@ -13,11 +13,11 @@ import (
 )
 
 type elementWait struct {
-	eval *eval.Runtime
+	eval elementValueEvaluator
 	id   cdpruntime.RemoteObjectID
 }
 
-func newElementWait(exec *eval.Runtime, id cdpruntime.RemoteObjectID) *elementWait {
+func newElementWait(exec elementValueEvaluator, id cdpruntime.RemoteObjectID) *elementWait {
 	return &elementWait{
 		eval: exec,
 		id:   id,

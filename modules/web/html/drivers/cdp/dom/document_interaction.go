@@ -8,21 +8,32 @@ import (
 )
 
 func (doc *HTMLDocument) MoveMouseByXY(ctx context.Context, x, y runtime.Float) (runtime.Boolean, error) {
-	return doc.input.MoveMouseByXY(ctx, x, y)
+	return withDocumentResult(ctx, doc, func(state *documentState) (runtime.Boolean, error) {
+		value, err := state.input.MoveMouseByXY(ctx, x, y)
+		return value, err
+	})
 }
 
 func (doc *HTMLDocument) ScrollTop(ctx context.Context, options drivers.ScrollOptions) (runtime.Boolean, error) {
-	return doc.input.ScrollTop(ctx, options)
+	return withDocumentResult(ctx, doc, func(state *documentState) (runtime.Boolean, error) {
+		return state.input.ScrollTop(ctx, options)
+	})
 }
 
 func (doc *HTMLDocument) ScrollBottom(ctx context.Context, options drivers.ScrollOptions) (runtime.Boolean, error) {
-	return doc.input.ScrollBottom(ctx, options)
+	return withDocumentResult(ctx, doc, func(state *documentState) (runtime.Boolean, error) {
+		return state.input.ScrollBottom(ctx, options)
+	})
 }
 
 func (doc *HTMLDocument) ScrollBySelector(ctx context.Context, selector drivers.QuerySelector, options drivers.ScrollOptions) (runtime.Boolean, error) {
-	return doc.input.ScrollIntoViewBySelector(ctx, doc.element.id, selector, options)
+	return withDocumentResult(ctx, doc, func(state *documentState) (runtime.Boolean, error) {
+		return state.input.ScrollIntoViewBySelector(ctx, state.element.id, selector, options)
+	})
 }
 
 func (doc *HTMLDocument) Scroll(ctx context.Context, options drivers.ScrollOptions) (runtime.Boolean, error) {
-	return doc.input.ScrollByXY(ctx, options)
+	return withDocumentResult(ctx, doc, func(state *documentState) (runtime.Boolean, error) {
+		return state.input.ScrollByXY(ctx, options)
+	})
 }
