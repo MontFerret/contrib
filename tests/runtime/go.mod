@@ -7,6 +7,7 @@ require (
 	github.com/MontFerret/contrib/modules/archive v0.0.0
 	github.com/MontFerret/contrib/modules/csv v1.0.0-rc.6
 	github.com/MontFerret/contrib/modules/db/postgres v0.0.0-20260708151614-3ed335b5f8ad
+	github.com/MontFerret/contrib/modules/db/redis v0.0.0
 	github.com/MontFerret/contrib/modules/db/sqlite v1.0.0-rc.4
 	github.com/MontFerret/contrib/modules/document/pdf v0.0.0-20260708151614-3ed335b5f8ad
 	github.com/MontFerret/contrib/modules/document/xlsx v0.0.0-20260708151614-3ed335b5f8ad

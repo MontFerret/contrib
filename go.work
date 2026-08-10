@@ -5,6 +5,7 @@ use (
 	./modules/archive
 	./modules/csv
 	./modules/db/postgres
+	./modules/db/redis
 	./modules/db/sqlite
 	./modules/document/pdf
 	./modules/document/xlsx
@@ -27,5 +28,7 @@ replace github.com/MontFerret/contrib/pkg/common v0.1.0 => ./pkg/common
 replace github.com/MontFerret/contrib/modules/ai/llm v0.0.0 => ./modules/ai/llm
 
 replace github.com/MontFerret/contrib/modules/archive v0.0.0 => ./modules/archive
+
+replace github.com/MontFerret/contrib/modules/db/redis v0.0.0 => ./modules/db/redis
 
 replace github.com/MontFerret/contrib/modules/security/oauth2 v0.0.0 => ./modules/security/oauth2

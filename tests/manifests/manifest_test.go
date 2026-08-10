@@ -15,7 +15,7 @@ const (
 	expectedAuthor        = "MontFerret Authors"
 	expectedCompatibility = ">=2.0.0-alpha.43 <3.0.0"
 	expectedLicense       = "Apache-2.0"
-	expectedModuleCount   = 17
+	expectedModuleCount   = 18
 	expectedRepositoryURL = "https://github.com/MontFerret/contrib"
 	manifestFilename      = "ferret.yaml"
 )

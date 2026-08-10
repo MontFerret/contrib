@@ -1,0 +1,29 @@
+$schema: https://schemas.ferretlang.org/module/v1.json
+name: montferret/redis
+namespace: DB::REDIS
+version: 1.0.0-rc.1
+description: Redis connection handles and generic command execution under DB::REDIS for Ferret.
+license: Apache-2.0
+authors:
+  - name: MontFerret Authors
+documentation: https://github.com/MontFerret/contrib/tree/main/modules/db/redis/
+repository:
+  url: https://github.com/MontFerret/contrib
+  directory: modules/db/redis
+compatibility:
+  ferret: ">=2.0.0-alpha.43 <3.0.0"
+keywords:
+  - redis
+  - key-value
+  - cache
+  - resp
+  - querying
+categories:
+  - data
+  - databases
+exports:
+  namespaces:
+    - name: DB::REDIS
+      functions:
+        - OPEN
+        - CLOSE
