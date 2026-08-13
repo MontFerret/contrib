@@ -1,27 +1,27 @@
 module github.com/MontFerret/contrib/tests/runner
 
-go 1.26.1
+go 1.26.5
 
 require (
-	github.com/MontFerret/contrib/modules/ai/llm v0.0.0
-	github.com/MontFerret/contrib/modules/archive v0.0.0
-	github.com/MontFerret/contrib/modules/csv v1.0.0-rc.6
-	github.com/MontFerret/contrib/modules/db/postgres v0.0.0-20260708151614-3ed335b5f8ad
-	github.com/MontFerret/contrib/modules/db/redis v0.0.0
-	github.com/MontFerret/contrib/modules/db/sqlite v1.0.0-rc.4
-	github.com/MontFerret/contrib/modules/document/pdf v0.0.0-20260708151614-3ed335b5f8ad
-	github.com/MontFerret/contrib/modules/document/xlsx v0.0.0-20260708151614-3ed335b5f8ad
-	github.com/MontFerret/contrib/modules/net/rest v1.0.0-rc.2
-	github.com/MontFerret/contrib/modules/security/jwt v1.0.0-rc.4
-	github.com/MontFerret/contrib/modules/security/oauth2 v0.0.0
-	github.com/MontFerret/contrib/modules/toml v1.0.0-rc.6
-	github.com/MontFerret/contrib/modules/web/article v1.0.0-rc.7
-	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.11
-	github.com/MontFerret/contrib/modules/web/robots v1.0.0-rc.6
-	github.com/MontFerret/contrib/modules/web/sitemap v1.0.0-rc.6
-	github.com/MontFerret/contrib/modules/xml v1.0.0-rc.6
-	github.com/MontFerret/contrib/modules/yaml v1.0.0-rc.6
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.43
+	github.com/MontFerret/contrib/modules/ai/llm v1.0.0-rc.5
+	github.com/MontFerret/contrib/modules/archive v1.0.0-rc.4
+	github.com/MontFerret/contrib/modules/csv v1.0.0-rc.17
+	github.com/MontFerret/contrib/modules/db/postgres v1.0.0-rc.10
+	github.com/MontFerret/contrib/modules/db/redis v1.0.0-rc.3
+	github.com/MontFerret/contrib/modules/db/sqlite v1.0.0-rc.13
+	github.com/MontFerret/contrib/modules/document/pdf v1.0.0-rc.9
+	github.com/MontFerret/contrib/modules/document/xlsx v1.0.0-rc.9
+	github.com/MontFerret/contrib/modules/net/rest v1.0.0-rc.12
+	github.com/MontFerret/contrib/modules/security/jwt v1.0.0-rc.13
+	github.com/MontFerret/contrib/modules/security/oauth2 v1.0.0-rc.4
+	github.com/MontFerret/contrib/modules/toml v1.0.0-rc.15
+	github.com/MontFerret/contrib/modules/web/article v1.0.0-rc.16
+	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.22
+	github.com/MontFerret/contrib/modules/web/robots v1.0.0-rc.15
+	github.com/MontFerret/contrib/modules/web/sitemap v1.0.0-rc.15
+	github.com/MontFerret/contrib/modules/xml v1.0.0-rc.15
+	github.com/MontFerret/contrib/modules/yaml v1.0.0-rc.15
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.45
 	github.com/rs/zerolog v1.35.1
 )
 
@@ -29,7 +29,7 @@ require (
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/JohannesKaufmann/dom v0.3.1 // indirect
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2 // indirect
-	github.com/MontFerret/contrib/pkg/common v0.1.1 // indirect
+	github.com/MontFerret/contrib/pkg/common v0.2.0 // indirect
 	github.com/MontFerret/cssx v0.2.0 // indirect
 	github.com/PuerkitoBio/goquery v1.12.0 // indirect
 	github.com/andybalholm/cascadia v1.3.4 // indirect
@@ -37,6 +37,7 @@ require (
 	github.com/antchfx/xpath v1.3.6 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/corpix/uarand v0.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -59,6 +60,7 @@ require (
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/openai/openai-go/v3 v3.41.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/redis/go-redis/v9 v9.20.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/richardlehane/mscfb v1.0.7 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
@@ -71,11 +73,12 @@ require (
 	github.com/tiendc/go-deepcopy v1.7.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	github.com/wI2L/jettison v0.7.4 // indirect
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/excelize/v2 v2.11.0 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	github.com/ziflex/dbx v1.10.0 // indirect
+	github.com/ziflex/go-options v1.0.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/net v0.56.0 // indirect
@@ -86,4 +89,26 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 	modernc.org/sqlite v1.51.0 // indirect
+)
+
+replace (
+	github.com/MontFerret/contrib/modules/ai/llm => ../../modules/ai/llm
+	github.com/MontFerret/contrib/modules/archive => ../../modules/archive
+	github.com/MontFerret/contrib/modules/csv => ../../modules/csv
+	github.com/MontFerret/contrib/modules/db/postgres => ../../modules/db/postgres
+	github.com/MontFerret/contrib/modules/db/redis => ../../modules/db/redis
+	github.com/MontFerret/contrib/modules/db/sqlite => ../../modules/db/sqlite
+	github.com/MontFerret/contrib/modules/document/pdf => ../../modules/document/pdf
+	github.com/MontFerret/contrib/modules/document/xlsx => ../../modules/document/xlsx
+	github.com/MontFerret/contrib/modules/net/rest => ../../modules/net/rest
+	github.com/MontFerret/contrib/modules/security/jwt => ../../modules/security/jwt
+	github.com/MontFerret/contrib/modules/security/oauth2 => ../../modules/security/oauth2
+	github.com/MontFerret/contrib/modules/toml => ../../modules/toml
+	github.com/MontFerret/contrib/modules/web/article => ../../modules/web/article
+	github.com/MontFerret/contrib/modules/web/html => ../../modules/web/html
+	github.com/MontFerret/contrib/modules/web/robots => ../../modules/web/robots
+	github.com/MontFerret/contrib/modules/web/sitemap => ../../modules/web/sitemap
+	github.com/MontFerret/contrib/modules/xml => ../../modules/xml
+	github.com/MontFerret/contrib/modules/yaml => ../../modules/yaml
+	github.com/MontFerret/contrib/pkg/common => ../../pkg/common
 )

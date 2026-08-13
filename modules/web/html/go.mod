@@ -4,7 +4,7 @@ go 1.25.6
 
 require (
 	github.com/MontFerret/cssx v0.2.0
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.43
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.45
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/andybalholm/cascadia v1.3.4
 	github.com/antchfx/htmlquery v1.3.6
@@ -38,7 +38,6 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/smarty/assertions v1.16.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/wI2L/jettison v0.7.4 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
