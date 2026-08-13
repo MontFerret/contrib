@@ -1,4 +1,5 @@
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.45 h1:Lnv/5AY/pfM1he61PKsHQB/lklerFFFl7r/+nfar96s=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.46 h1:xcIVjOqaPKH5T2lnTRzOYygkNeHiW8HGqGFnv/UMzkg=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.46/go.mod h1:Q6JfAgOzRi9KNLqgQtPIQ9BNsXeAar2ITmcQ0HI4zgM=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/gobwas/glob v0.2.3 h1:A4xDbljILXROh+kObIiy5kIaPYD8e96x1tgBhUI5J+Y=
