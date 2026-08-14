@@ -2,7 +2,8 @@ github.com/MontFerret/contrib/modules/xml v1.0.0-rc.4 h1:PjT+hr/ZDRBiNbyePLP1fv4
 github.com/MontFerret/contrib/modules/xml v1.0.0-rc.4/go.mod h1:eMl++62DU9ejC2sFyCldTi2fXZTxX21l7S+u0XmmTZc=
 github.com/MontFerret/contrib/pkg/common v0.1.1 h1:qA2URATIO+EVLH3BNFKYupLx97ftotyGWnKtJJhtR0Y=
 github.com/MontFerret/contrib/pkg/common v0.1.1/go.mod h1:wiMLQnE46YGci3qMzA3ExArKomQDXR5DvNSE7HnP0ik=
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.45 h1:Lnv/5AY/pfM1he61PKsHQB/lklerFFFl7r/+nfar96s=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.46 h1:xcIVjOqaPKH5T2lnTRzOYygkNeHiW8HGqGFnv/UMzkg=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.46/go.mod h1:Q6JfAgOzRi9KNLqgQtPIQ9BNsXeAar2ITmcQ0HI4zgM=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/gobwas/glob v0.2.3 h1:A4xDbljILXROh+kObIiy5kIaPYD8e96x1tgBhUI5J+Y=

@@ -4,7 +4,7 @@ go 1.26.5
 
 require (
 	github.com/MontFerret/contrib/pkg/common v0.2.0
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.45
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.46
 	github.com/ziflex/go-options v1.0.0
 )
 

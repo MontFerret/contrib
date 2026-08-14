@@ -2,7 +2,7 @@ module github.com/MontFerret/contrib/pkg/common
 
 go 1.25.0
 
-require github.com/MontFerret/ferret/v2 v2.0.0-alpha.45
+require github.com/MontFerret/ferret/v2 v2.0.0-alpha.46
 
 require (
 	github.com/goccy/go-json v0.10.6 // indirect
