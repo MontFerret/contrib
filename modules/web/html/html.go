@@ -9,26 +9,26 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
 )
 
-func New(opts ...Option) (module.Module, error) {
-	o, err := newOptions(opts)
-
-	if err != nil {
-		return nil, err
-	}
-
-	container := drivers.NewContainer()
-
-	for _, d := range o.drivers {
-		if err := container.Register(d); err != nil {
-			return nil, err
-		}
-	}
-
-	if o.defaultDrv != "" {
-		container.SetDefault(o.defaultDrv)
-	}
-
+func New(opts ...Option) module.Module {
 	return sdk.NewModule("html", func(registry module.Bootstrap) error {
+		o, err := newOptions(opts)
+
+		if err != nil {
+			return err
+		}
+
+		container := drivers.NewContainer()
+
+		for _, d := range o.drivers {
+			if err := container.Register(d); err != nil {
+				return err
+			}
+		}
+
+		if o.defaultDrv != "" {
+			container.SetDefault(o.defaultDrv)
+		}
+
 		if !o.noLib {
 			// Legacy support for modules that use module functions without namespace (e.g. `DOCUMENT` instead of `WEB::HTML::DOCUMENT`).
 			if err := lib.RegisterLibLegacy(registry.Host().Library()); err != nil {
@@ -44,5 +44,5 @@ func New(opts ...Option) (module.Module, error) {
 		})
 
 		return nil
-	}), nil
+	})
 }

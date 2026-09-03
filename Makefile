@@ -4,7 +4,7 @@ DIR_BIN = ./bin
 DIR_TEST = ./tests
 DIR_TEST_CLI = ${DIR_TEST}/runtime
 FERRET_SPEC ?= ferret-spec
-FERRET_SPEC_VERSION ?= v1.1.0
+FERRET_SPEC_VERSION ?= v1.2.0
 
 install-tools: install-manifest-validator
 	go install honnef.co/go/tools/cmd/staticcheck@latest && \

@@ -17,7 +17,7 @@ import (
 
 type (
 	ResourceFilter struct {
-		URL          glob.Glob
+		URL          *glob.Pattern
 		ResourceType string
 	}
 
