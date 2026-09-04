@@ -100,13 +100,13 @@ var (
 
 	optimizationLevel = flag.Int(
 		"ol",
-		int(compiler.O1),
-		"set optimization level (0-3)",
+		int(ferret.OptimizationFull),
+		"set optimization level (none, basic, full)",
 	)
 
 	logLevel = flag.String(
 		"log-level",
-		logging.ErrorLevel.String(),
+		ferret.LogError.String(),
 		"log level",
 	)
 )
@@ -180,16 +180,6 @@ func main() {
 		}
 	}()
 
-	drivers, err := html.New(
-		html.WithDefaultDriver(memory.New()),
-		html.WithDrivers(cdp.New(cdp.WithAddress(*conn))),
-	)
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
 	network, err := ferretnet.New(
 		ferretnet.WithHTTPPolicies(ferrethttp.WithAllowLocalhost(true)),
 	)
@@ -220,7 +210,10 @@ func main() {
 			article.New(),
 			robots.New(),
 			sitemap.New(),
-			drivers,
+			html.New(
+				html.WithDefaultDriver(memory.New()),
+				html.WithDrivers(cdp.New(cdp.WithAddress(*conn))),
+			),
 		),
 	)
 
@@ -234,7 +227,7 @@ func main() {
 	}
 
 	if query != "" {
-		err = runQuery(ctx, engine, sessionOptions, source.New("stdin", query))
+		err = runQuery(ctx, engine, sessionOptions, ferret.NewSource("stdin", query))
 	} else {
 		err = execFiles(ctx, engine, sessionOptions, files)
 	}
@@ -246,12 +239,12 @@ func main() {
 }
 
 func execFiles(ctx context.Context, engine *ferret.Engine, opts []ferret.SessionOption, files []string) error {
-	return processFiles(ctx, files, "execute", func(ctx context.Context, src *source.Source) error {
+	return processFiles(ctx, files, "execute", func(ctx context.Context, src ferret.Source) error {
 		return runQuery(ctx, engine, opts, src)
 	})
 }
 
-func runQuery(ctx context.Context, engine *ferret.Engine, opts []ferret.SessionOption, query *source.Source) error {
+func runQuery(ctx context.Context, engine *ferret.Engine, opts []ferret.SessionOption, query ferret.Source) error {
 	if !(*dryRun) {
 		return execQuery(ctx, engine, opts, query)
 	}
@@ -259,7 +252,7 @@ func runQuery(ctx context.Context, engine *ferret.Engine, opts []ferret.SessionO
 	return analyzeQuery(query)
 }
 
-func execQuery(ctx context.Context, engine *ferret.Engine, opts []ferret.SessionOption, query *source.Source) error {
+func execQuery(ctx context.Context, engine *ferret.Engine, opts []ferret.SessionOption, query ferret.Source) error {
 	plan, err := engine.Compile(ctx, query)
 
 	if err != nil {
@@ -295,7 +288,7 @@ func execQuery(ctx context.Context, engine *ferret.Engine, opts []ferret.Session
 	return nil
 }
 
-func processFiles(ctx context.Context, files []string, op string, predicate func(ctx context.Context, src *source.Source) error) error {
+func processFiles(ctx context.Context, files []string, op string, predicate func(ctx context.Context, src ferret.Source) error) error {
 	errList := make([]diagnostics.FormattableError, 0, len(files))
 
 	for _, path := range files {
@@ -428,7 +421,7 @@ func printResult(_ context.Context, res *ferret.Output) {
 	_, _ = os.Stdout.WriteString("\n")
 }
 
-func analyzeQuery(query *source.Source) error {
+func analyzeQuery(query ferret.Source) error {
 	optLevel := compiler.OptimizationLevel(*optimizationLevel)
 
 	if optLevel < 0 || optLevel > 3 {
@@ -436,9 +429,13 @@ func analyzeQuery(query *source.Source) error {
 		os.Exit(1)
 	}
 
-	c := compiler.New(compiler.WithOptimizationLevel(optLevel))
-	prog, err := c.Compile(query)
+	c, err := compiler.New(compiler.WithOptimizationLevel(optLevel))
+	if err != nil {
+		fmt.Println("Failed to create compiler:", err)
+		os.Exit(1)
+	}
 
+	prog, err := c.Compile(query)
 	if err != nil {
 		fmt.Println(diagnostics.Format(err))
 		os.Exit(1)

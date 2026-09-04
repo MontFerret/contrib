@@ -234,6 +234,7 @@ func (m memoryFS) AppendFile(string, []byte, fs.FileMode) error {
 }
 func (m memoryFS) Remove(string) error    { return errors.New("not implemented") }
 func (m memoryFS) RemoveAll(string) error { return errors.New("not implemented") }
+func (m memoryFS) Close() error           { return nil }
 
 type memoryFile struct {
 	reader *bytes.Reader

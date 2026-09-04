@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/MontFerret/contrib/pkg/common v0.1.1
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.46
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.52
 	github.com/xuri/excelize/v2 v2.11.0
 )
 
@@ -22,6 +22,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
+	github.com/ziflex/go-options v1.3.1 // indirect
 	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/net v0.56.0 // indirect

@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/MontFerret/contrib/pkg/common v0.2.0
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.46
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.52
 	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728
 )
 
@@ -18,6 +18,7 @@ require (
 	github.com/rs/zerolog v1.35.1 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	github.com/ziflex/go-options v1.3.1 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -39,18 +39,13 @@ import (
 )
 
 func main() {
-	htmlMod, err := htmlmodule.New(
-		htmlmodule.WithDefaultDriver(memory.New()),
-		htmlmodule.WithDrivers(
-			cdp.New(cdp.WithAddress("http://localhost:9222")),
-		),
-	)
-	if err != nil {
-		panic(err)
-	}
-
 	engine, err := ferret.New(
-		ferret.WithModules(htmlMod),
+		ferret.WithModules(htmlmodule.New(
+			htmlmodule.WithDefaultDriver(memory.New()),
+			htmlmodule.WithDrivers(
+				cdp.New(cdp.WithAddress("http://localhost:9222")),
+			),
+		)),
 	)
 	if err != nil {
 		panic(err)

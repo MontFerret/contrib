@@ -20,7 +20,7 @@ type (
 	Option func(opts *Options)
 
 	compiledStatusCodeFilter struct {
-		URL  glob.Glob
+		URL  *glob.Pattern
 		Code int
 	}
 
