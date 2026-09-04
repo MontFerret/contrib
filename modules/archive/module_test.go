@@ -57,7 +57,7 @@ func TestNewRejectsNegativeLimitsAtBootstrap(t *testing.T) {
 				t.Fatalf("expected typed module configuration error, got %v", err)
 			}
 			if validationErr.Field != test.field ||
-				validationErr.Reason != "must be non-negative" ||
+				validationErr.Reason.Error() != "must be non-negative" ||
 				validationErr.Value != "-1" {
 				t.Fatalf("unexpected module configuration error: %#v", validationErr)
 			}

@@ -15,7 +15,7 @@ import (
 // New returns the ARCHIVE module.
 func New(setters ...Option) module.Module {
 	return sdk.NewModule("archive", func(bootstrap module.Bootstrap) error {
-		config, err := options.ApplyWithValues[core.Config](core.DefaultConfig(), setters...)
+		config, err := options.ApplyTo[core.Config](core.DefaultConfig(), setters...)
 		if err != nil {
 			return fmt.Errorf("configure archive module: %w", err)
 		}
