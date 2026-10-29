@@ -1,6 +1,8 @@
 package eval
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -84,15 +86,14 @@ func (fn *Function) WithArgValue(value runtime.Value) *Function {
 		return fn
 	}
 
-	raw, err := jsonf.Default.Encode(value)
-
-	if err != nil {
+	var raw bytes.Buffer
+	if err := jsonf.Default.Encode(context.Background(), &raw, value); err != nil {
 		fn.err = fmt.Errorf("encode arg value: %w", err)
 		return fn
 	}
 
 	return fn.withArg(cdpruntime.CallArgument{
-		Value: raw,
+		Value: raw.Bytes(),
 	})
 }
 

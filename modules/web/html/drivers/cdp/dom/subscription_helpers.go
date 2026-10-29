@@ -60,7 +60,7 @@ func closeDOMEventResources(
 }
 
 func decodeDOMEventPayload(payload string) (runtime.Value, error) {
-	return jsoncodec.Default.Decode([]byte(payload))
+	return jsoncodec.Default.Decode(context.Background(), strings.NewReader(payload))
 }
 
 func newDOMBindingName() (string, error) {

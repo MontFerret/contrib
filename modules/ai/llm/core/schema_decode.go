@@ -10,18 +10,18 @@ import (
 )
 
 // DecodeSchema converts a Ferret object into a compiled JSON Schema.
-func DecodeSchema(_ context.Context, value runtime.Value) (Schema, error) {
+func DecodeSchema(ctx context.Context, value runtime.Value) (Schema, error) {
 	if _, ok := value.(runtime.Map); !ok {
 		return Schema{}, NewError(ErrInvalidSchema, "schema must be an object")
 	}
 
-	raw, err := ferretjson.Default.Encode(value)
-	if err != nil {
+	var raw bytes.Buffer
+	if err := ferretjson.Default.Encode(ctx, &raw, value); err != nil {
 		return Schema{}, NewError(ErrInvalidSchema, "schema is not valid JSON")
 	}
 
 	var document map[string]any
-	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder := json.NewDecoder(bytes.NewReader(raw.Bytes()))
 	decoder.UseNumber()
 
 	if err := decoder.Decode(&document); err != nil || decoderHasTrailingValue(decoder) {

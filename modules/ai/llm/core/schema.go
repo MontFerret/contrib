@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v6"
@@ -89,7 +90,7 @@ func (s Schema) ValidateJSON(data []byte) (runtime.Value, error) {
 		return runtime.None, NewError(ErrSchemaValidation, "provider output does not match the schema")
 	}
 
-	value, err := ferretjson.Default.Decode(data)
+	value, err := ferretjson.Default.Decode(context.Background(), bytes.NewReader(data))
 	if err != nil {
 		return runtime.None, NewError(ErrInvalidStructuredOutput, "provider returned malformed JSON")
 	}
