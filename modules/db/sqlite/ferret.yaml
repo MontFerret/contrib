@@ -11,7 +11,7 @@ repository:
   url: https://github.com/MontFerret/contrib
   directory: modules/db/sqlite
 compatibility:
-  ferret: ">=2.0.0-alpha.43 <3.0.0"
+  ferret: ">=2.0.0-alpha.58 <3.0.0"
 keywords:
   - sqlite
   - sql

@@ -88,24 +88,24 @@ func TestIntegrationPostgresThroughFerret(t *testing.T) {
 	assertOutputBool(t, output, true)
 }
 
-func runFQL(t *testing.T, query string, opts ...ferret.Option) (*ferret.Output, error) {
+func runFQL(t *testing.T, query string, opts ...ferret.Option) (*ferret.Content, error) {
 	t.Helper()
 
 	engineOpts := append([]ferret.Option{ferret.WithModules(New())}, opts...)
 	harness := sdktest.New(t, engineOpts...)
 
-	return harness.Run(context.Background(), query)
+	return collectResult(harness.Run(context.Background(), query))
 }
 
 func rawFQLString(value string) string {
 	return "`" + value + "`"
 }
 
-func assertOutputBool(t *testing.T, output *ferret.Output, expected bool) {
+func assertOutputBool(t *testing.T, output *ferret.Content, expected bool) {
 	t.Helper()
 
 	var actual bool
-	if err := json.Unmarshal(output.Content, &actual); err != nil {
+	if err := json.Unmarshal(output.Data, &actual); err != nil {
 		t.Fatalf("failed to decode output bool: %v", err)
 	}
 	if actual != expected {

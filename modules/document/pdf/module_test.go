@@ -37,7 +37,7 @@ func TestModuleRunsPDFWorkflowFromFQL(t *testing.T) {
 		ferret.WithFSRoot(root),
 		ferret.WithRuntimeParam("path", runtime.NewString(path)),
 	)
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		LET document = DOCUMENT::PDF::OPEN(@path)
 		LET pages = document.pages
 		LET first = pages[0]
@@ -67,7 +67,7 @@ func TestModuleRunsPDFWorkflowFromFQL(t *testing.T) {
 			unknownPage: first.missing
 		}
 		RETURN result
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
@@ -90,7 +90,7 @@ func TestModuleRunsPDFWorkflowFromFQL(t *testing.T) {
 		Count      int  `json:"count"`
 		Length     int  `json:"length"`
 	}
-	if err := json.Unmarshal(output.Content, &actual); err != nil {
+	if err := json.Unmarshal(output.Data, &actual); err != nil {
 		t.Fatalf("failed to decode output: %v", err)
 	}
 
@@ -126,7 +126,7 @@ func TestModuleReportsCapabilityErrorsFromFQL(t *testing.T) {
 		ferret.WithFSRoot(root),
 		ferret.WithRuntimeParam("path", runtime.NewString(path)),
 	)
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		LET document = DOCUMENT::PDF::OPEN(@path)
 		LET openErr = DOCUMENT::PDF::OPEN(1) ON ERROR RETURN "open"
 		LET missingDocument = document.missing
@@ -137,13 +137,13 @@ func TestModuleReportsCapabilityErrorsFromFQL(t *testing.T) {
 			AND missingDocument == NONE
 			AND missingPage == NONE
 			AND outOfRange == NONE
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
 
 	var actual bool
-	if err := json.Unmarshal(output.Content, &actual); err != nil {
+	if err := json.Unmarshal(output.Data, &actual); err != nil {
 		t.Fatalf("failed to decode output: %v", err)
 	}
 	if !actual {

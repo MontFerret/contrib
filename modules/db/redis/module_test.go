@@ -229,7 +229,7 @@ func TestIntegrationRedisThroughFerret(t *testing.T) {
 	}
 }
 
-func assertIntegrationOutput(t *testing.T, output *ferret.Output) {
+func assertIntegrationOutput(t *testing.T, output *ferret.Content) {
 	t.Helper()
 
 	var actual struct {
@@ -252,7 +252,7 @@ func assertIntegrationOutput(t *testing.T, output *ferret.Output) {
 		Deleted         int               `json:"deleted"`
 		Closed          bool              `json:"closed"`
 	}
-	if err := json.Unmarshal(output.Content, &actual); err != nil {
+	if err := json.Unmarshal(output.Data, &actual); err != nil {
 		t.Fatalf("failed to decode Redis integration output: %v", err)
 	}
 
@@ -282,13 +282,13 @@ func equalStrings(left, right []string) bool {
 	return true
 }
 
-func runFQL(t *testing.T, query string, opts ...ferret.Option) (*ferret.Output, error) {
+func runFQL(t *testing.T, query string, opts ...ferret.Option) (*ferret.Content, error) {
 	t.Helper()
 
 	engineOptions := append([]ferret.Option{ferret.WithModules(New())}, opts...)
 	harness := sdktest.New(t, engineOptions...)
 
-	return harness.Run(context.Background(), query)
+	return collectResult(harness.Run(context.Background(), query))
 }
 
 func assertErrorContains(t *testing.T, err error, expected string) {

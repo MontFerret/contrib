@@ -50,14 +50,14 @@ func TestModuleRunsHTTPClientFromFQL(t *testing.T) {
 		ferret.WithNetwork(newTestNetwork(t, ferrethttp.WithAllowLocalhost(true))),
 	)
 
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		LET api = NET::REST::CLIENT({
 			baseUrl: @baseUrl,
 			encoding: "json"
 		})
 		LET res = QUERY ONE "/health" IN api USING http
 		RETURN res.version == "1.0.0"
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
@@ -65,7 +65,7 @@ func TestModuleRunsHTTPClientFromFQL(t *testing.T) {
 		t.Fatal("expected HTTP server to be called")
 	}
 
-	assertOutputBool(t, output.Content, true)
+	assertOutputBool(t, output.Data, true)
 }
 
 func TestModuleRunsQueryModifiersFromFQL(t *testing.T) {
@@ -93,7 +93,7 @@ func TestModuleRunsQueryModifiersFromFQL(t *testing.T) {
 		ferret.WithNetwork(newTestNetwork(t, ferrethttp.WithAllowLocalhost(true))),
 	)
 
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		LET api = NET::REST::CLIENT({
 			baseUrl: @baseUrl,
 			encoding: "json"
@@ -103,7 +103,7 @@ func TestModuleRunsQueryModifiersFromFQL(t *testing.T) {
 		LET count = QUERY COUNT "/users" IN api
 		LET exists = QUERY EXISTS "/users" IN api
 		RETURN users[0].name == "Ada" AND first.id == 1 AND count == 2 AND exists
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
@@ -111,7 +111,7 @@ func TestModuleRunsQueryModifiersFromFQL(t *testing.T) {
 		t.Fatalf("expected 4 HTTP calls, got %d", calls.Load())
 	}
 
-	assertOutputBool(t, output.Content, true)
+	assertOutputBool(t, output.Data, true)
 }
 
 func TestModuleHonorsFerretHTTPPolicy(t *testing.T) {
@@ -135,13 +135,13 @@ func TestModuleHonorsFerretHTTPPolicy(t *testing.T) {
 		ferret.WithNetwork(fnet),
 	)
 
-	_, err = harness.Run(context.Background(), `
+	_, err = collectResult(harness.Run(context.Background(), `
 		LET api = NET::REST::CLIENT({
 			baseUrl: @baseUrl,
 			encoding: "json"
 		})
 		RETURN QUERY ONE "/health" IN api
-	`)
+	`))
 	if err == nil {
 		t.Fatal("expected HTTP policy error")
 	}

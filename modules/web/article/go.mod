@@ -4,8 +4,8 @@ go 1.25.6
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2
-	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.7
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.52
+	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.23.0.20261029163228-b960e4722e38
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.58
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	golang.org/x/net v0.56.0
@@ -13,6 +13,7 @@ require (
 
 require (
 	github.com/JohannesKaufmann/dom v0.3.1 // indirect
+	github.com/MontFerret/api v1.0.0-alpha.21 // indirect
 	github.com/MontFerret/cssx v0.2.0 // indirect
 	github.com/andybalholm/cascadia v1.3.4 // indirect
 	github.com/antchfx/htmlquery v1.3.6 // indirect
@@ -20,7 +21,7 @@ require (
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/corpix/uarand v0.2.0 // indirect
-	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/gobwas/glob v1.0.0 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/gorilla/css v1.0.1 // indirect
@@ -30,7 +31,7 @@ require (
 	github.com/sethgrid/pester v1.2.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	github.com/ziflex/go-options v1.3.1 // indirect
+	github.com/ziflex/go-options v1.6.1 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/text v0.38.0 // indirect

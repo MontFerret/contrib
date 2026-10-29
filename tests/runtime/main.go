@@ -3,14 +3,12 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 
 	llmmodule "github.com/MontFerret/contrib/modules/ai/llm"
 	archivemodule "github.com/MontFerret/contrib/modules/archive"
@@ -33,57 +31,14 @@ import (
 	"github.com/MontFerret/contrib/modules/xml"
 	"github.com/MontFerret/contrib/modules/yaml"
 	"github.com/MontFerret/ferret/v2"
-	"github.com/MontFerret/ferret/v2/pkg/asm"
-	"github.com/MontFerret/ferret/v2/pkg/compiler"
 	"github.com/MontFerret/ferret/v2/pkg/diagnostics"
 	"github.com/MontFerret/ferret/v2/pkg/logging"
 	ferretnet "github.com/MontFerret/ferret/v2/pkg/net"
 	ferrethttp "github.com/MontFerret/ferret/v2/pkg/net/http"
-	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/source"
 
 	"github.com/rs/zerolog"
 )
-
-type Params []string
-
-func (p *Params) String() string {
-	return "[" + strings.Join(*p, ",") + "]"
-}
-
-func (p *Params) Set(value string) error {
-	*p = append(*p, value)
-	return nil
-}
-
-func (p *Params) ToMap() (runtime.Params, error) {
-	res := runtime.NewParams()
-
-	for _, entry := range *p {
-		pair := strings.SplitN(entry, ":", 2)
-
-		if len(pair) < 2 {
-			return nil, runtime.Error(runtime.ErrInvalidArgument, entry)
-		}
-
-		var value interface{}
-		key := pair[0]
-
-		err := json.Unmarshal([]byte(pair[1]), &value)
-
-		if err != nil {
-			fmt.Println(pair[1])
-			return nil, err
-		}
-
-		if err := res.Set(key, value); err != nil {
-			fmt.Println(pair[1])
-			return nil, err
-		}
-	}
-
-	return res, nil
-}
 
 var (
 	conn = flag.String(
@@ -114,6 +69,13 @@ var (
 var logger zerolog.Logger
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, ferret.FormatError(err))
+		os.Exit(1)
+	}
+}
+
+func run() (resultErr error) {
 	var params Params
 
 	flag.Var(
@@ -134,7 +96,10 @@ func main() {
 		Timestamp().
 		Logger()
 
-	stat, _ := os.Stdin.Stat()
+	stat, err := os.Stdin.Stat()
+	if err != nil {
+		return err
+	}
 
 	var query string
 	var files []string
@@ -144,51 +109,33 @@ func main() {
 		std := bufio.NewReader(os.Stdin)
 
 		b, err := io.ReadAll(std)
-
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 
 		query = string(b)
 	} else if flag.NArg() > 0 {
 		files = flag.Args()
 	} else {
-		fmt.Println(flag.NArg())
-		fmt.Println("File or input stream are required")
-		os.Exit(1)
+		return fmt.Errorf("file or input stream is required")
 	}
-
-	var err error
 
 	p, err := params.ToMap()
-
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			<-c
-			cancel()
-		}
-	}()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
 	network, err := ferretnet.New(
 		ferretnet.WithHTTPPolicies(ferrethttp.WithAllowLocalhost(true)),
 	)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
-	engine, e := ferret.New(
+	engine, err := ferret.New(
 		ferret.WithLog(console),
 		ferret.WithLogLevel(ferret.MustParseLogLevel(*logLevel)),
 		ferret.WithNetwork(network),
@@ -217,10 +164,11 @@ func main() {
 		),
 	)
 
-	if e != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if err != nil {
+		return err
 	}
+
+	defer func() { resultErr = joinErrors(resultErr, engine.Close()) }()
 
 	sessionOptions := []ferret.SessionOption{
 		ferret.WithSessionRuntimeParams(p),
@@ -232,60 +180,7 @@ func main() {
 		err = execFiles(ctx, engine, sessionOptions, files)
 	}
 
-	if err != nil {
-		fmt.Println(ferret.FormatError(err))
-		os.Exit(1)
-	}
-}
-
-func execFiles(ctx context.Context, engine *ferret.Engine, opts []ferret.SessionOption, files []string) error {
-	return processFiles(ctx, files, "execute", func(ctx context.Context, src ferret.Source) error {
-		return runQuery(ctx, engine, opts, src)
-	})
-}
-
-func runQuery(ctx context.Context, engine *ferret.Engine, opts []ferret.SessionOption, query ferret.Source) error {
-	if !(*dryRun) {
-		return execQuery(ctx, engine, opts, query)
-	}
-
-	return analyzeQuery(query)
-}
-
-func execQuery(ctx context.Context, engine *ferret.Engine, opts []ferret.SessionOption, query ferret.Source) error {
-	plan, err := engine.Compile(ctx, query)
-
-	if err != nil {
-		return err
-	}
-
-	sess, err := plan.NewSession(ctx, opts...)
-
-	if err != nil {
-		return err
-	}
-
-	defer sess.Close()
-
-	res, err := sess.Run(ctx)
-
-	if err == nil {
-		printResult(ctx, res)
-	}
-
-	if err != nil {
-		frmt, ok := err.(diagnostics.Formattable)
-
-		if ok {
-			fmt.Println(frmt.Format())
-		} else {
-			fmt.Println(err)
-		}
-
-		os.Exit(1)
-	}
-
-	return nil
+	return err
 }
 
 func processFiles(ctx context.Context, files []string, op string, predicate func(ctx context.Context, src ferret.Source) error) error {
@@ -412,43 +307,6 @@ func processFiles(ctx context.Context, files []string, op string, predicate func
 
 		return diagnostics.NewDiagnosticsOf(errList)
 	}
-
-	return nil
-}
-
-func printResult(_ context.Context, res *ferret.Output) {
-	_, _ = os.Stdout.Write(res.Content)
-	_, _ = os.Stdout.WriteString("\n")
-}
-
-func analyzeQuery(query ferret.Source) error {
-	optLevel := compiler.OptimizationLevel(*optimizationLevel)
-
-	if optLevel < 0 || optLevel > 3 {
-		fmt.Printf("Invalid optimization level: %d.", optLevel)
-		os.Exit(1)
-	}
-
-	c, err := compiler.New(compiler.WithOptimizationLevel(optLevel))
-	if err != nil {
-		fmt.Println("Failed to create compiler:", err)
-		os.Exit(1)
-	}
-
-	prog, err := c.Compile(query)
-	if err != nil {
-		fmt.Println(diagnostics.Format(err))
-		os.Exit(1)
-	}
-
-	dis, err := asm.Disassemble(prog)
-
-	if err != nil {
-		fmt.Println("Failed to disassemble program:", err)
-		os.Exit(1)
-	}
-
-	fmt.Println(dis)
 
 	return nil
 }

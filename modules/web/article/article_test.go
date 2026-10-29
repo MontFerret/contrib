@@ -36,7 +36,7 @@ func TestRegisterInstallsSessionExtractor(t *testing.T) {
 			return nil
 		}),
 	)
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		RETURN WEB::ARTICLE::MARKDOWN("
 			<html>
 			  <body>
@@ -47,13 +47,13 @@ func TestRegisterInstallsSessionExtractor(t *testing.T) {
 			  </body>
 			</html>
 		")
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
 
 	var markdown string
-	if err := json.Unmarshal(output.Content, &markdown); err != nil {
+	if err := json.Unmarshal(output.Data, &markdown); err != nil {
 		t.Fatalf("unexpected markdown decode error: %v", err)
 	}
 

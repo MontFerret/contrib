@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/goccy/go-json"
@@ -487,12 +488,12 @@ func TestFunction(t *testing.T) {
 func mustEncodeRuntimeValue(t *testing.T, value runtime.Value) json.RawMessage {
 	t.Helper()
 
-	raw, err := jsonf.Default.Encode(value)
-	if err != nil {
+	var raw bytes.Buffer
+	if err := jsonf.Default.Encode(t.Context(), &raw, value); err != nil {
 		t.Fatalf("encode runtime value: %v", err)
 	}
 
-	return json.RawMessage(raw)
+	return json.RawMessage(raw.Bytes())
 }
 
 func mustMarshalAny(t *testing.T, value any) json.RawMessage {

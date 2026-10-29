@@ -102,6 +102,23 @@ jobs:
         working-directory: scripts/publish
         run: GOWORK=off go vet ./...
 
+  test-runtime:
+    name: Test runtime harness
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+          cache: true
+
+      - name: Test runtime harness
+        run: make test-runtime
+
   test-release:
     name: Test release transactions
     runs-on: ubuntu-latest

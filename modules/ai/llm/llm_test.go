@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/MontFerret/contrib/modules/ai/llm/core"
@@ -34,19 +35,19 @@ func TestModuleAppliesProviderOverridesInOptionOrder(t *testing.T) {
 		}
 	})
 
-	output, err := engine.Run(context.Background(), source.NewAnonymous(`
+	output, err := collectResult(engine.Run(context.Background(), source.NewAnonymous(`
 		LET model = AI::LLM::MODEL("openai", {
 			model: "opaque/model-name",
 			apiKey: "explicit-test-key"
 		})
 		RETURN AI::LLM::GENERATE(model, "hello")
-	`))
+	`)))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
 
 	var actual string
-	decodeOutput(t, output.Content, &actual)
+	decodeOutput(t, output.Data, &actual)
 	if actual != "last factory" {
 		t.Fatalf("expected last same-name provider override, got %q", actual)
 	}
@@ -80,7 +81,7 @@ func TestModuleInstallsConfiguredRegistryInRunContext(t *testing.T) {
 	})
 
 	runCtx := core.WithRegistry(context.Background(), callerRegistry)
-	if _, err := engine.Run(runCtx, source.NewAnonymous("RETURN true")); err != nil {
+	if _, err := collectResult(engine.Run(runCtx, source.NewAnonymous("RETURN true"))); err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
 	if observed == nil {
@@ -115,7 +116,7 @@ func TestModuleRunsGenerationFunction(t *testing.T) {
 	`)
 
 	var actual string
-	decodeOutput(t, output.Content, &actual)
+	decodeOutput(t, output.Data, &actual)
 	if actual != "generated response" {
 		t.Fatalf("unexpected generation result: %q", actual)
 	}
@@ -136,7 +137,7 @@ func TestModuleRunsPlainAndScalarQueries(t *testing.T) {
 		One  string   `json:"one"`
 		Many []string `json:"many"`
 	}
-	decodeOutput(t, output.Content, &actual)
+	decodeOutput(t, output.Data, &actual)
 
 	if len(actual.Many) != 1 || actual.Many[0] != "generated response" {
 		t.Fatalf("unexpected plain QUERY result: %#v", actual.Many)
@@ -178,7 +179,7 @@ func TestModuleRunsTwoTurnLocalSession(t *testing.T) {
 			Content string `json:"content"`
 		} `json:"history"`
 	}
-	decodeOutput(t, output.Content, &actual)
+	decodeOutput(t, output.Data, &actual)
 
 	if actual.First != "first answer" || actual.Second != "second answer" {
 		t.Fatalf("unexpected session responses: %#v", actual)
@@ -216,7 +217,7 @@ func TestModuleRunsSummarizeAndReset(t *testing.T) {
 		}
 	})
 
-	output, err := engine.Run(context.Background(), source.NewAnonymous(`
+	output, err := collectResult(engine.Run(context.Background(), source.NewAnonymous(`
 		LET model = AI::LLM::MODEL("openai", {
 			model: "opaque/model-name",
 			apiKey: "explicit-test-key"
@@ -237,7 +238,7 @@ func TestModuleRunsSummarizeAndReset(t *testing.T) {
 			reset: reset,
 			history: AI::LLM::HISTORY(session)
 		}
-	`))
+	`)))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
@@ -247,7 +248,7 @@ func TestModuleRunsSummarizeAndReset(t *testing.T) {
 		History []any  `json:"history"`
 		Reset   bool   `json:"reset"`
 	}
-	decodeOutput(t, output.Content, &actual)
+	decodeOutput(t, output.Data, &actual)
 	if actual.Summary != "generated response" || !actual.Reset || len(actual.History) != 0 {
 		t.Fatalf("unexpected summarize/reset result: %#v", actual)
 	}
@@ -303,7 +304,7 @@ func TestModuleRunsExtractionAndClassification(t *testing.T) {
 			Score int    `json:"score"`
 		} `json:"extracted"`
 	}
-	decodeOutput(t, output.Content, &actual)
+	decodeOutput(t, output.Data, &actual)
 
 	if actual.Extracted.Name != "Ada" || actual.Extracted.Score != 9 {
 		t.Fatalf("unexpected extraction result: %#v", actual.Extracted)
@@ -332,7 +333,7 @@ func TestModuleClosesEveryExecutionScopedSession(t *testing.T) {
 		}
 	})
 
-	_, err = engine.Run(context.Background(), source.NewAnonymous(`
+	_, err = collectResult(engine.Run(context.Background(), source.NewAnonymous(`
 		LET shortcut = AI::LLM::MODEL("openai", {
 			model: "opaque/model-name",
 			apiKey: "explicit-test-key",
@@ -348,7 +349,7 @@ func TestModuleClosesEveryExecutionScopedSession(t *testing.T) {
 			shortcut: [shortcut],
 			nested: {session: session, fork: fork}
 		}
-	`))
+	`)))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
@@ -360,14 +361,14 @@ func TestModuleClosesEveryExecutionScopedSession(t *testing.T) {
 	}
 
 	observed = nil
-	_, err = engine.Run(context.Background(), source.NewAnonymous(`
+	_, err = collectResult(engine.Run(context.Background(), source.NewAnonymous(`
 		LET session = AI::LLM::MODEL("openai", {
 			model: "opaque/model-name",
 			apiKey: "explicit-test-key",
 			session: true
 		})
 		RETURN QUERY COUNT "unsupported" IN session
-	`))
+	`)))
 	if err == nil {
 		t.Fatal("expected unsupported QUERY COUNT error")
 	}
@@ -376,7 +377,7 @@ func TestModuleClosesEveryExecutionScopedSession(t *testing.T) {
 	}
 }
 
-func runFQL(t *testing.T, query string) *ferret.Output {
+func runFQL(t *testing.T, query string) *ferret.Content {
 	t.Helper()
 
 	engine, err := ferret.New(ferret.WithModules(New(WithProviderFactory(newFakeProviderFactory()))))
@@ -389,7 +390,7 @@ func runFQL(t *testing.T, query string) *ferret.Output {
 		}
 	})
 
-	output, err := engine.Run(context.Background(), source.NewAnonymous(query))
+	output, err := collectResult(engine.Run(context.Background(), source.NewAnonymous(query)))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
@@ -403,4 +404,14 @@ func decodeOutput(t *testing.T, data []byte, target any) {
 	if err := json.Unmarshal(data, target); err != nil {
 		t.Fatalf("failed to decode output: %v", err)
 	}
+}
+
+func collectResult(output ferret.Output, err error) (content *ferret.Content, resultErr error) {
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { resultErr = errors.Join(resultErr, output.Close()) }()
+
+	return output.Collect(context.Background())
 }

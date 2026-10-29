@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MontFerret/ferret/v2/pkg/encoding"
 	encodingjson "github.com/MontFerret/ferret/v2/pkg/encoding/json"
 	encodingmsgpack "github.com/MontFerret/ferret/v2/pkg/encoding/msgpack"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -69,13 +70,13 @@ func TestHostValuesKeepSecretsOutOfFormattingAndSerialization(t *testing.T) {
 		}
 		assertNoSecrets(t, goJSON, secrets)
 
-		ferretJSON, encodeErr := encodingjson.Default.Encode(value)
+		ferretJSON, encodeErr := encoding.EncodeBytes(t.Context(), encodingjson.Default, value)
 		if encodeErr != nil {
 			t.Fatalf("Ferret JSON encode %T: %v", value, encodeErr)
 		}
 		assertNoSecrets(t, ferretJSON, secrets)
 
-		messagePack, encodeErr := encodingmsgpack.Default.Encode(value)
+		messagePack, encodeErr := encoding.EncodeBytes(t.Context(), encodingmsgpack.Default, value)
 		if encodeErr != nil {
 			t.Fatalf("MessagePack encode %T: %v", value, encodeErr)
 		}

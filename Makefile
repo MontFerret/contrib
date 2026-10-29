@@ -1,4 +1,4 @@
-.PHONY: install-tools install-manifest-validator modules packages validate-manifests test-publisher test-release build build-cli build-packages test test-unit test-packages test-integration lint lint-packages fmt fmt-packages versions deps update-package update-ferret release-major release-minor release-patch release-pre release-pre-all release-package-major release-package-minor release-package-patch release-package-pre
+.PHONY: install-tools install-manifest-validator modules packages validate-manifests test-publisher test-release build build-cli build-packages test test-runtime test-unit test-packages test-integration lint lint-packages fmt fmt-packages versions deps update-package update-ferret release-major release-minor release-patch release-pre release-pre-all release-package-major release-package-minor release-package-patch release-package-pre
 
 DIR_BIN = ./bin
 DIR_TEST = ./tests
@@ -39,9 +39,12 @@ build-packages:
 
 build-cli:
 	go build -v -o ${DIR_BIN}/runtime \
-		${DIR_TEST_CLI}/main.go
+		${DIR_TEST_CLI}
 
 test: test-unit test-integration
+
+test-runtime:
+	go test ${DIR_TEST_CLI}/...
 
 test-unit:
 	@./scripts/modules.sh test-unit $(filter-out $@,$(MAKECMDGOALS))

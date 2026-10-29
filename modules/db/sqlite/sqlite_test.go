@@ -64,10 +64,10 @@ func TestMemoryOnlyModuleAllowsMemoryDB(t *testing.T) {
 	}
 }
 
-func runFQL(t *testing.T, mod module.Module, query string) (*ferret.Output, error) {
+func runFQL(t *testing.T, mod module.Module, query string) (*ferret.Content, error) {
 	t.Helper()
 
 	harness := sdktest.New(t, ferret.WithModules(mod))
 
-	return harness.Run(context.Background(), query)
+	return collectResult(harness.Run(context.Background(), query))
 }

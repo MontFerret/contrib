@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"strconv"
@@ -90,7 +91,7 @@ func (r *Resolver) toValue(
 	// It's not an actual ref but rather a plain value
 	if ref.ObjectID == nil {
 		if ref.Value != nil {
-			return json.Default.Decode(ref.Value)
+			return json.Default.Decode(ctx, bytes.NewReader(ref.Value))
 		}
 
 		return runtime.None, nil
@@ -106,7 +107,7 @@ func (r *Resolver) toValue(
 	case NodeObjectType:
 		// is it even possible?
 		if ref.ObjectID == nil {
-			return json.Default.Decode(ref.Value)
+			return json.Default.Decode(ctx, bytes.NewReader(ref.Value))
 		}
 
 		return r.loadValue(ctx, NodeObjectType, ToRemoteClassName(ref), *ref.ObjectID)
@@ -131,7 +132,7 @@ func (r *Resolver) toValue(
 
 			return runtime.None, nil
 		default:
-			return json.Default.Decode(ref.Value)
+			return json.Default.Decode(ctx, bytes.NewReader(ref.Value))
 		}
 	}
 }
