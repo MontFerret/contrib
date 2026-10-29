@@ -1,15 +1,15 @@
-LET url = @lab.static.dynamic + "?redirect=/iframe&src=/events"
-LET page =  DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "?redirect=/iframe&src=/events"
+let page = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(page, "iframe[name='nested']")
 
-LET frames = (
-    FOR f IN page.frames
-        FILTER f.name == "nested"
-        LIMIT 1
-        RETURN f
+let frames = (
+    for f in page.frames
+        filter f.name == "nested"
+        limit 1
+        return f
 )
-LET doc = FIRST(frames)
+let doc = arrays::first(frames)
 
 WAIT_ELEMENT(doc, "#page-events")
 
@@ -21,4 +21,5 @@ WAIT_CLASS(doc, "#wait-class-content", "alert-success")
 CLICK(doc, "#wait-class-random-btn")
 WAIT_CLASS(doc, "#wait-class-random-content", "alert-success", 10000)
 
-RETURN ""
+return ""
+

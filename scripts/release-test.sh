@@ -237,6 +237,56 @@ test_bulk_release_uses_one_commit() {
   assert_clean
 }
 
+test_initial_bulk_release_creates_commit_only_above_tag_event_limit() {
+  local count i initial release_commit
+
+  for count in 3 18; do
+    new_fixture "initial-bulk-$count"
+    for ((i = 1; i <= count; i++)); do
+      add_module "module-$i" 1.0.0-rc.1
+    done
+    commit_fixture
+    initial="$(remote_main)"
+
+    run_bulk_release 1.0.0-rc.1 || fail "initial bulk release failed"
+    release_commit="$(remote_main)"
+    if [[ "$count" -gt 3 ]]; then
+      assert_not_equal "$initial" "$release_commit" "bulk release did not advance main"
+      assert_equal "$initial" "$(git --git-dir "$FIXTURE_ORIGIN" rev-parse "$release_commit^")" "bulk release parent"
+      assert_equal "$(git -C "$FIXTURE_WORK" rev-parse "$initial^{tree}")" \
+        "$(git -C "$FIXTURE_WORK" rev-parse "$release_commit^{tree}")" "empty release changed files"
+    else
+      assert_equal "$initial" "$release_commit" "small initial release unnecessarily advanced main"
+    fi
+    for ((i = 1; i <= count; i++)); do
+      assert_equal "$release_commit" "$(remote_tag_commit "modules/module-$i/v1.0.0-rc.1")" "bulk tag commit"
+    done
+    assert_clean
+  done
+}
+
+test_empty_bulk_release_rolls_back_on_push_failure() {
+  local i initial
+
+  new_fixture empty-bulk-push-failure
+  for i in 1 2 3 4; do
+    add_module "module-$i" 1.0.0-rc.1
+  done
+  commit_fixture
+  initial="$(remote_main)"
+  printf '%s\n' '#!/usr/bin/env bash' 'exit 1' > "$FIXTURE_ORIGIN/hooks/pre-receive"
+  chmod +x "$FIXTURE_ORIGIN/hooks/pre-receive"
+
+  if run_bulk_release 1.0.0-rc.1; then
+    fail "rejected empty bulk release was accepted"
+  fi
+  assert_equal "$initial" "$(remote_main)" "empty bulk push changed remote main"
+  assert_equal "$initial" "$(git -C "$FIXTURE_WORK" rev-parse HEAD)" "empty bulk push left a local commit"
+  assert_equal "" "$(git -C "$FIXTURE_WORK" tag --list)" "empty bulk push left local tags"
+  assert_equal "" "$(git --git-dir "$FIXTURE_ORIGIN" tag --list)" "empty bulk push left remote tags"
+  assert_clean
+}
+
 test_check_only_is_non_mutating() {
   local initial
 
@@ -388,6 +438,8 @@ tests=(
   test_initial_and_consequent_release
   test_stale_manifest_recovery
   test_bulk_release_uses_one_commit
+  test_initial_bulk_release_creates_commit_only_above_tag_event_limit
+  test_empty_bulk_release_rolls_back_on_push_failure
   test_check_only_is_non_mutating
   test_repository_state_rejections
   test_existing_tag_and_malformed_manifest_rejections
