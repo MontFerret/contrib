@@ -99,7 +99,7 @@ func (s *domEventStream) Read(ctx context.Context) <-chan runtime.Message {
 					continue
 				}
 
-				val, err := decodeDOMEventPayload(reply.Payload)
+				val, err := decodeDOMEventPayload(ctx, reply.Payload)
 
 				if err != nil {
 					select {

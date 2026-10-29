@@ -27,7 +27,7 @@ func TestModuleRunsWorkbookWorkflowFromFQL(t *testing.T) {
 
 	harness := sdktest.New(t, ferret.WithModules(New()))
 
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		LET workbook = DOCUMENT::XLSX::CREATE()
 		LET source = DOCUMENT::XLSX::SHEET(workbook, "Sheet1")
 
@@ -54,13 +54,13 @@ func TestModuleRunsWorkbookWorkflowFromFQL(t *testing.T) {
 			AND count == 2
 			AND exists
 			AND DOCUMENT::XLSX::CLOSE(workbook)
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
 
 	var actual bool
-	if err := json.Unmarshal(output.Content, &actual); err != nil {
+	if err := json.Unmarshal(output.Data, &actual); err != nil {
 		t.Fatalf("failed to decode output: %v", err)
 	}
 	if !actual {
@@ -78,7 +78,7 @@ func TestModuleSavesAndReopensWorkbookFromFQL(t *testing.T) {
 		ferret.WithFSRoot(root),
 		ferret.WithRuntimeParam("path", runtime.NewString(path)),
 	)
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		LET workbook = DOCUMENT::XLSX::CREATE()
 		LET sheet = DOCUMENT::XLSX::SHEET(workbook, "Sheet1")
 		DOCUMENT::XLSX::SET(sheet, "A1", "Saved")
@@ -93,13 +93,13 @@ func TestModuleSavesAndReopensWorkbookFromFQL(t *testing.T) {
 			AND DOCUMENT::XLSX::GET(reopenedSheet, "A2") == "Again"
 		DOCUMENT::XLSX::CLOSE(reopened)
 		RETURN ok
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("unexpected run error: %v", err)
 	}
 
 	var actual bool
-	if err := json.Unmarshal(output.Content, &actual); err != nil {
+	if err := json.Unmarshal(output.Data, &actual); err != nil {
 		t.Fatalf("failed to decode output: %v", err)
 	}
 	if !actual {
@@ -116,11 +116,11 @@ func TestModuleSaveAsHonorsReadOnlyFSFromFQL(t *testing.T) {
 		ferret.WithFSReadOnly(),
 	)
 
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		LET workbook = DOCUMENT::XLSX::CREATE()
 		DOCUMENT::XLSX::SAVE_AS(workbook, "blocked.xlsx")
 		RETURN true
-	`)
+	`))
 	if err == nil || !strings.Contains(err.Error(), "read-only") {
 		t.Fatalf("expected read-only filesystem error, got %v", err)
 	}

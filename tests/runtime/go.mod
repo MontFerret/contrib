@@ -16,12 +16,12 @@ require (
 	github.com/MontFerret/contrib/modules/security/oauth2 v1.0.0-rc.4
 	github.com/MontFerret/contrib/modules/toml v1.0.0-rc.15
 	github.com/MontFerret/contrib/modules/web/article v1.0.0-rc.16
-	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.22
+	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.23.0.20261029163228-b960e4722e38
 	github.com/MontFerret/contrib/modules/web/robots v1.0.0-rc.15
 	github.com/MontFerret/contrib/modules/web/sitemap v1.0.0-rc.15
 	github.com/MontFerret/contrib/modules/xml v1.0.0-rc.15
 	github.com/MontFerret/contrib/modules/yaml v1.0.0-rc.15
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.52
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.58
 	github.com/rs/zerolog v1.35.1
 )
 
@@ -29,6 +29,7 @@ require (
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/JohannesKaufmann/dom v0.3.1 // indirect
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2 // indirect
+	github.com/MontFerret/api v1.0.0-alpha.21 // indirect
 	github.com/MontFerret/contrib/pkg/common v0.2.0 // indirect
 	github.com/MontFerret/cssx v0.2.0 // indirect
 	github.com/PuerkitoBio/goquery v1.12.0 // indirect
@@ -77,7 +78,7 @@ require (
 	github.com/xuri/excelize/v2 v2.11.0 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	github.com/ziflex/dbx v1.10.0 // indirect
-	github.com/ziflex/go-options v1.4.0 // indirect
+	github.com/ziflex/go-options v1.6.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/exp v0.0.0-20260824195058-e88cd73687aa // indirect

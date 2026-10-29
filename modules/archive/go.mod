@@ -4,11 +4,12 @@ go 1.26.5
 
 require (
 	github.com/MontFerret/contrib/pkg/common v0.2.0
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.52
-	github.com/ziflex/go-options v1.4.0
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.58
+	github.com/ziflex/go-options v1.6.1
 )
 
 require (
+	github.com/MontFerret/api v1.0.0-alpha.21 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gobwas/glob v1.0.0 // indirect

@@ -126,7 +126,7 @@ func TestModuleInstallsConfiguredLimitsInRunContext(t *testing.T) {
 			})
 
 			runCtx := core.WithConfig(context.Background(), test.caller)
-			if _, err := engine.Run(runCtx, source.NewAnonymous("RETURN true")); err != nil {
+			if _, err := collectResult(engine.Run(runCtx, source.NewAnonymous("RETURN true"))); err != nil {
 				t.Fatalf("run engine: %v", err)
 			}
 			if observed != test.expected {
@@ -151,7 +151,7 @@ func TestModuleListReadAndExtractZIPFromFQL(t *testing.T) {
 		ferret.WithFSRoot(root),
 		ferret.WithRuntimeParam("source", runtime.NewString("release.zip")),
 	)
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		LET entries = ARCHIVE::LIST(@source)
 		LET text = ARCHIVE::READ(@source, "docs/readme.txt", { as: "string" })
 		LET binary = ARCHIVE::READ(@source, "docs/readme.txt")
@@ -168,7 +168,7 @@ func TestModuleListReadAndExtractZIPFromFQL(t *testing.T) {
 			missing: missing,
 			extracted: extracted
 		}
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("run archive workflow: %v", err)
 	}
@@ -193,7 +193,7 @@ func TestModuleListReadAndExtractZIPFromFQL(t *testing.T) {
 			Skipped bool    `json:"skipped"`
 		} `json:"extracted"`
 	}
-	if err := json.Unmarshal(output.Content, &actual); err != nil {
+	if err := json.Unmarshal(output.Data, &actual); err != nil {
 		t.Fatalf("decode FQL result: %v", err)
 	}
 
@@ -223,7 +223,7 @@ func TestModuleListReadAndExtractZIPFromFQL(t *testing.T) {
 		Entries   []map[string]json.RawMessage `json:"entries"`
 		Extracted []map[string]json.RawMessage `json:"extracted"`
 	}
-	if err := json.Unmarshal(output.Content, &raw); err != nil {
+	if err := json.Unmarshal(output.Data, &raw); err != nil {
 		t.Fatalf("decode raw FQL result: %v", err)
 	}
 	assertObjectFields(t, raw.Entries[0],
@@ -255,14 +255,14 @@ func TestModuleReadsTARGZByContentDetection(t *testing.T) {
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		LET entry = FIRST(ARCHIVE::LIST("payload.bin"))
 		RETURN {
 			format: entry.format,
 			compressed: entry.compressedSize,
 			value: ARCHIVE::READ("payload.bin", "manifest.json", { as: "string" })
 		}
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("run TAR.GZ workflow: %v", err)
 	}
@@ -272,7 +272,7 @@ func TestModuleReadsTARGZByContentDetection(t *testing.T) {
 		Format     string `json:"format"`
 		Value      string `json:"value"`
 	}
-	if err := json.Unmarshal(output.Content, &actual); err != nil {
+	if err := json.Unmarshal(output.Data, &actual); err != nil {
 		t.Fatalf("decode TAR.GZ result: %v", err)
 	}
 	if actual.Format != "tar.gz" || actual.Value != `{"ok":true}` || actual.Compressed != nil {
@@ -293,9 +293,9 @@ func TestModuleRejectsUnsafeEntryBeforeWriting(t *testing.T) {
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::EXTRACT("unsafe.zip", "dist")
-	`)
+	`))
 	if err == nil || !strings.Contains(err.Error(), "unsafe archive entry path") {
 		t.Fatalf("expected unsafe path error, got %v", err)
 	}
@@ -323,9 +323,9 @@ func TestModuleRejectsDestinationSymlink(t *testing.T) {
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::EXTRACT("release.zip", "dist")
-	`)
+	`))
 	if err == nil || !strings.Contains(err.Error(), "symbolic link") {
 		t.Fatalf("expected destination symlink error, got %v", err)
 	}
@@ -344,9 +344,9 @@ func TestModuleRejectsConfiguredEntryLimit(t *testing.T) {
 		ferret.WithModules(New(WithMaxEntrySize(4))),
 		ferret.WithFSRoot(root),
 	)
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::READ("large.zip", "large.txt")
-	`)
+	`))
 	if err == nil || !strings.Contains(err.Error(), "exceeding the limit") {
 		t.Fatalf("expected limit error, got %v", err)
 	}
@@ -362,9 +362,9 @@ func TestModuleRejectsUnknownOptions(t *testing.T) {
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::LIST("release.zip", { unknown: true })
-	`)
+	`))
 	if err == nil {
 		t.Fatalf("expected unknown option error, got %v", err)
 	}
@@ -374,9 +374,9 @@ func TestModuleReportsMissingFilesystem(t *testing.T) {
 	t.Parallel()
 
 	harness := sdktest.New(t, ferret.WithModules(New()))
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::LIST("release.zip")
-	`)
+	`))
 	if err == nil || !strings.Contains(err.Error(), "root is not configured") {
 		t.Fatalf("expected disabled filesystem error, got %v", err)
 	}
@@ -393,9 +393,9 @@ func TestModuleHonorsReadOnlyFilesystem(t *testing.T) {
 		ferret.WithFSRoot(root),
 		ferret.WithFSReadOnly(),
 	)
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::EXTRACT("release.zip", "dist")
-	`)
+	`))
 	if err == nil || !strings.Contains(err.Error(), "read-only") {
 		t.Fatalf("expected read-only error, got %v", err)
 	}
@@ -421,13 +421,13 @@ func TestModuleExtractionFiltersAndOverwrite(t *testing.T) {
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::EXTRACT("site.tar", "dist", {
 			overwrite: true,
 			include: ["public/*"],
 			exclude: ["public/*.map"]
 		})
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("extract filtered TAR: %v", err)
 	}
@@ -464,9 +464,9 @@ func TestModuleExtractionRejectsExistingFileWithoutOverwrite(t *testing.T) {
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::EXTRACT("release.zip", "dist")
-	`)
+	`))
 	if err == nil || !strings.Contains(err.Error(), "already exists") {
 		t.Fatalf("expected existing destination error, got %v", err)
 	}
@@ -490,14 +490,14 @@ func TestModuleExtractionWithNoEligibleEntriesDoesNotCreateDestination(t *testin
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::EXTRACT("release.zip", "dist", { include: ["assets/*"] })
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("extract with no eligible entries: %v", err)
 	}
-	if string(output.Content) != "[]" {
-		t.Fatalf("expected an empty result, got %s", output.Content)
+	if string(output.Data) != "[]" {
+		t.Fatalf("expected an empty result, got %s", output.Data)
 	}
 	if _, statErr := os.Stat(filepath.Join(root, "dist")); !os.IsNotExist(statErr) {
 		t.Fatalf("expected no destination side effects, got %v", statErr)
@@ -517,9 +517,9 @@ func TestModuleLinkErrorPreflightsBeforeWriting(t *testing.T) {
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::EXTRACT("links.tar", "dist", { links: "error" })
-	`)
+	`))
 	if err == nil || !strings.Contains(err.Error(), "links are disabled") {
 		t.Fatalf("expected link policy error, got %v", err)
 	}
@@ -541,9 +541,9 @@ func TestModuleRejectsSpecialTAREntryBeforeWriting(t *testing.T) {
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::EXTRACT("special.tar", "dist")
-	`)
+	`))
 	if err == nil || !strings.Contains(err.Error(), "unsupported special file type") {
 		t.Fatalf("expected special entry error, got %v", err)
 	}
@@ -562,9 +562,9 @@ func TestModuleCreateDirsFalseRequiresDestination(t *testing.T) {
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::EXTRACT("release.zip", "missing", { createDirs: false })
-	`)
+	`))
 	if err == nil || !strings.Contains(err.Error(), "does not exist") {
 		t.Fatalf("expected missing directory error, got %v", err)
 	}
@@ -585,9 +585,9 @@ func TestModuleRejectsDuplicateExtractionPath(t *testing.T) {
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	_, err := harness.Run(context.Background(), `
+	_, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::EXTRACT("duplicate.zip", "dist")
-	`)
+	`))
 	if err == nil || !strings.Contains(err.Error(), "duplicate extraction path") {
 		t.Fatalf("expected duplicate path error, got %v", err)
 	}
@@ -609,24 +609,24 @@ func TestModuleReadUsesFirstRegularDuplicate(t *testing.T) {
 		ferret.WithModules(New()),
 		ferret.WithFSRoot(root),
 	)
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::READ("duplicate.zip", "same.txt", { as: "string" })
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("read duplicate: %v", err)
 	}
 
 	var actual string
-	if err := json.Unmarshal(output.Content, &actual); err != nil {
+	if err := json.Unmarshal(output.Data, &actual); err != nil {
 		t.Fatalf("decode duplicate result: %v", err)
 	}
 	if actual != "first" {
 		t.Fatalf("expected first duplicate, got %q", actual)
 	}
 
-	_, err = harness.Run(context.Background(), `
+	_, err = collectResult(harness.Run(context.Background(), `
 		RETURN ARCHIVE::READ("duplicate.zip", "only-link")
-	`)
+	`))
 	if err == nil {
 		t.Fatalf("expected non-regular entry error, got %v", err)
 	}

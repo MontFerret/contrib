@@ -92,7 +92,7 @@ func TestModuleRunsManualClientCredentialsFlow(t *testing.T) {
 		ferret.WithRuntimeParam("tokenEndpoint", runtime.NewString(server.URL+"/token")),
 	)
 
-	output, err := harness.Run(context.Background(), `
+	output, err := collectResult(harness.Run(context.Background(), `
 		LET provider = SECURITY::OAUTH2::PROVIDER({
 			tokenEndpoint: @tokenEndpoint,
 			insecureAllowHTTP: true
@@ -110,7 +110,7 @@ func TestModuleRunsManualClientCredentialsFlow(t *testing.T) {
 			hasRefreshToken: token.hasRefreshToken,
 			header: SECURITY::OAUTH2::AUTH_HEADER(token)
 		}
-	`)
+	`))
 	if err != nil {
 		t.Fatalf("run OAuth2 flow: %v", err)
 	}
@@ -121,7 +121,7 @@ func TestModuleRunsManualClientCredentialsFlow(t *testing.T) {
 		Scopes          []string          `json:"scopes"`
 		HasRefreshToken bool              `json:"hasRefreshToken"`
 	}
-	if err := json.Unmarshal(output.Content, &result); err != nil {
+	if err := json.Unmarshal(output.Data, &result); err != nil {
 		t.Fatalf("decode result: %v", err)
 	}
 	if result.TokenType != "Bearer" {

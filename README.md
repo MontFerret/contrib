@@ -44,6 +44,8 @@ release transaction described below.
 
 ## Development
 
+The modules require Ferret `v2.0.0-alpha.58` or later within the v2 series.
+
 Use the repo-level `Makefile` to run module commands:
 
 ```sh
@@ -53,6 +55,8 @@ make fmt [module ...]
 ```
 
 If no module names are provided, the commands run against all available modules.
+
+Run `make test-runtime` to validate the binary runtime harness used by Ferret Lab.
 
 Support packages under `pkg/` can be updated across module `go.mod` and `go.sum` files with:
 

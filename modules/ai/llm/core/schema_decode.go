@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 
 	ferretjson "github.com/MontFerret/ferret/v2/pkg/encoding/json"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -17,6 +18,10 @@ func DecodeSchema(ctx context.Context, value runtime.Value) (Schema, error) {
 
 	var raw bytes.Buffer
 	if err := ferretjson.Default.Encode(ctx, &raw, value); err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return Schema{}, err
+		}
+
 		return Schema{}, NewError(ErrInvalidSchema, "schema is not valid JSON")
 	}
 

@@ -3,7 +3,9 @@ package core
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
@@ -119,5 +121,20 @@ func TestSchemaDocumentReturnsDefensiveCopy(t *testing.T) {
 	}
 	if _, err := schema.ValidateJSON([]byte(`{"name":"Ada"}`)); err != nil {
 		t.Fatalf("compiled validator diverged from document: %v", err)
+	}
+}
+
+func TestDecodeSchemaPreservesContextErrors(t *testing.T) {
+	value := object(map[string]runtime.Value{"type": runtime.NewString("object")})
+	canceled, cancel := context.WithCancel(t.Context())
+	cancel()
+	expired, stop := context.WithDeadline(t.Context(), time.Now().Add(-time.Second))
+	defer stop()
+
+	for _, ctx := range []context.Context{canceled, expired} {
+		_, err := DecodeSchema(ctx, value)
+		if !errors.Is(err, ctx.Err()) {
+			t.Fatalf("expected %v, got %v", ctx.Err(), err)
+		}
 	}
 }
