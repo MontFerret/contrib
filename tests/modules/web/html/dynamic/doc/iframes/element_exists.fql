@@ -1,19 +1,20 @@
-LET url = @lab.static.dynamic + "?redirect=/iframe"
-LET page = DOCUMENT(url, { driver: 'cdp' })
+let url = @lab.static.dynamic + "?redirect=/iframe"
+let page = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(page, "iframe[name='nested']")
 
-LET frames = (
-    FOR f IN page.frames
-        FILTER f.name == "nested"
-        LIMIT 1
-        RETURN f
+let frames = (
+    for f in page.frames
+        filter f.name == "nested"
+        limit 1
+        return f
 )
 
-LET doc = FIRST(frames)
+let doc = arrays::first(frames)
 
 T::NOT::NONE(doc)
-T::TRUE(ELEMENT_EXISTS(doc, '.text-center'))
-T::FALSE(ELEMENT_EXISTS(doc, '.foo-bar'))
+T::TRUE(ELEMENT_EXISTS(doc, ".text-center"))
+T::FALSE(ELEMENT_EXISTS(doc, ".foo-bar"))
 
-RETURN NONE
+return none
+

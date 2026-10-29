@@ -1,11 +1,12 @@
-LET first = @lab.static.static + "/overview.html"
-LET second = @lab.static.static + "/simple.html"
-LET page = DOCUMENT(first, { driver: "cdp" })
-LET document = FIRST(page.frames)
+let first = @lab.static.static + "/overview.html"
+let second = @lab.static.static + "/simple.html"
+let page = DOCUMENT(first, { driver: "cdp" })
+let document = arrays::first(page.frames)
 
 NAVIGATE(page, second)
 
 T::EQ(document.url, second)
 T::TRUE(ELEMENT_EXISTS(document, "body"))
 
-RETURN NONE
+return none
+

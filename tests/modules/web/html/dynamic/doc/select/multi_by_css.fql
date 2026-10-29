@@ -1,12 +1,12 @@
-LET url = @lab.static.dynamic + "?redirect=/forms"
-LET doc =  DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "?redirect=/forms"
+let doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-LET output = ELEMENT(doc, "#multi_select_output")
-LET result = SELECT(doc, "#multi_select_input", ["1", "2", "4"])
+let output = ELEMENT(doc, "#multi_select_output")
+let result = SELECT(doc, "#multi_select_input", ["1", "2", "4"])
 
 T::EQ(output.innerText, "1, 2, 4")
-T::EQ(JSON_STRINGIFY(result), '["1","2","4"]')
+T::EQ(encoding::json_stringify(result), "[""1"",""2"",""4""]")
 
-RETURN NONE
+return none
