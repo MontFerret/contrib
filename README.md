@@ -113,16 +113,45 @@ release commit when the version changed, creates the annotated module tag at
 that commit, and atomically pushes `main` and the tag. `release-pre-all` updates
 all module manifests in one release commit and atomically pushes that commit
 with every module tag, so a failed push cannot leave a partial bulk release.
+Releases with more than three tags always create a release commit, even when
+the manifests already contain the requested versions, to trigger publication
+through the update to `main`.
 Set `RELEASE_CHECK_ONLY=1` to validate a planned release without creating a
 commit, tag, or remote change.
 
-Every pushed `modules/**/v*` tag triggers the Barn publication workflow. The
+The Barn publication workflow handles individual `modules/**/v*` tag pushes
+and pushes to `main`. For a main push, it discovers module release tags pointing
+to the commits introduced by that push. This also handles bulk releases, for
+which GitHub suppresses tag push events when more than three tags are pushed
+together. Ordinary pushes without release tags do not publish anything.
+
+Each selected tag runs independently using its exact source commit. The
 workflow uses Barn's public Go API to validate the tagged module, prepares the
 immutable registry source records, and opens one ready-for-review pull request
-in [MontFerret/barn](https://github.com/MontFerret/barn). The release appears in
-the public registry only after that pull request passes Barn CI, is reviewed,
-and is merged. Re-running the workflow updates the existing publication branch
+per module version in [MontFerret/barn](https://github.com/MontFerret/barn).
+The release appears in the public registry only after that pull request passes
+Barn CI, is reviewed, and is merged. Re-running the workflow updates the existing publication branch
 or succeeds without changes when the version is already published.
+Duplicate triggers are serialized per tag, and a failed module does not cancel
+the remaining publications.
+
+To backfill or retry releases, run the workflow from `main` with either a module
+tag or the full release commit SHA. A commit selects every module release tag
+pointing to it; invalid references and commits without release tags are rejected.
+The workflow uses its current publisher tooling with the historical module
+source, without changing tags or versions:
+
+```sh
+gh workflow run publish-module.yml --repo MontFerret/contrib --ref main \
+  -f release_ref=modules/db/redis/v1.0.0-rc.5
+
+# Backfill the complete release batch from this commit.
+gh workflow run publish-module.yml --repo MontFerret/contrib --ref main \
+  -f release_ref=13f03eedcf202ffd91459aa975a49347d908006a
+```
+
+Check the workflow's per-module results and Barn PRs after dispatch. Discovery
+tests run as part of `make test-publisher` and require Git, Bash, and `jq`.
 
 Support-package tags under `pkg/` do not trigger Barn publication.
 

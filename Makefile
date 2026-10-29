@@ -26,6 +26,7 @@ validate-manifests:
 	@cd tests/manifests && GOWORK=off go test ./...
 
 test-publisher:
+	@bash scripts/discover-publications-test.sh
 	@cd scripts/publish && GOWORK=off go test ./...
 
 test-release:

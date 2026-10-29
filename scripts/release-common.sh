@@ -413,8 +413,10 @@ release_execute_plan() {
   git add -- "${RELEASE_MANIFESTS[@]}"
   release_assert_only_planned_staged_paths
 
-  if ! git diff --cached --quiet; then
-    git commit -m "$commit_message"
+  # GitHub suppresses tag events for pushes of more than three tags. Always
+  # advance main for those releases so branch-triggered publication can run.
+  if ! git diff --cached --quiet || [[ "${#RELEASE_TAGS[@]}" -gt 3 ]]; then
+    git commit --allow-empty -m "$commit_message"
     echo "Created release commit: $(git rev-parse --short HEAD)"
   else
     echo "Manifests already contain the planned versions; no release commit was needed."
