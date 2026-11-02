@@ -178,7 +178,7 @@ func (m *Manager) refreshDocument(ctx context.Context, doc *HTMLDocument, observ
 		return drivers.ErrDetached
 	}
 
-	state, err := m.loadDocumentState(ctx, doc, frame)
+	state, _, err := m.loadDocumentState(ctx, doc, frame)
 	if err != nil {
 		if errors.Is(err, drivers.ErrDetached) && !doc.detachIfCurrent(observedState) {
 			return nil

@@ -27,18 +27,24 @@ func (m *Manager) LoadRootDocument(ctx context.Context) (*HTMLDocument, error) {
 }
 
 func (m *Manager) LoadDocument(ctx context.Context, frame page.FrameTree) (*HTMLDocument, error) {
+	doc, _, err := m.loadDocument(ctx, frame)
+
+	return doc, err
+}
+
+func (m *Manager) loadDocument(ctx context.Context, frame page.FrameTree) (*HTMLDocument, bool, error) {
 	doc := newHTMLDocument(m.logger, m, frame)
-	state, err := m.loadDocumentState(ctx, doc, frame)
+	state, recovered, err := m.loadDocumentState(ctx, doc, frame)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	doc.replaceState(state)
 
-	return doc, nil
+	return doc, recovered, nil
 }
 
-func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, frame page.FrameTree) (*documentState, error) {
+func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, frame page.FrameTree) (*documentState, bool, error) {
 	var client *cdp.Client
 	var exec *eval.Runtime
 	var ref cdpruntime.RemoteObject
@@ -89,7 +95,7 @@ func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, fram
 		refreshFrame = true
 	}, 1)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	inputs := input.New(m.logger, client, exec, m.keyboard, m.mouse)
@@ -118,7 +124,7 @@ func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, fram
 		state,
 	)
 
-	return state, nil
+	return state, refreshFrame, nil
 }
 
 func (m *Manager) ResolveElement(ctx context.Context, frameID page.FrameID, id cdpruntime.RemoteObjectID) (*HTMLElement, error) {
@@ -144,31 +150,40 @@ func (m *Manager) ResolveElement(ctx context.Context, frameID page.FrameID, id c
 }
 
 func (m *Manager) GetFrameNode(ctx context.Context, frameID page.FrameID) (*HTMLDocument, error) {
-	return m.getFrameInternal(ctx, frameID)
-}
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-func (m *Manager) getFrameInternal(ctx context.Context, frameID page.FrameID) (*HTMLDocument, error) {
 	frame, found := m.frames.Get(frameID)
 	if !found {
 		return nil, runtime.ErrNotFound
 	}
 
-	// frame is initialized
+	loaded, err := m.loadFrame(ctx, frame)
+
+	return loaded.node, err
+}
+
+// The caller holds m.mu through lazy acquisition and installation.
+func (m *Manager) loadFrame(ctx context.Context, frame Frame) (Frame, error) {
 	if frame.node != nil {
-		return frame.node, nil
+		return frame, nil
 	}
 
-	// the frame is not loaded yet
-	doc, err := m.LoadDocument(ctx, frame.tree)
+	doc, recovered, err := m.loadDocument(ctx, frame.tree)
 	if err != nil {
-		return nil, runtime.Error(err, "failed to load frame document")
+		return Frame{}, runtime.Error(err, "failed to load frame document")
 	}
 
-	frame.node = doc
-	frame.tree = doc.Frame()
-	m.frames.Set(frameID, frame)
+	loaded := Frame{tree: doc.Frame(), node: doc}
+	if recovered {
+		if err := m.installRecoveredFrame(loaded, frame.tree); err != nil {
+			return Frame{}, err
+		}
+	} else {
+		m.frames.Set(loaded.tree.Frame.ID, loaded)
+	}
 
-	return doc, nil
+	return loaded, nil
 }
 
 func (m *Manager) clientForFrame(frameID page.FrameID) *cdp.Client {

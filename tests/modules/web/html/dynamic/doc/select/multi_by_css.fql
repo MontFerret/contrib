@@ -7,6 +7,6 @@ let output = ELEMENT(doc, "#multi_select_output")
 let result = SELECT(doc, "#multi_select_input", ["1", "2", "4"])
 
 T::EQ(output.innerText, "1, 2, 4")
-T::EQ(encoding::json_stringify(result), "[""1"",""2"",""4""]")
+T::EQ(result, ["1", "2", "4"])
 
 return none

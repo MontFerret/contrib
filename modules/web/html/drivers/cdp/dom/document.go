@@ -3,6 +3,7 @@ package dom
 import (
 	"context"
 	"errors"
+	"reflect"
 	"sync"
 
 	"github.com/mafredri/cdp"
@@ -175,6 +176,18 @@ func (doc *HTMLDocument) updateFrameTree(frame page.FrameTree) {
 	doc.fallback.frameTree = frame
 }
 
+// A concurrent refresh can publish document state before it acquires Manager.mu
+// to update the index. Only patch the snapshot that the index still describes.
+func (doc *HTMLDocument) reconcileFrameTree(indexed, updated page.FrameTree) {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
+
+	if doc.state != nil && reflect.DeepEqual(doc.state.frameTree, indexed) {
+		doc.state.frameTree = updated
+		doc.fallback.frameTree = updated
+	}
+}
+
 // updateFrameTreeIfCurrent prevents a recovered subtree from overwriting a newer generation.
 func (doc *HTMLDocument) updateFrameTreeIfCurrent(state *documentState, frame page.FrameTree) bool {
 	doc.mu.Lock()
@@ -244,7 +257,7 @@ func (doc *HTMLDocument) reload(ctx context.Context, frame page.FrameTree) (*doc
 		return nil, err
 	}
 
-	state, err := doc.dom.loadDocumentState(ctx, doc, frame)
+	state, _, err := doc.dom.loadDocumentState(ctx, doc, frame)
 	if err != nil {
 		if errors.Is(err, drivers.ErrDetached) && !doc.detachIfCurrent(observedState) {
 			return nil, nil

@@ -67,19 +67,70 @@ func (m *Manager) GetFrameTree(_ context.Context, frameID page.FrameID) (page.Fr
 }
 
 func (m *Manager) GetFrameNodes(ctx context.Context) (runtime.List, error) {
-	// Write lock: getFrameInternal may lazy-load a frame and mutate m.frames.
+	// Loading a frame can change index membership during traversal.
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	arr := runtime.NewArray(m.frames.Length())
+	count := m.frames.Length()
+	arr := runtime.NewArray(count)
+	visited := make(map[page.FrameID]bool, count)
 
-	for _, f := range m.frames.ToSlice() {
-		doc, err := m.getFrameInternal(ctx, f.tree.Frame.ID)
-		if err != nil {
-			return nil, err
+	var visit func(page.FrameID) error
+	visit = func(id page.FrameID) error {
+		if visited[id] {
+			return nil
 		}
 
-		_ = arr.Append(ctx, doc)
+		frame, found := m.frames.Get(id)
+		if !found {
+			return nil
+		}
+
+		loaded, err := m.loadFrame(ctx, frame)
+		if err != nil {
+			return err
+		}
+
+		visited[id] = true
+
+		if err := arr.Append(ctx, loaded.node); err != nil {
+			return err
+		}
+
+		// Lazy loading can replace the children of this frame.
+		for _, child := range loaded.tree.ChildFrames {
+			if err := visit(child.Frame.ID); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	if main := m.mainFrame.Get(); main != "" {
+		if err := visit(main); err != nil {
+			return nil, err
+		}
+	}
+
+	// AddFrame can index independent trees before a main frame is installed.
+	if len(visited) != m.frames.Length() {
+		frames := m.frames.ToSlice()
+		children := make(map[page.FrameID]bool)
+		for _, frame := range frames {
+			for _, child := range frame.tree.ChildFrames {
+				children[child.Frame.ID] = true
+			}
+		}
+
+		for _, frame := range frames {
+			id := frame.tree.Frame.ID
+			if !visited[id] && !children[id] {
+				if err := visit(id); err != nil {
+					return nil, err
+				}
+			}
+		}
 	}
 
 	return arr, nil
