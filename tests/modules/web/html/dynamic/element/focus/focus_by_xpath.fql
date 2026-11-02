@@ -1,8 +1,8 @@
-let url = @lab.static.dynamic + "/#/events"
-let page = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "/#/events"
+LET page =  DOCUMENT(url, { driver: "cdp" })
 
-FOCUS(page, X("//*[@id=""focus-input""]"))
+FOCUS(page, X('//*[@id="focus-input"]'))
 
 WAIT_CLASS(page, "#focus-content", "alert-success")
 
-return true
+RETURN TRUE

@@ -1,9 +1,9 @@
-let doc = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver: "cdp" })
+LET doc = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver:"cdp" })
 
-let child = ELEMENT(doc, ".track-list")
-let parent = child.parentElement
+LET child = ELEMENT(doc, ".track-list")
+LET parent = child.parentElement
 
 T::NOT::NONE(parent)
 T::EQ(parent.attributes.id, "tracks")
 
-return none
+RETURN NONE

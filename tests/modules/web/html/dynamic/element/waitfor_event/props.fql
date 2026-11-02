@@ -1,21 +1,17 @@
-let url = @lab.static.dynamic + "/#/events"
-let page = DOCUMENT(url, { driver: "cdp" })
-let target = ELEMENT(page, "#observable-element-target")
+LET url = @lab.static.dynamic + "/#/events"
+LET page = DOCUMENT(url, { driver: "cdp" })
+LET target = ELEMENT(page, "#observable-element-target")
 
 CLICK(page, "#observable-props-btn")
 
-let evt = waitfor event "ferret:props" in target options { props: ["detail"] }
+LET evt = WAITFOR EVENT "ferret:props" IN target OPTIONS { props: ["detail"] }
 
-return T::EQ(
-    evt,
-    {
-        type: "ferret:props",
-        detail: {
-            scope: "props",
-            nested: {
-                enabled: true
-            }
+RETURN T::EQ(evt, {
+    type: "ferret:props",
+    detail: {
+        scope: "props",
+        nested: {
+            enabled: true
         }
     }
-)
-
+})

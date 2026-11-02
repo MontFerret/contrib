@@ -1,13 +1,13 @@
-let url = @lab.static.dynamic
-let doc = DOCUMENT(url, { driver: "cdp" })
-let selector = X("//*[@id=""root""]/div/main/div/*")
+LET url = @lab.static.dynamic
+LET doc =  DOCUMENT(url, { driver: "cdp" })
+LET selector = X('//*[@id="root"]/div/main/div/*')
 
 WAIT_ELEMENT(doc, "#layout")
 
-let expected = [
-    "<h1>Welcome to Ferret E2E test page!</h1>",
-    "<p class=""lead"">It has several pages for testing different possibilities of the library</p>"
+LET expected = [
+'<h1>Welcome to Ferret E2E test page!</h1>',
+'<p class="lead">It has several pages for testing different possibilities of the library</p>'
 ]
-let actual = INNER_HTML_ALL(doc, selector)
+LET actual = INNER_HTML_ALL(doc, selector)
 
-return T::EQ(actual, expected)
+RETURN T::EQ(actual, expected)

@@ -1,16 +1,13 @@
-let url = @lab.static.dynamic
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic
+LET doc =  DOCUMENT(url, { driver: "cdp" })
 
-let expected = `Hello`
+LET expected = `Hello`
 
 INNER_TEXT_SET(doc, "body", expected)
 
-let actual = INNER_TEXT(doc, "body")
+LET actual = INNER_TEXT(doc, "body")
 
-let r1 = "(\\s|\\"")"
-let r2 = "(\n|\\s|\\"")"
+LET r1 = '(\s|\")'
+LET r2 = '(\n|\s|\")'
 
-return T::EQ(
-    REGEX_REPLACE(TRIM(actual), r2, ""),
-    REGEX_REPLACE(expected, r1, "")
-)
+RETURN T::EQ(REGEX_REPLACE(TRIM(actual), r2, ''), REGEX_REPLACE(expected, r1, ''))

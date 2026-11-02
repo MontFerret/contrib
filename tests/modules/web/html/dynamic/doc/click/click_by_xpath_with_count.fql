@@ -1,9 +1,9 @@
-let url = @lab.static.dynamic + "/#/forms"
-let page = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "/#/forms"
+LET page =  DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(page, "form")
 
-let input = ELEMENT(page, "#text_input")
+LET input = ELEMENT(page, "#text_input")
 
 INPUT(input, "Foo")
 
@@ -13,4 +13,4 @@ INPUT(input, "Bar")
 
 WAIT(100)
 
-return T::EQ(input.value, "Bar")
+RETURN T::EQ(input.value, "Bar")

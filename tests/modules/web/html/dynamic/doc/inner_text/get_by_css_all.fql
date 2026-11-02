@@ -1,16 +1,16 @@
-let url = @lab.static.dynamic
-let doc = DOCUMENT(url, { driver: "cdp" })
-let selector = "#root > div > main > div > *"
+LET url = @lab.static.dynamic
+LET doc =  DOCUMENT(url, { driver: "cdp" })
+LET selector = '#root > div > main > div > *'
 
 WAIT_ELEMENT(doc, "#layout")
 
-let expected = [
-    "Welcome to Ferret E2E test page!",
-    "It has several pages for testing different possibilities of the library"
+LET expected = [
+    'Welcome to Ferret E2E test page!',
+    'It has several pages for testing different possibilities of the library'
 ]
-let actual = (
-    for str in INNER_TEXT_ALL(doc, selector)
-        return REGEX_REPLACE(TRIM(str), "\n", "")
+LET actual = (
+    FOR str IN INNER_TEXT_ALL(doc, selector)
+        RETURN REGEX_REPLACE(TRIM(str), '\n', '')
 )
 
-return T::EQ(actual, expected)
+RETURN T::EQ(actual, expected)

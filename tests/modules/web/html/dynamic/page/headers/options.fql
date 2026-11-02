@@ -1,7 +1,6 @@
-let page = WEB::HTML::OPEN(
-    @lab.mock.api + "/html/request-options",
-    { driver: "cdp", headers: { "x-ferret-test": "cdp-header" } }
-)
+LET page = WEB::HTML::OPEN(@lab.mock.api + "/html/request-options", {
+    driver: "cdp",
+    headers: { "x-ferret-test": "cdp-header" }
+})
 
-return T::EQ(ELEMENT(page, "#header").innerText, "cdp-header")
-
+RETURN T::EQ(ELEMENT(page, "#header").innerText, "cdp-header")

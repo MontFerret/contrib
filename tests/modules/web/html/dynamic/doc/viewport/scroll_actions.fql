@@ -1,6 +1,6 @@
-let url = @lab.static.dynamic + "?redirect=/forms"
-let options = { behavior: "instant" }
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET options = { behavior: "instant" }
+LET doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "#page-form")
 
@@ -27,5 +27,4 @@ T::TRUE(SCROLL_BOTTOM(doc, options))
 T::TRUE(SCROLL_ELEMENT(doc, "#text_input", options))
 T::FALSE(SCROLL_ELEMENT(doc, "#text_input", options))
 
-return none
-
+RETURN NONE

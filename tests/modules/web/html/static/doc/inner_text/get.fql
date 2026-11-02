@@ -1,7 +1,7 @@
-let url = @lab.static.static + "/overview.html"
-let doc = DOCUMENT(url)
+LET url = @lab.static.static + '/overview.html'
+LET doc = DOCUMENT(url)
 
-let expected = "Components and options for laying out your Bootstrap project, including wrapping containers, a powerful grid system, a flexible media object, and responsive utility classes."
-let actual = INNER_TEXT(doc, "body > div > div > main > p.bd-lead")
+LET expected = "Components and options for laying out your Bootstrap project, including wrapping containers, a powerful grid system, a flexible media object, and responsive utility classes."
+LET actual = INNER_TEXT(doc, 'body > div > div > main > p.bd-lead')
 
-return T::EQ(actual, expected)
+RETURN T::EQ(actual, expected)

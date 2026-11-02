@@ -1,12 +1,15 @@
-let url = @lab.static.static + "/overview.html"
-let doc = DOCUMENT(url)
+LET url = @lab.static.static + '/overview.html'
+LET doc = DOCUMENT(url)
 
-let el = ELEMENT(doc, "body > header > a")
-let attrs = [el.attributes.class, el.attributes.href]
+LET el = ELEMENT(doc, "body > header > a")
+LET attrs = [
+    el.attributes.class,
+    el.attributes.href
+]
 
-let expected = "[""navbar-brand mr-0 mr-md-2"",""http://getbootstrap.com/""]"
-let actual = TO_STRING(attrs)
+LET expected = '["navbar-brand mr-0 mr-md-2","http://getbootstrap.com/"]'
+LET actual = TO_STRING(attrs)
 
 T::EQ(actual, expected)
 
-return none
+RETURN NONE

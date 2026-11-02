@@ -1,9 +1,9 @@
-let url = @lab.static.static + "/value.html"
-let doc = DOCUMENT(url)
+LET url = @lab.static.static + '/value.html'
+LET doc = DOCUMENT(url)
 
-let el = ELEMENT(doc, "#listings_table")
+LET el = ELEMENT(doc, "#listings_table")
 
 T::TRUE(ELEMENT_EXISTS(el, X("//*[contains(@class, 'odd')]")))
 T::FALSE(ELEMENT_EXISTS(el, X("//*[contains(@class, 'foo-bar')]")))
 
-return none
+RETURN NONE

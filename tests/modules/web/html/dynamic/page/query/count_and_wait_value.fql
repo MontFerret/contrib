@@ -1,15 +1,17 @@
-let page = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver: "cdp" })
+LET page = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver: "cdp" })
 
-let first = waitfor value query one ".track[data-index='0']" in page using css timeout 10s every 250ms on timeout return none
+LET first = WAITFOR VALUE (QUERY ONE ".track[data-index='0']" IN page USING css)
+    TIMEOUT 10s
+    EVERY 250ms
+    ON TIMEOUT RETURN NONE
 
 T::NOT::NONE(first)
 
-let count = query count ".track" in page using css
+LET count = QUERY COUNT ".track" IN page USING css
 
 T::EQ(count, 20)
 
-T::TRUE(query exists ".track[data-index='19']" in page using css)
-T::FALSE(query exists ".track[data-index='20']" in page using css)
+T::TRUE(QUERY EXISTS ".track[data-index='19']" IN page USING css)
+T::FALSE(QUERY EXISTS ".track[data-index='20']" IN page USING css)
 
-return true
-
+RETURN TRUE

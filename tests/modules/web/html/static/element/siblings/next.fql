@@ -1,13 +1,13 @@
-let url = @lab.static.static + "/list.html"
-let doc = DOCUMENT(url)
+LET url = @lab.static.static + '/list.html'
+LET doc = DOCUMENT(url)
 
-let current = ELEMENT(doc, ".track")
+LET current = ELEMENT(doc, ".track")
 T::NOT::NONE(current)
-let next = current.nextElementSibling.nextElementSibling
+LET next = current.nextElementSibling.nextElementSibling
 T::NOT::NONE(next)
 
-let currentIdx = TO_INT(current.attributes["data-index"])
-let nextIdx = TO_INT(next.attributes["data-index"])
+LET currentIdx = TO_INT(current.attributes['data-index'])
+LET nextIdx = TO_INT(next.attributes['data-index'])
 T::GT(nextIdx, currentIdx)
 
-return none
+RETURN NONE

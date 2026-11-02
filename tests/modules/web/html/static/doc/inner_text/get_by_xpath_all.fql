@@ -1,7 +1,7 @@
-let url = @lab.static.static + "/grid.html"
-let doc = DOCUMENT(url)
+LET url = @lab.static.static + '/grid.html'
+LET doc = DOCUMENT(url)
 
-let expected = [
+LET expected = [
     "Containers provide a means to center and horizontally pad your site’s contents. Use .container for a responsive pixel width or .container-fluid for width: 100% across all viewport and device sizes.",
     "Rows are wrappers for columns. Each column has horizontal padding (called a gutter) for controlling the space between them. This padding is then counteracted on the rows with negative margins. This way, all the content in your columns is visually aligned down the left side.",
     "In a grid layout, content must be placed within columns and only columns may be immediate children of rows.",
@@ -13,11 +13,6 @@ let expected = [
     "Grid breakpoints are based on minimum width media queries, meaning they apply to that one breakpoint and all those above it (e.g., .col-sm-4 applies to small, medium, large, and extra large devices, but not the first xs breakpoint).",
     "You can use predefined grid classes (like .col-4) or Sass mixins for more semantic markup."
 ]
-u
-let actual = INNER_TEXT_ALL(
-    doc,
-    X("//body/div[contains(@class, ""container-fluid"")]/div/main/ul/li")
-)
-/l
-return T::EQ(actual, expected)
-ected)
+LET actual = INNER_TEXT_ALL(doc, X('//body/div[contains(@class, "container-fluid")]/div/main/ul/li'))
+
+RETURN T::EQ(actual, expected)

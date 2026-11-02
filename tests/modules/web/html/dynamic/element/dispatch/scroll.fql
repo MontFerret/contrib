@@ -1,42 +1,41 @@
-let url = @lab.static.dynamic + "?redirect=/forms"
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-dispatch "scroll" in doc with { y: 300 }
+DISPATCH "scroll" IN doc WITH { y: 300 }
 WAIT(100)
 T::NOT::EQ(INNER_TEXT(doc, "#scroll_output"), "0")
 
-dispatch "scroll" in doc with { to: "top" }
+DISPATCH "scroll" IN doc WITH { to: "top" }
 WAIT(100)
 T::EQ(INNER_TEXT(doc, "#scroll_output"), "0")
 
-dispatch "scroll" in doc with { to: "bottom" }
+DISPATCH "scroll" IN doc WITH { to: "bottom" }
 WAIT(100)
 T::NOT::EQ(INNER_TEXT(doc, "#scroll_output"), "0")
 
-dispatch "scroll" in doc with { to: "top" }
+DISPATCH "scroll" IN doc WITH { to: "top" }
 WAIT(100)
 T::EQ(INNER_TEXT(doc, "#scroll_output"), "0")
 
-let container = ELEMENT(doc, "#scroll_container")
-dispatch "scroll" in container with { by: { y: 120 } }
+LET container = ELEMENT(doc, "#scroll_container")
+DISPATCH "scroll" IN container WITH { by: { y: 120 } }
 WAIT(100)
 T::NOT::EQ(INNER_TEXT(doc, "#scroll_container_output"), "0")
 
-dispatch "scroll" in container with { to: "top" }
+DISPATCH "scroll" IN container WITH { to: "top" }
 WAIT(100)
 T::EQ(INNER_TEXT(doc, "#scroll_container_output"), "0")
 
-dispatch "scroll" in container with { to: "bottom" }
+DISPATCH "scroll" IN container WITH { to: "bottom" }
 WAIT(100)
 T::NOT::EQ(INNER_TEXT(doc, "#scroll_container_output"), "0")
 
-dispatch "scroll" in container with { to: "top" }
+DISPATCH "scroll" IN container WITH { to: "top" }
 WAIT(100)
 T::EQ(INNER_TEXT(doc, "#scroll_container_output"), "0")
 
-dispatch "scroll" in container with { intoView: true }
+DISPATCH "scroll" IN container WITH { intoView: true }
 
-return none
-
+RETURN NONE

@@ -1,18 +1,17 @@
-let url = @lab.static.dynamic + "?redirect=/iframe&src=/events"
-let page = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/iframe&src=/events"
+LET page = DOCUMENT(url, { driver: 'cdp' })
 
 WAIT_ELEMENT(page, "iframe[name='nested']")
 
-let doc = page.frames[1]
+LET doc = page.frames[1]
 
 WAIT_ELEMENT(doc, "#page-events", 5000)
 
-let input = ELEMENT(doc, "#hoverable-btn")
+LET input = ELEMENT(doc, "#hoverable-btn")
 
 HOVER(input)
 WAIT_ELEMENT(doc, "#hoverable-content")
 
-let output = ELEMENT(doc, "#hoverable-content")
+LET output = ELEMENT(doc, "#hoverable-content")
 
-return T::EQ(output.innerText, "Lorem ipsum dolor sit amet.")
-
+RETURN T::EQ(output.innerText, "Lorem ipsum dolor sit amet.")

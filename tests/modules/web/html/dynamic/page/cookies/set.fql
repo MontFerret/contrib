@@ -1,11 +1,16 @@
-let url = @lab.static.dynamic
-let doc = DOCUMENT(@lab.static.dynamic, { driver: "cdp" })
+LET url = @lab.static.dynamic
+LET doc = DOCUMENT(@lab.static.dynamic, {
+    driver: "cdp"
+})
 
-COOKIE_SET(doc, { name: "x-e2e", value: "test" })
+COOKIE_SET(doc, {
+    name: "x-e2e",
+    value: "test"
+})
 
-let cookie = COOKIE_GET(doc, "x-e2e")
+LET cookie = COOKIE_GET(doc, "x-e2e")
 T::NOT::NONE(cookie)
 
-let expected = "test"
+LET expected = "test"
 
-return T::EQ(cookie.value, expected)
+RETURN T::EQ(cookie.value, expected)

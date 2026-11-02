@@ -1,9 +1,8 @@
-let url = @lab.static.dynamic + "?redirect=/forms"
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET doc =  DOCUMENT(url, { driver: "cdp" })
 
-let els = ELEMENTS(doc, X(".//*[contains(@class, 'form-control')]"))
+LET els = ELEMENTS(doc, X(".//*[contains(@class, 'form-control')]"))
 
 T::NOT::EMPTY(els)
 
-return true
-
+RETURN TRUE

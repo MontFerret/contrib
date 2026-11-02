@@ -1,6 +1,6 @@
-let url = @lab.static.dynamic
-let page = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic
+LET page = DOCUMENT(url, { driver: "cdp" })
 
-let actual = XPATH(page, "//meta/@charset")
+LET actual = XPATH(page, "//meta/@charset")
 
-return T::EQ(actual, ["utf-8"])
+RETURN T::EQ(actual, ["utf-8"])

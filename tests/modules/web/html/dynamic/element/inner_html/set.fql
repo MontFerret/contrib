@@ -1,17 +1,14 @@
-let url = @lab.static.dynamic
-let doc = DOCUMENT(url, { driver: "cdp" })
-let el = ELEMENT(doc, "#index")
+LET url = @lab.static.dynamic
+LET doc =  DOCUMENT(url, { driver: "cdp" })
+LET el = ELEMENT(doc, "#index")
 
-let expected = "<span>This node was injected by Ferret</span>"
+LET expected = "<span>This node was injected by Ferret</span>"
 INNER_HTML_SET(el, "<span>This node was injected by Ferret</span>")
-let actual = INNER_HTML(el)
+LET actual = INNER_HTML(el)
 
 WAIT(100)
 
-let r1 = "(\\s|\\"")"
-let r2 = "(\n|\\s|\\"")"
+LET r1 = '(\s|\")'
+LET r2 = '(\n|\s|\")'
 
-return T::EQ(
-    REGEX_REPLACE(TRIM(actual), r2, ""),
-    REGEX_REPLACE(expected, r1, "")
-)
+RETURN T::EQ(REGEX_REPLACE(TRIM(actual), r2, ''), REGEX_REPLACE(expected, r1, ''))

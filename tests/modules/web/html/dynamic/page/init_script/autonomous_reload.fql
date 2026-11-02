@@ -1,18 +1,16 @@
-let url = @lab.static.static + "/init-script.html?reload=once"
-let page = DOCUMENT(
-    url,
-    {
-        driver: "cdp",
-        initScript: {
-            source: "window.__beforeCount = Number(sessionStorage.getItem('__beforeCount') || 0) + 1; sessionStorage.setItem('__beforeCount', String(window.__beforeCount))",
-            timing: "beforeDocument"
-        }
-    }
-)
+LET url = @lab.static.static + "/init-script.html?reload=once"
+LET page = DOCUMENT(url, {
+  driver: "cdp",
+  initScript: {
+    source: "window.__beforeCount = Number(sessionStorage.getItem('__beforeCount') || 0) + 1; sessionStorage.setItem('__beforeCount', String(window.__beforeCount))",
+    timing: "beforeDocument"
+  }
+})
 
-let reloaded = waitfor value query one "html[data-before-count='2']" in page using css timeout 5s every 200ms
+LET reloaded = WAITFOR VALUE (QUERY ONE "html[data-before-count='2']" IN page USING css)
+    TIMEOUT 5s
+    EVERY 200ms
 
 T::EQ(page.url, @lab.static.static + "/init-script.html?reload=done")
 
-return T::EQ(reloaded.attributes["data-before-count"], "2")
-
+RETURN T::EQ(reloaded.attributes["data-before-count"], "2")

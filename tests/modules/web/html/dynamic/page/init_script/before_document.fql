@@ -1,14 +1,10 @@
-let url = @lab.static.static + "/init-script.html"
-let page = DOCUMENT(
-    url,
-    {
-        driver: "cdp",
-        initScript: {
-            source: "window.__beforeDocument = 'ready'",
-            timing: "beforeDocument"
-        }
-    }
-)
+LET url = @lab.static.static + "/init-script.html"
+LET page = DOCUMENT(url, {
+  driver: "cdp",
+  initScript: {
+    source: "window.__beforeDocument = 'ready'",
+    timing: "beforeDocument"
+  }
+})
 
-return T::EQ(ELEMENT(page, "html").attributes["data-inline-value"], "ready")
-
+RETURN T::EQ(ELEMENT(page, "html").attributes["data-inline-value"], "ready")

@@ -1,7 +1,6 @@
-let url = @lab.static.dynamic + "?redirect=/forms"
-let page = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET page = DOCUMENT(url, { driver: "cdp" })
 
-let actual = XPATH(page, "//div[contains(@class, 'form-group')]")
+LET actual = XPATH(page, "//div[contains(@class, 'form-group')]")
 
-return T::LEN(actual, 6)
-
+RETURN T::LEN(actual, 6)

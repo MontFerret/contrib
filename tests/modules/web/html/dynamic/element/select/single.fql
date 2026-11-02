@@ -1,13 +1,13 @@
-let url = @lab.static.dynamic + "?redirect=/forms"
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET doc =  DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-let input = ELEMENT(doc, "#select_input")
-let output = ELEMENT(doc, "#select_output")
-let result = SELECT(input, ["4"])
+LET input = ELEMENT(doc, "#select_input")
+LET output = ELEMENT(doc, "#select_output")
+LET result = SELECT(input, ["4"])
 
 T::EQ(output.innerText, "4")
 T::EQ(result, ["4"])
 
-return none
+RETURN NONE

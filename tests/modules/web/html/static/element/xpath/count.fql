@@ -1,9 +1,9 @@
-let url = @lab.static.static + "/value.html"
-let page = DOCUMENT(url)
+LET url = @lab.static.static + '/value.html'
+LET page = DOCUMENT(url)
 
-let el = ELEMENT(page, "#listings_table")
-let actual = XPATH(el, "count(//tr)")
+LET el = ELEMENT(page, '#listings_table')
+LET actual = XPATH(el, "count(//tr)")
 
 T::EQ(actual, 41)
 
-return none
+RETURN NONE

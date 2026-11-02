@@ -1,26 +1,25 @@
-let url = @lab.static.dynamic + "?redirect=/forms"
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-let input = ELEMENT(doc, "#text_input")
-let textOutput = ELEMENT(doc, "#text_output")
-dispatch "input" in input with { value: "hello" }
+LET input = ELEMENT(doc, "#text_input")
+LET textOutput = ELEMENT(doc, "#text_output")
+DISPATCH "input" IN input WITH { value: "hello" }
 T::EQ(textOutput.innerText, "hello")
 
-let select = ELEMENT(doc, "#select_input")
-let selectOutput = ELEMENT(doc, "#select_output")
-dispatch "change" in select with { value: "4" }
+LET select = ELEMENT(doc, "#select_input")
+LET selectOutput = ELEMENT(doc, "#select_output")
+DISPATCH "change" IN select WITH { value: "4" }
 T::EQ(selectOutput.innerText, "4")
 
-let checkbox = ELEMENT(doc, "#checkbox_input")
-let checkboxOutput = ELEMENT(doc, "#checkbox_output")
-dispatch "check" in checkbox
+LET checkbox = ELEMENT(doc, "#checkbox_input")
+LET checkboxOutput = ELEMENT(doc, "#checkbox_output")
+DISPATCH "check" IN checkbox
 T::EQ(checkboxOutput.innerText, "checked")
-dispatch "uncheck" in checkbox
+DISPATCH "uncheck" IN checkbox
 T::EQ(checkboxOutput.innerText, "unchecked")
-dispatch "toggle" in checkbox
+DISPATCH "toggle" IN checkbox
 T::EQ(checkboxOutput.innerText, "checked")
 
-return none
-
+RETURN NONE

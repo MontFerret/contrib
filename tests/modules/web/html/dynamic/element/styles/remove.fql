@@ -1,18 +1,18 @@
-let url = @lab.static.dynamic + "?redirect=/events"
-let doc = DOCUMENT(url, { driver: "cdp" })
-let pageSelector = "#page-events"
-let elemSelector = "#wait-no-style-content"
+LET url = @lab.static.dynamic + "?redirect=/events"
+LET doc = DOCUMENT(url, { driver: "cdp" })
+LET pageSelector = "#page-events"
+LET elemSelector = "#wait-no-style-content"
 
 WAIT_ELEMENT(doc, pageSelector)
-let el = ELEMENT(doc, elemSelector)
+LET el = ELEMENT(doc, elemSelector)
 
-let prev = el.attributes.style
+LET prev = el.attributes.style
 
 STYLE_REMOVE(el, "display")
 
-let curr = el.attributes.style
+LET curr = el.attributes.style
 
 T::EQ(prev.display, "block")
 T::EQ(curr.display, "inline")
 
-return true
+RETURN TRUE

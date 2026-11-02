@@ -1,16 +1,15 @@
-let url = @lab.static.dynamic + "?redirect=/iframe&src=/forms"
-let page = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/iframe&src=/forms"
+LET page = DOCUMENT(url, { driver: 'cdp' })
 
 WAIT_ELEMENT(page, "iframe[name='nested']")
 
-let doc = page.frames[1]
+LET doc = page.frames[1]
 
 WAIT_ELEMENT(doc, "form")
 
-let input = ELEMENT(doc, "#text_input")
-let output = ELEMENT(doc, "#text_output")
+LET input = ELEMENT(doc, "#text_input")
+LET output = ELEMENT(doc, "#text_output")
 
 INPUT(input, "foo")
 
-return T::EQ(output.innerText, "foo")
-
+RETURN T::EQ(output.innerText, "foo")

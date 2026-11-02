@@ -1,12 +1,12 @@
-let db = DB::SQLITE::OPEN({ memory: true })
+LET db = DB::SQLITE::OPEN({ memory: true })
 
-let create = query one `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)` in db using sql_exec
+LET create = QUERY ONE `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)` IN db USING sql_exec
 
-let result = query one `
+LET result = QUERY ONE `
   INSERT INTO users(name)
   VALUES (?)
-` in db using sql_exec
-    with { params: ["Ada"] }
+` IN db USING sql_exec WITH {
+  params: ["Ada"]
+}
 
-return T::EQ(result, { rowsAffected: 1, lastInsertId: 1 })
-
+RETURN T::EQ(result, { rowsAffected: 1, lastInsertId: 1 })

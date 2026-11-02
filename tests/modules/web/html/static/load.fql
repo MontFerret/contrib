@@ -1,6 +1,6 @@
-let url = @lab.static.static + "/overview.html"
-let doc = DOCUMENT(url)
+LET url = @lab.static.static + '/overview.html'
+LET doc = DOCUMENT(url)
 
 T::EQ(doc.url, url)
 
-return none
+RETURN NONE

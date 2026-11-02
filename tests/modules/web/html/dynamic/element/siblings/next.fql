@@ -1,12 +1,12 @@
-let doc = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver: "cdp" })
+LET doc = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver:"cdp" })
 
-let current = ELEMENT(doc, ".track")
+LET current = ELEMENT(doc, ".track")
 T::NOT::NONE(current)
-let next = current.nextElementSibling
+LET next = current.nextElementSibling
 T::NOT::NONE(next)
 
-let currentIdx = TO_INT(current.attributes["data-index"])
-let nextIdx = TO_INT(next.attributes["data-index"])
+LET currentIdx = TO_INT(current.attributes['data-index'])
+LET nextIdx = TO_INT(next.attributes['data-index'])
 T::GT(nextIdx, currentIdx)
 
-return none
+RETURN NONE

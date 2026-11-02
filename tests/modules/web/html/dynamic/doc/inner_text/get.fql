@@ -1,7 +1,7 @@
-let url = @lab.static.dynamic
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic
+LET doc =  DOCUMENT(url, { driver: "cdp" })
 
-let expected = `Ferret
+LET expected = `Ferret
 Forms
 Navigation
 Events
@@ -9,12 +9,9 @@ iFrame
 Welcome to Ferret E2E test page!
 It has several pages for testing different possibilities of the library
 `
-let actual = INNER_TEXT(doc)
+LET actual = INNER_TEXT(doc)
 
-let r1 = "(\n|\\s)"
-let r2 = "(\n|\\s)"
+LET r1 = '(\n|\s)'
+LET r2 = '(\n|\s)'
 
-return T::EQ(
-    REGEX_REPLACE(TRIM(actual), r2, ""),
-    REGEX_REPLACE(expected, r1, "")
-)
+RETURN T::EQ(REGEX_REPLACE(TRIM(actual), r2, ''), REGEX_REPLACE(expected, r1, ''))

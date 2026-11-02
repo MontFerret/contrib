@@ -1,6 +1,6 @@
-let url = @lab.static.static + "/value.html"
-let page = DOCUMENT(url)
+LET url = @lab.static.static + '/value.html'
+LET page = DOCUMENT(url)
 
-let actual = XPATH(page, "//tr[contains(@class, 'odd')]")
+LET actual = XPATH(page, "//tr[contains(@class, 'odd')]")
 
-return T::LEN(actual, 20)
+RETURN T::LEN(actual, 20)

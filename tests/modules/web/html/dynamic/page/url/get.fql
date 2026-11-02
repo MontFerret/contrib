@@ -1,14 +1,16 @@
-let page = DOCUMENT(@lab.static.dynamic, { driver: "cdp" })
+LET page = DOCUMENT(@lab.static.dynamic, {
+    driver: 'cdp'
+})
 
-let initialDoc = page.frames[0].url
-let initial = page.url
+LET initialDoc = page.frames[0].url
+LET initial = page.url
 
 CLICK(page, ".nav-link-forms")
 
-let currentDoc = page.frames[0].url
-let current = page.url
+LET currentDoc = page.frames[0].url
+LET current = page.url
 
 T::NOT::EQ(initial, current)
 T::EQ(initialDoc, currentDoc)
 
-return none
+RETURN NONE

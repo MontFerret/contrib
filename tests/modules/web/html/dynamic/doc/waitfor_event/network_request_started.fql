@@ -1,23 +1,25 @@
-let url = @lab.static.dynamic + "/#/events"
-let page = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "/#/events"
+LET page = DOCUMENT(url, { driver: "cdp" })
 
 INPUT(page, "#ajax-input", "index.html")
 CLICK(page, "#ajax-input-button")
 
-let evt = waitfor event "network.request_started" in page when CONTAINS(
-    .url,
-    "index.html"
-) and .method == "GET" and .type == "fetch" timeout 10s
+LET evt = WAITFOR EVENT "network.request_started" IN page
+    WHEN CONTAINS(.url, "index.html")
+    AND .method == "GET"
+    AND .type == "fetch"
+    TIMEOUT 10s
 
 T::TRUE(CONTAINS(evt.url, "index.html"))
 
-return T::EQ(
-    { event: evt.event, method: evt.method, type: evt.type, failed: evt.failed },
-    {
-        event: "network.request_started",
-        method: "GET",
-        type: "fetch",
-        failed: false
-    }
-)
-
+RETURN T::EQ({
+    event: evt.event,
+    method: evt.method,
+    type: evt.type,
+    failed: evt.failed
+}, {
+    event: "network.request_started",
+    method: "GET",
+    type: "fetch",
+    failed: false
+})

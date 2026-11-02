@@ -1,12 +1,12 @@
-let url = @lab.static.dynamic + "?redirect=/forms"
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET doc =  DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-let form = ELEMENT(doc, "#page-form")
+LET form = ELEMENT(doc, "#page-form")
 
 INPUT(form, "#text_input", "foo", 100)
 
-let output = ELEMENT(doc, "#text_output")
+LET output = ELEMENT(doc, "#text_output")
 
-return T::EQ(output.innerText, "foo")
+RETURN T::EQ(output.innerText, "foo")

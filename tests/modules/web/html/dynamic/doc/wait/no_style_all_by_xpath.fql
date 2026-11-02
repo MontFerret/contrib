@@ -1,32 +1,32 @@
-let url = @lab.static.dynamic + "?redirect=/events"
-let doc = DOCUMENT(url, { driver: "cdp" })
-let selector = X("//*[@id='wait-class-btn' or @id='wait-class-random-btn']")
+LET url = @lab.static.dynamic + "?redirect=/events"
+LET doc =  DOCUMENT(url, { driver: "cdp" })
+LET selector = X("//*[@id='wait-class-btn' or @id='wait-class-random-btn']")
 
 WAIT_ELEMENT(doc, "#page-events")
 
-let n = (
-    for el in ELEMENTS(doc, selector)
+LET n = (
+    FOR el IN ELEMENTS(doc, selector)
         ATTR_SET(el, "style", "color: black")
 
-        return none
+        RETURN NONE
 )
 
 WAIT_STYLE_ALL(doc, selector, "color", "rgb(0, 0, 0)", 10000)
 
-let n2 = (
-    for el in ELEMENTS(doc, selector)
+LET n2 = (
+    FOR el IN ELEMENTS(doc, selector)
         ATTR_SET(el, "style", "color: red")
 
-        return none
+        RETURN NONE
 )
 
 WAIT_NO_STYLE_ALL(doc, selector, "color", "rgb(0, 0, 0)", 10000)
 
-let results = (
-    for el in ELEMENTS(doc, selector)
-        return el.style.color
+LET results = (
+    FOR el IN ELEMENTS(doc, selector)
+        RETURN el.style.color
 )
 
-T::EQ(results, ["rgb(255, 0, 0)", "rgb(255, 0, 0)"])
+T::EQ(results, ["rgb(255, 0, 0)","rgb(255, 0, 0)"])
 
-return none
+RETURN NONE

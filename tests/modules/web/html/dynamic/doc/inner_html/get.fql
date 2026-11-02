@@ -1,7 +1,7 @@
-let url = @lab.static.dynamic
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic
+LET doc = DOCUMENT(url, { driver: "cdp" })
 
-let expected = `<head>
+LET expected = `<head>
                         <meta charset="utf-8">
                         <meta http-equiv="x-ua-compatible" content="ie=edge">
                         <title>Ferret E2E SPA</title>
@@ -20,13 +20,9 @@ let expected = `<head>
                         <script src="vendor/react-bootstrap.min.js"></script>
                         <script src="index.js" type="module"></script>
                 </body>`
-let actual = INNER_HTML(doc)
+LET actual = INNER_HTML(doc)
 
-let r1 = "(\\s|\\"")"
-let r2 = "(\n|\\s|\\"")"
+LET r1 = '(\s|\")'
+LET r2 = '(\n|\s|\")'
 
-return T::EQ(
-    REGEX_REPLACE(TRIM(actual), r2, ""),
-    REGEX_REPLACE(expected, r1, "")
-)
-
+RETURN T::EQ(REGEX_REPLACE(TRIM(actual), r2, ''), REGEX_REPLACE(expected, r1, ''))

@@ -1,15 +1,5 @@
-let page = DOCUMENT(@lab.static.static + "/simple.html", { driver: "cdp" })
-let image = SCREENSHOT(
-    page,
-    {
-        format: "png",
-        x: 1,
-        y: 2,
-        width: 32,
-        height: 16
-    }
-)
+LET page = DOCUMENT(@lab.static.static + "/simple.html", { driver: "cdp" })
+LET image = SCREENSHOT(page, { format: "png", x: 1, y: 2, width: 32, height: 16 })
 
 // A PNG starts with the eight-byte signature 89 50 4E 47 0D 0A 1A 0A.
-return T::TRUE(STARTS_WITH(ENCODING::BASE64_ENCODE(image), "iVBORw0KGgo"))
-
+RETURN T::TRUE(STARTS_WITH(ENCODING::BASE64_ENCODE(image), "iVBORw0KGgo"))

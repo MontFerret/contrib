@@ -1,11 +1,9 @@
-let url = @lab.static.dynamic + "/#/events"
-let page = DOCUMENT(url, { driver: "cdp" })
-let target = ELEMENT(page, "#observable-element-target")
+LET url = @lab.static.dynamic + "/#/events"
+LET page = DOCUMENT(url, { driver: "cdp" })
+LET target = ELEMENT(page, "#observable-element-target")
 
-let evt = waitfor event "ferret:sequence" in target when .detail.index == 2 trigger CLICK(
-    page,
-    "#observable-sequence-btn"
-)
+LET evt = WAITFOR EVENT "ferret:sequence" IN target
+    WHEN .detail.index == 2
+    TRIGGER CLICK(page, "#observable-sequence-btn")
 
-return T::EQ(evt.detail.index, 2)
-
+RETURN T::EQ(evt.detail.index, 2)

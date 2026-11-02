@@ -1,13 +1,10 @@
-let url = @lab.static.dynamic
-let doc = DOCUMENT(url, { driver: "cdp" })
-let selector = "#root > div > main > div"
+LET url = @lab.static.dynamic
+LET doc =  DOCUMENT(url, { driver: "cdp" })
+LET selector = '#root > div > main > div'
 
 WAIT_ELEMENT(doc, "#layout")
 
-let expected = "<div><h1>Welcome to Ferret E2E test page!</h1></div><div><p class=""lead"">It has several pages for testing different possibilities of the library</p></div>"
-let actual = INNER_HTML(doc, selector)
+LET expected = '<div><h1>Welcome to Ferret E2E test page!</h1></div><div><p class="lead">It has several pages for testing different possibilities of the library</p></div>'
+LET actual = INNER_HTML(doc, selector)
 
-return T::EQ(
-    REGEX_REPLACE(TRIM(actual), "(\n|\\s)", ""),
-    REGEX_REPLACE(expected, "\\s", "")
-)
+RETURN T::EQ(REGEX_REPLACE(TRIM(actual), '(\n|\s)', ''), REGEX_REPLACE(expected, '\s', ''))

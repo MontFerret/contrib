@@ -1,10 +1,9 @@
-let url = @lab.static.dynamic + "/#/events"
-let page = DOCUMENT(url, { driver: "cdp" })
-let btn = ELEMENT(page, "#wait-class-random-btn")
+LET url = @lab.static.dynamic + "/#/events"
+LET page = DOCUMENT(url, { driver: "cdp" })
+LET btn = ELEMENT(page, "#wait-class-random-btn")
 
 btn <- "click"
 
 WAIT_CLASS(page, "#wait-class-random-content", "alert-success", 10000)
 
-return none
-
+RETURN NONE

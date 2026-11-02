@@ -1,15 +1,13 @@
-let uri = "file:ferret_shared_uri_integration?mode=memory&cache=shared"
-let first = DB::SQLITE::OPEN({ uri: uri })
-let second = DB::SQLITE::OPEN({ uri: uri })
+LET uri = "file:ferret_shared_uri_integration?mode=memory&cache=shared"
+LET first = DB::SQLITE::OPEN({ uri: uri })
+LET second = DB::SQLITE::OPEN({ uri: uri })
 
-let create = query one `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)` in first using sql_exec
-let insert = query one `INSERT INTO users(name) VALUES (?)` in first using sql_exec
-    with { params: ["Ada"] }
+LET create = QUERY ONE `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)` IN first USING sql_exec
+LET insert = QUERY ONE `INSERT INTO users(name) VALUES (?)` IN first USING sql_exec WITH { params: ["Ada"] }
 
-let rows = query `
+LET rows = QUERY `
   SELECT name
   FROM users
-` in second using sql
+` IN second USING sql
 
-return T::EQ(rows, [ { name: "Ada" } ])
-
+RETURN T::EQ(rows, [{ name: "Ada" }])

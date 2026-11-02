@@ -1,25 +1,25 @@
-let url = @lab.static.dynamic + "?redirect=/forms"
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-let el = ELEMENT(doc, "#text_input")
-let prevAttrs = el.attributes
+LET el = ELEMENT(doc, "#text_input")
+LET prevAttrs = el.attributes
 
 el.attributes["aria-label"] = "Email"
 T::NONE(prevAttrs["aria-label"])
 T::EQ(el.attributes["aria-label"], "Email")
 
-let attrs = el.attributes
+LET attrs = el.attributes
 attrs.placeholder = "Email"
 T::EQ(attrs.placeholder, "Email")
 T::EQ(el.attributes.placeholder, "Email")
 
-attrs.placeholder = none
+attrs.placeholder = NONE
 T::NONE(attrs.placeholder)
 T::NONE(el.attributes.placeholder)
 
-let style = el.style
+LET style = el.style
 style.display = "none"
 T::EQ(style.display, "none")
 T::EQ(el.style.display, "none")
@@ -28,19 +28,19 @@ style.backgroundColor = "rgb(255, 0, 0)"
 T::EQ(style["background-color"], "rgb(255, 0, 0)")
 T::EQ(el.style.backgroundColor, "rgb(255, 0, 0)")
 
-style.display = none
+style.display = NONE
 T::NONE(style.display)
 
-let classes = el.classes
-classes.active = true
+LET classes = el.classes
+classes.active = TRUE
 T::TRUE(classes.active)
 T::TRUE(el.classes.active)
 
-classes.active = false
+classes.active = FALSE
 T::NONE(classes.active)
 T::NONE(el.classes.active)
 
-let dataset = el.dataset
+LET dataset = el.dataset
 dataset.productId = "123"
 T::EQ(dataset.productId, "123")
 T::EQ(el.dataset.productId, "123")
@@ -57,10 +57,9 @@ T::EQ(el.dataset.foo_bar, "stable")
 T::EQ(el.attributes["data-foo_bar"], "stable")
 T::NONE(dataset.fooBar)
 
-dataset["data-product-id"] = none
+dataset["data-product-id"] = NONE
 T::NONE(dataset.productId)
 T::NONE(el.dataset.productId)
 T::NONE(el.attributes["data-product-id"])
 
-return none
-
+RETURN NONE

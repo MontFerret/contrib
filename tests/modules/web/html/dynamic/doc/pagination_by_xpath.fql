@@ -1,14 +1,9 @@
-let url = @lab.static.dynamic + "/#/pagination"
-let page = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "/#/pagination"
+LET page =  DOCUMENT(url, { driver: "cdp" })
 
-let items = (
-    for i in PAGINATION(
-        page,
-        X(
-            "//li[contains(@class, 'page-item-next') and contains(@class, 'page-item') and not(contains(@class, 'disabled'))]"
-        )
-    )
-        return i
+LET items = (
+    FOR i IN PAGINATION(page, X("//li[contains(@class, 'page-item-next') and contains(@class, 'page-item') and not(contains(@class, 'disabled'))]"))
+        RETURN i
 )
 
-return T::LEN(items, 5)
+RETURN T::LEN(items, 5)

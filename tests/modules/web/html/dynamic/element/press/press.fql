@@ -1,7 +1,7 @@
-let url = @lab.static.dynamic + "/#/events"
-let page = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "/#/events"
+LET page =  DOCUMENT(url, { driver: "cdp" })
 
-let input = ELEMENT(page, "#press-input")
+LET input = ELEMENT(page, "#press-input")
 
 FOCUS(input)
 
@@ -11,4 +11,4 @@ WAIT(100)
 
 T::EQ(INNER_TEXT(page, "#press-content"), "Enter")
 
-return none
+RETURN NONE

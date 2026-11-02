@@ -1,7 +1,7 @@
-let url = @lab.static.static + "/article.html"
-let doc = DOCUMENT(url)
-let element = ELEMENT(doc, "article")
-let article = WEB::ARTICLE::EXTRACT(element)
+LET url = @lab.static.static + "/article.html"
+LET doc = DOCUMENT(url)
+LET element = ELEMENT(doc, "article")
+LET article = WEB::ARTICLE::EXTRACT(element)
 
 T::EQ(article.title, "Ferret Lab Article Fixture")
 T::NONE(article.canonicalUrl)
@@ -9,15 +9,7 @@ T::NONE(article.siteName)
 T::NOT::NONE(article.text)
 T::NOT::NONE(article.html)
 T::NOT::NONE(article.markdown)
-T::NOT::EQ(
-    REGEX_REPLACE(
-        article.text,
-        "article extraction through the same runtime path",
-        ""
-    ),
-    article.text
-)
+T::NOT::EQ(REGEX_REPLACE(article.text, "article extraction through the same runtime path", ""), article.text)
 T::EQ(REGEX_REPLACE(article.text, "Overview Grid", ""), article.text)
 
-return none
-
+RETURN NONE

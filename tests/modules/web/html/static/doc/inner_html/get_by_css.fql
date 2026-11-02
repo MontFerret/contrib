@@ -1,10 +1,7 @@
-let url = @lab.static.static + "/overview.html"
-let doc = DOCUMENT(url)
+LET url = @lab.static.static + '/overview.html'
+LET doc = DOCUMENT(url)
 
-let expected = "<li class=""toc-entry toc-h2""><a href=""#containers"">Containers</a></li><li class=""toc-entry toc-h2""><a href=""#responsive-breakpoints"">Responsive breakpoints</a></li><li class=""toc-entry toc-h2""><a href=""#z-index"">Z-index</a></li>"
-let actual = INNER_HTML(doc, ".section-nav")
+LET expected = '<li class="toc-entry toc-h2"><a href="#containers">Containers</a></li><li class="toc-entry toc-h2"><a href="#responsive-breakpoints">Responsive breakpoints</a></li><li class="toc-entry toc-h2"><a href="#z-index">Z-index</a></li>'
+LET actual = INNER_HTML(doc, '.section-nav')
 
-return T::EQ(
-    REGEX_REPLACE(TRIM(actual), "(\n|\\s)", ""),
-    REGEX_REPLACE(expected, "\\s", "")
-)
+RETURN T::EQ(REGEX_REPLACE(TRIM(actual), '(\n|\s)', ''), REGEX_REPLACE(expected, '\s', ''))

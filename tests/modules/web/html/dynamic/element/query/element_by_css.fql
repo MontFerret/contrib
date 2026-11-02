@@ -1,9 +1,8 @@
-let url = @lab.static.dynamic
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic
+LET doc =  DOCUMENT(url, { driver: "cdp" })
 
-let el = ELEMENT(doc, "#root")?
+LET el = ELEMENT(doc, "#root")?
 
 T::NOT::NONE(el)
 
-return true
-
+RETURN TRUE

@@ -1,7 +1,7 @@
-let url = @lab.static.static + "/simple.html"
-let doc = DOCUMENT(url)
+LET url = @lab.static.static + '/simple.html'
+LET doc = DOCUMENT(url)
 
-let expected = `<!DOCTYPE html>
+LET expected = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
@@ -11,12 +11,9 @@ let expected = `<!DOCTYPE html>
     <h1>Hello world</h1>
 </body>
 </html>`
-let actual = INNER_HTML(doc)
+LET actual = INNER_HTML(doc)
 
-let r1 = "(\\s|\\"")"
-let r2 = "(\n|\\s|\\"")"
+LET r1 = '(\s|\")'
+LET r2 = '(\n|\s|\")'
 
-return T::EQ(
-    REGEX_REPLACE(TRIM(actual), r2, ""),
-    REGEX_REPLACE(expected, r1, "")
-)
+RETURN T::EQ(REGEX_REPLACE(TRIM(actual), r2, ''), REGEX_REPLACE(expected, r1, ''))

@@ -1,7 +1,6 @@
-let db = DB::SQLITE::OPEN({ memory: true })
+LET db = DB::SQLITE::OPEN({ memory: true })
 DB::SQLITE::CLOSE(db)
 
-let status = query `SELECT 1` in db using sql on error return "error"
+LET status = QUERY `SELECT 1` IN db USING sql ON ERROR RETURN "error"
 
-return T::EQ(status, "error")
-
+RETURN T::EQ(status, "error")

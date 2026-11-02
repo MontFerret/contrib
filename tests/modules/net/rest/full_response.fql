@@ -1,6 +1,11 @@
-let api = NET::REST::CLIENT({ baseUrl: @lab.mock.api, encoding: "json" })
+LET api = NET::REST::CLIENT({
+  baseUrl: @lab.mock.api,
+  encoding: "json"
+})
 
-let response = query one "/health" in api options { response: "full" }
+LET response = QUERY ONE "/health" IN api OPTIONS {
+  response: "full"
+}
 
 T::TRUE(response.ok)
 T::EQ(response.status, 200)
@@ -8,5 +13,4 @@ T::EQ(response.body.version, "1.0.0")
 T::EQ(response.body.status, "ok")
 T::EQ(response.url, @lab.mock.api + "/health")
 
-return none
-
+RETURN NONE

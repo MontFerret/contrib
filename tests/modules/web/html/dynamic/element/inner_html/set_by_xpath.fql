@@ -1,27 +1,25 @@
-let url = @lab.static.dynamic + "/#/lists"
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "/#/lists"
+LET doc =  DOCUMENT(url, { driver: "cdp" })
 
-let expected = [
-    {
-        "details": "<h5 class=""track-artist"">MEDUZA</h5><small class=""track-name"">Piece Of Your Heart (feat. Goodboys)</small>"
-    },
-    {
-        "details": "<h5 class=""track-artist"">Metanoia Music</h5><small class=""track-name"">Che Crozz x Orbis - Lift Me Up</small>"
-    }
+LET expected = [
+    {"details":'<h5 class="track-artist">MEDUZA</h5><small class="track-name">Piece Of Your Heart (feat. Goodboys)</small>'},
+    {"details":'<h5 class="track-artist">Metanoia Music</h5><small class="track-name">Che Crozz x Orbis - Lift Me Up</small>'}
 ]
 
-let html = (
-    for t in expected
-        return "<li><div class=""track-details"">" + t.details + "</div></li>"
+LET html = (
+    FOR t IN expected
+        RETURN '<li><div class="track-details">' + t.details + '</div></li>'
 )
 
-INNER_HTML_SET(doc, X(".//*[contains(@class, 'track-list')]"), join(html, "\n"))
+INNER_HTML_SET(doc, X(".//*[contains(@class, 'track-list')]"), join(html, '\n'))
 
-let list = ELEMENT(doc, ".track-list")
+LET list = ELEMENT(doc, '.track-list')
 
-let actual = (
-    for item in ELEMENTS(doc, ".track-list li")
-        return { details: INNER_HTML(item, ".track-details") }
+LET actual = (
+    FOR item IN ELEMENTS(doc, '.track-list li')
+        RETURN {
+            details: INNER_HTML(item, '.track-details'),
+        }
 )
 
-return T::EQ(actual, expected)
+RETURN T::EQ(actual, expected)

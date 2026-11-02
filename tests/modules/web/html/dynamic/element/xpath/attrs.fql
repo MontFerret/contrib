@@ -1,8 +1,8 @@
-let url = @lab.static.dynamic
-let page = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic
+LET page =  DOCUMENT(url, { driver: "cdp" })
 
-let actual = XPATH(page, "//body/@class")
+LET actual = XPATH(page, "//body/@class")
 
 T::NOT::EMPTY(actual)
 
-return T::EQ(actual[0], "text-center")
+RETURN T::EQ(actual[0], "text-center")

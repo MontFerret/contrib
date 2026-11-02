@@ -1,12 +1,11 @@
-let url = @lab.static.dynamic + "?redirect=/forms"
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/forms"
+LET doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-let input = ELEMENT(doc, "#text_input")
-let output = ELEMENT(doc, "#text_output")
+LET input = ELEMENT(doc, "#text_input")
+LET output = ELEMENT(doc, "#text_output")
 
-dispatch "type" in input with { text: "macbook", clear: true, delay: 10 }
+DISPATCH "type" IN input WITH { text: "macbook", clear: true, delay: 10 }
 
-return T::EQ(output.innerText, "macbook")
-
+RETURN T::EQ(output.innerText, "macbook")

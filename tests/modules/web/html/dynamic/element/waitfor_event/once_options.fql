@@ -1,10 +1,11 @@
-let url = @lab.static.dynamic + "/#/events"
-let page = DOCUMENT(url, { driver: "cdp" })
-let target = ELEMENT(page, "#observable-element-target")
+LET url = @lab.static.dynamic + "/#/events"
+LET page = DOCUMENT(url, { driver: "cdp" })
+LET target = ELEMENT(page, "#observable-element-target")
 
-let status = waitfor event "ferret:sequence" in target options {
-    listener: { once: true }
-} when .detail.index == 2 trigger CLICK(page, "#observable-sequence-btn") timeout 500ms on timeout return "timeout"
+LET status = WAITFOR EVENT "ferret:sequence" IN target
+    OPTIONS { listener: { once: true } }
+    WHEN .detail.index == 2
+    TRIGGER CLICK(page, "#observable-sequence-btn")
+    TIMEOUT 500ms ON TIMEOUT RETURN "timeout"
 
-return T::EQ(status, "timeout")
-
+RETURN T::EQ(status, "timeout")

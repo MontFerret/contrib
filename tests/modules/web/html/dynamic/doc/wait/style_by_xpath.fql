@@ -1,18 +1,18 @@
-let url = @lab.static.dynamic + "?redirect=/events"
-let doc = DOCUMENT(url, { driver: "cdp" })
-let selector = X("//*[@id='wait-class-btn']")
+LET url = @lab.static.dynamic + "?redirect=/events"
+LET doc =  DOCUMENT(url, { driver: "cdp" })
+LET selector = X("//*[@id='wait-class-btn']")
 
 WAIT_ELEMENT(doc, "#page-events")
 
-let el = ELEMENT(doc, selector)
-let prev = el.style
+LET el = ELEMENT(doc, selector)
+LET prev = el.style
 
 ATTR_SET(el, "style", "width: 200px")
 WAIT_STYLE(doc, selector, "width", "200px")
 
-let curr = el.style
+LET curr = el.style
 
 T::NOT::EQ(prev.width, "200px")
 T::EQ(curr.width, "200px")
 
-return none
+RETURN NONE

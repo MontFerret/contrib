@@ -1,21 +1,21 @@
-let url = @lab.static.dynamic + "?redirect=/events"
-let doc = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/events"
+LET doc =  DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "#page-events")
 
-let el = ELEMENT(doc, "#wait-class-content")
+LET el = ELEMENT(doc, "#wait-class-content")
 
 ATTR_SET(el, "style", "color: black")
 WAIT_STYLE(el, "color", "rgb(0, 0, 0)")
 
-let prev = el.style
+LET prev = el.style
 
 ATTR_SET(el, "style", "color: red")
 WAIT_NO_STYLE(el, "color", "black")
 
-let curr = el.style
+LET curr = el.style
 
 T::EQ(prev.color, "rgb(0, 0, 0)")
 T::EQ(curr.color, "rgb(255, 0, 0)")
 
-return none
+RETURN NONE

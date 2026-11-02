@@ -1,27 +1,27 @@
-let url = @lab.static.dynamic + "?redirect=/events"
-let doc = DOCUMENT(url, { driver: "cdp" })
-let pageSelector = "#page-events"
-let elemSelector = "#wait-no-style-content"
-let styleName = "color"
-let styleValue = "rgb(100, 100, 100)"
+LET url = @lab.static.dynamic + "?redirect=/events"
+LET doc =  DOCUMENT(url, { driver: "cdp" })
+LET pageSelector = "#page-events"
+LET elemSelector = "#wait-no-style-content"
+LET styleName = "color"
+LET styleValue = "rgb(100, 100, 100)"
 
 WAIT_ELEMENT(doc, pageSelector)
-let el = ELEMENT(doc, elemSelector)
+LET el = ELEMENT(doc, elemSelector)
 
-let prev = el.style.color
+LET prev = el.style.color
 
 T::NOT::EQ(prev, styleValue)
 
 STYLE_SET(el, styleName, styleValue)
 
-let curr = el.style.color
+LET curr = el.style.color
 
 T::EQ(curr, styleValue)
 
 ATTR_REMOVE(el, "style")
 
-let removed = el.style.color
+LET removed = el.style.color
 
 T::EQ(prev, removed)
 
-return true
+RETURN TRUE

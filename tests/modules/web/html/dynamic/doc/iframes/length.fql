@@ -1,7 +1,6 @@
-let url = @lab.static.dynamic + "?redirect=/iframe"
-let page = DOCUMENT(url, { driver: "cdp" })
+LET url = @lab.static.dynamic + "?redirect=/iframe"
+LET page = DOCUMENT(url, { driver: 'cdp' })
 
 WAIT_ELEMENT(page, "iframe[name='nested']")
 
-return T::LEN(page.frames, 2)
-
+RETURN T::LEN(page.frames, 2)

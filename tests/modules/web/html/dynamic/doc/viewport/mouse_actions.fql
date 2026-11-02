@@ -1,5 +1,11 @@
-let url = @lab.static.dynamic + "?redirect=/events"
-let doc = DOCUMENT(url, { driver: "cdp", viewport: { width: 320, height: 240 } })
+LET url = @lab.static.dynamic + "?redirect=/events"
+LET doc = DOCUMENT(url, {
+    driver: "cdp",
+    viewport: {
+        width: 320,
+        height: 240
+    }
+})
 
 WAIT_ELEMENT(doc, "#page-events")
 
@@ -12,5 +18,4 @@ T::FALSE(MOUSE(doc, 10000, 10000))
 T::TRUE(MOUSE(doc, -10, -10))
 T::FALSE(MOUSE(doc, -20, -20))
 
-return none
-
+RETURN NONE

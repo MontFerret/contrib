@@ -1,16 +1,16 @@
-let url = @lab.static.static + "/simple.html"
-let doc = DOCUMENT(url)
-let el = ELEMENT(doc, "body")
+LET url = @lab.static.static + '/simple.html'
+LET doc = DOCUMENT(url)
+LET el = ELEMENT(doc, "body")
 
-let expected = `<div><h1>Injected by Ferret</h1></div>`
+LET expected = `<div><h1>Injected by Ferret</h1></div>`
 
 INNER_HTML_SET(el, expected)
 
-let actual = INNER_HTML(el)
+LET actual = INNER_HTML(el)
 
-let r1 = "(\\s|\\"")"
-let r2 = "(\n|\\s|\\"")"
+LET r1 = '(\s|\")'
+LET r2 = '(\n|\s|\")'
 
-T::EQ(REGEX_REPLACE(TRIM(actual), r2, ""), REGEX_REPLACE(expected, r1, ""))
+T::EQ(REGEX_REPLACE(TRIM(actual), r2, ''), REGEX_REPLACE(expected, r1, ''))
 
-return none
+RETURN NONE

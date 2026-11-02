@@ -1,26 +1,19 @@
-let single = PARSE(
-    "<h1>single</h1>",
-    {
-        headers: { "X-Ferret-Test": "parse-header" },
-        cookies: { name: "session", value: "one" }
-    }
-)
+LET single = PARSE("<h1>single</h1>", {
+    headers: { "X-Ferret-Test": "parse-header" },
+    cookies: { name: "session", value: "one" }
+})
 
 T::EQ(ELEMENT(single, "h1").innerText, "single")
 
-let multiple = PARSE(
-    "<h1>multiple</h1>",
-    {
-        cookies: [
-            { name: "session", value: "one" },
-            { name: "theme", value: "dark" }
-        ]
-    }
-)
+LET multiple = PARSE("<h1>multiple</h1>", {
+    cookies: [
+        { name: "session", value: "one" },
+        { name: "theme", value: "dark" }
+    ]
+})
 
 T::EQ(ELEMENT(multiple, "h1").innerText, "multiple")
 
-let empty = PARSE("<h1>empty</h1>", { headers: {}, cookies: [] })
+LET empty = PARSE("<h1>empty</h1>", { headers: {}, cookies: [] })
 
-return T::EQ(ELEMENT(empty, "h1").innerText, "empty")
-
+RETURN T::EQ(ELEMENT(empty, "h1").innerText, "empty")
