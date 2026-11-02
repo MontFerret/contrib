@@ -1,14 +1,14 @@
-LET url = @lab.static.static + '/overview.html'
-LET doc = DOCUMENT(url)
+let url = @lab.static.static + "/overview.html"
+let doc = DOCUMENT(url)
 
-LET expected = [
-'<a href="#containers">Containers</a>',
-'<a href="#responsive-breakpoints">Responsive breakpoints</a>',
-'<a href="#z-index">Z-index</a>'
+let expected = [
+    "<a href=""#containers"">Containers</a>",
+    "<a href=""#responsive-breakpoints"">Responsive breakpoints</a>",
+    "<a href=""#z-index"">Z-index</a>"
 ]
-LET actual = (
-    FOR i IN INNER_HTML_ALL(doc, X("//*[contains(@class, 'section-nav')]/li"))
-        RETURN TRIM(i)
+let actual = (
+    for i in INNER_HTML_ALL(doc, X("//*[contains(@class, 'section-nav')]/li"))
+        return TRIM(i)
 )
 
-RETURN T::EQ(actual, expected)
+return T::EQ(actual, expected)

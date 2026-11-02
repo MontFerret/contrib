@@ -1,13 +1,13 @@
-LET url = @lab.static.dynamic + "?redirect=/events"
-LET doc =  DOCUMENT(url, { driver: "cdp" })
-LET pageSelector = "#page-events"
-LET elemSelector = "#wait-no-style-content"
+let url = @lab.static.dynamic + "?redirect=/events"
+let doc = DOCUMENT(url, { driver: "cdp" })
+let pageSelector = "#page-events"
+let elemSelector = "#wait-no-style-content"
 
 WAIT_ELEMENT(doc, pageSelector)
 
-LET el = ELEMENT(doc, elemSelector)
-LET attrs = ATTR_GET(el, "style")
+let el = ELEMENT(doc, elemSelector)
+let attrs = ATTR_GET(el, "style")
 
 T::EQ(attrs.style.display, "block")
 
-RETURN TRUE
+return true

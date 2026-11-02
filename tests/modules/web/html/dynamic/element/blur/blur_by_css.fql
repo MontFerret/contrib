@@ -1,5 +1,5 @@
-LET url = @lab.static.dynamic + "/#/events"
-LET page =  DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "/#/events"
+let page = DOCUMENT(url, { driver: "cdp" })
 
 FOCUS(page, "#focus-input")
 
@@ -9,4 +9,4 @@ BLUR(page, "#focus-input")
 
 WAIT_NO_CLASS(page, "#focus-content", "alert-success")
 
-RETURN TRUE
+return true

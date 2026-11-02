@@ -1,37 +1,39 @@
-LET url = @lab.static.dynamic + "/#/lists"
-LET doc =  DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "/#/lists"
+let doc = DOCUMENT(url, { driver: "cdp" })
 
-LET expected = [
-    {
-        "artist":'MEDUZA',
-        "track": 'Piece Of Your Heart (feat. Goodboys)'
-    },
-    {
-        "artist": 'Metanoia Music',
-        "track": 'Che Crozz x Orbis - Lift Me Up'
-    }
+let expected = [
+    { "artist": "MEDUZA", "track": "Piece Of Your Heart (feat. Goodboys)" },
+    { "artist": "Metanoia Music", "track": "Che Crozz x Orbis - Lift Me Up" }
 ]
 
-LET f = (
-    FOR item, idx IN ELEMENTS(doc, '.track-list li')
-    LIMIT 2
-        LET value = expected[idx]
+let f = (
+    for item, idx in ELEMENTS(doc, ".track-list li")
+        limit 2
+        let value = expected[idx]
 
-        INNER_HTML_SET(item, X(".//*[contains(@class, 'track-artist')]"), value.artist)
-        INNER_HTML_SET(item, X(".//*[contains(@class, 'track-name')]"), value.track)
+        INNER_HTML_SET(
+            item,
+            X(".//*[contains(@class, 'track-artist')]"),
+            value.artist
+        )
+        INNER_HTML_SET(
+            item,
+            X(".//*[contains(@class, 'track-name')]"),
+            value.track
+        )
 
-        RETURN NONE
+        return none
 )
 
-LET list = ELEMENT(doc, '.track-list')
+let list = ELEMENT(doc, ".track-list")
 
-LET actual = (
-    FOR item IN ELEMENTS(doc, '.track-list li')
-        LIMIT 2
-        RETURN {
-            artist: TRIM(INNER_TEXT(item, '.track-artist')),
-            track: TRIM(INNER_TEXT(item, '.track-name'))
+let actual = (
+    for item in ELEMENTS(doc, ".track-list li")
+        limit 2
+        return {
+            artist: TRIM(INNER_TEXT(item, ".track-artist")),
+            track: TRIM(INNER_TEXT(item, ".track-name"))
         }
 )
 
-RETURN T::EQ(actual, expected)
+return T::EQ(actual, expected)

@@ -1,25 +1,23 @@
-LET url = @lab.static.dynamic + "/#/events"
-LET page = DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "/#/events"
+let page = DOCUMENT(url, { driver: "cdp" })
 
 CLICK(page, "#ajax-input-seq-buttons")
 
-WAITFOR EVENT "network.request_started" IN page
-    WHEN CONTAINS(.url, "index.html")
-    AND .type == "fetch"
-    TIMEOUT 10s
+waitfor event "network.request_started" in page when CONTAINS(.url, "index.html") and .type == "fetch" timeout 10s
 
-LET evt = WAITFOR EVENT "network.idle" IN page
-    OPTIONS { quiet: 2500, maxInflight: 0, types: ["fetch"] }
-    TIMEOUT 10s
-
-RETURN T::EQ({
-    event: evt.event,
-    inflight: evt.inflight,
-    maxInflight: evt.maxInflight,
-    quiet: evt.quiet
-}, {
-    event: "network.idle",
-    inflight: 0,
+let evt = waitfor event "network.idle" in page options {
+    quiet: 2500,
     maxInflight: 0,
-    quiet: 2500
-})
+    types: ["fetch"]
+} timeout 10s
+
+return T::EQ(
+    {
+        event: evt.event,
+        inflight: evt.inflight,
+        maxInflight: evt.maxInflight,
+        quiet: evt.quiet
+    },
+    { event: "network.idle", inflight: 0, maxInflight: 0, quiet: 2500 }
+)
+

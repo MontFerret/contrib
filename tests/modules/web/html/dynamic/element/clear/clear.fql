@@ -1,9 +1,9 @@
-LET url = @lab.static.dynamic + "?redirect=/forms"
-LET doc =  DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "?redirect=/forms"
+let doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-LET input = ELEMENT(doc, "#text_input")
+let input = ELEMENT(doc, "#text_input")
 
 INPUT(input, "Foo", 100)
 
@@ -23,4 +23,4 @@ INPUT_CLEAR(input)
 
 T::EMPTY(INNER_TEXT(doc, "#text_output"))
 
-RETURN NONE
+return none

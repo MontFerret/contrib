@@ -1,19 +1,22 @@
-LET db = DB::SQLITE::OPEN({ memory: true })
+let db = DB::SQLITE::OPEN({ memory: true })
 
-LET create = QUERY ONE `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)` IN db USING sql_exec
+let create = query one `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)` in db using sql_exec
 
-LET committed = DB::SQLITE::BEGIN(db)
-LET committedInsert = QUERY ONE `INSERT INTO users(name) VALUES (?)` IN committed USING sql_exec WITH { params: ["Ada"] }
+let committed = DB::SQLITE::BEGIN(db)
+let committedInsert = query one `INSERT INTO users(name) VALUES (?)` in committed using sql_exec
+    with { params: ["Ada"] }
 DB::SQLITE::COMMIT(committed)
 
-LET rolledBack = DB::SQLITE::BEGIN(db)
-LET rolledBackInsert = QUERY ONE `INSERT INTO users(name) VALUES (?)` IN rolledBack USING sql_exec WITH { params: ["Grace"] }
+let rolledBack = DB::SQLITE::BEGIN(db)
+let rolledBackInsert = query one `INSERT INTO users(name) VALUES (?)` in rolledBack using sql_exec
+    with { params: ["Grace"] }
 DB::SQLITE::ROLLBACK(rolledBack)
 
-LET rows = QUERY `
+let rows = query `
   SELECT name
   FROM users
   ORDER BY id
-` IN db USING sql
+` in db using sql
 
-RETURN T::EQ(rows, [{ name: "Ada" }])
+return T::EQ(rows, [ { name: "Ada" } ])
+

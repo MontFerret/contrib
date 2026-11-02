@@ -1,14 +1,14 @@
-LET url = @lab.static.dynamic + "?redirect=/forms"
-LET doc = DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "?redirect=/forms"
+let doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-LET input = ELEMENT(doc, "#multi_select_input")
-LET output = ELEMENT(doc, "#multi_select_output")
+let input = ELEMENT(doc, "#multi_select_input")
+let output = ELEMENT(doc, "#multi_select_output")
 
-DISPATCH "select" IN input WITH { value: ["1", "2", "4"] }
+dispatch "select" in input with { value: ["1", "2", "4"] }
 
-LET result = input.selectedOptions
+let result = input.selectedOptions
 
 T::EQ(output.innerText, "1, 2, 4")
 T::EQ(LENGTH(result), 3)
@@ -16,4 +16,5 @@ T::EQ(result[0].value, "1")
 T::EQ(result[1].value, "2")
 T::EQ(result[2].value, "4")
 
-RETURN NONE
+return none
+

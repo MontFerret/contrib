@@ -1,9 +1,9 @@
-LET url = @lab.static.dynamic
-LET doc = DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic
+let doc = DOCUMENT(url, { driver: "cdp" })
 
-LET expected = url + '/#/'
-LET actual = doc.url
+let expected = url + "/#/"
+let actual = doc.url
 
 T::EQ(actual, expected)
 
-RETURN NONE
+return none

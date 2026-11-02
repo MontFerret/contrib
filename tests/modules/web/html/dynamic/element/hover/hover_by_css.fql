@@ -1,11 +1,11 @@
-LET url = @lab.static.dynamic + "?redirect=/events"
-LET doc =  DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "?redirect=/events"
+let doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "#page-events")
 
 HOVER(doc, "#hoverable-btn")
 WAIT_ELEMENT(doc, "#hoverable-content")
 
-LET output = INNER_TEXT(doc, "#hoverable-content")
+let output = INNER_TEXT(doc, "#hoverable-content")
 
-RETURN T::EQ(output, "Lorem ipsum dolor sit amet.")
+return T::EQ(output, "Lorem ipsum dolor sit amet.")

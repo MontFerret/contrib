@@ -1,5 +1,5 @@
-LET url = @lab.static.dynamic
-LET doc =  DOCUMENT(url, { driver: "cdp" })
-LET el = ELEMENT(doc, ".jumbotron")
+let url = @lab.static.dynamic
+let doc = DOCUMENT(url, { driver: "cdp" })
+let el = ELEMENT(doc, ".jumbotron")
 
-RETURN INNER_TEXT(el, "h5")
+return INNER_TEXT(el, "h5")

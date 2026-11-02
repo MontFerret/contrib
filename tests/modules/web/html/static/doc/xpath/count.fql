@@ -1,6 +1,6 @@
-LET url = @lab.static.static + '/overview.html'
-LET page = DOCUMENT(url)
+let url = @lab.static.static + "/overview.html"
+let page = DOCUMENT(url)
 
-LET actual = XPATH(page, "count(//body)")
+let actual = XPATH(page, "count(//body)")
 
-RETURN T::EQ(actual, 1)
+return T::EQ(actual, 1)

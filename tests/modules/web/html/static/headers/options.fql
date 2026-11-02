@@ -1,5 +1,7 @@
-LET page = DOCUMENT(@lab.mock.api + "/html/request-options", {
-    headers: { "x-ferret-test": "memory-header" }
-})
+let page = DOCUMENT(
+    @lab.mock.api + "/html/request-options",
+    { headers: { "x-ferret-test": "memory-header" } }
+)
 
-RETURN T::EQ(ELEMENT(page, "#header").innerText, "memory-header")
+return T::EQ(ELEMENT(page, "#header").innerText, "memory-header")
+

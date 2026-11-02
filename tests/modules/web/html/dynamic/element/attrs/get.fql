@@ -1,15 +1,12 @@
-LET url = @lab.static.dynamic
-LET doc = DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic
+let doc = DOCUMENT(url, { driver: "cdp" })
 
-LET el = ELEMENT(doc, "#index")
-LET attrs = [
-    el.attributes.class,
-    el.attributes["data-type"]
-]
+let el = ELEMENT(doc, "#index")
+let attrs = [el.attributes.class, el.attributes["data-type"]]
 
-LET expected = '["jumbotron","page"]'
-LET actual = TO_STRING(attrs)
+let expected = "[""jumbotron"",""page""]"
+let actual = TO_STRING(attrs)
 
 T::EQ(actual, expected)
 
-RETURN NONE
+return none

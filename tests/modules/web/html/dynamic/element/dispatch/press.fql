@@ -1,9 +1,10 @@
-LET url = @lab.static.dynamic + "/#/events"
-LET page = DOCUMENT(url, { driver: "cdp" })
-LET input = ELEMENT(page, "#press-input")
+let url = @lab.static.dynamic + "/#/events"
+let page = DOCUMENT(url, { driver: "cdp" })
+let input = ELEMENT(page, "#press-input")
 
-DISPATCH "press" IN input WITH { key: "Enter" }
+dispatch "press" in input with { key: "Enter" }
 
 WAIT(100)
 
-RETURN T::EQ(INNER_TEXT(page, "#press-content"), "Enter")
+return T::EQ(INNER_TEXT(page, "#press-content"), "Enter")
+

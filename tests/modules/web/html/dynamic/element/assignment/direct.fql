@@ -1,9 +1,9 @@
-LET url = @lab.static.dynamic + "?redirect=/forms"
-LET doc = DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "?redirect=/forms"
+let doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-LET output = ELEMENT(doc, "#text_output")
+let output = ELEMENT(doc, "#text_output")
 output.textContent = "Continue"
 T::EQ(output.textContent, "Continue")
 
@@ -13,7 +13,7 @@ T::EQ(output.innerText, "Go")
 output.innerHTML = "<strong>Submit</strong>"
 T::EQ(output.innerHTML, "<strong>Submit</strong>")
 
-LET input = ELEMENT(doc, "#text_input")
+let input = ELEMENT(doc, "#text_input")
 input.value = "hello@example.com"
 T::EQ(input.value, "hello@example.com")
 
@@ -31,21 +31,22 @@ input.dataset = { productId: "123" }
 T::EQ(input.dataset.productId, "123")
 T::EQ(input.attributes["data-product-id"], "123")
 
-input.disabled = TRUE
+input.disabled = true
 T::TRUE(input.disabled)
 
-input.disabled = FALSE
+input.disabled = false
 T::FALSE(input.disabled)
 
-LET checkbox = ELEMENT(doc, "#checkbox_input")
-checkbox.checked = TRUE
+let checkbox = ELEMENT(doc, "#checkbox_input")
+checkbox.checked = true
 T::TRUE(checkbox.checked)
 
-checkbox.checked = FALSE
+checkbox.checked = false
 T::FALSE(checkbox.checked)
 
-LET option = ELEMENT(doc, "#select_input option:nth-child(4)")
-option.selected = TRUE
+let option = ELEMENT(doc, "#select_input option:nth-child(4)")
+option.selected = true
 T::TRUE(option.selected)
 
-RETURN NONE
+return none
+

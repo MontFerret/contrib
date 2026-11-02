@@ -1,9 +1,9 @@
-LET url = @lab.static.static + '/list.html'
-LET doc = DOCUMENT(url)
+let url = @lab.static.static + "/list.html"
+let doc = DOCUMENT(url)
 
-LET list = ELEMENT(doc, X("//*[contains(@class, 'track-list')]"))
-LET children = list.children
+let list = ELEMENT(doc, X("//*[contains(@class, 'track-list')]"))
+let children = list.children
 T::NOT::NONE(children)
 T::NOT::EMPTY(children)
 
-RETURN NONE
+return none

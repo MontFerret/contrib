@@ -1,21 +1,22 @@
-LET workbook = DOCUMENT::XLSX::CREATE()
-LET sheet = DOCUMENT::XLSX::SHEET(workbook, "Sheet1")
+let workbook = DOCUMENT::XLSX::CREATE()
+let sheet = DOCUMENT::XLSX::SHEET(workbook, "Sheet1")
 
-DOCUMENT::XLSX::WRITE_RANGE(sheet, "A1:C4", [
-  ["Name", "Active", "Score"],
-  ["Alice", true, 92],
-  ["Bob", false, 81],
-  [NONE, NONE, NONE]
-])
+DOCUMENT::XLSX::WRITE_RANGE(
+    sheet,
+    "A1:C4",
+    [
+        ["Name", "Active", "Score"],
+        ["Alice", true, 92],
+        ["Bob", false, 81],
+        [none, none, none]
+    ]
+)
 
-LET rows = QUERY "A1:C4" IN sheet WITH {
-  headers: true,
-  trimEmptyRows: true
-}
-LET shortcut = sheet[~ "A2:C3"]
-LET first = QUERY ONE "A2:C3" IN sheet
-LET count = QUERY COUNT "A2:C3" IN sheet
-LET exists = QUERY EXISTS "A2:C3" IN sheet
+let rows = query "A1:C4" in sheet with { headers: true, trimEmptyRows: true }
+let shortcut = sheet[~ "A2:C3"]
+let first = query one "A2:C3" in sheet
+let count = query count "A2:C3" in sheet
+let exists = query exists "A2:C3" in sheet
 
 T::EQ(rows[0].Name, "Alice")
 T::EQ(rows[0].Active, true)
@@ -25,4 +26,5 @@ T::EQ(first[0], "Alice")
 T::EQ(count, 2)
 T::TRUE(exists)
 
-RETURN DOCUMENT::XLSX::CLOSE(workbook)
+return DOCUMENT::XLSX::CLOSE(workbook)
+

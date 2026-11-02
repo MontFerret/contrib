@@ -1,19 +1,16 @@
-LET url = @lab.static.dynamic + "?redirect=/media"
-LET expectedW = 1920
-LET expectedH = 1080
+let url = @lab.static.dynamic + "?redirect=/media"
+let expectedW = 1920
+let expectedH = 1080
 
-LET doc = DOCUMENT(url, {
-    driver: 'cdp',
-    viewport: {
-        width: expectedW,
-        height: expectedH
-    }
-})
+let doc = DOCUMENT(
+    url,
+    { driver: "cdp", viewport: { width: expectedW, height: expectedH } }
+)
 
-LET actualW = TO_INT(INNER_TEXT(doc, '#screen-width'))
-LET actualH = TO_INT(INNER_TEXT(doc, '#screen-height'))
+let actualW = TO_INT(INNER_TEXT(doc, "#screen-width"))
+let actualH = TO_INT(INNER_TEXT(doc, "#screen-height"))
 
 T::EQ(actualW, expectedW)
 T::EQ(actualH, expectedH)
 
-RETURN NONE
+return none

@@ -1,8 +1,9 @@
-LET doc = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver:"cdp" })
+let doc = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver: "cdp" })
 
-LET list = ELEMENT(doc, ".track-list")
+let list = ELEMENT(doc, ".track-list")
 
 T::EQ(list.length, 20)
 T::LEN(list.children, 20)
 
-RETURN NONE
+return none
+

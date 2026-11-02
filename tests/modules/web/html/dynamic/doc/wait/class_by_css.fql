@@ -1,5 +1,5 @@
-LET url = @lab.static.dynamic + "?redirect=/events"
-LET doc =  DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "?redirect=/events"
+let doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "#page-events")
 
@@ -11,4 +11,4 @@ WAIT_CLASS(doc, "#wait-class-content", "alert-success")
 CLICK(doc, "#wait-class-random-btn")
 WAIT_CLASS(doc, "#wait-class-random-content", "alert-success", 10000)
 
-RETURN NONE
+return none

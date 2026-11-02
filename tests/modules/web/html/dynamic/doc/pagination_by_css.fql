@@ -1,9 +1,9 @@
-LET url = @lab.static.dynamic + "/#/pagination"
-LET page =  DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "/#/pagination"
+let page = DOCUMENT(url, { driver: "cdp" })
 
-LET items = (
-    FOR i IN PAGINATION(page, 'li[class="page-item-next page-item"]')
-        RETURN i
+let items = (
+    for i in PAGINATION(page, "li[class=""page-item-next page-item""]")
+        return i
 )
 
-RETURN T::LEN(items, 5)
+return T::LEN(items, 5)

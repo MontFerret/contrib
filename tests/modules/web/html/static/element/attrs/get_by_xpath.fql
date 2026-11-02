@@ -1,10 +1,10 @@
-LET url = @lab.static.static + '/overview.html'
-LET doc = DOCUMENT(url)
+let url = @lab.static.static + "/overview.html"
+let doc = DOCUMENT(url)
 
-LET element = ELEMENT(doc, X("//body/header/a"))
-LET actual = XPATH(element, "string(@href)")
-LET expected = "http://getbootstrap.com/"
+let element = ELEMENT(doc, X("//body/header/a"))
+let actual = XPATH(element, "string(@href)")
+let expected = "http://getbootstrap.com/"
 
 T::EQ(actual, expected)
 
-RETURN NONE
+return none

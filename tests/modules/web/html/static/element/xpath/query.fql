@@ -1,9 +1,9 @@
-LET url = @lab.static.static + '/value.html'
-LET page = DOCUMENT(url)
+let url = @lab.static.static + "/value.html"
+let page = DOCUMENT(url)
 
-LET element = ELEMENT(page, '.tablesorter')
-LET actual = XPATH(element, "//input[contains(@type, 'hidden')]")
+let element = ELEMENT(page, ".tablesorter")
+let actual = XPATH(element, "//input[contains(@type, 'hidden')]")
 
 T::LEN(actual, 40)
 
-RETURN NONE
+return none

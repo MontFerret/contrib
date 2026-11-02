@@ -1,8 +1,8 @@
-LET doc = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver:"cdp" })
+let doc = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver: "cdp" })
 
-LET current = ELEMENT(doc, "body")
+let current = ELEMENT(doc, "body")
 T::NOT::NONE(current)
-LET next = current.nextElementSibling
+let next = current.nextElementSibling
 T::NONE(next)
 
-RETURN NONE
+return none

@@ -1,8 +1,8 @@
-LET url = @lab.static.dynamic + "?redirect=/events"
-LET doc =  DOCUMENT(url, { driver: "cdp" })
-LET pageSelector = "#page-events"
-LET elemSelector = "#wait-no-element-content"
-LET btnSelector = "#wait-no-element-btn"
+let url = @lab.static.dynamic + "?redirect=/events"
+let doc = DOCUMENT(url, { driver: "cdp" })
+let pageSelector = "#page-events"
+let elemSelector = "#wait-no-element-content"
+let btnSelector = "#wait-no-element-btn"
 
 WAIT_ELEMENT(doc, pageSelector)
 
@@ -12,4 +12,4 @@ WAIT_NO_ELEMENT(doc, elemSelector, 10000)
 
 T::FALSE(ELEMENT_EXISTS(doc, elemSelector), "element should not be found")
 
-RETURN NONE
+return none

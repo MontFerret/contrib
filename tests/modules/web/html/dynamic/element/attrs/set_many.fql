@@ -1,19 +1,16 @@
-LET url = @lab.static.dynamic + "?redirect=/events"
-LET doc =  DOCUMENT(url, { driver: "cdp" })
-LET pageSelector = "#page-events"
-LET elemSelector = "#wait-no-style-content"
-LET color = "rgb(66, 66, 66)"
+let url = @lab.static.dynamic + "?redirect=/events"
+let doc = DOCUMENT(url, { driver: "cdp" })
+let pageSelector = "#page-events"
+let elemSelector = "#wait-no-style-content"
+let color = "rgb(66, 66, 66)"
 
 WAIT_ELEMENT(doc, pageSelector)
 
-LET el = ELEMENT(doc, elemSelector)
+let el = ELEMENT(doc, elemSelector)
 
-ATTR_SET(el, {
-    style: "color:" + color,
-    "data-ferret-x": "test"
-})
+ATTR_SET(el, { style: "color:" + color, "data-ferret-x": "test" })
 
 T::EQ(el.attributes.style.color, color)
 T::EQ(el.attributes["data-ferret-x"], "test")
 
-RETURN TRUE
+return true

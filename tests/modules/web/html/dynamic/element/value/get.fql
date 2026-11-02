@@ -1,11 +1,11 @@
-LET url = @lab.static.dynamic + "?redirect=/forms"
-LET doc =  DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "?redirect=/forms"
+let doc = DOCUMENT(url, { driver: "cdp" })
 
-LET el = ELEMENT(doc, "#select_input")
+let el = ELEMENT(doc, "#select_input")
 
-LET expected = "1"
-LET actual = el.value
+let expected = "1"
+let actual = el.value
 
 T::EQ(actual, expected)
 
-RETURN NONE
+return none

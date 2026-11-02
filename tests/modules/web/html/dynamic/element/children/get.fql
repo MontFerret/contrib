@@ -1,8 +1,8 @@
-LET doc = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver:"cdp" })
+let doc = DOCUMENT(@lab.static.dynamic + "/#/lists", { driver: "cdp" })
 
-LET list = ELEMENT(doc, ".track-list")
-LET children = list.children
+let list = ELEMENT(doc, ".track-list")
+let children = list.children
 T::NOT::NONE(children)
 T::NOT::EMPTY(children)
 
-RETURN NONE
+return none

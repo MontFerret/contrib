@@ -1,11 +1,12 @@
-LET url = @lab.static.dynamic + "?redirect=/forms"
-LET doc = DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "?redirect=/forms"
+let doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-LET el = ELEMENT(doc, "#text_input")
-LET classes = el.classes
+let el = ELEMENT(doc, "#text_input")
+let classes = el.classes
 
 classes.active = "yes"
 
-RETURN NONE
+return none
+

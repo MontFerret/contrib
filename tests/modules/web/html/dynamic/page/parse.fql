@@ -1,4 +1,5 @@
-LET page = PARSE(`
+let page = PARSE(
+    `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,10 +10,10 @@ LET page = PARSE(`
     <h1>Hello world</h1>
 </body>
 </html>
-`, {
-    driver: "cdp"
-})
+    `,
+    { driver: "cdp" }
+)
 
-LET title = ELEMENT(page, "title")
+let title = ELEMENT(page, "title")
 
-RETURN T::EQ(title.innerText, "Offline")
+return T::EQ(title.innerText, "Offline")

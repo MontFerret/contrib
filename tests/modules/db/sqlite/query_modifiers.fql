@@ -1,28 +1,32 @@
-LET db = DB::SQLITE::OPEN({ memory: true })
+let db = DB::SQLITE::OPEN({ memory: true })
 
-LET create = QUERY ONE `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)` IN db USING sql_exec
-LET firstInsert = QUERY ONE `INSERT INTO users(name) VALUES (?)` IN db USING sql_exec WITH { params: ["Ada"] }
-LET secondInsert = QUERY ONE `INSERT INTO users(name) VALUES (?)` IN db USING sql_exec WITH { params: ["Grace"] }
+let create = query one `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)` in db using sql_exec
+let firstInsert = query one `INSERT INTO users(name) VALUES (?)` in db using sql_exec
+    with { params: ["Ada"] }
+let secondInsert = query one `INSERT INTO users(name) VALUES (?)` in db using sql_exec
+    with { params: ["Grace"] }
 
-LET first = QUERY ONE `
+let first = query one `
   SELECT id, name
   FROM users
   ORDER BY id
-` IN db USING sql
+` in db using sql
 
-LET count = QUERY COUNT `
+let count = query count `
   SELECT id
   FROM users
-` IN db USING sql
+` in db using sql
 
-LET exists = QUERY EXISTS `
+let exists = query exists `
   SELECT id
   FROM users
   WHERE name = ?
-` IN db USING sql WITH { params: ["Grace"] }
+` in db using sql
+    with { params: ["Grace"] }
 
 T::EQ(first.name, "Ada")
 T::EQ(count, 2)
 T::TRUE(exists)
 
-RETURN NONE
+return none
+

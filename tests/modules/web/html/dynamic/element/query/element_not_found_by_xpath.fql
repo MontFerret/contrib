@@ -1,8 +1,9 @@
-LET url = @lab.static.dynamic
-LET doc =  DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic
+let doc = DOCUMENT(url, { driver: "cdp" })
 
-LET el = ELEMENT(doc, X("//*[@id='do-not-exist']"))?
+let el = ELEMENT(doc, X("//*[@id='do-not-exist']"))?
 
 T::NONE(el)
 
-RETURN TRUE
+return true
+

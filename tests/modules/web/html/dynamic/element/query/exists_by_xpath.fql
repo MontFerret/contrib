@@ -1,9 +1,10 @@
-LET url = @lab.static.dynamic
-LET doc =  DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic
+let doc = DOCUMENT(url, { driver: "cdp" })
 
-LET el = ELEMENT(doc, "#root")
+let el = ELEMENT(doc, "#root")
 
 T::TRUE(ELEMENT_EXISTS(el, X(".//*[contains(@class, 'jumbotron')]")))
 T::FALSE(ELEMENT_EXISTS(el, X(".//*[contains(@class, 'foo-bar')]")))
 
-RETURN NONE
+return none
+

@@ -1,10 +1,10 @@
-LET url = @lab.static.static + '/list.html'
-LET doc = DOCUMENT(url)
+let url = @lab.static.static + "/list.html"
+let doc = DOCUMENT(url)
 
-LET child = ELEMENT(doc, ".track-list")
-LET parent = child.parentElement
+let child = ELEMENT(doc, ".track-list")
+let parent = child.parentElement
 
 T::NOT::NONE(parent)
 T::EQ(parent.attributes.id, "tracks")
 
-RETURN NONE
+return none

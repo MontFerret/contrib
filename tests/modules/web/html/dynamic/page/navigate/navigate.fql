@@ -1,6 +1,6 @@
-LET url = @lab.static.dynamic
-LET p = DOCUMENT("", { driver: "cdp" })
+let url = @lab.static.dynamic
+let p = DOCUMENT("", { driver: "cdp" })
 
 NAVIGATE(p, url)
 
-RETURN T::EQ(p.url, url + '/#/')
+return T::EQ(p.url, url + "/#/")

@@ -1,10 +1,11 @@
-LET url = @lab.static.dynamic + "?redirect=/forms"
-LET doc = DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "?redirect=/forms"
+let doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "form")
 
-LET output = ELEMENT(doc, "#text_output")
+let output = ELEMENT(doc, "#text_output")
 
 output.text = "Continue"
 
-RETURN NONE
+return none
+

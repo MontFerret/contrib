@@ -1,6 +1,6 @@
-LET url = @lab.static.dynamic
-LET page = DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic
+let page = DOCUMENT(url, { driver: "cdp" })
 
-LET actual = XPATH(page, "count(//body)")
+let actual = XPATH(page, "count(//body)")
 
-RETURN T::EQ(actual, 1)
+return T::EQ(actual, 1)

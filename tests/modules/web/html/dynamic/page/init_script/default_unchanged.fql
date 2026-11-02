@@ -1,4 +1,5 @@
-LET url = @lab.static.static + "/init-script.html"
-LET page = DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.static + "/init-script.html"
+let page = DOCUMENT(url, { driver: "cdp" })
 
-RETURN T::EQ(ELEMENT(page, "html").attributes["data-inline-value"], "missing")
+return T::EQ(ELEMENT(page, "html").attributes["data-inline-value"], "missing")
+

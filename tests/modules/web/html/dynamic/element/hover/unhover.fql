@@ -1,9 +1,9 @@
-LET url = @lab.static.dynamic + "?redirect=/events"
-LET doc = DOCUMENT(url, { driver: "cdp" })
+let url = @lab.static.dynamic + "?redirect=/events"
+let doc = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(doc, "#page-events")
 
-LET input = ELEMENT(doc, "#hoverable-btn")
+let input = ELEMENT(doc, "#hoverable-btn")
 
 HOVER(input)
 WAIT_ELEMENT(doc, "#hoverable-content")
@@ -11,6 +11,10 @@ WAIT_ELEMENT(doc, "#hoverable-content")
 UNHOVER(input)
 WAIT_NO_ELEMENT(doc, "#hoverable-content")
 
-T::FALSE(ELEMENT_EXISTS(doc, "#hoverable-content"), "element should no longer be hovered")
+T::FALSE(
+    ELEMENT_EXISTS(doc, "#hoverable-content"),
+    "element should no longer be hovered"
+)
 
-RETURN NONE
+return none
+
