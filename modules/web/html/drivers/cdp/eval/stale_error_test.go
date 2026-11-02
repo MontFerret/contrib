@@ -13,6 +13,8 @@ func TestIsStaleError(t *testing.T) {
 		name string
 		want bool
 	}{
+		{name: "reported context error", err: &rpcc.ResponseError{Code: -32000, Message: "Cannot find context with specified id"}, want: true},
+		{name: "wrapped reported context error", err: fmt.Errorf("cdp.Runtime: CallFunctionOn: %w", &rpcc.ResponseError{Code: -32000, Message: "Cannot find context with specified id"}), want: true},
 		{name: "typed", err: &rpcc.ResponseError{Code: -32000, Message: "Execution context was destroyed."}, want: true},
 		{name: "wrapped", err: fmt.Errorf("outer: %w", &rpcc.ResponseError{Code: -32000, Message: "Could not find object with given id"}), want: true},
 		{name: "generic minus 32000", err: &rpcc.ResponseError{Code: -32000, Message: "Some other protocol error"}},

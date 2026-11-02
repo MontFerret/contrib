@@ -2,6 +2,7 @@ package dom
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/mafredri/cdp"
@@ -174,6 +175,21 @@ func (doc *HTMLDocument) updateFrameTree(frame page.FrameTree) {
 	doc.fallback.frameTree = frame
 }
 
+// updateFrameTreeIfCurrent prevents a recovered subtree from overwriting a newer generation.
+func (doc *HTMLDocument) updateFrameTreeIfCurrent(state *documentState, frame page.FrameTree) bool {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
+
+	if state == nil || doc.state != state {
+		return false
+	}
+
+	state.frameTree = frame
+	doc.fallback.frameTree = frame
+
+	return true
+}
+
 func (doc *HTMLDocument) detach() {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
@@ -218,21 +234,30 @@ func (doc *HTMLDocument) refresh(ctx context.Context, observedState *documentSta
 	return doc.dom.refreshDocument(ctx, doc, observedState)
 }
 
-func (doc *HTMLDocument) reload(ctx context.Context, frame page.FrameTree) (bool, error) {
+// reload returns the installed generation, or nil if another replacement won.
+func (doc *HTMLDocument) reload(ctx context.Context, frame page.FrameTree) (*documentState, error) {
 	doc.refreshMu.Lock()
 	defer doc.refreshMu.Unlock()
 
 	observedState, err := doc.snapshot()
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	state, err := doc.dom.loadDocumentState(ctx, doc, frame)
 	if err != nil {
-		return false, err
+		if errors.Is(err, drivers.ErrDetached) && !doc.detachIfCurrent(observedState) {
+			return nil, nil
+		}
+
+		return nil, err
 	}
 
-	return doc.replaceStateIfCurrent(observedState, state), nil
+	if !doc.replaceStateIfCurrent(observedState, state) {
+		return nil, nil
+	}
+
+	return state, nil
 }
 
 func (doc *HTMLDocument) logError(err error) *zerolog.Event {

@@ -11,7 +11,7 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/dom"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
-	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/events"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/internal/recovery"
 	cdpnet "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/network"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -160,12 +160,26 @@ func (p *HTMLPage) waitForMainFrameReady(ctx context.Context) error {
 }
 
 func (p *HTMLPage) waitForDocumentReady(ctx context.Context, client *cdp.Client, frameID page.FrameID) error {
-	exec, err := eval.Create(ctx, p.logger, client, frameID)
-	if err != nil {
-		return err
-	}
+	var exec *eval.Runtime
+	ready := templates.DOMReady()
+	_, err := recovery.Wait(ctx, func(ctx context.Context) (runtime.Value, error) {
+		if exec == nil {
+			created, err := eval.Create(ctx, p.logger, client, frameID)
+			if err != nil {
+				return runtime.None, err
+			}
 
-	_, err = events.NewEvalWaitTask(exec, templates.DOMReady(), events.DefaultPolling).Run(ctx)
+			exec = created
+		}
+
+		if ctx.Err() != nil {
+			return runtime.None, ctx.Err()
+		}
+
+		return exec.EvalValue(ctx, ready)
+	}, func() {
+		exec = nil
+	}, recovery.Unlimited)
 
 	return err
 }

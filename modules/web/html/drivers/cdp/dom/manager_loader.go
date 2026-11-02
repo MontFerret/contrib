@@ -7,8 +7,10 @@ import (
 	"github.com/mafredri/cdp/protocol/page"
 	cdpruntime "github.com/mafredri/cdp/protocol/runtime"
 
+	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/eval"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/input"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/internal/recovery"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/templates"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
@@ -37,20 +39,60 @@ func (m *Manager) LoadDocument(ctx context.Context, frame page.FrameTree) (*HTML
 }
 
 func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, frame page.FrameTree) (*documentState, error) {
-	client := m.clientForFrame(frame.Frame.ID)
+	var client *cdp.Client
+	var exec *eval.Runtime
+	var ref cdpruntime.RemoteObject
+	refreshFrame := false
 
-	exec, err := eval.Create(ctx, m.logger, client, frame.Frame.ID)
+	_, err := recovery.Wait(ctx, func(ctx context.Context) (runtime.Value, error) {
+		if refreshFrame {
+			reply, err := m.rootClient.Page.GetFrameTree(ctx)
+			if err != nil {
+				return runtime.None, err
+			}
+
+			current, found := findFrame(reply.FrameTree, doc.identity)
+			if !found {
+				return runtime.None, drivers.ErrDetached
+			}
+
+			frame = current
+			m.RecordFrameClient(reply.FrameTree.Frame.ID, m.rootClient)
+		}
+
+		if ctx.Err() != nil {
+			return runtime.None, ctx.Err()
+		}
+
+		client = m.clientForFrame(frame.Frame.ID)
+		created, err := eval.Create(ctx, m.logger, client, frame.Frame.ID)
+		if err != nil {
+			return runtime.None, err
+		}
+
+		exec = created
+
+		if ctx.Err() != nil {
+			return runtime.None, ctx.Err()
+		}
+
+		root, err := exec.EvalRef(ctx, templates.GetDocument())
+		if err != nil {
+			return runtime.None, runtime.Error(err, "failed to load root element")
+		}
+
+		ref = root
+
+		return runtime.True, nil
+	}, func() {
+		exec = nil
+		refreshFrame = true
+	}, 1)
 	if err != nil {
 		return nil, err
 	}
 
 	inputs := input.New(m.logger, client, exec, m.keyboard, m.mouse)
-
-	ref, err := exec.EvalRef(ctx, templates.GetDocument())
-	if err != nil {
-		return nil, runtime.Error(err, "failed to load root element")
-	}
-
 	exec.SetLoader(NewNodeLoader(m))
 
 	generation := uint64(1)
@@ -123,6 +165,7 @@ func (m *Manager) getFrameInternal(ctx context.Context, frameID page.FrameID) (*
 	}
 
 	frame.node = doc
+	frame.tree = doc.Frame()
 	m.frames.Set(frameID, frame)
 
 	return doc, nil
