@@ -1,8 +1,8 @@
 module github.com/MontFerret/contrib/pkg/common
 
-go 1.25.0
+go 1.26.0
 
-require github.com/MontFerret/ferret/v2 v2.0.0-alpha.58
+require github.com/MontFerret/ferret/v2 v2.0.0-alpha.61
 
 require (
 	github.com/MontFerret/api v1.0.0-alpha.21 // indirect

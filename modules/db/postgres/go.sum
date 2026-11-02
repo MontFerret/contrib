@@ -4,8 +4,8 @@ github.com/MontFerret/api v1.0.0-alpha.21 h1:gEdhL2JdVAPTkc5bmoPp4nev2rrQDl6qztY
 github.com/MontFerret/api v1.0.0-alpha.21/go.mod h1:wz5bfUIGYkED8Hqz9CdsW0o2jSgagotbVLOCbHHacSI=
 github.com/MontFerret/contrib/pkg/common v0.1.1 h1:qA2URATIO+EVLH3BNFKYupLx97ftotyGWnKtJJhtR0Y=
 github.com/MontFerret/contrib/pkg/common v0.1.1/go.mod h1:wiMLQnE46YGci3qMzA3ExArKomQDXR5DvNSE7HnP0ik=
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.58 h1:/E7ROxqVuRHoV5Y5cbndEr9w18Ix2t4Mdvxn75OMqNs=
-github.com/MontFerret/ferret/v2 v2.0.0-alpha.58/go.mod h1:bwETwyqMRpipbrpjk0+NQetfbaHZagH3PULp1uHW7dQ=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.61 h1:qViLcP9f2nmuuS3D7pOzKrv/FnLF9UV9ut0izcYPDZk=
+github.com/MontFerret/ferret/v2 v2.0.0-alpha.61/go.mod h1:1/OVWn8LDHUer/w24M7GC7dNYTu16y/VBYnL9gOy9fQ=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

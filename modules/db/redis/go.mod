@@ -1,10 +1,10 @@
 module github.com/MontFerret/contrib/modules/db/redis
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/MontFerret/contrib/pkg/common v0.1.1
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.58
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.61
 	github.com/redis/go-redis/v9 v9.20.0
 )
 

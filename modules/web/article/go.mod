@@ -1,11 +1,11 @@
 module github.com/MontFerret/contrib/modules/web/article
 
-go 1.25.6
+go 1.26.0
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2
 	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.23.0.20261029163228-b960e4722e38
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.58
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.61
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	golang.org/x/net v0.56.0
