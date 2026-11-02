@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/MontFerret/cssx v0.2.0
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.61
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.62
 	github.com/PuerkitoBio/goquery v1.13.0
 	github.com/andybalholm/cascadia v1.3.5
 	github.com/antchfx/htmlquery v1.3.7
@@ -38,6 +38,5 @@ require (
 	github.com/stretchr/objx v0.8.0 // indirect
 	github.com/ziflex/go-options v1.7.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
-	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
 	golang.org/x/sys v0.49.0 // indirect
 )

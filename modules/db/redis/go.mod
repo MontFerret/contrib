@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/MontFerret/contrib/pkg/common v0.2.0
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.61
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.62
 	github.com/redis/go-redis/v9 v9.23.0
 )
 
@@ -14,7 +14,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/gobwas/glob v1.1.0 // indirect
 	github.com/goccy/go-json v0.12.0 // indirect
-	github.com/gopherjs/gopherjs v1.21.0 // indirect
 	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/rs/zerolog v1.35.1 // indirect

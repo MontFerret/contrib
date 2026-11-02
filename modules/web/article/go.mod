@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2
 	github.com/MontFerret/contrib/modules/web/html v1.0.0-rc.24
-	github.com/MontFerret/ferret/v2 v2.0.0-alpha.61
+	github.com/MontFerret/ferret/v2 v2.0.0-alpha.62
 	github.com/PuerkitoBio/goquery v1.13.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	golang.org/x/net v0.62.0
@@ -24,7 +24,6 @@ require (
 	github.com/gobwas/glob v1.1.0 // indirect
 	github.com/goccy/go-json v0.12.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
-	github.com/gopherjs/gopherjs v1.21.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
