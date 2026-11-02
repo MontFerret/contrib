@@ -11,7 +11,7 @@ LET html = (
         RETURN '<li><div class="track-details">' + t.details + '</div></li>'
 )
 
-INNER_HTML_SET(doc, X(".//*[contains(@class, 'track-list')]"), CONCAT_SEPARATOR('\n', html))
+INNER_HTML_SET(doc, X(".//*[contains(@class, 'track-list')]"), join(html, '\n'))
 
 LET list = ELEMENT(doc, '.track-list')
 

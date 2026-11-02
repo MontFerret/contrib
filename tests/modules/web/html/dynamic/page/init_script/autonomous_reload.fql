@@ -7,6 +7,10 @@ LET page = DOCUMENT(url, {
   }
 })
 
-WAIT(300)
+LET reloaded = WAITFOR VALUE (QUERY ONE "html[data-before-count='2']" IN page USING css)
+    TIMEOUT 5s
+    EVERY 200ms
 
-RETURN T::EQ(ELEMENT(page, "html").attributes["data-before-count"], "2")
+T::EQ(page.url, @lab.static.static + "/init-script.html?reload=done")
+
+RETURN T::EQ(reloaded.attributes["data-before-count"], "2")

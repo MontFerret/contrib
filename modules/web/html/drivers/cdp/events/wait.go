@@ -53,8 +53,15 @@ func (task *WaitTask) Run(ctx context.Context) (runtime.Value, error) {
 			return out, nil
 		}
 
-		// Nothing yet, let's wait before the next try
-		<-time.After(task.polling)
+		timer := time.NewTimer(task.polling)
+
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+
+			return runtime.None, ctx.Err()
+		case <-timer.C:
+		}
 	}
 }
 

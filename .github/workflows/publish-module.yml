@@ -2,26 +2,95 @@ name: Publish Module to Barn
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'modules/**/v*'
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: Module release tag or full release commit SHA to publish
+        required: true
+        type: string
 
 permissions:
   contents: read
 
-concurrency:
-  group: publish-module-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  publish:
-    name: Publish ${{ github.ref_name }}
+  discover:
+    name: Discover module publications
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.discover.outputs.matrix }}
+      count: ${{ steps.discover.outputs.count }}
 
     steps:
+      - name: Checkout publication tooling and release history
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.workflow_sha }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Discover release tags
+        id: discover
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
+          EVENT_DELETED: ${{ github.event.deleted }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+          RELEASE_REF: ${{ inputs.release_ref }}
+        run: |
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            matrix="$(bash scripts/discover-publications.sh ref "$RELEASE_REF")"
+          elif [[ "$EVENT_DELETED" == true ]]; then
+            matrix='{"include":[]}'
+          elif [[ "$EVENT_REF" == refs/tags/* ]]; then
+            matrix="$(bash scripts/discover-publications.sh ref "${EVENT_REF#refs/tags/}")"
+          else
+            matrix="$(bash scripts/discover-publications.sh range "$BEFORE" "$AFTER")"
+          fi
+
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "count=$(jq '.include | length' <<< "$matrix")" >> "$GITHUB_OUTPUT"
+          echo "$matrix" | jq .
+
+  publish:
+    name: Publish ${{ matrix.tag }}
+    needs: discover
+    if: needs.discover.outputs.count != '0'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    concurrency:
+      group: publish-module-${{ matrix.tag }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout publication tooling
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.workflow_sha }}
+
       - name: Checkout released module source
         uses: actions/checkout@v6
         with:
+          ref: ${{ matrix.commit }}
+          path: source
           fetch-depth: 0
+
+      - name: Verify release tag still identifies the selected commit
+        env:
+          RELEASE_TAG: ${{ matrix.tag }}
+          RELEASE_COMMIT: ${{ matrix.commit }}
+        run: |
+          actual="$(git -C source rev-parse --verify "refs/tags/$RELEASE_TAG^{commit}")"
+          if [[ "$actual" != "$RELEASE_COMMIT" ]]; then
+            echo "Release tag changed after discovery: $RELEASE_TAG" >&2
+            exit 1
+          fi
 
       - name: Create Barn GitHub App token
         id: app-token
@@ -54,12 +123,12 @@ jobs:
       - name: Prepare Barn registry records
         id: prepare
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ matrix.tag }}
         run: |
           (
             cd scripts/publish
             GOWORK=off go run . \
-              --source-root ../.. \
+              --source-root ../../source \
               --barn-root ../../barn \
               --tag "$RELEASE_TAG"
           )
@@ -75,8 +144,8 @@ jobs:
       - name: Commit and push publication branch
         if: steps.prepare.outputs.changed == 'true'
         env:
-          PUBLICATION_BRANCH: publish/contrib/${{ github.ref_name }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          PUBLICATION_BRANCH: publish/contrib/${{ matrix.tag }}
+          RELEASE_TAG: ${{ matrix.tag }}
         run: |
           git -C barn check-ref-format --branch "$PUBLICATION_BRANCH"
           git -C barn config user.name "ferret-release[bot]"
@@ -105,11 +174,11 @@ jobs:
         if: steps.prepare.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          PUBLICATION_BRANCH: publish/contrib/${{ github.ref_name }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          PUBLICATION_BRANCH: publish/contrib/${{ matrix.tag }}
+          RELEASE_TAG: ${{ matrix.tag }}
           PR_BODY: >-
             Automated Barn publication for MontFerret/contrib tag
-            `${{ github.ref_name }}`, prepared using Barn's public Go API.
+            `${{ matrix.tag }}`, prepared using Barn's public Go API.
             Merge after Barn CI and review pass.
         run: |
           existing_pr="$(

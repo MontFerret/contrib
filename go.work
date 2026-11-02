@@ -20,5 +20,6 @@ use (
 	./modules/xml
 	./modules/yaml
 	./pkg/common
+	./scripts/publish
 	./tests/runtime
 )

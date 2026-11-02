@@ -1,21 +1,18 @@
-LET target = @lab.static.static + "/"
-LET url = @lab.static.dynamic + "?redirect=/iframe&src=/iframe"
-LET page = DOCUMENT(url, { driver: 'cdp' })
+let target = @lab.static.static + "/"
+let url = @lab.static.dynamic + "?redirect=/iframe&src=/iframe"
+let page = DOCUMENT(url, { driver: "cdp" })
 
 WAIT_ELEMENT(page, "iframe[name='nested']")
 
-LET original = FIRST(FRAMES(page, "name", "nested"))
+let original = arrays::first(FRAMES(page, "name", "nested"))
 
 INPUT(original, "#url_input", target)
 
 CLICK(original, "#submit")
 
-WAIT_NAVIGATION(page, {
-    frame: original,
-    target: target,
-    timeout: 10000
-})
+WAIT_NAVIGATION(page, { frame: original, target: target, timeout: 10000 })
 
-LET current = FIRST(FRAMES(page, "name", "nested"))
+let current = arrays::first(FRAMES(page, "name", "nested"))
 
-RETURN T::EQ(current.URL, target)
+return T::EQ(current.URL, target)
+

@@ -1,9 +1,10 @@
-LET first = @lab.static.static + "/overview.html"
-LET second = @lab.static.static + "/simple.html"
-LET page = DOCUMENT(first, { driver: "cdp" })
-LET document = FIRST(page.frames)
-LET old = ELEMENT(document, "body")
+let first = @lab.static.static + "/overview.html"
+let second = @lab.static.static + "/simple.html"
+let page = DOCUMENT(first, { driver: "cdp" })
+let document = arrays::first(page.frames)
+let old = ELEMENT(document, "body")
 
 NAVIGATE(page, second)
 
-RETURN INNER_TEXT(old)
+return INNER_TEXT(old)
+

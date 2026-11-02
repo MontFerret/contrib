@@ -2,6 +2,8 @@ package dom
 
 import (
 	"context"
+	"errors"
+	"reflect"
 	"sync"
 
 	"github.com/mafredri/cdp"
@@ -174,6 +176,33 @@ func (doc *HTMLDocument) updateFrameTree(frame page.FrameTree) {
 	doc.fallback.frameTree = frame
 }
 
+// A concurrent refresh can publish document state before it acquires Manager.mu
+// to update the index. Only patch the snapshot that the index still describes.
+func (doc *HTMLDocument) reconcileFrameTree(indexed, updated page.FrameTree) {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
+
+	if doc.state != nil && reflect.DeepEqual(doc.state.frameTree, indexed) {
+		doc.state.frameTree = updated
+		doc.fallback.frameTree = updated
+	}
+}
+
+// updateFrameTreeIfCurrent prevents a recovered subtree from overwriting a newer generation.
+func (doc *HTMLDocument) updateFrameTreeIfCurrent(state *documentState, frame page.FrameTree) bool {
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
+
+	if state == nil || doc.state != state {
+		return false
+	}
+
+	state.frameTree = frame
+	doc.fallback.frameTree = frame
+
+	return true
+}
+
 func (doc *HTMLDocument) detach() {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
@@ -218,21 +247,30 @@ func (doc *HTMLDocument) refresh(ctx context.Context, observedState *documentSta
 	return doc.dom.refreshDocument(ctx, doc, observedState)
 }
 
-func (doc *HTMLDocument) reload(ctx context.Context, frame page.FrameTree) (bool, error) {
+// reload returns the installed generation, or nil if another replacement won.
+func (doc *HTMLDocument) reload(ctx context.Context, frame page.FrameTree) (*documentState, error) {
 	doc.refreshMu.Lock()
 	defer doc.refreshMu.Unlock()
 
 	observedState, err := doc.snapshot()
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	state, err := doc.dom.loadDocumentState(ctx, doc, frame)
+	state, _, err := doc.dom.loadDocumentState(ctx, doc, frame)
 	if err != nil {
-		return false, err
+		if errors.Is(err, drivers.ErrDetached) && !doc.detachIfCurrent(observedState) {
+			return nil, nil
+		}
+
+		return nil, err
 	}
 
-	return doc.replaceStateIfCurrent(observedState, state), nil
+	if !doc.replaceStateIfCurrent(observedState, state) {
+		return nil, nil
+	}
+
+	return state, nil
 }
 
 func (doc *HTMLDocument) logError(err error) *zerolog.Event {

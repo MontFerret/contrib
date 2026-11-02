@@ -2,6 +2,7 @@ package dom
 
 import (
 	"context"
+	"errors"
 
 	"github.com/mafredri/cdp/protocol/page"
 
@@ -28,29 +29,32 @@ func (m *Manager) ReloadRoot(ctx context.Context) error {
 		}
 	}
 
+	var state *documentState
+
 	if doc == nil {
 		doc, err = m.LoadDocument(ctx, ftRepl.FrameTree)
 		if err != nil {
 			return err
 		}
+
+		state = doc.currentState()
 	} else {
-		replaced, err := doc.reload(ctx, ftRepl.FrameTree)
+		state, err = doc.reload(ctx, ftRepl.FrameTree)
 		if err != nil {
 			return err
 		}
 
-		if !replaced {
+		if state == nil {
 			return nil
 		}
 	}
 
-	if err := m.reloadRetainedDocuments(ctx, doc, ftRepl.FrameTree); err != nil {
+	tree, err := m.reloadRetainedDocuments(ctx, doc.Frame())
+	if err != nil {
 		return err
 	}
 
-	m.mu.Lock()
-	m.installMainFrame(doc, ftRepl.FrameTree)
-	m.mu.Unlock()
+	m.installMainFrameIfCurrent(doc, state, tree)
 
 	return nil
 }
@@ -92,23 +96,67 @@ func (m *Manager) refreshFrameTree(doc *HTMLDocument, tree page.FrameTree) {
 	m.mu.Unlock()
 }
 
-func (m *Manager) reloadRetainedDocuments(ctx context.Context, root *HTMLDocument, tree page.FrameTree) error {
-	for _, current := range m.frames.ToSlice() {
-		if current.node == nil || current.node == root {
-			continue
-		}
-
-		frame, found := findFrame(tree, current.node.identity)
-		if !found {
-			continue
-		}
-
-		if _, err := current.node.reload(ctx, frame); err != nil {
-			return err
-		}
+// Reload parents before descendants, carrying each recovered subtree into the
+// enclosing snapshot. Copy child slices so published generations remain untouched.
+func (m *Manager) reloadRetainedDocuments(ctx context.Context, tree page.FrameTree) (page.FrameTree, error) {
+	if len(tree.ChildFrames) == 0 {
+		return tree, nil
 	}
 
-	return nil
+	children := make([]page.FrameTree, len(tree.ChildFrames))
+
+	for i, child := range tree.ChildFrames {
+		var state *documentState
+
+		current, found := m.frames.Get(child.Frame.ID)
+		if found && current.node != nil {
+			loaded, err := current.node.reload(ctx, child)
+			if err != nil {
+				return page.FrameTree{}, err
+			}
+
+			if loaded == nil {
+				children[i] = current.node.Frame()
+
+				continue
+			}
+
+			state = loaded
+			child = current.node.Frame()
+		}
+
+		updated, err := m.reloadRetainedDocuments(ctx, child)
+		if err != nil {
+			return page.FrameTree{}, err
+		}
+
+		if state != nil && !current.node.updateFrameTreeIfCurrent(state, updated) {
+			updated = current.node.Frame()
+		}
+
+		children[i] = updated
+	}
+
+	tree.ChildFrames = children
+
+	return tree, nil
+}
+
+// Keep the root generation stable while publishing its recovered frame tree.
+func (m *Manager) installMainFrameIfCurrent(doc *HTMLDocument, state *documentState, tree page.FrameTree) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	doc.mu.Lock()
+	defer doc.mu.Unlock()
+
+	if state == nil || doc.state != state {
+		return
+	}
+
+	state.frameTree = tree
+	doc.fallback.frameTree = tree
+	m.installMainFrame(doc, tree)
 }
 
 func (m *Manager) refreshDocument(ctx context.Context, doc *HTMLDocument, observedState *documentState) error {
@@ -130,8 +178,12 @@ func (m *Manager) refreshDocument(ctx context.Context, doc *HTMLDocument, observ
 		return drivers.ErrDetached
 	}
 
-	state, err := m.loadDocumentState(ctx, doc, frame)
+	state, _, err := m.loadDocumentState(ctx, doc, frame)
 	if err != nil {
+		if errors.Is(err, drivers.ErrDetached) && !doc.detachIfCurrent(observedState) {
+			return nil
+		}
+
 		return err
 	}
 
@@ -140,15 +192,22 @@ func (m *Manager) refreshDocument(ctx context.Context, doc *HTMLDocument, observ
 	}
 
 	if ftRepl.FrameTree.Frame.ID == doc.identity {
-		if err := m.reloadRetainedDocuments(ctx, doc, ftRepl.FrameTree); err != nil {
+		tree, err := m.reloadRetainedDocuments(ctx, doc.Frame())
+		if err != nil {
 			return err
 		}
 
-		m.mu.Lock()
-		m.installMainFrame(doc, ftRepl.FrameTree)
-		m.mu.Unlock()
+		m.installMainFrameIfCurrent(doc, state, tree)
 	} else {
-		m.frames.Set(doc.identity, Frame{tree: frame, node: doc})
+		m.mu.Lock()
+		doc.mu.RLock()
+
+		if doc.state == state {
+			m.frames.Set(doc.identity, Frame{tree: state.frameTree, node: doc})
+		}
+
+		doc.mu.RUnlock()
+		m.mu.Unlock()
 	}
 
 	return nil
