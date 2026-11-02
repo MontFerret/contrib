@@ -3,6 +3,17 @@ info:
   title: Users API
   version: 1.0.0
 paths:
+  /html/request-options:
+    get:
+      summary: Echo an HTML request header
+      operationId: getHTMLRequestOptions
+      x-lab-mock:
+        status: 200
+        headers:
+          content-type: text/html
+        bodyTemplate: |
+          <!DOCTYPE html>
+          <html><body><p id="header">{{ with index .Headers "X-Ferret-Test" }}{{ index . 0 }}{{ end }}</p></body></html>
   /health:
     get:
       summary: Health check endpoint

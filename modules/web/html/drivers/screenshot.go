@@ -17,12 +17,12 @@ type (
 
 	// ScreenshotParams defines parameters for the screenshot function.
 	ScreenshotParams struct {
-		Format  ScreenshotFormat
-		X       runtime.Float
-		Y       runtime.Float
-		Width   runtime.Float
-		Height  runtime.Float
-		Quality runtime.Int
+		Format  ScreenshotFormat `json:"format"`
+		X       runtime.Float    `json:"x"`
+		Y       runtime.Float    `json:"y"`
+		Width   runtime.Float    `json:"width"`
+		Height  runtime.Float    `json:"height"`
+		Quality runtime.Int      `json:"quality"`
 	}
 )
 

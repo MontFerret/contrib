@@ -17,16 +17,16 @@ type (
 	}
 
 	pageLoadParamsInput struct {
-		Driver      *string              `json:"driver"`
-		Timeout     *time.Duration       `json:"timeout"`
-		UserAgent   *string              `json:"userAgent"`
-		KeepCookies *bool                `json:"keepCookies"`
-		Cookies     runtime.Value        `json:"cookies"`
-		Headers     *drivers.HTTPHeaders `json:"headers"`
-		Viewport    *drivers.Viewport    `json:"viewport"`
-		Ignore      *drivers.Ignore      `json:"ignore"`
-		Charset     *string              `json:"charset"`
-		InitScript  *drivers.InitScript  `json:"initScript"`
+		Driver      *string             `json:"driver"`
+		Timeout     *time.Duration      `json:"timeout"`
+		UserAgent   *string             `json:"userAgent"`
+		KeepCookies *bool               `json:"keepCookies"`
+		Cookies     runtime.Value       `json:"cookies"`
+		Headers     runtime.Value       `json:"headers"`
+		Viewport    *drivers.Viewport   `json:"viewport"`
+		Ignore      *drivers.Ignore     `json:"ignore"`
+		Charset     *string             `json:"charset"`
+		InitScript  *drivers.InitScript `json:"initScript"`
 	}
 )
 
@@ -120,9 +120,12 @@ func newPageLoadParams(ctx context.Context, url runtime.String, arg runtime.Valu
 			res.KeepCookies = *input.KeepCookies
 		}
 
-		if input.Headers != nil {
-			res.Headers = input.Headers
+		headers, err := parseHeadersValue(ctx, input.Headers)
+		if err != nil {
+			return PageLoadParams{}, err
 		}
+
+		res.Headers = headers
 
 		if input.Viewport != nil {
 			res.Viewport = input.Viewport
