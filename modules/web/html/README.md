@@ -190,6 +190,9 @@ RETURN page.url
 
 `DOCUMENT(url, "cdp")` is also supported as a shorthand for selecting a driver by name.
 
+Header objects map header names to string values. Native header values such as
+`page.response.headers` are also accepted. Header names are case-insensitive.
+
 `afterNavigation` evaluates the script after each successful CDP-controlled initial,
 explicit, back, or forward navigation reaches Ferret's main-frame readiness point.
 `beforeDocument` uses the browser's new-document mechanism before the first real
@@ -200,6 +203,13 @@ and reloads. The memory driver rejects `initScript`.
 ### `PARSE` Options
 
 `PARSE(html, params)` accepts `driver`, `keepCookies`, `cookies`, `headers`, and `viewport`.
+
+Headers use the same input forms as `DOCUMENT`. Cookies accept a single cookie
+object, a list of cookie objects, or native cookie values and collections.
+Each cookie object requires `name` and `value` strings. `PARSE` now applies the
+same cookie validation as `DOCUMENT`, so `cookies: {}` is rejected and
+`cookies: []` is accepted. Omitted headers or cookies and explicit `NONE` leave
+the option unset.
 
 ```fql
 LET page = PARSE("<html><body><h1>Loaded</h1></body></html>", {

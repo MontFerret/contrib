@@ -370,9 +370,10 @@ func TestPaginationRemainsPageOnly(t *testing.T) {
 
 type testPage struct {
 	*memory.HTMLPage
-	frame       *testDocument
-	navigatedTo runtime.String
-	printedPDF  bool
+	frame            *testDocument
+	screenshotParams *drivers.ScreenshotParams
+	navigatedTo      runtime.String
+	printedPDF       bool
 }
 
 func (p *testPage) GetMainFrame() drivers.HTMLDocument {
@@ -405,7 +406,9 @@ func (p *testPage) PrintToPDF(_ context.Context, _ drivers.PDFParams) (runtime.B
 	return runtime.NewBinary([]byte("pdf")), nil
 }
 
-func (p *testPage) CaptureScreenshot(_ context.Context, _ drivers.ScreenshotParams) (runtime.Binary, error) {
+func (p *testPage) CaptureScreenshot(_ context.Context, params drivers.ScreenshotParams) (runtime.Binary, error) {
+	p.screenshotParams = &params
+
 	return runtime.NewBinary([]byte("image")), nil
 }
 

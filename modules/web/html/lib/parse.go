@@ -2,6 +2,7 @@ package lib
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 	"github.com/MontFerret/ferret/v2/pkg/sdk"
@@ -9,10 +10,21 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
 
-type ParseParams struct {
-	Driver string `json:"driver"`
-	drivers.ParseParams
-}
+type (
+	ParseParams struct {
+		Driver string `json:"driver"`
+		drivers.ParseParams
+	}
+
+	parseParamsInput struct {
+		Driver      string            `json:"driver"`
+		Headers     runtime.Value     `json:"headers"`
+		Cookies     runtime.Value     `json:"cookies"`
+		Viewport    *drivers.Viewport `json:"viewport"`
+		Content     []byte            `json:"content"`
+		KeepCookies bool              `json:"keepCookies"`
+	}
+)
 
 // Parse loads an HTML page from string or binary content.
 //
@@ -83,10 +95,34 @@ func parseParseParams(ctx context.Context, content []byte, arg runtime.Value) (P
 		return ParseParams{}, err
 	}
 
-	res := defaultParseParams(content)
+	input := parseParamsInput{Content: content}
 
-	if err := sdk.Decode(ctx, arg, &res, sdk.DisallowUnknownFields()); err != nil {
+	if err := sdk.Decode(ctx, arg, &input, sdk.DisallowUnknownFields()); err != nil {
 		return ParseParams{}, err
+	}
+
+	headers, err := parseHeadersValue(ctx, input.Headers)
+	if err != nil {
+		return ParseParams{}, err
+	}
+
+	res := ParseParams{
+		Driver: input.Driver,
+		ParseParams: drivers.ParseParams{
+			Content:     input.Content,
+			KeepCookies: input.KeepCookies,
+			Viewport:    input.Viewport,
+			Headers:     headers,
+		},
+	}
+
+	if input.Cookies != nil && input.Cookies != runtime.None {
+		cookies, err := parseCookiesValue(ctx, input.Cookies)
+		if err != nil {
+			return ParseParams{}, fmt.Errorf("cookies: %w", err)
+		}
+
+		res.Cookies = cookies
 	}
 
 	return res, nil

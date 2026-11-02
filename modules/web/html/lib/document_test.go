@@ -3,6 +3,7 @@ package lib
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 
@@ -111,6 +112,13 @@ func TestDocument(t *testing.T) {
 				"keepCookies": runtime.True,
 				"timeout":     runtime.NewInt(int(expected.Timeout)),
 				"charset":     runtime.NewString(expected.Charset),
+				"headers": runtime.NewObjectWith(map[string]runtime.Value{
+					"Accept": runtime.String("text/html"),
+				}),
+				"viewport": runtime.NewObjectWith(map[string]runtime.Value{
+					"height": runtime.Int(1024), "width": runtime.Int(768), "scaleFactor": runtime.Float(1),
+					"mobile": runtime.True, "landscape": runtime.True,
+				}),
 				"cookies": runtime.NewArrayWith(
 					runtime.NewObjectWith(map[string]runtime.Value{
 						"name":   runtime.NewString("session"),
@@ -148,6 +156,14 @@ func TestDocument(t *testing.T) {
 
 			if out.Timeout != expected.Timeout {
 				t.Fatalf("expected timeout %v, got %v", defaultTimeout, out.Timeout)
+			}
+
+			if !reflect.DeepEqual(out.Headers, expected.Headers) {
+				t.Fatalf("headers = %#v, want %#v", out.Headers, expected.Headers)
+			}
+
+			if !reflect.DeepEqual(out.Viewport, expected.Viewport) {
+				t.Fatalf("viewport = %#v, want %#v", out.Viewport, expected.Viewport)
 			}
 
 			if out.Cookies == nil {
