@@ -9,8 +9,8 @@ import (
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-func newNavigationEventStream(logger zerolog.Logger, sessions *cdpsession.Manager) runtime.Stream {
-	return newSessionRuntimeStream(logger, sessions, func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
+func newNavigationEventStream(ctx context.Context, logger zerolog.Logger, sessions sessionStreamManager) (runtime.Stream, error) {
+	return newSessionRuntimeStream(ctx, sessions, func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
 		frameStream, err := client.CDP.Page.FrameNavigated(ctx)
 		if err != nil {
 			return nil, err
@@ -26,8 +26,8 @@ func newNavigationEventStream(logger zerolog.Logger, sessions *cdpsession.Manage
 	})
 }
 
-func newRequestEventStream(logger zerolog.Logger, sessions *cdpsession.Manager) runtime.Stream {
-	return newSessionRuntimeStream(logger, sessions, func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
+func newRequestEventStream(ctx context.Context, logger zerolog.Logger, sessions sessionStreamManager) (runtime.Stream, error) {
+	return newSessionRuntimeStream(ctx, sessions, func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
 		stream, err := client.CDP.Network.RequestWillBeSent(ctx)
 		if err != nil {
 			return nil, err
@@ -37,8 +37,8 @@ func newRequestEventStream(logger zerolog.Logger, sessions *cdpsession.Manager) 
 	})
 }
 
-func newResponseEventStream(logger zerolog.Logger, sessions *cdpsession.Manager) runtime.Stream {
-	return newSessionRuntimeStream(logger, sessions, func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
+func newResponseEventStream(ctx context.Context, logger zerolog.Logger, sessions sessionStreamManager) (runtime.Stream, error) {
+	return newSessionRuntimeStream(ctx, sessions, func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
 		stream, err := client.CDP.Network.ResponseReceived(ctx)
 		if err != nil {
 			return nil, err

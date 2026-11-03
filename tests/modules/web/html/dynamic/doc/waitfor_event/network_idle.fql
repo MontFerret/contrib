@@ -1,11 +1,10 @@
 LET url = @lab.static.dynamic + "/#/events"
 LET page = DOCUMENT(url, { driver: "cdp" })
 
-CLICK(page, "#ajax-input-seq-buttons")
-
 WAITFOR EVENT "network.request_started" IN page
     WHEN CONTAINS(.url, "index.html")
     AND .type == "fetch"
+    TRIGGER CLICK(page, "#ajax-input-seq-buttons")
     TIMEOUT 10s
 
 LET evt = WAITFOR EVENT "network.idle" IN page

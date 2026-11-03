@@ -36,6 +36,13 @@ func (m *Manager) Navigate(ctx context.Context, url runtime.String) error {
 	urlStr := url.String()
 	m.logger.Trace().Str("url", urlStr).Msg("starting navigation")
 
+	stream, err := m.OnNavigation(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer stream.Close()
+
 	repl, err := m.client.Page.Navigate(ctx, page.NewNavigateArgs(urlStr))
 	if err == nil && repl.ErrorText != nil {
 		err = errors.New(*repl.ErrorText)
@@ -49,7 +56,7 @@ func (m *Manager) Navigate(ctx context.Context, url runtime.String) error {
 
 	m.logger.Trace().Msg("succeeded starting navigation")
 
-	return m.WaitForNavigation(ctx, WaitEventOptions{})
+	return m.waitForNavigation(ctx, stream, WaitEventOptions{})
 }
 
 func (m *Manager) NavigateForward(ctx context.Context, skip runtime.Int) (runtime.Boolean, error) {
@@ -100,6 +107,14 @@ func (m *Manager) NavigateForward(ctx context.Context, skip runtime.Int) (runtim
 	}
 
 	entry := history.Entries[to]
+
+	stream, err := m.OnNavigation(ctx)
+	if err != nil {
+		return runtime.False, err
+	}
+
+	defer stream.Close()
+
 	err = m.client.Page.NavigateToHistoryEntry(ctx, page.NewNavigateToHistoryEntryArgs(entry.ID))
 	if err != nil {
 		m.logger.Trace().
@@ -113,7 +128,7 @@ func (m *Manager) NavigateForward(ctx context.Context, skip runtime.Int) (runtim
 		return runtime.False, err
 	}
 
-	err = m.WaitForNavigation(ctx, WaitEventOptions{})
+	err = m.waitForNavigation(ctx, stream, WaitEventOptions{})
 	if err != nil {
 		m.logger.Trace().
 			Int("history_entries", length).
@@ -179,6 +194,14 @@ func (m *Manager) NavigateBack(ctx context.Context, skip runtime.Int) (runtime.B
 	}
 
 	entry := history.Entries[to]
+
+	stream, err := m.OnNavigation(ctx)
+	if err != nil {
+		return runtime.False, err
+	}
+
+	defer stream.Close()
+
 	err = m.client.Page.NavigateToHistoryEntry(ctx, page.NewNavigateToHistoryEntryArgs(entry.ID))
 	if err != nil {
 		m.logger.Trace().
@@ -191,7 +214,7 @@ func (m *Manager) NavigateBack(ctx context.Context, skip runtime.Int) (runtime.B
 		return runtime.False, err
 	}
 
-	err = m.WaitForNavigation(ctx, WaitEventOptions{})
+	err = m.waitForNavigation(ctx, stream, WaitEventOptions{})
 	if err != nil {
 		m.logger.Trace().
 			Int("history_entries", length).
@@ -220,6 +243,10 @@ func (m *Manager) WaitForNavigation(ctx context.Context, opts WaitEventOptions) 
 
 	defer stream.Close()
 
+	return m.waitForNavigation(ctx, stream, opts)
+}
+
+func (m *Manager) waitForNavigation(ctx context.Context, stream runtime.Stream, opts WaitEventOptions) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -239,16 +266,16 @@ func (m *Manager) WaitForNavigation(ctx context.Context, opts WaitEventOptions) 
 	return ctx.Err()
 }
 
-func (m *Manager) OnNavigation(_ context.Context) (runtime.Stream, error) {
-	return newNavigationEventStream(m.logger, m.sessions), nil
+func (m *Manager) OnNavigation(ctx context.Context) (runtime.Stream, error) {
+	return newNavigationEventStream(ctx, m.logger, m.sessions)
 }
 
-func (m *Manager) OnRequest(_ context.Context) (runtime.Stream, error) {
-	return newRequestEventStream(m.logger, m.sessions), nil
+func (m *Manager) OnRequest(ctx context.Context) (runtime.Stream, error) {
+	return newRequestEventStream(ctx, m.logger, m.sessions)
 }
 
-func (m *Manager) OnResponse(_ context.Context) (runtime.Stream, error) {
-	return newResponseEventStream(m.logger, m.sessions), nil
+func (m *Manager) OnResponse(ctx context.Context) (runtime.Stream, error) {
+	return newResponseEventStream(ctx, m.logger, m.sessions)
 }
 
 func (m *Manager) OnEvent(ctx context.Context, eventName runtime.String, options runtime.Map) (runtime.Stream, error) {

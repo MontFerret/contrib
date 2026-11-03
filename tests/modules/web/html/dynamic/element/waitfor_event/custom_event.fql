@@ -2,9 +2,8 @@ LET url = @lab.static.dynamic + "/#/events"
 LET page = DOCUMENT(url, { driver: "cdp" })
 LET target = ELEMENT(page, "#observable-element-target")
 
-CLICK(page, "#observable-element-btn")
-
 LET evt = WAITFOR EVENT "ferret:element" IN target
+    TRIGGER CLICK(page, "#observable-element-btn")
 
 RETURN T::EQ({
     type: evt.type,

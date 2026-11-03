@@ -2,13 +2,12 @@ LET url = @lab.static.dynamic + "/#/events"
 LET page = DOCUMENT(url, { driver: "cdp" })
 
 INPUT(page, "#ajax-input", "index.html")
-CLICK(page, "#ajax-input-button")
-
 LET evt = WAITFOR EVENT "network.request_finished" IN page
     OPTIONS { captureBody: true, bodyLimit: 15 }
     WHEN CONTAINS(.url, "index.html")
     AND .status == 200
     AND .type == "fetch"
+    TRIGGER CLICK(page, "#ajax-input-button")
     TIMEOUT 10s
 
 T::NOT::NONE(evt.body)

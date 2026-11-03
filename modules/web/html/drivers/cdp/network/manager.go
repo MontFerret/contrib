@@ -22,7 +22,7 @@ type (
 	Manager struct {
 		logger           zerolog.Logger
 		client           *cdp.Client
-		sessions         *cdpsession.Manager
+		sessions         sessionStreamManager
 		headers          *drivers.HTTPHeaders
 		interceptor      *Interceptor
 		observer         *networkObserver
@@ -46,7 +46,10 @@ func New(
 	m := new(Manager)
 	m.logger = logutil.WithComponent(logger.With(), "network_manager").Logger()
 	m.client = client
-	m.sessions = sessions
+	if sessions != nil {
+		m.sessions = sessions
+	}
+
 	m.headers = drivers.NewHTTPHeaders()
 	m.stop = cancel
 	m.response = new(sync.Map)

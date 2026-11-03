@@ -7,9 +7,8 @@ WAIT_ELEMENT(page, "iframe[name='nested']")
 let original = arrays::first(FRAMES(page, "name", "nested"))
 
 INPUT(original, "#url_input", target)
-CLICK(original, "#submit")
-
 waitfor event "navigation" in page options { frame: original }
+    TRIGGER CLICK(original, "#submit")
 
 let current = arrays::first(FRAMES(page, "name", "nested"))
 

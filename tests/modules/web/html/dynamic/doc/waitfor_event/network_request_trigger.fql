@@ -1,0 +1,9 @@
+LET page = DOCUMENT("", { driver: "cdp" })
+LET target = @lab.static.static + "/simple.html"
+
+LET evt = WAITFOR EVENT "network.request_started" IN page
+    WHEN .url == target
+    TRIGGER NAVIGATE(page, target)
+    TIMEOUT 2s
+
+RETURN T::EQ(evt.url, target)
