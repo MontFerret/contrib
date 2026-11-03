@@ -38,10 +38,11 @@ func (stream *nilNavigationStream) Close() error {
 
 type nilFrameNavigationStream struct {
 	*nilNavigationStream
+	reply *page.FrameNavigatedReply
 }
 
 func (stream *nilFrameNavigationStream) Recv() (*page.FrameNavigatedReply, error) {
-	return nil, nil
+	return stream.reply, nil
 }
 
 type nilWithinDocumentNavigationStream struct {
@@ -61,7 +62,7 @@ func TestSessionNavigationStreamRejectsNilReplies(t *testing.T) {
 		{name: "within document"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			frame := &nilFrameNavigationStream{newNilNavigationStream(tt.triggerFrame)}
+			frame := &nilFrameNavigationStream{nilNavigationStream: newNilNavigationStream(tt.triggerFrame)}
 			within := &nilWithinDocumentNavigationStream{newNilNavigationStream(!tt.triggerFrame)}
 			stream := newSessionNavigationEventStream(zerolog.Nop(), nil, frame, within)
 

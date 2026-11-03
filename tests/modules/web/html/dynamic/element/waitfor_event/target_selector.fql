@@ -2,9 +2,9 @@ LET url = @lab.static.dynamic + "/#/events"
 LET page = DOCUMENT(url, { driver: "cdp" })
 LET root = ELEMENT(page, "#observable-target-selector-root")
 
-CLICK(page, "#observable-target-selector-btn")
-
-LET evt = WAITFOR EVENT "ferret:target-selector" IN root OPTIONS { targetSelector: ".observable-target-selector-child" } TIMEOUT 500ms
+LET evt = WAITFOR EVENT "ferret:target-selector" IN root OPTIONS { targetSelector: ".observable-target-selector-child" }
+    TRIGGER CLICK(page, "#observable-target-selector-btn")
+    TIMEOUT 500ms
 
 RETURN T::EQ({
     type: evt.type,

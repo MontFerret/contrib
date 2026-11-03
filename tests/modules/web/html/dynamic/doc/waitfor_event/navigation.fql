@@ -2,8 +2,7 @@ LET url = @lab.static.dynamic + "/#/navigation"
 LET page = DOCUMENT(url, { driver: 'cdp' })
 
 INPUT(page, "#url", "https://getbootstrap.com/")
-CLICK(page, "#submit")
-
 WAITFOR EVENT "navigation" IN page
+    TRIGGER CLICK(page, "#submit")
 
 RETURN T::EQ(page.URL, "https://getbootstrap.com/")

@@ -551,15 +551,15 @@ LET first = WAITFOR VALUE (QUERY ONE ".track[data-index='0']" IN page USING css)
 RETURN first == NONE ? NONE : first.innerText
 ```
 
-For browser-backed pages, `WAITFOR EVENT` subscribes to page, network, navigation, document, or element events.
+For browser-backed pages, `WAITFOR EVENT` subscribes to page, network, navigation, document, or element events. Use `TRIGGER` for the action that produces the event so the subscription is active before the action runs.
 
 ```fql
 LET page = DOCUMENT($url, { driver: "cdp" })
 
 INPUT(page, "#url", "https://example.com/next")
-CLICK(page, "#submit")
 
 WAITFOR EVENT "navigation" IN page
+  TRIGGER CLICK(page, "#submit")
 
 RETURN page.url
 ```
@@ -569,13 +569,12 @@ RETURN page.url
 ```fql
 LET page = DOCUMENT($url, { driver: "cdp" })
 
-CLICK(page, "#load-data")
-
 LET evt = WAITFOR EVENT "network.request_finished" IN page
   OPTIONS { captureBody: true, bodyLimit: 4096 }
   WHEN CONTAINS(.url, "/api/data")
   AND .status == 200
   AND .type == "fetch"
+  TRIGGER CLICK(page, "#load-data")
   TIMEOUT 10s
   ON TIMEOUT RETURN NONE
 
@@ -592,10 +591,9 @@ DOM custom events can be observed from documents or elements:
 LET page = DOCUMENT($url, { driver: "cdp" })
 LET target = ELEMENT(page, "#observable-element-target")
 
-CLICK(page, "#observable-element-btn")
-
 LET evt = WAITFOR EVENT "ferret:element" IN target
   WHEN .detail.scope == "element"
+  TRIGGER CLICK(page, "#observable-element-btn")
 
 RETURN evt.detail
 ```

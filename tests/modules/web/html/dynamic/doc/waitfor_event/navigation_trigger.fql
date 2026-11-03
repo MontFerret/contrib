@@ -1,0 +1,10 @@
+LET page = DOCUMENT("", { driver: "cdp" })
+LET target = @lab.static.static + "/simple.html"
+
+LET evt = WAITFOR EVENT "navigation" IN page
+    TRIGGER NAVIGATE(page, target)
+    TIMEOUT 2s
+
+T::NOT::NONE(evt)
+
+RETURN T::EQ(page.URL, target)

@@ -2,7 +2,6 @@ package network
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
@@ -10,26 +9,21 @@ import (
 )
 
 type networkIdleStream struct {
-	observer  *networkObserver
-	done      chan struct{}
-	options   networkIdleOptions
-	closeOnce sync.Once
+	observer     *networkObserver
+	subscription *networkSubscription
+	options      networkIdleOptions
 }
 
-func newNetworkIdleStream(observer *networkObserver, options networkIdleOptions) runtime.Stream {
+func newNetworkIdleStream(ctx context.Context, observer *networkObserver, options networkIdleOptions) runtime.Stream {
 	return &networkIdleStream{
-		observer: observer,
-		options:  options,
-		done:     make(chan struct{}),
+		observer:     observer,
+		options:      options,
+		subscription: newNetworkSubscription(ctx, observer),
 	}
 }
 
 func (s *networkIdleStream) Close() error {
-	s.closeOnce.Do(func() {
-		close(s.done)
-	})
-
-	return nil
+	return s.subscription.Close()
 }
 
 func (s *networkIdleStream) Read(ctx context.Context) <-chan runtime.Message {
@@ -38,8 +32,8 @@ func (s *networkIdleStream) Read(ctx context.Context) <-chan runtime.Message {
 	go func() {
 		defer close(out)
 
-		subscriber := s.observer.subscribe()
-		defer s.observer.unsubscribe(subscriber.id)
+		subscriber := s.subscription.subscriber
+		defer s.Close()
 
 		active := s.observer.snapshotActive(s.options.types)
 		timer := s.newTimer(len(active))
@@ -54,11 +48,11 @@ func (s *networkIdleStream) Read(ctx context.Context) <-chan runtime.Message {
 			select {
 			case <-ctx.Done():
 				return
-			case <-s.done:
+			case <-subscriber.done:
 				return
 			case event := <-subscriber.ch:
 				if event.err != nil {
-					if !sendNetworkMessage(ctx, s.done, out, runtime.NewErrorMessage(event.err)) {
+					if !sendNetworkMessage(ctx, subscriber.done, out, runtime.NewErrorMessage(event.err)) {
 						return
 					}
 
@@ -72,7 +66,7 @@ func (s *networkIdleStream) Read(ctx context.Context) <-chan runtime.Message {
 
 				if !sendNetworkMessage(
 					ctx,
-					s.done,
+					subscriber.done,
 					out,
 					runtime.NewValueMessage(buildNetworkIdlePayload(s.options, len(active))),
 				) {

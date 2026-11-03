@@ -4,126 +4,186 @@ import (
 	"context"
 	"sync"
 
-	"github.com/rs/zerolog"
-
 	cdpsession "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/session"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-type sessionStreamOpener func(context.Context, *cdpsession.Client) (runtime.Stream, error)
+type (
+	sessionStreamOpener func(context.Context, *cdpsession.Client) (runtime.Stream, error)
+
+	sessionStreamManager interface {
+		Snapshot() []*cdpsession.Client
+		AddListener(cdpsession.Listener) cdpsession.ListenerID
+		RemoveListener(cdpsession.ListenerID)
+	}
+)
 
 type sessionRuntimeStream struct {
-	logger     zerolog.Logger
-	sessions   *cdpsession.Manager
-	open       sessionStreamOpener
-	streams    map[string]runtime.Stream
-	cancel     context.CancelFunc
-	wg         sync.WaitGroup
-	listenerID cdpsession.ListenerID
-	mu         sync.Mutex
+	sessions        sessionStreamManager
+	open            sessionStreamOpener
+	ctx             context.Context
+	cancel          context.CancelFunc
+	streams         map[string]*sessionStream
+	initialDetached map[string]struct{}
+	messages        chan runtime.Message
+	done            chan struct{}
+	stopRead        func() bool
+	listenerID      cdpsession.ListenerID
+	wg              sync.WaitGroup
+	mu              sync.Mutex
+	readOnce        sync.Once
+	closed          bool
+	initializing    bool
 }
 
 func newSessionRuntimeStream(
-	logger zerolog.Logger,
-	sessions *cdpsession.Manager,
+	ctx context.Context,
+	sessions sessionStreamManager,
 	open sessionStreamOpener,
-) runtime.Stream {
-	return &sessionRuntimeStream{
-		logger:   logger,
-		sessions: sessions,
-		open:     open,
-		streams:  make(map[string]runtime.Stream),
+) (runtime.Stream, error) {
+	streamCtx, cancel := context.WithCancel(ctx)
+	s := &sessionRuntimeStream{
+		sessions:     sessions,
+		initializing: true,
+		open:         open,
+		ctx:          streamCtx,
+		cancel:       cancel,
+		streams:      make(map[string]*sessionStream),
+		messages:     make(chan runtime.Message),
+		done:         make(chan struct{}),
 	}
+
+	if sessions == nil {
+		s.closed = true
+		cancel()
+		close(s.messages)
+		close(s.done)
+
+		return s, nil
+	}
+
+	// Register before taking the snapshot so a concurrent attachment cannot be missed.
+	s.listenerID = sessions.AddListener(s.onSessionEvent)
+	go s.cleanup()
+
+	for _, client := range sessions.Snapshot() {
+		if err := s.attach(client); err != nil {
+			_ = s.Close()
+
+			return nil, err
+		}
+	}
+
+	s.mu.Lock()
+	s.initializing = false
+	s.initialDetached = nil
+	s.mu.Unlock()
+
+	return s, nil
 }
 
 func (s *sessionRuntimeStream) Close() error {
-	s.mu.Lock()
-	cancel := s.cancel
-	s.cancel = nil
-	s.mu.Unlock()
-
-	if cancel != nil {
-		cancel()
-	}
+	s.cancel()
+	<-s.done
 
 	return nil
 }
 
 func (s *sessionRuntimeStream) Read(ctx context.Context) <-chan runtime.Message {
-	out := make(chan runtime.Message)
-	if s.sessions == nil {
-		close(out)
-		return out
-	}
+	s.readOnce.Do(func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
 
-	streamCtx, cancel := context.WithCancel(ctx)
-
-	s.mu.Lock()
-	s.cancel = cancel
-	s.mu.Unlock()
-
-	s.listenerID = s.sessions.AddListener(func(event cdpsession.Event) {
-		switch event.Kind {
-		case cdpsession.EventAttached:
-			s.attach(streamCtx, event.Client, out)
-		case cdpsession.EventDetached:
-			s.detach(event.Client)
+		if !s.closed {
+			s.stopRead = context.AfterFunc(ctx, s.cancel)
 		}
 	})
 
-	for _, client := range s.sessions.Snapshot() {
-		s.attach(streamCtx, client, out)
-	}
-
-	go func() {
-		<-streamCtx.Done()
-		s.sessions.RemoveListener(s.listenerID)
-		s.closeStreams()
-		s.wg.Wait()
-		close(out)
-	}()
-
-	return out
+	return s.messages
 }
 
-func (s *sessionRuntimeStream) attach(ctx context.Context, client *cdpsession.Client, out chan<- runtime.Message) {
-	if ctx.Err() != nil || client == nil {
-		return
+func (s *sessionRuntimeStream) onSessionEvent(event cdpsession.Event) {
+	switch event.Kind {
+	case cdpsession.EventAttached:
+		if err := s.attach(event.Client); err != nil {
+			s.reportError(err)
+		}
+	case cdpsession.EventDetached:
+		s.detach(event.Client)
+	}
+}
+
+func (s *sessionRuntimeStream) attach(client *cdpsession.Client) error {
+	if client == nil {
+		return nil
 	}
 
 	key := string(client.ID)
-
 	s.mu.Lock()
-	if _, exists := s.streams[key]; exists {
-		s.mu.Unlock()
-		return
-	}
-	s.mu.Unlock()
+	defer s.mu.Unlock()
 
+	if err := s.ctx.Err(); err != nil {
+		return err
+	}
+
+	if s.closed || s.streams[key] != nil {
+		return nil
+	}
+
+	// The initial snapshot can outlive a session's detach notification.
+	if _, detached := s.initialDetached[key]; detached {
+		return nil
+	}
+
+	ctx, cancel := context.WithCancel(s.ctx)
 	stream, err := s.open(ctx, client)
 	if err != nil {
+		cancel()
+
+		return err
+	}
+
+	entry := newSessionStream(stream, cancel)
+	s.streams[key] = entry
+	// Add while holding mu: cleanup prevents further additions before waiting.
+	s.wg.Add(1)
+	go s.consume(ctx, key, entry)
+
+	return nil
+}
+
+func (s *sessionRuntimeStream) consume(ctx context.Context, key string, entry *sessionStream) {
+	defer s.wg.Done()
+	defer s.removeStream(key, entry)
+	defer entry.Close()
+
+	for message := range entry.stream.Read(ctx) {
 		select {
 		case <-ctx.Done():
-		case out <- runtime.NewErrorMessage(err):
+			return
+		case s.messages <- message:
 		}
+	}
+}
+
+func (s *sessionRuntimeStream) reportError(err error) {
+	s.mu.Lock()
+	if s.closed {
+		s.mu.Unlock()
+
 		return
 	}
 
-	s.mu.Lock()
-	s.streams[key] = stream
+	s.wg.Add(1)
 	s.mu.Unlock()
 
-	s.wg.Add(1)
+	// Session callbacks must not wait for a caller to begin reading.
 	go func() {
 		defer s.wg.Done()
-		defer s.removeStream(key)
 
-		for evt := range stream.Read(ctx) {
-			select {
-			case <-ctx.Done():
-				return
-			case out <- evt:
-			}
+		select {
+		case <-s.ctx.Done():
+		case s.messages <- runtime.NewErrorMessage(err):
 		}
 	}()
 }
@@ -134,36 +194,52 @@ func (s *sessionRuntimeStream) detach(client *cdpsession.Client) {
 	}
 
 	key := string(client.ID)
-
 	s.mu.Lock()
-	stream, exists := s.streams[key]
-	if exists {
-		delete(s.streams, key)
+	if s.initializing {
+		if s.initialDetached == nil {
+			s.initialDetached = make(map[string]struct{})
+		}
+
+		s.initialDetached[key] = struct{}{}
 	}
+
+	entry := s.streams[key]
+	delete(s.streams, key)
 	s.mu.Unlock()
 
-	if exists {
-		_ = stream.Close()
+	if entry != nil {
+		_ = entry.Close()
 	}
 }
 
-func (s *sessionRuntimeStream) closeStreams() {
-	s.mu.Lock()
-	streams := make([]runtime.Stream, 0, len(s.streams))
-	for key, stream := range s.streams {
-		streams = append(streams, stream)
-		delete(s.streams, key)
-	}
-	s.mu.Unlock()
-
-	for _, stream := range streams {
-		_ = stream.Close()
-	}
-}
-
-func (s *sessionRuntimeStream) removeStream(key string) {
+func (s *sessionRuntimeStream) removeStream(key string, entry *sessionStream) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	delete(s.streams, key)
+	if s.streams[key] == entry {
+		delete(s.streams, key)
+	}
+}
+
+func (s *sessionRuntimeStream) cleanup() {
+	<-s.ctx.Done()
+	s.sessions.RemoveListener(s.listenerID)
+
+	s.mu.Lock()
+	s.closed = true
+	if s.stopRead != nil {
+		s.stopRead()
+	}
+
+	entries := s.streams
+	s.streams = nil
+	s.mu.Unlock()
+
+	for _, entry := range entries {
+		_ = entry.Close()
+	}
+
+	s.wg.Wait()
+	close(s.messages)
+	close(s.done)
 }

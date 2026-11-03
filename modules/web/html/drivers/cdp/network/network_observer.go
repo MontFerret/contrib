@@ -111,7 +111,7 @@ func (o *networkObserver) Subscribe(
 			return nil, err
 		}
 
-		return newNetworkIdleStream(o, idleOptions), nil
+		return newNetworkIdleStream(ctx, o, idleOptions), nil
 	}
 
 	eventOptions, err := parseNetworkEventOptions(ctx, eventName, options)
@@ -119,7 +119,7 @@ func (o *networkObserver) Subscribe(
 		return nil, err
 	}
 
-	return newNetworkEventStream(o, o.logger, eventName, eventOptions), nil
+	return newNetworkEventStream(ctx, o, o.logger, eventName, eventOptions), nil
 }
 
 func (o *networkObserver) subscribe() *networkEventSubscriber {
