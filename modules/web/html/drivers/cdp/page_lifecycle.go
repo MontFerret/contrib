@@ -5,6 +5,10 @@ import (
 )
 
 func (p *HTMLPage) Close() error {
+	if p.policySession != nil {
+		p.policySession.invalidate()
+	}
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -13,6 +17,10 @@ func (p *HTMLPage) Close() error {
 	}
 
 	p.closed = true
+
+	if p.policySession != nil {
+		defer p.policySession.release()
+	}
 
 	var url string
 	if p.dom != nil {
@@ -60,4 +68,18 @@ func (p *HTMLPage) Close() error {
 	}
 
 	return nil
+}
+
+func (p *HTMLPage) withPolicyContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	if p.policySession == nil {
+		return ctx, func() {}
+	}
+
+	operationCtx, cancel := context.WithCancel(ctx)
+	stop := context.AfterFunc(p.policySession.lifetime, cancel)
+
+	return operationCtx, func() {
+		stop()
+		cancel()
+	}
 }

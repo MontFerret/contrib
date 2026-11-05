@@ -82,6 +82,59 @@ chromium --headless=new --remote-debugging-port=9222 --remote-debugging-address=
 
 Use the exact browser binary name available in your environment, such as `chromium`, `google-chrome`, or `Google Chrome`.
 
+### Host-Controlled CDP Origin Allowlist
+
+Hosts can restrict intercepted HTTP(S) requests with a driver option:
+
+```go
+driver := cdp.New(
+    cdp.WithAddress("http://localhost:9222"),
+    cdp.WithAllowedOrigins("https://example.com", "https://api.example.com"),
+)
+defer driver.Close()
+```
+
+**This restriction affects the entire Chromium endpoint**, including unrelated tabs, browser contexts, popups, and workers. Use a dedicated endpoint where every workload shares the same allowlist. It is not a policy scoped to one document, query, or browser context; FQL and document options cannot change it.
+
+Origins match by scheme, hostname, and effective port. Host casing, IDNA names, IP literals, and standard HTTP/HTTPS ports are normalized. Listing `https://example.com` also matches `https://EXAMPLE.com:443`, but does not allow HTTP, other ports, subdomains, or the distinct hostname `example.com.`. Supply an origin with no path or only `/`; credentials, wildcard hosts, other paths, queries, fragments, unsupported schemes, and malformed ports are rejected.
+
+`New` preserves its existing return type. Invalid configuration is retained and reported by `Open` or `Parse` before connecting. Inputs are copied and frozen during construction. The last `WithAllowedOrigins` option replaces earlier lists; an explicitly empty list denies every intercepted network origin. Omitting the option preserves unrestricted behavior. Internal `about:blank` initialization remains available.
+
+The driver installs browser-level `Fetch` interception before creating its first page target. One persistent policy connection stays alive until `Driver.Close()`, even when all pages have closed. Closing the driver cancels pending initialization, invalidates its active pages, and releases its connections. An unexpected policy-connection or interception-stream failure is terminal: active sessions are invalidated, future `Open`/`Parse` calls fail, and recovery requires a new driver. Initial connection/setup errors fail the operation without creating a page target.
+
+Independent drivers use independent CDP connections. Closing one does not disable another's policy. Their restrictions compose rather than replacing each other, so all drivers sharing an endpoint should use the same policy. Existing page-level `Ignore` resource filters continue to apply.
+
+#### Coverage and Security Limits
+
+The browser-backed tests use local HTTP/HTTPS fixtures and have been exercised on Chromium **155.0.8059.40**. Requests expected to be denied are checked against server-side request counters.
+
+| Network path or behavior | Coverage |
+| --- | --- |
+| Main HTTP/HTTPS navigation; forbidden origins, schemes, ports, and hosts | Intercepted before transmission. |
+| Redirect destinations; JavaScript fetch/XHR and direct preflight-triggering requests | Intercepted; tested against forbidden destination counters. |
+| Redirected fetch requiring a CORS preflight | Chromium 155 can stall before reporting the destination to Fetch. Tests abort this path and verify zero destination requests; applications should bound requests with cancellation/timeouts. |
+| External scripts, images, stylesheets, and frames | Intercepted. |
+| Cross-site frame requests, popups, dedicated-worker fetches, and service-worker fetches | Covered by browser-level interception without relying on child-target initialization. |
+| Unrelated browser contexts | Restricted by the same browser-wide policy. |
+| WebSocket handshakes (`ws:`/`wss:`) | **Not restricted by Fetch.** The test verifies that an unlisted `ws:` handshake reaches the fixture. |
+| WebRTC, WebTransport, DNS/prefetch/preconnect, browser background traffic, and other paths outside Fetch | No enforcement guarantee; not validated by this suite. |
+| Local/non-network schemes such as `data:` and `blob:` | No scheme-wide guarantee; unsupported URLs are denied when Fetch presents them. |
+
+This feature is CDP request interception. It does not install administrator-managed Chrome `URLBlocklist`/`URLAllowlist` policies, and it does not provide OS/container network isolation, IP-address restrictions, or DNS-rebinding protection. A permitted hostname may resolve to any address Chrome can reach. Non-browser clients, including the memory driver, are unaffected.
+
+Chrome removes interception when its policy connection disconnects. Terminal driver failure prevents continued driver use and triggers cleanup, but cannot atomically stop Chrome networking during that loss. Closing the last restricted driver also removes its browser-wide restriction; stop unmanaged endpoint workloads separately. For hostile workloads, enforce destination restrictions at the network level in addition to this option.
+
+The legacy child-target transport is a separate concern tracked in [issue #56](https://github.com/MontFerret/contrib/issues/56). This feature does not migrate it to flat sessions.
+
+Run the browser-backed Go tests against a dedicated browser on the same machine:
+
+```sh
+cd modules/web/html
+FERRET_CDP_TEST_ADDRESS=http://127.0.0.1:9222 go test ./drivers/cdp/... -count=1
+```
+
+The fixture tests configure the dedicated endpoint to accept their self-signed TLS certificates. Without `FERRET_CDP_TEST_ADDRESS`, browser-backed tests skip explicitly and unit tests still run. The existing Lab/Chromium integration commands remain unchanged.
+
 ## Loading Pages
 
 ### Load Static HTML Over HTTP

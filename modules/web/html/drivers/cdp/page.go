@@ -23,14 +23,15 @@ type (
 	HTMLPageEvent string
 
 	HTMLPage struct {
-		logger     zerolog.Logger
-		client     *cdp.Client
-		sessions   *cdpsession.Manager
-		network    *cdpnet.Manager
-		dom        *dom.Manager
-		initScript *drivers.InitScript
-		mu         sync.Mutex
-		closed     runtime.Boolean
+		logger        zerolog.Logger
+		client        *cdp.Client
+		sessions      *cdpsession.Manager
+		network       *cdpnet.Manager
+		dom           *dom.Manager
+		initScript    *drivers.InitScript
+		policySession *policySession
+		mu            sync.Mutex
+		closed        runtime.Boolean
 	}
 )
 

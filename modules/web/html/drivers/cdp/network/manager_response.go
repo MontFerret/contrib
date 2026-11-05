@@ -20,6 +20,10 @@ func (m *Manager) Close() error {
 		m.stop = nil
 	}
 
+	if m.interceptor != nil {
+		_ = m.interceptor.Close()
+	}
+
 	if m.sessions != nil {
 		m.sessions.RemoveListener(m.responseListener)
 	}
