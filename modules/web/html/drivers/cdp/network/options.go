@@ -13,6 +13,9 @@ type (
 
 	Filter struct {
 		Patterns []drivers.ResourceFilter
+		// AllowedOrigins restricts requests to exact HTTP(S) origins. Nil leaves
+		// origins unrestricted; a non-nil empty slice denies every network origin.
+		AllowedOrigins []string
 	}
 
 	Options struct {

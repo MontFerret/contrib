@@ -3,8 +3,8 @@ package network
 import (
 	"context"
 	"sync"
+	"time"
 
-	"github.com/gobwas/glob"
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/fetch"
 	"github.com/mafredri/cdp/protocol/network"
@@ -15,74 +15,20 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
 )
 
-type (
-	ResourceFilter struct {
-		URL          *glob.Pattern
-		ResourceType string
-	}
-
-	Interceptor struct {
-		logger  zerolog.Logger
-		client  *cdp.Client
-		filters map[string]*InterceptorFilter
-		loop    *events.Loop
-		mu      sync.RWMutex
-		running bool
-	}
-
-	InterceptorFilter struct {
-		resources []ResourceFilter
-	}
-
-	InterceptorListener func(ctx context.Context, msg *fetch.RequestPausedReply) bool
-)
-
-func NewInterceptorFilter(filter *Filter) (*InterceptorFilter, error) {
-	interFilter := new(InterceptorFilter)
-	interFilter.resources = make([]ResourceFilter, 0, len(filter.Patterns))
-
-	for _, pattern := range filter.Patterns {
-		rf := ResourceFilter{
-			ResourceType: pattern.Type,
-		}
-
-		if pattern.URL != "" {
-			p, err := glob.Compile(pattern.URL)
-
-			if err != nil {
-				return nil, err
-			}
-
-			rf.URL = p
-		}
-
-		if rf.ResourceType != "" && rf.URL != nil {
-			interFilter.resources = append(interFilter.resources, rf)
-		}
-	}
-
-	return interFilter, nil
+type Interceptor struct {
+	logger   zerolog.Logger
+	client   *cdp.Client
+	filters  map[string]*InterceptorFilter
+	loop     *events.Loop
+	mu       sync.RWMutex
+	running  bool
+	cancel   context.CancelFunc
+	done     chan struct{}
+	err      error
+	requests sync.WaitGroup
 }
 
-func (f *InterceptorFilter) Filter(rt network.ResourceType, req network.Request) bool {
-	var result bool
-
-	for _, pattern := range f.resources {
-		if pattern.ResourceType != "" && pattern.URL != nil {
-			result = string(rt) == pattern.ResourceType && pattern.URL.Match(req.URL)
-		} else if pattern.ResourceType != "" {
-			result = string(rt) == pattern.ResourceType
-		} else if pattern.URL != nil {
-			result = pattern.URL.Match(req.URL)
-		}
-
-		if result {
-			break
-		}
-	}
-
-	return result
-}
+type InterceptorListener func(ctx context.Context, msg *fetch.RequestPausedReply) bool
 
 func NewInterceptor(logger zerolog.Logger, client *cdp.Client) *Interceptor {
 	i := new(Interceptor)
@@ -91,6 +37,8 @@ func NewInterceptor(logger zerolog.Logger, client *cdp.Client) *Interceptor {
 	i.filters = make(map[string]*InterceptorFilter)
 	i.loop = events.NewLoop(createRequestPausedStreamFactory(client))
 	i.loop.AddListener(requestPausedEvent, events.Always(i.filter))
+	i.loop.AddListener(events.Error, events.Always(i.failed))
+	i.done = make(chan struct{})
 
 	return i
 }
@@ -107,7 +55,6 @@ func (i *Interceptor) AddFilter(name string, filter *Filter) error {
 	defer i.mu.Unlock()
 
 	f, err := NewInterceptorFilter(filter)
-
 	if err != nil {
 		return err
 	}
@@ -146,6 +93,9 @@ func (i *Interceptor) RemoveListener(id events.ListenerID) {
 	i.loop.RemoveListener(requestPausedEvent, id)
 }
 
+// Run subscribes before enabling Fetch so no paused request can be lost at startup.
+// The context owns interception until cancellation. A stream failure leaves Fetch
+// enabled, keeping requests paused until the owner tears down the connection.
 func (i *Interceptor) Run(ctx context.Context) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -154,50 +104,110 @@ func (i *Interceptor) Run(ctx context.Context) error {
 		return nil
 	}
 
-	err := i.client.Fetch.Enable(ctx, fetch.NewEnableArgs())
-	i.running = err == nil
+	runCtx, cancel := context.WithCancel(ctx)
+	i.cancel = cancel
+	i.err = nil
+	i.done = make(chan struct{})
 
-	if err != nil {
-		return err
-	}
-
-	if err := i.loop.Run(ctx); err != nil {
-		if e := i.client.Fetch.Disable(ctx); e != nil {
-			i.logger.Err(err).Msg("failed to disable fetch")
-		}
-
-		i.running = false
+	if err := i.loop.Run(runCtx); err != nil {
+		cancel()
+		i.err = err
+		close(i.done)
 
 		return err
 	}
 
-	go func() {
-		<-ctx.Done()
+	if err := i.client.Fetch.Enable(runCtx, fetch.NewEnableArgs()); err != nil {
+		cancel()
+		i.err = err
+		close(i.done)
 
-		nested, cancel := context.WithTimeout(context.Background(), drivers.DefaultWaitTimeout)
-		defer cancel()
+		return err
+	}
 
-		i.stop(nested)
-	}()
+	i.running = true
+	go i.waitForStop(runCtx)
 
 	return nil
 }
 
-func (i *Interceptor) stop(ctx context.Context) {
-	err := i.client.Fetch.Disable(ctx)
-	i.running = false
+// Done closes after interception stops. Err distinguishes stream failure from
+// normal cancellation. Callers must finish Run before observing Done.
+func (i *Interceptor) Done() <-chan struct{} {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
 
-	if err != nil {
-		i.logger.Err(err).Msg("failed to stop interceptor")
+	return i.done
+}
+
+// Err reports an unexpected interception stream failure or a startup error.
+func (i *Interceptor) Err() error {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+
+	return i.err
+}
+
+// Close cancels interception and waits for bounded Fetch cleanup.
+func (i *Interceptor) Close() error {
+	i.mu.RLock()
+	cancel, done := i.cancel, i.done
+	i.mu.RUnlock()
+
+	if cancel == nil {
+		return nil
+	}
+
+	cancel()
+	<-done
+
+	return i.Err()
+}
+
+func (i *Interceptor) failed(_ context.Context, message any) {
+	err, ok := message.(error)
+	if !ok {
+		return
+	}
+
+	i.mu.Lock()
+	if i.err == nil {
+		i.err = err
+	}
+
+	cancel := i.cancel
+	i.mu.Unlock()
+
+	if cancel != nil {
+		cancel()
 	}
 }
 
-func (i *Interceptor) filter(ctx context.Context, message any) {
+func (i *Interceptor) waitForStop(ctx context.Context) {
+	<-ctx.Done()
+
 	i.mu.Lock()
-	defer i.mu.Unlock()
+	failed := i.err != nil
+	i.mu.Unlock()
+	i.requests.Wait()
 
+	if !failed {
+		nested, cancel := context.WithTimeout(context.Background(), time.Duration(drivers.DefaultWaitTimeout)*time.Millisecond)
+		defer cancel()
+
+		if err := i.client.Fetch.Disable(nested); err != nil {
+			i.logger.Trace().Err(err).Msg("failed to stop interceptor")
+		}
+	}
+
+	i.mu.Lock()
+	i.running = false
+	close(i.done)
+	i.mu.Unlock()
+}
+
+func (i *Interceptor) filter(ctx context.Context, message any) {
 	msg, ok := message.(*fetch.RequestPausedReply)
-
 	if !ok {
 		return
 	}
@@ -213,6 +223,13 @@ func (i *Interceptor) filter(ctx context.Context, message any) {
 
 	var reject bool
 
+	i.mu.Lock()
+	if ctx.Err() != nil {
+		i.mu.Unlock()
+
+		return
+	}
+
 	for _, filter := range i.filters {
 		reject = filter.Filter(msg.ResourceType, msg.Request)
 
@@ -221,23 +238,25 @@ func (i *Interceptor) filter(ctx context.Context, message any) {
 		}
 	}
 
+	i.requests.Add(1)
+	i.mu.Unlock()
+
+	defer i.requests.Done()
+	i.resolve(ctx, msg, reject)
+}
+
+func (i *Interceptor) resolve(ctx context.Context, msg *fetch.RequestPausedReply, reject bool) {
 	if !reject {
 		err := i.client.Fetch.ContinueRequest(ctx, fetch.NewContinueRequestArgs(msg.RequestID))
-
 		if err != nil {
 			i.logger.Err(err).Msg("failed to allow resource loading")
 		}
-
-		log.Trace().Msg("succeeded to allow resource loading")
 
 		return
 	}
 
 	err := i.client.Fetch.FailRequest(ctx, fetch.NewFailRequestArgs(msg.RequestID, network.ErrorReasonBlockedByClient))
-
 	if err != nil {
-		log.Trace().Err(err).Msg("failed to block resource loading")
+		i.logger.Trace().Err(err).Msg("failed to block resource loading")
 	}
-
-	log.Trace().Msg("succeeded to block resource loading")
 }
