@@ -10,14 +10,14 @@ type (
 		URL          *glob.Pattern
 		ResourceType string
 	}
-)
 
-// InterceptorFilter blocks matching resources or requests outside its allowed origins.
-// Its compiled configuration is immutable and may be shared between interceptors.
-type InterceptorFilter struct {
-	resources []ResourceFilter
-	origins   map[origin]struct{}
-}
+	// InterceptorFilter blocks matching resources or requests outside its allowed origins.
+	// Its compiled configuration is immutable and may be shared between interceptors.
+	InterceptorFilter struct {
+		resources []ResourceFilter
+		origins   map[origin]struct{}
+	}
+)
 
 // NewInterceptorFilter validates and snapshots a resource/origin filter.
 func NewInterceptorFilter(filter *Filter) (*InterceptorFilter, error) {
