@@ -2,6 +2,7 @@ package cdp
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/devtool"
@@ -62,7 +63,7 @@ func (drv *Driver) Open(ctx context.Context, params drivers.Params) (drivers.HTM
 		return nil, err
 	}
 
-	page, err := LoadHTMLPage(ctx, sessions, drv.setDefaultParams(params))
+	page, err := loadHTMLPage(ctx, sessions, drv.setDefaultParams(params), owned)
 
 	return owned.finish(page, err)
 }
@@ -85,19 +86,21 @@ func (drv *Driver) Parse(ctx context.Context, params drivers.ParseParams) (drive
 		return nil, err
 	}
 
-	page, err := LoadHTMLPageWithContent(ctx, sessions, drv.setDefaultParams(drivers.Params{
+	page, err := loadHTMLPageWithContent(ctx, sessions, drv.setDefaultParams(drivers.Params{
 		URL:         BlankPageURL,
 		UserAgent:   "",
 		KeepCookies: params.KeepCookies,
 		Cookies:     params.Cookies,
 		Headers:     params.Headers,
 		Viewport:    params.Viewport,
-	}), params.Content)
+	}), params.Content, owned)
 
 	return owned.finish(page, err)
 }
 
 // Close releases the browser policy connection and invalidates owned pages.
+// Restricted drivers return unresolved cleanup failures after bounded attempts;
+// the endpoint may still contain live targets when cleanup fails.
 // Without an allowlist, page lifecycles remain owned by their callers.
 func (drv *Driver) Close() error {
 	if drv.policy != nil {
@@ -123,7 +126,7 @@ func (drv *Driver) beginPolicySession(ctx context.Context) (*policySession, cont
 func (drv *Driver) createSessionManager(ctx context.Context, keepCookies bool, owned *policySession) (manager *cdpsession.Manager, err error) {
 	defer func() {
 		if err != nil && owned != nil {
-			_ = owned.Close()
+			err = stderrors.Join(err, owned.Close())
 		}
 	}()
 
@@ -140,14 +143,18 @@ func (drv *Driver) createSessionManager(ctx context.Context, keepCookies bool, o
 
 	createTarget, err := drv.createTarget(ctx, browserClient, keepCookies, owned)
 	if err != nil {
-		_ = browserConn.Close()
+		if owned == nil {
+			_ = browserConn.Close()
+		}
 
 		return nil, errors.Wrap(err, "create a browser target")
 	}
 
 	sessions, err := cdpsession.New(ctx, browserConn, browserClient, createTarget.TargetID)
 	if err != nil {
-		_ = browserConn.Close()
+		if owned == nil {
+			_ = browserConn.Close()
+		}
 
 		return nil, errors.Wrap(err, "establish a new connection")
 	}

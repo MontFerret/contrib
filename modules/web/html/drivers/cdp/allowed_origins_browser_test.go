@@ -608,3 +608,47 @@ func TestBrowserAllowedOriginsEmptyParse(t *testing.T) {
 		t.Fatalf("empty policy result=%s requests=%d", actual, received.Load())
 	}
 }
+
+func TestBrowserAllowedOriginsCloseResults(t *testing.T) {
+	ctx, address, _ := policyBrowser(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte("<html><body>cleanup fixture</body></html>"))
+	}))
+	defer server.Close()
+	for _, keepCookies := range []bool{false, true} {
+		options := []Option{WithAddress(address), WithAllowedOrigins(server.URL)}
+		if keepCookies {
+			options = append(options, WithKeepCookies())
+		}
+
+		driver := New(options...)
+		var wg sync.WaitGroup
+		for index := range 8 {
+			wg.Go(func() {
+				var page drivers.HTMLPage
+				var err error
+				if index%2 == 0 {
+					page, err = driver.Open(ctx, drivers.Params{URL: server.URL})
+				} else {
+					page, err = driver.Parse(ctx, drivers.ParseParams{Content: []byte("<html><body>parsed fixture</body></html>")})
+				}
+
+				if err != nil {
+					t.Errorf("initialize cleanup fixture: %v", err)
+
+					return
+				}
+
+				if err := page.Close(); err != nil {
+					t.Errorf("page cleanup (keepCookies=%v): %v", keepCookies, err)
+				}
+			})
+		}
+
+		wg.Wait()
+		if err := driver.Close(); err != nil {
+			t.Errorf("driver cleanup (keepCookies=%v): %v", keepCookies, err)
+		}
+	}
+}

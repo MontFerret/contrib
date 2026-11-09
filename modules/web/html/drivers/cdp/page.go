@@ -2,6 +2,7 @@ package cdp
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -44,7 +45,11 @@ func LoadHTMLPage(
 	ctx context.Context,
 	sessions *cdpsession.Manager,
 	params drivers.Params,
-) (p *HTMLPage, err error) {
+) (*HTMLPage, error) {
+	return loadHTMLPage(ctx, sessions, params, nil)
+}
+
+func loadHTMLPage(ctx context.Context, sessions *cdpsession.Manager, params drivers.Params, owned *policySession) (p *HTMLPage, err error) {
 	logger := logging.From(ctx)
 	initScript, err := drivers.NormalizeInitScript(params.InitScript)
 	if err != nil {
@@ -67,20 +72,35 @@ func LoadHTMLPage(
 	defer func() {
 		if err != nil {
 			if p != nil {
-				_ = p.Close()
+				err = errors.Join(err, p.Close())
+
 				return
 			}
 
 			if domManager != nil {
 				if closeErr := domManager.Close(); closeErr != nil {
 					logger.Error().Err(closeErr).Msg("failed to close DOM manager")
+
+					if owned != nil {
+						err = errors.Join(err, closeErr)
+					}
 				}
 			}
 
 			if netManager != nil {
 				if closeErr := netManager.Close(); closeErr != nil {
 					logger.Error().Err(closeErr).Msg("failed to close network manager")
+
+					if owned != nil {
+						err = errors.Join(err, closeErr)
+					}
 				}
+			}
+
+			if owned != nil {
+				err = errors.Join(err, owned.Close())
+
+				return
 			}
 
 			if err := client.Page.Close(context.Background()); err != nil {
@@ -146,6 +166,12 @@ func LoadHTMLPage(
 	)
 	p.initScript = initScript
 
+	if owned != nil {
+		if err = owned.setPage(p); err != nil {
+			return p, err
+		}
+	}
+
 	if err = p.registerInitScript(ctx); err != nil {
 		return p, err
 	}
@@ -168,9 +194,13 @@ func LoadHTMLPageWithContent(
 	sessions *cdpsession.Manager,
 	params drivers.Params,
 	content []byte,
-) (p *HTMLPage, err error) {
+) (*HTMLPage, error) {
+	return loadHTMLPageWithContent(ctx, sessions, params, content, nil)
+}
+
+func loadHTMLPageWithContent(ctx context.Context, sessions *cdpsession.Manager, params drivers.Params, content []byte, owned *policySession) (p *HTMLPage, err error) {
 	logger := logging.From(ctx)
-	p, err = LoadHTMLPage(ctx, sessions, params)
+	p, err = loadHTMLPage(ctx, sessions, params, owned)
 
 	if err != nil {
 		return nil, err
@@ -180,6 +210,7 @@ func LoadHTMLPageWithContent(
 		if err != nil {
 			if e := p.Close(); e != nil {
 				logger.Error().Err(e).Msg("failed to close page")
+				err = errors.Join(err, e)
 			}
 		}
 	}()

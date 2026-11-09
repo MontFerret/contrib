@@ -3,6 +3,7 @@ package cdp
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/mafredri/cdp"
@@ -101,7 +102,9 @@ func (s *policySession) finish(page *HTMLPage, err error) (drivers.HTMLPage, err
 	defer s.cancel()
 
 	if err != nil {
-		_ = s.Close()
+		if cleanupErr := s.Close(); cleanupErr != nil && !errors.Is(err, cleanupErr) {
+			err = errors.Join(err, cleanupErr)
+		}
 
 		return nil, err
 	}
@@ -114,21 +117,27 @@ func (s *policySession) finish(page *HTMLPage, err error) (drivers.HTMLPage, err
 		}
 
 		s.mu.Unlock()
-		_ = page.Close()
-		_ = s.Close()
 
-		return nil, failure
+		return nil, errors.Join(failure, s.Close())
 	}
 
-	s.page = page
-	page.policySession = s
 	s.mu.Unlock()
 
 	return page, nil
 }
 
-func (s *policySession) release() {
-	s.policy.release(s)
+func (s *policySession) setPage(page *HTMLPage) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.closed {
+		return errors.New("CDP session invalidated during page initialization")
+	}
+
+	s.page = page
+	page.policySession = s
+
+	return nil
 }
 
 func (s *policySession) Close() error {
@@ -137,39 +146,119 @@ func (s *policySession) Close() error {
 		s.cancel()
 		s.mu.Lock()
 		s.closed = true
-		conn, client, page, sessions := s.conn, s.client, s.page, s.sessions
-		targetID, contextID := s.targetID, s.contextID
+		conn, page, sessions := s.conn, s.page, s.sessions
 		s.mu.Unlock()
 
-		// Close browser targets through the independent browser channel first.
-		// Page methods may hold their mutex while waiting for a CDP response.
-		ctx, cancel := context.WithTimeout(context.Background(), policyCleanupTimeout)
-		defer cancel()
-
-		if client != nil && conn.Context().Err() == nil {
-			if contextID != "" {
-				_ = client.Target.DisposeBrowserContext(ctx, target.NewDisposeBrowserContextArgs(contextID))
-			} else if targetID != "" {
-				_, _ = client.Target.CloseTarget(ctx, target.NewCloseTargetArgs(targetID))
-			}
-		}
-
-		if conn != nil {
-			s.closeErr = conn.Close()
+		s.closeErr = s.closeTarget()
+		if conn != nil && conn.Context().Err() == nil {
+			s.closeErr = errors.Join(s.closeErr, conn.Close())
 		}
 
 		if sessions != nil {
-			// Closing the browser connection alone does not cancel the tunneled
-			// clients. Unblock their pending commands before acquiring page locks.
-			_ = sessions.Close()
+			// Cancel tunneled clients before taking page locks held by commands.
+			s.closeErr = errors.Join(s.closeErr, sessions.Close())
 		}
 
 		if page != nil {
-			s.closeErr = errors.Join(s.closeErr, page.Close())
+			s.closeErr = errors.Join(s.closeErr, page.closeResources())
 		}
 
-		s.release()
+		s.policy.release(s, s.closeErr)
 	})
 
 	return s.closeErr
+}
+
+func (s *policySession) closeTarget() error {
+	if s.targetID == "" && s.contextID == "" {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), policyCleanupTimeout)
+	defer cancel()
+
+	var primary *cdp.Client
+	if s.conn != nil && s.conn.Context().Err() == nil {
+		primary = s.client
+	}
+
+	primaryCtx, stop := context.WithTimeout(ctx, policyCleanupTimeout/2)
+	err := s.disposeTarget(primaryCtx, primary)
+	stop()
+	if err == nil {
+		return nil
+	}
+
+	fallback := s.policy.cleanupClient()
+	if fallback != nil {
+		fallbackErr := s.disposeTarget(ctx, fallback)
+		if fallbackErr == nil {
+			return nil
+		}
+
+		err = errors.Join(err, fallbackErr)
+	} else {
+		fallback = primary
+	}
+
+	// A command can fail because a concurrent close already removed the target.
+	// Confirm absence with protocol state, rather than matching error strings.
+	if fallback != nil {
+		gone, confirmationErr := s.targetGone(ctx, fallback)
+		if confirmationErr == nil && gone {
+			return nil
+		}
+
+		err = errors.Join(err, confirmationErr)
+	}
+
+	if s.contextID != "" {
+		return fmt.Errorf("dispose CDP browser context %s: %w", s.contextID, err)
+	}
+
+	return fmt.Errorf("close CDP target %s: %w", s.targetID, err)
+}
+
+func (s *policySession) disposeTarget(ctx context.Context, client *cdp.Client) error {
+	if client == nil {
+		return errors.New("browser cleanup connection unavailable")
+	}
+
+	if s.contextID != "" {
+		return client.Target.DisposeBrowserContext(ctx, target.NewDisposeBrowserContextArgs(s.contextID))
+	}
+
+	_, err := client.Target.CloseTarget(ctx, target.NewCloseTargetArgs(s.targetID))
+
+	return err
+}
+
+func (s *policySession) targetGone(ctx context.Context, client *cdp.Client) (bool, error) {
+	if s.contextID != "" {
+		reply, err := client.Target.GetBrowserContexts(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		for _, id := range reply.BrowserContextIDs {
+			if id == s.contextID {
+				return false, nil
+			}
+		}
+
+		return true, nil
+	}
+
+	reply, err := client.Target.GetTargets(ctx, target.NewGetTargetsArgs())
+	if err != nil {
+		return false, err
+	}
+
+	for _, info := range reply.TargetInfos {
+		if info.TargetID == s.targetID {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }

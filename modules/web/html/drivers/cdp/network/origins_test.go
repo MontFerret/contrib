@@ -7,6 +7,7 @@ import (
 
 	cdpnetwork "github.com/mafredri/cdp/protocol/network"
 
+	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/network"
 )
 
@@ -89,6 +90,31 @@ func TestOriginFilterCopiesConfiguration(t *testing.T) {
 	origins[0] = "https://evil.test"
 	if !filter.Filter(cdpnetwork.ResourceTypeFetch, cdpnetwork.Request{URL: origins[0]}) {
 		t.Fatal("configuration mutation changed compiled permissions")
+	}
+}
+
+func TestOriginAndResourceFiltersCompose(t *testing.T) {
+	filter, err := network.NewInterceptorFilter(&network.Filter{
+		AllowedOrigins: []string{"https://example.com"},
+		Patterns:       []drivers.ResourceFilter{{Type: "Image", URL: "*.png"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, test := range []struct {
+		url     string
+		kind    cdpnetwork.ResourceType
+		blocked bool
+	}{
+		{"https://example.com/image.png", cdpnetwork.ResourceTypeImage, true},
+		{"https://example.com/image.png", cdpnetwork.ResourceTypeFetch, false},
+		{"https://example.com/data", cdpnetwork.ResourceTypeFetch, false},
+		{"https://other.example/data", cdpnetwork.ResourceTypeFetch, true},
+	} {
+		if blocked := filter.Filter(test.kind, cdpnetwork.Request{URL: test.url}); blocked != test.blocked {
+			t.Errorf("%s %s: blocked=%v, want %v", test.kind, test.url, blocked, test.blocked)
+		}
 	}
 }
 

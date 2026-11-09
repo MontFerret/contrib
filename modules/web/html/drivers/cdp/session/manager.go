@@ -40,6 +40,7 @@ type Manager struct {
 	nextListenerID   atomic.Int64
 	mu               sync.RWMutex
 	closeOnce        sync.Once
+	closeErr         error
 }
 
 func New(
@@ -115,8 +116,7 @@ func New(
 		ctx,
 		target.NewAutoAttachRelatedArgs(rootTargetID, false),
 	); err != nil {
-		_ = manager.Close()
-		return nil, err
+		return nil, errors.Join(err, manager.Close())
 	}
 
 	return manager, nil
@@ -175,8 +175,6 @@ func (m *Manager) RemoveListener(id ListenerID) {
 }
 
 func (m *Manager) Close() error {
-	var closeErr error
-
 	m.closeOnce.Do(func() {
 		m.cancel()
 
@@ -184,6 +182,11 @@ func (m *Manager) Close() error {
 		errs := make([]error, 0, len(clients)+4)
 
 		for _, client := range clients {
+			if m.browserConn != nil && m.browserConn.Context().Err() != nil {
+				// The browser channel is already gone; a remote detach cannot run.
+				client.markDetached()
+			}
+
 			if err := client.Close(); err != nil {
 				errs = append(errs, err)
 			}
@@ -207,17 +210,17 @@ func (m *Manager) Close() error {
 			}
 		}
 
-		if m.browserConn != nil {
+		if m.browserConn != nil && m.browserConn.Context().Err() == nil {
 			if err := m.browserConn.Close(); err != nil {
 				errs = append(errs, err)
 			}
 		}
 
 		m.wg.Wait()
-		closeErr = errors.Join(errs...)
+		m.closeErr = errors.Join(errs...)
 	})
 
-	return closeErr
+	return m.closeErr
 }
 
 func (m *Manager) routeMessages() {

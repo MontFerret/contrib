@@ -64,7 +64,7 @@ func New(
 		}
 	}()
 
-	if options.Filter != nil && len(options.Filter.Patterns) > 0 {
+	if options.Filter != nil && (len(options.Filter.Patterns) > 0 || options.Filter.AllowedOrigins != nil) {
 		m.interceptor = NewInterceptor(logger, client)
 
 		if err = m.interceptor.AddFilter("resources", options.Filter); err != nil {

@@ -2,13 +2,18 @@ package cdp
 
 import (
 	"context"
+	"errors"
 )
 
 func (p *HTMLPage) Close() error {
 	if p.policySession != nil {
-		p.policySession.invalidate()
+		return p.policySession.Close()
 	}
 
+	return p.closeResources()
+}
+
+func (p *HTMLPage) closeResources() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -18,10 +23,7 @@ func (p *HTMLPage) Close() error {
 
 	p.closed = true
 
-	if p.policySession != nil {
-		defer p.policySession.release()
-	}
-
+	var errs []error
 	var url string
 	if p.dom != nil {
 		frame := p.dom.GetMainFrame()
@@ -33,6 +35,7 @@ func (p *HTMLPage) Close() error {
 
 	if p.dom != nil {
 		if err := p.dom.Close(); err != nil {
+			errs = append(errs, err)
 			p.logger.Warn().
 				Str("url", url).
 				Err(err).
@@ -42,6 +45,7 @@ func (p *HTMLPage) Close() error {
 
 	if p.network != nil {
 		if err := p.network.Close(); err != nil {
+			errs = append(errs, err)
 			p.logger.Warn().
 				Str("url", url).
 				Err(err).
@@ -49,7 +53,7 @@ func (p *HTMLPage) Close() error {
 		}
 	}
 
-	if p.client != nil && p.client.Page != nil {
+	if p.policySession == nil && p.client != nil && p.client.Page != nil {
 		if err := p.client.Page.Close(context.Background()); err != nil {
 			p.logger.Warn().
 				Str("url", url).
@@ -58,13 +62,17 @@ func (p *HTMLPage) Close() error {
 		}
 	}
 
-	if p.sessions != nil {
+	if p.policySession == nil && p.sessions != nil {
 		if err := p.sessions.Close(); err != nil {
 			p.logger.Warn().
 				Str("url", url).
 				Err(err).
 				Msg("failed to close session manager")
 		}
+	}
+
+	if p.policySession != nil {
+		return errors.Join(errs...)
 	}
 
 	return nil
