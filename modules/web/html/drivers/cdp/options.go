@@ -12,9 +12,10 @@ import (
 type (
 	Options struct {
 		*drivers.Options
-		Connection  *ConnectionOptions
-		Address     string
-		KeepCookies bool
+		Connection     *ConnectionOptions
+		Address        string
+		KeepCookies    bool
+		allowedOrigins []string
 	}
 
 	ConnectionOptions struct {
@@ -52,6 +53,19 @@ func WithAddress(address string) Option {
 		if address != "" {
 			opts.Address = normalizeAddress(address)
 		}
+	}
+}
+
+// WithAllowedOrigins restricts intercepted HTTP(S) requests across the entire
+// Chromium endpoint, including unrelated browser contexts. Use a dedicated
+// endpoint with one shared policy. An empty list denies every network origin.
+// Configuration is copied and validated by New; Open and Parse report errors.
+// The policy connection remains active until Driver.Close.
+func WithAllowedOrigins(origins ...string) Option {
+	values := append([]string{}, origins...)
+
+	return func(opts *Options) {
+		opts.allowedOrigins = append([]string{}, values...)
 	}
 }
 

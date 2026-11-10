@@ -18,6 +18,9 @@ import (
 )
 
 func (p *HTMLPage) Navigate(ctx context.Context, url runtime.String) error {
+	ctx, cancel := p.withPolicyContext(ctx)
+	defer cancel()
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -29,6 +32,9 @@ func (p *HTMLPage) Navigate(ctx context.Context, url runtime.String) error {
 }
 
 func (p *HTMLPage) NavigateBack(ctx context.Context, skip runtime.Int) (runtime.Boolean, error) {
+	ctx, cancel := p.withPolicyContext(ctx)
+	defer cancel()
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -49,6 +55,9 @@ func (p *HTMLPage) NavigateBack(ctx context.Context, skip runtime.Int) (runtime.
 }
 
 func (p *HTMLPage) NavigateForward(ctx context.Context, skip runtime.Int) (runtime.Boolean, error) {
+	ctx, cancel := p.withPolicyContext(ctx)
+	defer cancel()
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -69,6 +78,9 @@ func (p *HTMLPage) NavigateForward(ctx context.Context, skip runtime.Int) (runti
 }
 
 func (p *HTMLPage) WaitForNavigation(ctx context.Context, targetURL runtime.String) error {
+	ctx, cancel := p.withPolicyContext(ctx)
+	defer cancel()
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -81,6 +93,9 @@ func (p *HTMLPage) WaitForNavigation(ctx context.Context, targetURL runtime.Stri
 }
 
 func (p *HTMLPage) WaitForFrameNavigation(ctx context.Context, frame drivers.HTMLDocument, targetURL runtime.String) error {
+	ctx, cancel := p.withPolicyContext(ctx)
+	defer cancel()
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
