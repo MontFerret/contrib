@@ -3,14 +3,19 @@ package network
 import (
 	"context"
 
+	"github.com/mafredri/cdp/protocol/target"
 	"github.com/rs/zerolog"
 
 	cdpsession "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/session"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
-func newNavigationEventStream(ctx context.Context, logger zerolog.Logger, sessions sessionStreamManager) (runtime.Stream, error) {
-	return newSessionRuntimeStream(ctx, sessions, func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
+func newNavigationEventStream(ctx context.Context, logger zerolog.Logger, sessions sessionStreamManager, frameID target.ID) (runtime.Stream, error) {
+	return newSessionRuntimeStream(ctx, sessions, frameID, func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
+		if client.Info.Type != "" && client.Info.Type != "page" && client.Info.Type != "iframe" {
+			return nil, nil
+		}
+
 		frameStream, err := client.CDP.Page.FrameNavigated(ctx)
 		if err != nil {
 			return nil, err
@@ -27,7 +32,7 @@ func newNavigationEventStream(ctx context.Context, logger zerolog.Logger, sessio
 }
 
 func newRequestEventStream(ctx context.Context, logger zerolog.Logger, sessions sessionStreamManager) (runtime.Stream, error) {
-	return newSessionRuntimeStream(ctx, sessions, func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
+	return newSessionRuntimeStream(ctx, sessions, "", func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
 		stream, err := client.CDP.Network.RequestWillBeSent(ctx)
 		if err != nil {
 			return nil, err
@@ -38,7 +43,7 @@ func newRequestEventStream(ctx context.Context, logger zerolog.Logger, sessions 
 }
 
 func newResponseEventStream(ctx context.Context, logger zerolog.Logger, sessions sessionStreamManager) (runtime.Stream, error) {
-	return newSessionRuntimeStream(ctx, sessions, func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
+	return newSessionRuntimeStream(ctx, sessions, "", func(ctx context.Context, client *cdpsession.Client) (runtime.Stream, error) {
 		stream, err := client.CDP.Network.ResponseReceived(ctx)
 		if err != nil {
 			return nil, err

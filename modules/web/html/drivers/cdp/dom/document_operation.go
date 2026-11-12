@@ -21,6 +21,14 @@ func withDocumentResult[T any](
 			return zero, err
 		}
 
+		if attempt == 0 && doc.rendererChanged(state) {
+			if err := doc.refresh(ctx, state); err != nil {
+				return zero, err
+			}
+
+			continue
+		}
+
 		result, err := operation(state)
 		if err == nil {
 			return result, nil
@@ -30,7 +38,7 @@ func withDocumentResult[T any](
 			continue
 		}
 
-		if attempt == 0 && eval.IsStaleError(err) {
+		if attempt == 0 && (eval.IsStaleError(err) || doc.rendererChanged(state)) {
 			if refreshErr := doc.refresh(ctx, state); refreshErr != nil {
 				return zero, refreshErr
 			}

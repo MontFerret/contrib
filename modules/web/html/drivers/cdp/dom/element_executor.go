@@ -37,7 +37,7 @@ func (exec *elementExecutor) ensureAttached() error {
 		return nil
 	}
 
-	if !exec.document.isCurrentState(exec.state) {
+	if !exec.document.isCurrentState(exec.state) || (exec.state.renderer != nil && exec.state.renderer.Err() != nil) {
 		return drivers.ErrDetached
 	}
 

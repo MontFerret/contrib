@@ -2,6 +2,7 @@ package input
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/mafredri/cdp"
@@ -10,12 +11,13 @@ import (
 
 type Mouse struct {
 	client *cdp.Client
+	mu     sync.Mutex
 	x      float64
 	y      float64
 }
 
 func NewMouse(client *cdp.Client) *Mouse {
-	return &Mouse{client, 0, 0}
+	return &Mouse{client: client}
 }
 
 func (m *Mouse) Click(ctx context.Context, x, y float64, delay time.Duration) error {
@@ -27,17 +29,20 @@ func (m *Mouse) ClickWithCount(ctx context.Context, x, y float64, delay time.Dur
 }
 
 func (m *Mouse) ClickWithButton(ctx context.Context, x, y float64, delay time.Duration, button input.MouseButton, count int) error {
-	if err := m.Move(ctx, x, y); err != nil {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if err := m.move(ctx, x, y, 1); err != nil {
 		return err
 	}
 
-	if err := m.DownWithCount(ctx, button, count); err != nil {
+	if err := m.button(ctx, "mousePressed", button, count); err != nil {
 		return err
 	}
 
 	time.Sleep(randomDuration(int(delay)))
 
-	return m.UpWithCount(ctx, button, count)
+	return m.button(ctx, "mouseReleased", button, count)
 }
 
 func (m *Mouse) Down(ctx context.Context, button input.MouseButton) error {
@@ -45,12 +50,10 @@ func (m *Mouse) Down(ctx context.Context, button input.MouseButton) error {
 }
 
 func (m *Mouse) DownWithCount(ctx context.Context, button input.MouseButton, count int) error {
-	return m.client.Input.DispatchMouseEvent(
-		ctx,
-		input.NewDispatchMouseEventArgs("mousePressed", m.x, m.y).
-			SetButton(button).
-			SetClickCount(count),
-	)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return m.button(ctx, "mousePressed", button, count)
 }
 
 func (m *Mouse) Up(ctx context.Context, button input.MouseButton) error {
@@ -58,9 +61,16 @@ func (m *Mouse) Up(ctx context.Context, button input.MouseButton) error {
 }
 
 func (m *Mouse) UpWithCount(ctx context.Context, button input.MouseButton, count int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return m.button(ctx, "mouseReleased", button, count)
+}
+
+func (m *Mouse) button(ctx context.Context, event string, button input.MouseButton, count int) error {
 	return m.client.Input.DispatchMouseEvent(
 		ctx,
-		input.NewDispatchMouseEventArgs("mouseReleased", m.x, m.y).
+		input.NewDispatchMouseEventArgs(event, m.x, m.y).
 			SetButton(button).
 			SetClickCount(count),
 	)
@@ -71,6 +81,31 @@ func (m *Mouse) Move(ctx context.Context, x, y float64) error {
 }
 
 func (m *Mouse) MoveBySteps(ctx context.Context, x, y float64, steps int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return m.move(ctx, x, y, steps)
+}
+
+func (m *Mouse) buttonAt(ctx context.Context, event string, point Quad, button input.MouseButton, count int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if err := m.move(ctx, point.X, point.Y, 1); err != nil {
+		return err
+	}
+
+	return m.button(ctx, event, button, count)
+}
+
+func (m *Mouse) position() Quad {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return Quad{X: m.x, Y: m.y}
+}
+
+func (m *Mouse) move(ctx context.Context, x, y float64, steps int) error {
 	fromX := m.x
 	fromY := m.y
 

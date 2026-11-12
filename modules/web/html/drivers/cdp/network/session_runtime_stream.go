@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/mafredri/cdp/protocol/target"
+
 	cdpsession "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/session"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
@@ -12,6 +14,8 @@ type (
 	sessionStreamOpener func(context.Context, *cdpsession.Client) (runtime.Stream, error)
 
 	sessionStreamManager interface {
+		PageContext() context.Context
+		FrameError(target.ID) error
 		Snapshot() []*cdpsession.Client
 		AddListener(cdpsession.Listener) cdpsession.ListenerID
 		RemoveListener(cdpsession.ListenerID)
@@ -20,6 +24,7 @@ type (
 
 type sessionRuntimeStream struct {
 	sessions        sessionStreamManager
+	frameID         target.ID
 	open            sessionStreamOpener
 	ctx             context.Context
 	cancel          context.CancelFunc
@@ -28,6 +33,7 @@ type sessionRuntimeStream struct {
 	messages        chan runtime.Message
 	done            chan struct{}
 	stopRead        func() bool
+	stopSessions    func() bool
 	listenerID      cdpsession.ListenerID
 	wg              sync.WaitGroup
 	mu              sync.Mutex
@@ -39,17 +45,20 @@ type sessionRuntimeStream struct {
 func newSessionRuntimeStream(
 	ctx context.Context,
 	sessions sessionStreamManager,
+	frameID target.ID,
 	open sessionStreamOpener,
 ) (runtime.Stream, error) {
-	streamCtx, cancel := context.WithCancel(ctx)
+	streamCtx, end := context.WithCancelCause(ctx)
+	cancel := func() { end(context.Canceled) }
 	s := &sessionRuntimeStream{
 		sessions:     sessions,
+		frameID:      frameID,
 		initializing: true,
 		open:         open,
 		ctx:          streamCtx,
 		cancel:       cancel,
 		streams:      make(map[string]*sessionStream),
-		messages:     make(chan runtime.Message),
+		messages:     make(chan runtime.Message, 1),
 		done:         make(chan struct{}),
 	}
 
@@ -63,8 +72,29 @@ func newSessionRuntimeStream(
 	}
 
 	// Register before taking the snapshot so a concurrent attachment cannot be missed.
+	if err := ctx.Err(); err != nil {
+		cancel()
+
+		return nil, err
+	}
+
+	if err := context.Cause(sessions.PageContext()); err != nil {
+		cancel()
+
+		return nil, err
+	}
+
+	pageCtx := sessions.PageContext()
+	s.stopSessions = context.AfterFunc(pageCtx, func() { end(context.Cause(pageCtx)) })
 	s.listenerID = sessions.AddListener(s.onSessionEvent)
 	go s.cleanup()
+	if frameID != "" {
+		if err := sessions.FrameError(frameID); err != nil {
+			_ = s.Close()
+
+			return nil, err
+		}
+	}
 
 	for _, client := range sessions.Snapshot() {
 		if err := s.attach(client); err != nil {
@@ -104,6 +134,10 @@ func (s *sessionRuntimeStream) Read(ctx context.Context) <-chan runtime.Message 
 
 func (s *sessionRuntimeStream) onSessionEvent(event cdpsession.Event) {
 	switch event.Kind {
+	case cdpsession.EventFailed:
+		if s.frameID != "" && event.Client != nil && !event.Client.BelongsToPopup() && event.Client.TargetID == s.frameID {
+			s.reportError(event.Err)
+		}
 	case cdpsession.EventAttached:
 		if err := s.attach(event.Client); err != nil {
 			s.reportError(err)
@@ -114,7 +148,7 @@ func (s *sessionRuntimeStream) onSessionEvent(event cdpsession.Event) {
 }
 
 func (s *sessionRuntimeStream) attach(client *cdpsession.Client) error {
-	if client == nil {
+	if client == nil || client.BelongsToPopup() || !client.SupportsNetwork() {
 		return nil
 	}
 
@@ -122,7 +156,7 @@ func (s *sessionRuntimeStream) attach(client *cdpsession.Client) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if err := s.ctx.Err(); err != nil {
+	if err := context.Cause(s.ctx); err != nil {
 		return err
 	}
 
@@ -138,9 +172,25 @@ func (s *sessionRuntimeStream) attach(client *cdpsession.Client) error {
 	ctx, cancel := context.WithCancel(s.ctx)
 	stream, err := s.open(ctx, client)
 	if err != nil {
+		cause := context.Cause(ctx)
 		cancel()
 
+		if cause != nil {
+			return cause
+		}
+
+		// A snapshot can contain a child whose route closed during subscription.
+		if client.Conn != nil && client.Conn.Context().Err() != nil {
+			return nil
+		}
+
 		return err
+	}
+
+	if stream == nil {
+		cancel()
+
+		return nil
 	}
 
 	entry := newSessionStream(stream, cancel)
@@ -189,7 +239,7 @@ func (s *sessionRuntimeStream) reportError(err error) {
 }
 
 func (s *sessionRuntimeStream) detach(client *cdpsession.Client) {
-	if client == nil {
+	if client == nil || client.BelongsToPopup() || !client.SupportsNetwork() {
 		return
 	}
 
@@ -223,6 +273,7 @@ func (s *sessionRuntimeStream) removeStream(key string, entry *sessionStream) {
 
 func (s *sessionRuntimeStream) cleanup() {
 	<-s.ctx.Done()
+	s.stopSessions()
 	s.sessions.RemoveListener(s.listenerID)
 
 	s.mu.Lock()
@@ -240,6 +291,6 @@ func (s *sessionRuntimeStream) cleanup() {
 	}
 
 	s.wg.Wait()
-	close(s.messages)
+	closePageMessages(s.sessions.PageContext(), s.messages)
 	close(s.done)
 }

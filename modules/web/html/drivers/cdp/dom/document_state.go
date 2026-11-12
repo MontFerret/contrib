@@ -1,6 +1,8 @@
 package dom
 
 import (
+	"context"
+
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/page"
 
@@ -10,10 +12,11 @@ import (
 
 type (
 	documentState struct {
-		client  *cdp.Client
-		input   *input.Manager
-		eval    *eval.Runtime
-		element *HTMLElement
+		client   *cdp.Client
+		renderer context.Context
+		input    *input.Manager
+		eval     *eval.Runtime
+		element  *HTMLElement
 		// frameTree is the only mutable generation field and is guarded by HTMLDocument.mu.
 		frameTree  page.FrameTree
 		generation uint64

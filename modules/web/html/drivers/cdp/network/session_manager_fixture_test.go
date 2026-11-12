@@ -1,6 +1,7 @@
 package network
 
 import (
+	"context"
 	"sort"
 	"sync"
 
@@ -10,6 +11,7 @@ import (
 )
 
 type subscriptionTestSessions struct {
+	pageCtx       context.Context
 	clients       map[target.SessionID]*cdpsession.Client
 	listeners     map[cdpsession.ListenerID]cdpsession.Listener
 	next          cdpsession.ListenerID
@@ -19,6 +21,7 @@ type subscriptionTestSessions struct {
 
 func newSubscriptionTestSessions(clients ...*cdpsession.Client) *subscriptionTestSessions {
 	s := &subscriptionTestSessions{
+		pageCtx:   context.Background(),
 		clients:   make(map[target.SessionID]*cdpsession.Client),
 		listeners: make(map[cdpsession.ListenerID]cdpsession.Listener),
 	}
@@ -90,3 +93,7 @@ func (s *subscriptionTestSessions) listenerCount() int {
 
 	return len(s.listeners)
 }
+
+func (s *subscriptionTestSessions) PageContext() context.Context { return s.pageCtx }
+
+func (s *subscriptionTestSessions) FrameError(target.ID) error { return nil }

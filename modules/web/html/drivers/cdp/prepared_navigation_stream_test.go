@@ -2,8 +2,11 @@ package cdp
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
+
+	"github.com/mafredri/cdp/rpcc"
 
 	netdriver "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/network"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
@@ -41,7 +44,7 @@ func TestPreparedNavigationEventStream(t *testing.T) {
 	}
 
 	prepareCalls := 0
-	stream := newPreparedNavigationEventStream(raw, func(_ context.Context, evt *netdriver.NavigationEvent) error {
+	stream := newPreparedNavigationEventStream(t.Context(), t.Context(), raw, netdriver.WaitEventOptions{}, func(_ context.Context, evt *netdriver.NavigationEvent) error {
 		prepareCalls++
 		if evt.FrameID != "frame-id" {
 			t.Fatalf("expected frame-id, got %s", evt.FrameID)
@@ -95,7 +98,7 @@ func TestPreparedNavigationEventStreamExitsOnCtxCancel(t *testing.T) {
 		}).Copy()),
 	}
 
-	stream := newPreparedNavigationEventStream(raw, func(context.Context, *netdriver.NavigationEvent) error {
+	stream := newPreparedNavigationEventStream(t.Context(), t.Context(), raw, netdriver.WaitEventOptions{}, func(context.Context, *netdriver.NavigationEvent) error {
 		return nil
 	})
 
@@ -130,7 +133,7 @@ func TestPreparedNavigationEventStreamCloseIsTransportOnly(t *testing.T) {
 	raw := &stubStream{}
 	prepareCalls := 0
 
-	stream := newPreparedNavigationEventStream(raw, func(context.Context, *netdriver.NavigationEvent) error {
+	stream := newPreparedNavigationEventStream(t.Context(), t.Context(), raw, netdriver.WaitEventOptions{}, func(context.Context, *netdriver.NavigationEvent) error {
 		prepareCalls++
 		return nil
 	})
@@ -145,5 +148,33 @@ func TestPreparedNavigationEventStreamCloseIsTransportOnly(t *testing.T) {
 
 	if prepareCalls != 0 {
 		t.Fatalf("expected close to avoid prepare, got %d calls", prepareCalls)
+	}
+}
+
+func TestRootLossDuringNavigationPreparation(t *testing.T) {
+	page, closePage := context.WithCancelCause(t.Context())
+	raw := &blockingStubStream{first: runtime.NewValueMessage(&netdriver.NavigationEvent{FrameID: "root"})}
+	entered := make(chan struct{})
+	stream := newPreparedNavigationEventStream(t.Context(), page, raw, netdriver.WaitEventOptions{}, func(ctx context.Context, _ *netdriver.NavigationEvent) error {
+		close(entered)
+		<-ctx.Done()
+
+		return ctx.Err()
+	})
+	defer stream.Close()
+	messages := stream.Read(t.Context())
+	<-entered
+	closePage(rpcc.ErrConnClosing)
+	select {
+	case msg := <-messages:
+		if !errors.Is(msg.Err(), rpcc.ErrConnClosing) {
+			t.Fatalf("navigation ended with %v", msg.Err())
+		}
+	case <-time.After(time.Second):
+		t.Fatal("page closure did not interrupt document readiness")
+	}
+
+	if _, ok := <-messages; ok {
+		t.Fatal("navigation stream remained open")
 	}
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/page"
+	"github.com/mafredri/cdp/protocol/target"
 	"github.com/rs/zerolog"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
@@ -17,13 +18,13 @@ import (
 )
 
 type HTMLDocument struct {
-	logger    zerolog.Logger
-	dom       *Manager
-	state     *documentState
-	identity  page.FrameID
-	fallback  documentFallback
-	mu        sync.RWMutex
-	refreshMu sync.Mutex
+	logger     zerolog.Logger
+	dom        *Manager
+	state      *documentState
+	identity   page.FrameID
+	fallback   documentFallback
+	mu         sync.RWMutex
+	refreshing chan struct{}
 }
 
 func NewHTMLDocument(
@@ -56,8 +57,9 @@ func NewHTMLDocument(
 
 func newHTMLDocument(logger zerolog.Logger, manager *Manager, frame page.FrameTree) *HTMLDocument {
 	return &HTMLDocument{
-		logger: logutil.WithComponent(logger.With(), "html_document").Logger(),
-		dom:    manager,
+		refreshing: make(chan struct{}, 1),
+		logger:     logutil.WithComponent(logger.With(), "html_document").Logger(),
+		dom:        manager,
 		fallback: documentFallback{
 			frameTree: frame,
 		},
@@ -232,8 +234,13 @@ func (doc *HTMLDocument) detachIfCurrent(observedState *documentState) bool {
 }
 
 func (doc *HTMLDocument) refresh(ctx context.Context, observedState *documentState) error {
-	doc.refreshMu.Lock()
-	defer doc.refreshMu.Unlock()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case doc.refreshing <- struct{}{}:
+	}
+
+	defer func() { <-doc.refreshing }()
 
 	state, err := doc.snapshot()
 	if err != nil {
@@ -249,8 +256,13 @@ func (doc *HTMLDocument) refresh(ctx context.Context, observedState *documentSta
 
 // reload returns the installed generation, or nil if another replacement won.
 func (doc *HTMLDocument) reload(ctx context.Context, frame page.FrameTree) (*documentState, error) {
-	doc.refreshMu.Lock()
-	defer doc.refreshMu.Unlock()
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case doc.refreshing <- struct{}{}:
+	}
+
+	defer func() { <-doc.refreshing }()
 
 	observedState, err := doc.snapshot()
 	if err != nil {
@@ -284,4 +296,22 @@ func (doc *HTMLDocument) logError(err error) *zerolog.Event {
 		Str("mimeType", frame.MimeType).
 		Str("frameID", string(frame.ID)).
 		Err(err)
+}
+
+// Rebind outside the frame index lock. Refresh acquires both the document
+// generation lock and the frame index when publishing its replacement.
+func (doc *HTMLDocument) rendererChanged(state *documentState) bool {
+	if doc.dom == nil || !doc.dom.sessions.IsFlat() {
+		return false
+	}
+
+	if view := doc.dom.renderers.Load(); view != nil {
+		if _, unresolved := view.unavailable[doc.identity]; unresolved {
+			return true
+		}
+	}
+
+	client, _ := doc.dom.frameRenderer(doc.identity)
+
+	return (state.renderer != nil && state.renderer.Err() != nil) || doc.dom.sessions.FrameChanging(target.ID(doc.identity)) || client != state.client
 }

@@ -73,12 +73,6 @@ func (m *Manager) startResponseWatcher(ctx context.Context) error {
 		return m.watchResponseClient(ctx, "root", m.client)
 	}
 
-	for _, client := range m.sessions.Snapshot() {
-		if err := m.watchResponseStream(ctx, client); err != nil {
-			return err
-		}
-	}
-
 	m.responseListener = m.sessions.AddListener(func(event cdpsession.Event) {
 		switch event.Kind {
 		case cdpsession.EventAttached:
@@ -90,15 +84,26 @@ func (m *Manager) startResponseWatcher(ctx context.Context) error {
 		}
 	})
 
+	for _, client := range m.sessions.Snapshot() {
+		if err := m.watchResponseStream(ctx, client); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (m *Manager) watchResponseStream(ctx context.Context, client *cdpsession.Client) error {
-	if client == nil || client.CDP == nil {
+	if client == nil || client.BelongsToPopup() || !client.SupportsNetwork() || client.CDP == nil {
 		return nil
 	}
 
-	return m.watchResponseClient(ctx, string(client.ID), client.CDP)
+	err := m.watchResponseClient(ctx, string(client.ID), client.CDP)
+	if err != nil && client.Conn != nil && client.Conn.Context().Err() != nil {
+		return nil
+	}
+
+	return err
 }
 
 func (m *Manager) watchResponseClient(ctx context.Context, key string, client *cdp.Client) error {
@@ -107,21 +112,18 @@ func (m *Manager) watchResponseClient(ctx context.Context, key string, client *c
 	}
 
 	m.responseMu.Lock()
-	if _, exists := m.responseWatchers[key]; exists {
-		m.responseMu.Unlock()
+	defer m.responseMu.Unlock()
+
+	if m.responseWatchers[key] != nil || ctx.Err() != nil {
 		return nil
 	}
-	m.responseMu.Unlock()
 
 	stream, err := client.Network.ResponseReceived(ctx)
 	if err != nil {
 		return err
 	}
 
-	m.responseMu.Lock()
 	m.responseWatchers[key] = stream
-	m.responseMu.Unlock()
-
 	go func() {
 		defer m.closeResponseWatcher(key)
 

@@ -33,6 +33,8 @@ type (
 		policySession *policySession
 		mu            sync.Mutex
 		closed        runtime.Boolean
+		closeOnce     sync.Once
+		closeErr      error
 	}
 )
 
@@ -81,7 +83,7 @@ func loadHTMLPage(ctx context.Context, sessions *cdpsession.Manager, params driv
 				if closeErr := domManager.Close(); closeErr != nil {
 					logger.Error().Err(closeErr).Msg("failed to close DOM manager")
 
-					if owned != nil {
+					if owned != nil || sessions.IsFlat() {
 						err = errors.Join(err, closeErr)
 					}
 				}
@@ -91,7 +93,7 @@ func loadHTMLPage(ctx context.Context, sessions *cdpsession.Manager, params driv
 				if closeErr := netManager.Close(); closeErr != nil {
 					logger.Error().Err(closeErr).Msg("failed to close network manager")
 
-					if owned != nil {
+					if owned != nil || sessions.IsFlat() {
 						err = errors.Join(err, closeErr)
 					}
 				}
@@ -103,12 +105,20 @@ func loadHTMLPage(ctx context.Context, sessions *cdpsession.Manager, params driv
 				return
 			}
 
-			if err := client.Page.Close(context.Background()); err != nil {
-				logger.Error().Err(err).Msg("failed to close page")
+			cleanupCtx, cancel := context.WithTimeout(context.Background(), policyCleanupTimeout)
+			defer cancel()
+			if closeErr := sessions.ClosePageTargets(cleanupCtx, nil); closeErr != nil {
+				logger.Error().Err(closeErr).Msg("failed to close page")
+				if sessions.IsFlat() {
+					err = errors.Join(err, closeErr)
+				}
 			}
 
-			if err := sessions.Close(); err != nil {
-				logger.Error().Err(err).Msg("failed to close session manager")
+			if closeErr := sessions.Close(); closeErr != nil {
+				logger.Error().Err(closeErr).Msg("failed to close session manager")
+				if sessions.IsFlat() {
+					err = errors.Join(err, closeErr)
+				}
 			}
 		}
 	}()
@@ -156,6 +166,8 @@ func loadHTMLPage(ctx context.Context, sessions *cdpsession.Manager, params driv
 	if err != nil {
 		return nil, err
 	}
+
+	domManager.SetFrameSessions(sessions)
 
 	p = NewHTMLPage(
 		logger,
@@ -206,14 +218,14 @@ func loadHTMLPageWithContent(ctx context.Context, sessions *cdpsession.Manager, 
 		return nil, err
 	}
 
-	defer func() {
+	defer func(page *HTMLPage) {
 		if err != nil {
-			if e := p.Close(); e != nil {
+			if e := page.Close(); e != nil {
 				logger.Error().Err(e).Msg("failed to close page")
 				err = errors.Join(err, e)
 			}
 		}
-	}()
+	}(p)
 
 	frameID := p.getCurrentDocument().Frame().Frame.ID
 	err = p.client.Page.SetDocumentContent(ctx, page.NewSetDocumentContentArgs(frameID, string(content)))

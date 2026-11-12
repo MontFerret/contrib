@@ -16,7 +16,7 @@ import (
 )
 
 func (m *Manager) LoadRootDocument(ctx context.Context) (*HTMLDocument, error) {
-	ftRepl, err := m.rootClient.Page.GetFrameTree(ctx)
+	ftRepl, err := m.frameTree(ctx, false, "")
 	if err != nil {
 		return nil, err
 	}
@@ -46,13 +46,14 @@ func (m *Manager) loadDocument(ctx context.Context, frame page.FrameTree) (*HTML
 
 func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, frame page.FrameTree) (*documentState, bool, error) {
 	var client *cdp.Client
+	var renderer context.Context
 	var exec *eval.Runtime
 	var ref cdpruntime.RemoteObject
 	refreshFrame := false
 
 	_, err := recovery.Wait(ctx, func(ctx context.Context) (runtime.Value, error) {
 		if refreshFrame {
-			reply, err := m.rootClient.Page.GetFrameTree(ctx)
+			reply, err := m.frameTree(ctx, false, doc.identity)
 			if err != nil {
 				return runtime.None, err
 			}
@@ -70,7 +71,8 @@ func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, fram
 			return runtime.None, ctx.Err()
 		}
 
-		client = m.clientForFrame(frame.Frame.ID)
+		client, renderer = m.frameRenderer(frame.Frame.ID)
+
 		created, err := eval.Create(ctx, m.logger, client, frame.Frame.ID)
 		if err != nil {
 			return runtime.None, err
@@ -98,7 +100,17 @@ func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, fram
 		return nil, false, err
 	}
 
-	inputs := input.New(m.logger, client, exec, m.keyboard, m.mouse)
+	mouse := m.mouse
+	if renderer != nil {
+		value, loaded := m.rendererMice.LoadOrStore(client, input.NewMouse(client))
+
+		mouse = value.(*input.Mouse)
+		if !loaded {
+			context.AfterFunc(renderer, func() { m.rendererMice.Delete(client) })
+		}
+	}
+
+	inputs := input.New(m.logger, client, exec, m.keyboard, mouse)
 	exec.SetLoader(NewNodeLoader(m))
 
 	generation := uint64(1)
@@ -107,6 +119,7 @@ func (m *Manager) loadDocumentState(ctx context.Context, doc *HTMLDocument, fram
 	}
 
 	state := &documentState{
+		renderer:   renderer,
 		client:     client,
 		input:      inputs,
 		eval:       exec,
@@ -186,11 +199,14 @@ func (m *Manager) loadFrame(ctx context.Context, frame Frame) (Frame, error) {
 	return loaded, nil
 }
 
-func (m *Manager) clientForFrame(frameID page.FrameID) *cdp.Client {
-	client, ok := m.owners.Get(frameID)
-	if ok && client != nil {
-		return client
+func (m *Manager) frameRenderer(id page.FrameID) (*cdp.Client, context.Context) {
+	if view := m.renderers.Load(); view != nil {
+		if owner := view.owners[id]; owner != nil {
+			return owner.CDP, owner.Conn.Context()
+		}
+	} else if c, ok := m.owners.Get(id); ok && c != nil {
+		return c, nil
 	}
 
-	return m.rootClient
+	return m.rootClient, nil
 }

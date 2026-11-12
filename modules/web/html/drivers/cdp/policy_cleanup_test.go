@@ -227,27 +227,27 @@ func TestPolicySessionCleanupSharesDeadline(t *testing.T) {
 }
 
 func TestPolicySessionPartialInitialization(t *testing.T) {
-	for _, stage := range []string{"attach", "auto attach", "canceled attach", "canceled attach with cleanup failure"} {
+	for _, stage := range []string{"discovery", "auto attach", "canceled discovery", "canceled discovery with cleanup failure"} {
 		t.Run(stage, func(t *testing.T) {
 			canceled := strings.HasPrefix(stage, "canceled")
 			cleanupFailure := strings.HasSuffix(stage, "cleanup failure")
 			var closed atomic.Int32
-			attaching := make(chan struct{}, 1)
+			discovering := make(chan struct{}, 1)
 			endpoint := newPolicyTestEndpoint(t, func(_ int32, method string, _ json.RawMessage) (any, error) {
 				switch method {
 				case "Target.createTarget":
 					return map[string]any{"targetId": "partial-target"}, nil
-				case "Target.attachToTarget":
-					attaching <- struct{}{}
+				case "Target.setDiscoverTargets":
+					discovering <- struct{}{}
 					if stage == "auto attach" {
-						return map[string]any{"sessionId": "root"}, nil
+						return struct{}{}, nil
 					}
 
 					if canceled {
 						return nil, nil
 					}
 
-					return nil, &rpcc.ResponseError{Code: -32000, Message: "attachment failed"}
+					return nil, &rpcc.ResponseError{Code: -32000, Message: "discovery failed"}
 				case "Target.autoAttachRelated":
 					return nil, &rpcc.ResponseError{Code: -32000, Message: "auto attachment failed"}
 				case "Target.closeTarget":
@@ -269,7 +269,7 @@ func TestPolicySessionPartialInitialization(t *testing.T) {
 			defer cancel()
 			finished := make(chan error, 1)
 			go func() { _, err := driver.Parse(ctx, drivers.ParseParams{}); finished <- err }()
-			<-attaching
+			<-discovering
 			if canceled {
 				cancel()
 			}

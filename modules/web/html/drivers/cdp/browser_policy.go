@@ -84,9 +84,7 @@ func (p *browserPolicy) begin(ctx context.Context, driver *Driver) (*policySessi
 				return nil, errors.New("CDP browser policy connection is unavailable; create a new driver")
 			}
 
-			operationCtx, cancel := context.WithCancel(ctx)
-			lifetime, invalidate := context.WithCancel(context.Background())
-			session := &policySession{policy: p, ctx: operationCtx, cancel: cancel, lifetime: lifetime, invalidate: invalidate}
+			session := newPageSession(ctx, p, driver)
 			p.sessions[session] = struct{}{}
 			p.mu.Unlock()
 

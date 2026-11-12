@@ -6,7 +6,6 @@ import (
 
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/devtool"
-	"github.com/mafredri/cdp/protocol/target"
 	"github.com/mafredri/cdp/rpcc"
 	"github.com/pkg/errors"
 
@@ -112,7 +111,9 @@ func (drv *Driver) Close() error {
 
 func (drv *Driver) beginPolicySession(ctx context.Context) (*policySession, context.Context, error) {
 	if drv.policy == nil {
-		return nil, ctx, nil
+		owned := newPageSession(ctx, nil, drv)
+
+		return owned, owned.ctx, nil
 	}
 
 	owned, err := drv.policy.begin(ctx, drv)
@@ -125,66 +126,41 @@ func (drv *Driver) beginPolicySession(ctx context.Context) (*policySession, cont
 
 func (drv *Driver) createSessionManager(ctx context.Context, keepCookies bool, owned *policySession) (manager *cdpsession.Manager, err error) {
 	defer func() {
-		if err != nil && owned != nil {
+		if err != nil {
 			err = stderrors.Join(err, owned.Close())
 		}
 	}()
 
-	browserConn, browserClient, err := drv.openBrowser(ctx)
+	ver, err := drv.dev.Version(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "get browser endpoint")
+	}
+
+	conn, err := cdpsession.DialFlat(ctx, ver.WebSocketDebuggerURL, drv.dialOptions()...)
 	if err != nil {
 		return nil, errors.Wrap(err, "initialize driver")
 	}
 
-	if owned != nil {
-		if err := owned.setConnection(browserConn, browserClient); err != nil {
-			return nil, err
-		}
+	browserClient := cdp.NewClient(conn.Conn)
+	if err := owned.setConnection(conn.Conn, browserClient); err != nil {
+		return nil, err
 	}
 
-	createTarget, err := drv.createTarget(ctx, browserClient, keepCookies, owned)
+	target, err := owned.createTarget(ctx, browserClient, !drv.options.KeepCookies && !keepCookies)
 	if err != nil {
-		if owned == nil {
-			_ = browserConn.Close()
-		}
-
 		return nil, errors.Wrap(err, "create a browser target")
 	}
 
-	sessions, err := cdpsession.New(ctx, browserConn, browserClient, createTarget.TargetID)
+	sessions, err := cdpsession.NewFlat(ctx, conn, target.TargetID)
 	if err != nil {
-		if owned == nil {
-			_ = browserConn.Close()
-		}
-
 		return nil, errors.Wrap(err, "establish a new connection")
 	}
 
-	if owned != nil {
-		if err := owned.setSessions(sessions); err != nil {
-			return nil, err
-		}
+	if err := owned.setSessions(sessions); err != nil {
+		return nil, err
 	}
 
 	return sessions, nil
-}
-
-func (drv *Driver) createTarget(ctx context.Context, client *cdp.Client, keepCookies bool, owned *policySession) (*target.CreateTargetReply, error) {
-	isolated := !drv.options.KeepCookies && !keepCookies
-	if owned != nil {
-		return owned.createTarget(ctx, client, isolated)
-	}
-
-	args := target.NewCreateTargetArgs(BlankPageURL)
-	if isolated {
-		reply, err := client.Target.CreateBrowserContext(ctx, target.NewCreateBrowserContextArgs().SetDisposeOnDetach(true))
-		if err != nil {
-			return nil, err
-		}
-
-		args.SetBrowserContextID(reply.BrowserContextID)
-	}
-
-	return client.Target.CreateTarget(ctx, args)
 }
 
 func (drv *Driver) setDefaultParams(params drivers.Params) drivers.Params {
@@ -201,6 +177,15 @@ func (drv *Driver) openBrowser(ctx context.Context) (*rpcc.Conn, *cdp.Client, er
 		return nil, nil, errors.Wrap(err, "failed to initialize driver")
 	}
 
+	conn, err := rpcc.DialContext(ctx, ver.WebSocketDebuggerURL, drv.dialOptions()...)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to initialize driver")
+	}
+
+	return conn, cdp.NewClient(conn), nil
+}
+
+func (drv *Driver) dialOptions() []rpcc.DialOption {
 	dialOpts := make([]rpcc.DialOption, 0, 2)
 	if drv.options.Connection != nil {
 		if drv.options.Connection.BufferSize > 0 {
@@ -212,10 +197,5 @@ func (drv *Driver) openBrowser(ctx context.Context) (*rpcc.Conn, *cdp.Client, er
 		}
 	}
 
-	conn, err := rpcc.DialContext(ctx, ver.WebSocketDebuggerURL, dialOpts...)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to initialize driver")
-	}
-
-	return conn, cdp.NewClient(conn), nil
+	return dialOpts
 }

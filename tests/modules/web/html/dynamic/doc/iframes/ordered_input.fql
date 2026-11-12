@@ -1,0 +1,20 @@
+LET page = DOCUMENT(@lab.static.static + "/simple.html", {
+    driver: "cdp",
+    initScript: {
+        timing: "afterNavigation",
+        source: `for (const name of ["first", "second"]) {
+            const frame = document.createElement("iframe")
+            frame.name = name
+            if (name === "first") frame.setAttribute("sandbox", "allow-scripts")
+            frame.srcdoc = "<button onclick='document.title=this.textContent'>" + name + "</button>"
+            document.body.append(frame)
+        }`
+    }
+})
+
+LET frames = page.frames
+T::LEN(frames, 3)
+T::EQ(frames[1].name, "first")
+T::EQ(frames[2].name, "second")
+CLICK(frames[1], "button")
+RETURN T::EQ(frames[1].title, "first")

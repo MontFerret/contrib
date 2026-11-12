@@ -25,6 +25,7 @@ var (
 )
 
 type Manager struct {
+	targets          *targetTracker
 	detached         target.DetachedFromTargetClient
 	attached         target.AttachedToTargetClient
 	message          target.ReceivedMessageFromTargetClient
@@ -122,6 +123,18 @@ func New(
 	return manager, nil
 }
 
+// IsFlat reports whether the manager routes top-level CDP session identifiers.
+func (m *Manager) IsFlat() bool { return m != nil && m.targets != nil }
+
+// Context ends when the manager closes or its flat browser connection is lost.
+func (m *Manager) Context() context.Context {
+	if m == nil || m.ctx == nil {
+		return context.Background()
+	}
+
+	return m.ctx
+}
+
 func (m *Manager) Root() *Client {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -176,7 +189,21 @@ func (m *Manager) RemoveListener(id ListenerID) {
 
 func (m *Manager) Close() error {
 	m.closeOnce.Do(func() {
+		if m.targets != nil {
+			m.targets.endPage(rpcc.ErrConnClosing)
+		}
+
 		m.cancel()
+		if m.targets != nil {
+			m.targets.events.stop(context.Canceled)
+			if m.browserConn.Context().Err() == nil {
+				m.closeErr = m.browserConn.Close()
+			}
+
+			m.wg.Wait()
+
+			return
+		}
 
 		clients := m.Snapshot()
 		errs := make([]error, 0, len(clients)+4)
@@ -386,4 +413,88 @@ func (m *Manager) emit(event Event) {
 	for _, listener := range listeners {
 		listener(event)
 	}
+}
+
+// FrameSessions returns the active out-of-process frames in the root document
+// hierarchy and any initialization error affecting frame enumeration.
+func (m *Manager) FrameSessions() ([]*Client, error) {
+	if m == nil || m.targets == nil {
+		return nil, nil
+	}
+
+	frames, problems := m.FrameTopology()
+	var errs []error
+	for _, err := range problems {
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return frames, errors.Join(errs...)
+}
+
+// FrameError returns the initialization failure of the specified root-page frame.
+func (m *Manager) FrameError(id target.ID) error {
+	if m == nil || m.targets == nil {
+		return nil
+	}
+
+	m.targets.mu.RLock()
+	defer m.targets.mu.RUnlock()
+
+	return m.targets.framesFailed[id]
+}
+
+// PageContext ends when the root target closes. The manager continues to own surviving popups.
+func (m *Manager) PageContext() context.Context {
+	if m.IsFlat() {
+		return m.targets.pageCtx
+	}
+
+	return m.Context()
+}
+
+// FrameTopology snapshots published renderers and unresolved root-hierarchy frame transitions.
+// A nil problem denotes an in-progress renderer change.
+func (m *Manager) FrameTopology() ([]*Client, map[target.ID]error) {
+	if !m.IsFlat() {
+		return nil, nil
+	}
+
+	t := m.targets
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var clients []*Client
+	for _, c := range m.clientsBySession {
+		if c.Info.Type == "iframe" && !c.popup {
+			clients = append(clients, c)
+		}
+	}
+
+	problems := make(map[target.ID]error, len(t.transitions)+len(t.framesFailed))
+	for id := range t.transitions {
+		problems[id] = nil
+	}
+
+	for id, err := range t.framesFailed {
+		problems[id] = err
+	}
+
+	return clients, problems
+}
+
+// FrameChanging reports whether an existing document must resolve a replacement renderer.
+func (m *Manager) FrameChanging(id target.ID) bool {
+	if !m.IsFlat() {
+		return false
+	}
+
+	t := m.targets
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	_, pending := t.transitions[id]
+
+	return pending || t.framesFailed[id] != nil
 }

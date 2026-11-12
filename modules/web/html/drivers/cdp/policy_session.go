@@ -15,11 +15,12 @@ import (
 	cdpsession "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/session"
 )
 
-// policySession includes pending page initialization so policy loss can cancel
-// it before a page is published to the caller.
+// policySession owns a driver-created page and its pending initialization.
+// Restricted drivers also register this owner for browser-wide invalidation.
 type policySession struct {
 	mu         sync.Mutex
 	policy     *browserPolicy
+	driver     *Driver
 	ctx        context.Context
 	cancel     context.CancelFunc
 	lifetime   context.Context
@@ -33,6 +34,13 @@ type policySession struct {
 	closed     bool
 	closeOnce  sync.Once
 	closeErr   error
+}
+
+func newPageSession(ctx context.Context, policy *browserPolicy, driver *Driver) *policySession {
+	operation, cancel := context.WithCancel(ctx)
+	lifetime, invalidate := context.WithCancel(context.Background())
+
+	return &policySession{policy: policy, driver: driver, ctx: operation, cancel: cancel, lifetime: lifetime, invalidate: invalidate}
 }
 
 func (s *policySession) setConnection(conn *rpcc.Conn, client *cdp.Client) error {
@@ -155,7 +163,7 @@ func (s *policySession) Close() error {
 		}
 
 		if sessions != nil {
-			// Cancel tunneled clients before taking page locks held by commands.
+			// Release pending commands before acquiring page locks.
 			s.closeErr = errors.Join(s.closeErr, sessions.Close())
 		}
 
@@ -163,7 +171,9 @@ func (s *policySession) Close() error {
 			s.closeErr = errors.Join(s.closeErr, page.closeResources())
 		}
 
-		s.policy.release(s, s.closeErr)
+		if s.policy != nil {
+			s.policy.release(s, s.closeErr)
+		}
 	})
 
 	return s.closeErr
@@ -189,7 +199,19 @@ func (s *policySession) closeTarget() error {
 		return nil
 	}
 
-	fallback := s.policy.cleanupClient()
+	var fallback *cdp.Client
+	if s.policy != nil {
+		fallback = s.policy.cleanupClient()
+	} else if s.driver != nil && ctx.Err() == nil {
+		conn, client, dialErr := s.driver.openBrowser(ctx)
+		if dialErr == nil {
+			defer conn.Close()
+			fallback = client
+		} else {
+			err = errors.Join(err, dialErr)
+		}
+	}
+
 	if fallback != nil {
 		fallbackErr := s.disposeTarget(ctx, fallback)
 		if fallbackErr == nil {
@@ -203,7 +225,7 @@ func (s *policySession) closeTarget() error {
 
 	// A command can fail because a concurrent close already removed the target.
 	// Confirm absence with protocol state, rather than matching error strings.
-	if fallback != nil {
+	if fallback != nil && (s.contextID != "" || s.sessions == nil) {
 		gone, confirmationErr := s.targetGone(ctx, fallback)
 		if confirmationErr == nil && gone {
 			return nil
@@ -226,6 +248,10 @@ func (s *policySession) disposeTarget(ctx context.Context, client *cdp.Client) e
 
 	if s.contextID != "" {
 		return client.Target.DisposeBrowserContext(ctx, target.NewDisposeBrowserContextArgs(s.contextID))
+	}
+
+	if s.sessions != nil {
+		return s.sessions.ClosePageTargets(ctx, client)
 	}
 
 	_, err := client.Target.CloseTarget(ctx, target.NewCloseTargetArgs(s.targetID))

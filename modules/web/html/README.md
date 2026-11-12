@@ -93,6 +93,18 @@ chromium --headless=new --remote-debugging-port=9222 --remote-debugging-address=
 
 Use the exact browser binary name available in your environment, such as `chromium`, `google-chrome`, or `Google Chrome`.
 
+### CDP target sessions
+
+`Open` and `Parse` use flat CDP sessions. An `HTMLPage` represents one document hierarchy, including frames in other renderer processes. Worker sessions enable Runtime and use Network events where Chromium supports them. A failed child attachment raises a session lifecycle error, and operations that require a failed frame return its initialization error.
+
+The root document is frame zero. Child frames follow depth-first in their parent’s `window.frames` order. Pointer input uses the renderer that measured the element. A retained document waits for its replacement renderer during a process swap and becomes detached when its frame is removed.
+
+Child setup has a 30-second deadline and buffers up to 1,024 early events or 4 MiB of event data. If setup fails, reads and navigation waits for that frame receive the cause. Sibling frames and unfiltered page navigation remain usable. Losing the root target ends its navigation, request, response, and network subscriptions with a target-closed error.
+
+Popups with a known opener have independent page sessions. Their navigation, frames and network events stay separate from the opener’s. Closing a popup releases its session. If Chromium closes the opener first, its popups can keep running. Explicitly closing the Ferret page disposes its owned browser context or, in a shared context, closes its root and owned popup descendants. Browser-wide Fetch interception uses a separate connection.
+
+Go hosts that create their own targets can use `session.DialFlat(ctx, websocketURL, opts...)`, issue browser commands through `cdp.NewClient(conn.Conn)`, then call `session.NewFlat(ctx, conn, targetID)`. Use a dedicated flat connection per manager. A successful manager owns that connection. On construction failure the caller retains it for target cleanup and closure. The existing `session.New(ctx, conn, client, targetID)` constructor continues to use tunneled sessions on an already-open browser connection.
+
 ### Host-Controlled Origin Allowlists
 
 Configure each driver that can fetch documents. The [registration example](#register-the-module) passes one bundle of shared options to both drivers. Each constructor applies bundled options in order where `WithOptions` appears. A later `WithAllowedOrigins` replaces an earlier list, whether either option is bundled or supplied individually.
@@ -130,8 +142,6 @@ The browser-backed tests use local HTTP/HTTPS fixtures and have been exercised o
 This feature is CDP request interception. It does not install administrator-managed Chrome `URLBlocklist`/`URLAllowlist` policies, and it does not provide OS/container network isolation, IP-address restrictions, or DNS-rebinding protection. A permitted hostname may resolve to any address Chrome can reach. The memory driver enforces its own configured list through its HTTP client. Both drivers match URL origins, so hosts that also require IP restrictions must enforce those separately.
 
 Chrome removes interception when its policy connection disconnects. Terminal driver failure prevents continued driver use and triggers cleanup, but cannot atomically stop Chrome networking during that loss. Closing the last restricted driver also removes its browser-wide restriction; stop unmanaged endpoint workloads separately. For hostile workloads, enforce destination restrictions at the network level in addition to this option.
-
-The legacy child-target transport is a separate concern tracked in [issue #56](https://github.com/MontFerret/contrib/issues/56). This feature does not migrate it to flat sessions.
 
 Run the browser-backed Go tests against a dedicated browser on the same machine:
 

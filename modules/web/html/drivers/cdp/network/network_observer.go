@@ -48,16 +48,10 @@ func (o *networkObserver) Start(ctx context.Context) error {
 	}
 
 	o.ctx, o.cancel = context.WithCancel(ctx)
+	context.AfterFunc(o.ctx, o.closeSubscribers)
 
 	if o.sessions == nil {
 		return o.watchClient(rootSessionKey, o.client)
-	}
-
-	for _, client := range o.sessions.Snapshot() {
-		if err := o.watchSession(client); err != nil {
-			_ = o.Close()
-			return err
-		}
 	}
 
 	o.listenerID = o.sessions.AddListener(func(event cdpsession.Event) {
@@ -67,10 +61,20 @@ func (o *networkObserver) Start(ctx context.Context) error {
 				o.emit(networkEvent{err: err})
 				o.logger.Warn().Err(err).Msg("failed to watch network stream for attached session")
 			}
+		case cdpsession.EventFailed:
+			o.logger.Warn().Err(event.Err).Str("operation", event.Operation).Msg("CDP target session failed")
 		case cdpsession.EventDetached:
 			o.detachSession(event.Client)
 		}
 	})
+
+	for _, client := range o.sessions.Snapshot() {
+		if err := o.watchSession(client); err != nil {
+			_ = o.Close()
+
+			return err
+		}
+	}
 
 	return nil
 }
@@ -101,6 +105,16 @@ func (o *networkObserver) Subscribe(
 	eventName string,
 	options runtime.Map,
 ) (runtime.Stream, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	if o.sessions != nil {
+		if err := context.Cause(o.sessions.PageContext()); err != nil {
+			return nil, err
+		}
+	}
+
 	if !drivers.IsNetworkEvent(eventName) {
 		return nil, invalidNetworkEventNameError(eventName)
 	}
@@ -131,7 +145,12 @@ func (o *networkObserver) subscribe() *networkEventSubscriber {
 	}
 
 	o.mu.Lock()
-	o.subscribers[id] = subscriber
+	if o.ctx != nil && o.ctx.Err() != nil {
+		close(subscriber.done)
+	} else {
+		o.subscribers[id] = subscriber
+	}
+
 	o.mu.Unlock()
 
 	return subscriber
@@ -146,6 +165,16 @@ func (o *networkObserver) unsubscribe(id int64) {
 	o.mu.Unlock()
 
 	if exists {
+		close(subscriber.done)
+	}
+}
+
+func (o *networkObserver) closeSubscribers() {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	for id, subscriber := range o.subscribers {
+		delete(o.subscribers, id)
 		close(subscriber.done)
 	}
 }
@@ -193,11 +222,16 @@ func (o *networkObserver) snapshotActive(types map[string]struct{}) map[string]n
 }
 
 func (o *networkObserver) watchSession(client *cdpsession.Client) error {
-	if client == nil || client.CDP == nil {
+	if client == nil || client.BelongsToPopup() || !client.SupportsNetwork() || client.CDP == nil {
 		return nil
 	}
 
-	return o.watchClient(string(client.ID), client.CDP)
+	err := o.watchClient(string(client.ID), client.CDP)
+	if err != nil && client.Conn != nil && client.Conn.Context().Err() != nil {
+		return nil
+	}
+
+	return err
 }
 
 func (o *networkObserver) watchClient(key string, client *cdp.Client) error {
@@ -206,11 +240,11 @@ func (o *networkObserver) watchClient(key string, client *cdp.Client) error {
 	}
 
 	o.mu.Lock()
-	if _, exists := o.watchers[key]; exists {
-		o.mu.Unlock()
+	defer o.mu.Unlock()
+
+	if o.ctx.Err() != nil || o.watchers[key] != nil {
 		return nil
 	}
-	o.mu.Unlock()
 
 	watcher, err := newNetworkSessionWatcher(o.ctx, o.logger, key, client)
 	if err != nil {
@@ -221,10 +255,7 @@ func (o *networkObserver) watchClient(key string, client *cdp.Client) error {
 		return nil
 	}
 
-	o.mu.Lock()
 	o.watchers[key] = watcher
-	o.mu.Unlock()
-
 	o.wg.Add(1)
 	go func() {
 		defer o.wg.Done()
@@ -236,7 +267,7 @@ func (o *networkObserver) watchClient(key string, client *cdp.Client) error {
 }
 
 func (o *networkObserver) detachSession(client *cdpsession.Client) {
-	if client == nil {
+	if client == nil || client.BelongsToPopup() || !client.SupportsNetwork() {
 		return
 	}
 

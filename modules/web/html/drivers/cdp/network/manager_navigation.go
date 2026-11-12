@@ -2,8 +2,10 @@ package network
 
 import (
 	"context"
+	"io"
 
 	"github.com/mafredri/cdp/protocol/page"
+	"github.com/mafredri/cdp/protocol/target"
 	"github.com/pkg/errors"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
@@ -56,7 +58,7 @@ func (m *Manager) Navigate(ctx context.Context, url runtime.String) error {
 
 	m.logger.Trace().Msg("succeeded starting navigation")
 
-	return m.waitForNavigation(ctx, stream, WaitEventOptions{})
+	return m.waitForNavigation(ctx, stream, WaitEventOptions{FrameID: repl.FrameID})
 }
 
 func (m *Manager) NavigateForward(ctx context.Context, skip runtime.Int) (runtime.Boolean, error) {
@@ -236,7 +238,7 @@ func (m *Manager) NavigateBack(ctx context.Context, skip runtime.Int) (runtime.B
 }
 
 func (m *Manager) WaitForNavigation(ctx context.Context, opts WaitEventOptions) error {
-	stream, err := m.OnNavigation(ctx)
+	stream, err := m.OnFrameNavigation(ctx, opts.FrameID)
 	if err != nil {
 		return err
 	}
@@ -251,6 +253,10 @@ func (m *Manager) waitForNavigation(ctx context.Context, stream runtime.Stream, 
 	defer cancel()
 
 	for evt := range stream.Read(ctx) {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		if err := evt.Err(); err != nil {
 			return err
 		}
@@ -263,11 +269,15 @@ func (m *Manager) waitForNavigation(ctx context.Context, stream runtime.Stream, 
 		return nil
 	}
 
-	return ctx.Err()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	return m.NavigationClosedError(ctx)
 }
 
 func (m *Manager) OnNavigation(ctx context.Context) (runtime.Stream, error) {
-	return newNavigationEventStream(ctx, m.logger, m.sessions)
+	return m.OnFrameNavigation(ctx, "")
 }
 
 func (m *Manager) OnRequest(ctx context.Context) (runtime.Stream, error) {
@@ -284,4 +294,24 @@ func (m *Manager) OnEvent(ctx context.Context, eventName runtime.String, options
 	}
 
 	return m.observer.Subscribe(ctx, eventName.String(), options)
+}
+
+// OnFrameNavigation propagates setup failures for the specified frame to its subscription.
+func (m *Manager) OnFrameNavigation(ctx context.Context, frame page.FrameID) (runtime.Stream, error) {
+	return newNavigationEventStream(ctx, m.logger, m.sessions, target.ID(frame))
+}
+
+// NavigationClosedError preserves caller cancellation and the cause of page shutdown.
+func (m *Manager) NavigationClosedError(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if m.sessions != nil {
+		if err := context.Cause(m.sessions.PageContext()); err != nil {
+			return err
+		}
+	}
+
+	return io.ErrUnexpectedEOF
 }

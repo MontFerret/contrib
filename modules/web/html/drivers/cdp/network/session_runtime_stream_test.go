@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mafredri/cdp/rpcc"
+
 	cdpsession "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/session"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
@@ -15,7 +17,7 @@ func TestSessionSubscriptionBuffersBeforeRead(t *testing.T) {
 	sessions := newSubscriptionTestSessions(&cdpsession.Client{ID: "root"})
 	raw := newSubscriptionTestStream()
 	opened := false
-	stream, err := newSessionRuntimeStream(t.Context(), sessions, func(context.Context, *cdpsession.Client) (runtime.Stream, error) {
+	stream, err := newSessionRuntimeStream(t.Context(), sessions, "", func(context.Context, *cdpsession.Client) (runtime.Stream, error) {
 		opened = true
 
 		return raw, nil
@@ -48,7 +50,7 @@ func TestSessionSubscriptionCloseBeforeRead(t *testing.T) {
 			defer cancel()
 			sessions := newSubscriptionTestSessions(&cdpsession.Client{ID: "root"})
 			raw := newSubscriptionTestStream()
-			stream, err := newSessionRuntimeStream(ctx, sessions, func(context.Context, *cdpsession.Client) (runtime.Stream, error) {
+			stream, err := newSessionRuntimeStream(ctx, sessions, "", func(context.Context, *cdpsession.Client) (runtime.Stream, error) {
 				return raw, nil
 			})
 			if err != nil {
@@ -84,7 +86,8 @@ func TestSessionSubscriptionSetupFailure(t *testing.T) {
 	want := errors.New("cannot open attached stream")
 	sessions := newSubscriptionTestSessions(&cdpsession.Client{ID: "a-root"}, &cdpsession.Client{ID: "b-bad"})
 	raw := newSubscriptionTestStream()
-	stream, err := newSessionRuntimeStream(t.Context(), sessions, func(_ context.Context, client *cdpsession.Client) (runtime.Stream, error) {
+
+	stream, err := newSessionRuntimeStream(t.Context(), sessions, "", func(_ context.Context, client *cdpsession.Client) (runtime.Stream, error) {
 		if client.ID == "b-bad" {
 			return nil, want
 		}
@@ -103,7 +106,7 @@ func TestSessionSubscriptionSetupFailure(t *testing.T) {
 func TestSessionSubscriptionAttachmentAndDetachment(t *testing.T) {
 	sessions := newSubscriptionTestSessions()
 	raw := newSubscriptionTestStream()
-	stream, err := newSessionRuntimeStream(t.Context(), sessions, func(context.Context, *cdpsession.Client) (runtime.Stream, error) {
+	stream, err := newSessionRuntimeStream(t.Context(), sessions, "", func(context.Context, *cdpsession.Client) (runtime.Stream, error) {
 		return raw, nil
 	})
 	if err != nil {
@@ -134,7 +137,7 @@ func TestSessionSubscriptionAttachmentAndDetachment(t *testing.T) {
 func TestSessionSubscriptionAttachmentFailureBeforeRead(t *testing.T) {
 	sessions := newSubscriptionTestSessions()
 	want := errors.New("attachment stream failed")
-	stream, err := newSessionRuntimeStream(t.Context(), sessions, func(context.Context, *cdpsession.Client) (runtime.Stream, error) {
+	stream, err := newSessionRuntimeStream(t.Context(), sessions, "", func(context.Context, *cdpsession.Client) (runtime.Stream, error) {
 		return nil, want
 	})
 	if err != nil {
@@ -167,7 +170,7 @@ func TestSessionSubscriptionAttachmentFailureBeforeRead(t *testing.T) {
 func TestSessionSubscriptionCloseDuringAttachment(t *testing.T) {
 	sessions := newSubscriptionTestSessions()
 	started := make(chan struct{})
-	stream, err := newSessionRuntimeStream(t.Context(), sessions, func(ctx context.Context, _ *cdpsession.Client) (runtime.Stream, error) {
+	stream, err := newSessionRuntimeStream(t.Context(), sessions, "", func(ctx context.Context, _ *cdpsession.Client) (runtime.Stream, error) {
 		close(started)
 		<-ctx.Done()
 
@@ -210,7 +213,7 @@ func TestSessionSubscriptionSkipsDetachedSnapshotEntry(t *testing.T) {
 	sessions := newSubscriptionTestSessions(client)
 	sessions.afterSnapshot = func() { sessions.emit(cdpsession.EventDetached, client) }
 	opened := false
-	stream, err := newSessionRuntimeStream(t.Context(), sessions, func(context.Context, *cdpsession.Client) (runtime.Stream, error) {
+	stream, err := newSessionRuntimeStream(t.Context(), sessions, "", func(context.Context, *cdpsession.Client) (runtime.Stream, error) {
 		opened = true
 
 		return newSubscriptionTestStream(), nil
@@ -223,5 +226,20 @@ func TestSessionSubscriptionSkipsDetachedSnapshotEntry(t *testing.T) {
 
 	if opened {
 		t.Fatal("reopened a detached session from the initial snapshot")
+	}
+}
+
+func TestRootLossDuringSubscriptionSetup(t *testing.T) {
+	sessions := newSubscriptionTestSessions(&cdpsession.Client{ID: "root"})
+	var closePage context.CancelCauseFunc
+	sessions.pageCtx, closePage = context.WithCancelCause(t.Context())
+	stream, err := newSessionRuntimeStream(t.Context(), sessions, "", func(ctx context.Context, _ *cdpsession.Client) (runtime.Stream, error) {
+		closePage(rpcc.ErrConnClosing)
+		<-ctx.Done()
+
+		return nil, ctx.Err()
+	})
+	if stream != nil || !errors.Is(err, rpcc.ErrConnClosing) {
+		t.Fatalf("subscription during root loss: %v, %v", stream, err)
 	}
 }

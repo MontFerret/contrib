@@ -46,17 +46,9 @@ func (m *Manager) MouseEvent(ctx context.Context, objectID cdpruntime.RemoteObje
 
 		return m.mouse.ClickWithButton(ctx, point.X, point.Y, delay, button, count)
 	case drivers.DispatchMouseDownEvent:
-		if err := m.mouse.Move(ctx, point.X, point.Y); err != nil {
-			return err
-		}
-
-		return m.mouse.DownWithCount(ctx, button, count)
+		return m.mouse.buttonAt(ctx, "mousePressed", point, button, count)
 	case drivers.DispatchMouseUpEvent:
-		if err := m.mouse.Move(ctx, point.X, point.Y); err != nil {
-			return err
-		}
-
-		return m.mouse.UpWithCount(ctx, button, count)
+		return m.mouse.buttonAt(ctx, "mouseReleased", point, button, count)
 	case drivers.DispatchMouseMoveEvent, drivers.DispatchMouseOverEvent:
 		return m.mouse.Move(ctx, point.X, point.Y)
 	case drivers.DispatchMouseOutEvent:

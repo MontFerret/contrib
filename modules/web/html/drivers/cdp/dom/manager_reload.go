@@ -5,19 +5,21 @@ import (
 	"errors"
 
 	"github.com/mafredri/cdp/protocol/page"
+	"github.com/mafredri/cdp/protocol/target"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 )
 
 func (m *Manager) ReloadRoot(ctx context.Context) error {
-	ftRepl, err := m.rootClient.Page.GetFrameTree(ctx)
+	ftRepl, err := m.frameTree(ctx, false, "")
 	if err != nil {
 		return err
 	}
 
-	ids := collectFrameIDs(ftRepl.FrameTree)
-	m.owners.Set(ftRepl.FrameTree.Frame.ID, m.rootClient)
-	m.owners.Retain(ids)
+	if !m.sessions.IsFlat() {
+		m.owners.Set(ftRepl.FrameTree.Frame.ID, m.rootClient)
+		m.owners.Retain(collectFrameIDs(ftRepl.FrameTree))
+	}
 
 	doc := m.GetMainFrame()
 	if doc != nil {
@@ -60,7 +62,7 @@ func (m *Manager) ReloadRoot(ctx context.Context) error {
 }
 
 func (m *Manager) RefreshFrames(ctx context.Context) error {
-	ftRepl, err := m.rootClient.Page.GetFrameTree(ctx)
+	ftRepl, err := m.frameTree(ctx, true, "")
 	if err != nil {
 		return err
 	}
@@ -70,9 +72,11 @@ func (m *Manager) RefreshFrames(ctx context.Context) error {
 		return m.ReloadRoot(ctx)
 	}
 
-	ids := collectFrameIDs(ftRepl.FrameTree)
-	m.owners.Set(ftRepl.FrameTree.Frame.ID, m.rootClient)
-	m.owners.Retain(ids)
+	if !m.sessions.IsFlat() {
+		m.owners.Set(ftRepl.FrameTree.Frame.ID, m.rootClient)
+		m.owners.Retain(collectFrameIDs(ftRepl.FrameTree))
+	}
+
 	m.refreshFrameTree(doc, ftRepl.FrameTree)
 
 	return nil
@@ -109,6 +113,14 @@ func (m *Manager) reloadRetainedDocuments(ctx context.Context, tree page.FrameTr
 		var state *documentState
 
 		current, found := m.frames.Get(child.Frame.ID)
+		if view := m.renderers.Load(); view != nil {
+			if _, unavailable := view.unavailable[child.Frame.ID]; unavailable {
+				children[i] = child
+
+				continue
+			}
+		}
+
 		if found && current.node != nil {
 			loaded, err := current.node.reload(ctx, child)
 			if err != nil {
@@ -160,14 +172,19 @@ func (m *Manager) installMainFrameIfCurrent(doc *HTMLDocument, state *documentSt
 }
 
 func (m *Manager) refreshDocument(ctx context.Context, doc *HTMLDocument, observedState *documentState) error {
-	ftRepl, err := m.rootClient.Page.GetFrameTree(ctx)
+	if err := m.sessions.FrameError(target.ID(doc.identity)); err != nil {
+		return err
+	}
+
+	ftRepl, err := m.frameTree(ctx, false, doc.identity)
 	if err != nil {
 		return err
 	}
 
-	ids := collectFrameIDs(ftRepl.FrameTree)
-	m.owners.Set(ftRepl.FrameTree.Frame.ID, m.rootClient)
-	m.owners.Retain(ids)
+	if !m.sessions.IsFlat() {
+		m.owners.Set(ftRepl.FrameTree.Frame.ID, m.rootClient)
+		m.owners.Retain(collectFrameIDs(ftRepl.FrameTree))
+	}
 
 	frame, found := findFrame(ftRepl.FrameTree, doc.identity)
 	if !found {

@@ -2,10 +2,8 @@ package cdp
 
 import (
 	"context"
-	"strings"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
-	cdpnet "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/network"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
 
@@ -20,24 +18,12 @@ func (p *HTMLPage) Subscribe(ctx context.Context, subscription runtime.Subscript
 		p.mu.Lock()
 		defer p.mu.Unlock()
 
-		stream, err := p.navigationStream(ctx)
-		if err != nil {
-			return nil, err
-		}
-
 		opts, err := p.parseNavigationSubscriptionOptions(ctx, subscription.Options)
 		if err != nil {
-			_ = stream.Close()
 			return nil, err
 		}
 
-		if opts.FrameID == "" && opts.URL == nil {
-			return stream, nil
-		}
-
-		return newFilteredNavigationEventStream(stream, func(evt *cdpnet.NavigationEvent) bool {
-			return matchNavigationEvent(evt, opts)
-		}), nil
+		return p.navigationStream(ctx, opts)
 	case drivers.RequestEvent:
 		return p.network.OnRequest(ctx)
 	case drivers.ResponseEvent:
@@ -45,15 +31,6 @@ func (p *HTMLPage) Subscribe(ctx context.Context, subscription runtime.Subscript
 	default:
 		return p.network.OnEvent(ctx, subscription.EventName, subscription.Options)
 	}
-}
-
-func invalidObservableEventNameError(eventName string) error {
-	return runtime.Errorf(
-		runtime.ErrInvalidOperation,
-		"unknown event name: %s; supported events: %s",
-		eventName,
-		strings.Join(drivers.SupportedObservableEvents(), ", "),
-	)
 }
 
 func (p *HTMLPage) Dispatch(ctx context.Context, event runtime.DispatchEvent) error {

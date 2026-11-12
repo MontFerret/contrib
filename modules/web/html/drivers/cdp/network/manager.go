@@ -41,7 +41,7 @@ func New(
 	sessions *cdpsession.Manager,
 	options Options,
 ) (*Manager, error) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(sessions.PageContext())
 
 	m := new(Manager)
 	m.logger = logutil.WithComponent(logger.With(), "network_manager").Logger()

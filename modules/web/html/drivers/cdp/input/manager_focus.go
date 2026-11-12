@@ -149,7 +149,7 @@ func (m *Manager) MoveMouseByXY(ctx context.Context, xv, yv runtime.Float) (runt
 	x = min(max(x, 0), float64(max(width-1, 0)))
 	y = min(max(y, 0), float64(max(height-1, 0)))
 
-	if x == m.mouse.x && y == m.mouse.y {
+	if position := m.mouse.position(); x == position.X && y == position.Y {
 		m.logger.Trace().Msg("mouse is already at the requested coordinates")
 
 		return runtime.False, nil
@@ -268,7 +268,7 @@ func (m *Manager) unhoverTarget(ctx context.Context, target targetRef) error {
 		ctx,
 		m.client,
 		objectID,
-		Quad{X: m.mouse.x, Y: m.mouse.y},
+		m.mouse.position(),
 		randomMouseDistance(),
 	)
 	if err != nil {

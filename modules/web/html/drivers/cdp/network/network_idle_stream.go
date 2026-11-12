@@ -27,10 +27,10 @@ func (s *networkIdleStream) Close() error {
 }
 
 func (s *networkIdleStream) Read(ctx context.Context) <-chan runtime.Message {
-	out := make(chan runtime.Message)
+	out := make(chan runtime.Message, 1)
 
 	go func() {
-		defer close(out)
+		defer closePageMessages(s.subscription.observer.sessions.PageContext(), out)
 
 		subscriber := s.subscription.subscriber
 		defer s.Close()

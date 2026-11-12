@@ -81,9 +81,6 @@ func (p *HTMLPage) WaitForNavigation(ctx context.Context, targetURL runtime.Stri
 	ctx, cancel := p.withPolicyContext(ctx)
 	defer cancel()
 
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	pattern, err := p.urlToRegexp(targetURL)
 	if err != nil {
 		return err
@@ -96,10 +93,6 @@ func (p *HTMLPage) WaitForFrameNavigation(ctx context.Context, frame drivers.HTM
 	ctx, cancel := p.withPolicyContext(ctx)
 	defer cancel()
 
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	current := p.dom.GetMainFrame()
 	doc, ok := frame.(*dom.HTMLDocument)
 	if !ok {
 		return errors.New("invalid frame type")
@@ -111,7 +104,8 @@ func (p *HTMLPage) WaitForFrameNavigation(ctx context.Context, frame drivers.HTM
 	}
 
 	frameID := doc.Frame().Frame.ID
-	isMain := current.Frame().Frame.ID == frameID
+	current := p.dom.GetMainFrame()
+	isMain := current != nil && current.Frame().Frame.ID == frameID
 	opts := cdpnet.WaitEventOptions{
 		URL: pattern,
 	}
@@ -137,13 +131,13 @@ func (p *HTMLPage) urlToRegexp(targetURL runtime.String) (*regexp.Regexp, error)
 	return r, nil
 }
 
-func (p *HTMLPage) navigationStream(ctx context.Context) (runtime.Stream, error) {
-	stream, err := p.network.OnNavigation(ctx)
+func (p *HTMLPage) navigationStream(ctx context.Context, opts cdpnet.WaitEventOptions) (runtime.Stream, error) {
+	stream, err := p.network.OnFrameNavigation(ctx, opts.FrameID)
 	if err != nil {
 		return nil, err
 	}
 
-	return newPreparedNavigationEventStream(stream, p.prepareNavigationEvent), nil
+	return newPreparedNavigationEventStream(ctx, p.sessions.PageContext(), stream, opts, p.prepareNavigationEvent), nil
 }
 
 func (p *HTMLPage) prepareNavigationEvent(ctx context.Context, evt *cdpnet.NavigationEvent) error {
@@ -161,6 +155,9 @@ func (p *HTMLPage) prepareNavigationEvent(ctx context.Context, evt *cdpnet.Navig
 	if err := p.waitForDocumentReady(ctx, client, evt.FrameID); err != nil {
 		return err
 	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
 	return p.dom.ReloadRoot(ctx)
 }
@@ -200,27 +197,27 @@ func (p *HTMLPage) waitForDocumentReady(ctx context.Context, client *cdp.Client,
 }
 
 func (p *HTMLPage) waitForNavigation(ctx context.Context, opts cdpnet.WaitEventOptions) error {
-	stream, err := p.navigationStream(ctx)
+	stream, err := p.navigationStream(ctx, opts)
 	if err != nil {
 		return err
 	}
 
 	defer stream.Close()
 
-	for evt := range stream.Read(ctx) {
-		if err := evt.Err(); err != nil {
-			return err
-		}
+	return p.readNavigation(ctx, stream)
+}
 
-		nav, ok := evt.Value().(*cdpnet.NavigationEvent)
-		if !ok || !matchNavigationEvent(nav, opts) {
-			continue
-		}
-
-		return nil
+func (p *HTMLPage) readNavigation(ctx context.Context, stream runtime.Stream) error {
+	msg, ok := <-stream.Read(ctx)
+	if !ok {
+		return p.network.NavigationClosedError(ctx)
 	}
 
-	return ctx.Err()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	return msg.Err()
 }
 
 func (p *HTMLPage) parseNavigationSubscriptionOptions(ctx context.Context, value runtime.Map) (cdpnet.WaitEventOptions, error) {

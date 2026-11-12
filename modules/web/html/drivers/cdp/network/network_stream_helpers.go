@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/mafredri/cdp/protocol/page"
@@ -57,4 +58,19 @@ func frameIDString(frameID *page.FrameID) string {
 
 func boolPtrValue(value *bool) bool {
 	return value != nil && *value
+}
+
+// Reserve one terminal message when the page goes away. No producer is left
+// when this runs, so an abandoned reader cannot block subscription cleanup.
+func closePageMessages(pageCtx context.Context, out chan runtime.Message) {
+	if err := context.Cause(pageCtx); errors.Is(err, rpcc.ErrConnClosing) {
+		select {
+		case <-out:
+		default:
+		}
+
+		out <- runtime.NewErrorMessage(err)
+	}
+
+	close(out)
 }

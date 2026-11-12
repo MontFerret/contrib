@@ -10,6 +10,19 @@ func (p *HTMLPage) Close() error {
 		return p.policySession.Close()
 	}
 
+	if p.sessions.IsFlat() {
+		p.closeOnce.Do(func() {
+			// Public LoadHTMLPage callers own a manager directly. Interrupt
+			// pending renderer commands before waiting for the page mutex.
+			ctx, cancel := context.WithTimeout(context.Background(), policyCleanupTimeout)
+			defer cancel()
+
+			p.closeErr = errors.Join(p.sessions.ClosePageTargets(ctx, nil), p.sessions.Close(), p.closeResources())
+		})
+
+		return p.closeErr
+	}
+
 	return p.closeResources()
 }
 
@@ -53,8 +66,11 @@ func (p *HTMLPage) closeResources() error {
 		}
 	}
 
-	if p.policySession == nil && p.client != nil && p.client.Page != nil {
-		if err := p.client.Page.Close(context.Background()); err != nil {
+	if p.policySession == nil && !p.sessions.IsFlat() && p.client != nil && p.client.Page != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), policyCleanupTimeout)
+		defer cancel()
+
+		if err := p.client.Page.Close(ctx); err != nil {
 			p.logger.Warn().
 				Str("url", url).
 				Err(err).
@@ -62,8 +78,9 @@ func (p *HTMLPage) closeResources() error {
 		}
 	}
 
-	if p.policySession == nil && p.sessions != nil {
+	if p.policySession == nil && p.sessions != nil && !p.sessions.IsFlat() {
 		if err := p.sessions.Close(); err != nil {
+			errs = append(errs, err)
 			p.logger.Warn().
 				Str("url", url).
 				Err(err).
@@ -71,7 +88,7 @@ func (p *HTMLPage) closeResources() error {
 		}
 	}
 
-	if p.policySession != nil {
+	if p.policySession != nil || p.sessions.IsFlat() {
 		return errors.Join(errs...)
 	}
 

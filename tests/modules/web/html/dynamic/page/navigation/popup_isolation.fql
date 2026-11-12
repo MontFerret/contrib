@@ -1,0 +1,19 @@
+LET url = @lab.static.static + "/simple.html"
+LET page = DOCUMENT(url, {
+    driver: "cdp",
+    initScript: {
+        timing: "afterNavigation",
+        source: `document.querySelector("h1").onclick = () => {
+            const popup = window.open("about:blank")
+            popup.document.title = "Popup"
+            popup.location.hash = "child"
+            document.body.dataset.popup = popup.document.title
+        }`
+    }
+})
+
+CLICK(page, "h1")
+T::EQ(ELEMENT(page, "body").attributes["data-popup"], "Popup")
+T::EQ(page.url, url)
+T::EQ(page.title, "Title")
+RETURN T::LEN(page.frames, 1)

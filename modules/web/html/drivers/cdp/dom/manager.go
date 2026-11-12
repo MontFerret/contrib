@@ -2,24 +2,29 @@ package dom
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/page"
 	"github.com/rs/zerolog"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/input"
+	cdpsession "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/session"
 	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
 )
 
 type Manager struct {
-	logger     zerolog.Logger
-	rootClient *cdp.Client
-	mouse      *input.Mouse
-	keyboard   *input.Keyboard
-	mainFrame  *AtomicFrameID
-	frames     *AtomicFrameCollection
-	owners     *AtomicFrameClientCollection
-	mu         sync.RWMutex
+	logger       zerolog.Logger
+	rootClient   *cdp.Client
+	sessions     *cdpsession.Manager
+	renderers    atomic.Pointer[rendererTree]
+	rendererMice sync.Map
+	mouse        *input.Mouse
+	keyboard     *input.Keyboard
+	mainFrame    *AtomicFrameID
+	frames       *AtomicFrameCollection
+	owners       *AtomicFrameClientCollection
+	mu           sync.RWMutex
 }
 
 func New(
@@ -61,9 +66,12 @@ func (m *Manager) GetMainFrame() *HTMLDocument {
 }
 
 func (m *Manager) RecordFrameClient(frameID page.FrameID, client *cdp.Client) {
-	if client == nil || frameID == "" {
+	if m.sessions.IsFlat() || client == nil || frameID == "" {
 		return
 	}
 
 	m.owners.Set(frameID, client)
 }
+
+// SetFrameSessions supplies the page-scoped OOPIF owners before document loading begins.
+func (m *Manager) SetFrameSessions(s *cdpsession.Manager) { m.sessions = s }
