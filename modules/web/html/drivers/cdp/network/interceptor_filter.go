@@ -1,8 +1,12 @@
 package network
 
 import (
+	"net/url"
+
 	"github.com/gobwas/glob"
 	"github.com/mafredri/cdp/protocol/network"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers/internal/origin"
 )
 
 type (
@@ -15,24 +19,21 @@ type (
 	// Its compiled configuration is immutable and may be shared between interceptors.
 	InterceptorFilter struct {
 		resources []ResourceFilter
-		origins   map[origin]struct{}
+		origins   *origin.Allowlist
 	}
 )
 
 // NewInterceptorFilter validates and snapshots a resource/origin filter.
 func NewInterceptorFilter(filter *Filter) (*InterceptorFilter, error) {
-	interFilter := new(InterceptorFilter)
-
-	if filter.AllowedOrigins != nil {
-		origins, err := compileOrigins(filter.AllowedOrigins)
-		if err != nil {
-			return nil, err
-		}
-
-		interFilter.origins = origins
+	origins, err := origin.NewAllowlist(filter.AllowedOrigins)
+	if err != nil {
+		return nil, err
 	}
 
-	interFilter.resources = make([]ResourceFilter, 0, len(filter.Patterns))
+	interFilter := &InterceptorFilter{
+		origins:   origins,
+		resources: make([]ResourceFilter, 0, len(filter.Patterns)),
+	}
 
 	for _, pattern := range filter.Patterns {
 		rf := ResourceFilter{
@@ -59,12 +60,12 @@ func NewInterceptorFilter(filter *Filter) (*InterceptorFilter, error) {
 // Filter reports whether the request must be blocked.
 func (f *InterceptorFilter) Filter(rt network.ResourceType, req network.Request) bool {
 	if f.origins != nil && req.URL != BlankPageURL {
-		parsed, err := parseOrigin(req.URL, false)
+		parsed, err := url.Parse(req.URL)
 		if err != nil {
 			return true
 		}
 
-		if _, allowed := f.origins[parsed]; !allowed {
+		if _, allowed := f.origins.Match(parsed); !allowed {
 			return true
 		}
 	}

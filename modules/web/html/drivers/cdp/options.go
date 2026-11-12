@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/textproto"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
@@ -12,10 +13,9 @@ import (
 type (
 	Options struct {
 		*drivers.Options
-		Connection     *ConnectionOptions
-		Address        string
-		KeepCookies    bool
-		allowedOrigins []string
+		Connection  *ConnectionOptions
+		Address     string
+		KeepCookies bool
 	}
 
 	ConnectionOptions struct {
@@ -48,6 +48,18 @@ func NewOptions(setters []Option) *Options {
 	return opts
 }
 
+// WithOptions applies shared driver options in order at this position in the
+// constructor's option list. The supplied slice may be reused or modified.
+func WithOptions(options ...drivers.Option) Option {
+	setters := slices.Clone(options)
+
+	return func(opts *Options) {
+		for _, set := range setters {
+			set(opts.Options)
+		}
+	}
+}
+
 func WithAddress(address string) Option {
 	return func(opts *Options) {
 		if address != "" {
@@ -62,23 +74,15 @@ func WithAddress(address string) Option {
 // Configuration is copied and validated by New; Open and Parse report errors.
 // The policy connection remains active until Driver.Close.
 func WithAllowedOrigins(origins ...string) Option {
-	values := append([]string{}, origins...)
-
-	return func(opts *Options) {
-		opts.allowedOrigins = append([]string{}, values...)
-	}
+	return WithOptions(drivers.WithAllowedOrigins(origins...))
 }
 
 func WithProxy(address string) Option {
-	return func(opts *Options) {
-		drivers.WithProxy(address)(opts.Options)
-	}
+	return WithOptions(drivers.WithProxy(address))
 }
 
 func WithUserAgent(value string) Option {
-	return func(opts *Options) {
-		drivers.WithUserAgent(value)(opts.Options)
-	}
+	return WithOptions(drivers.WithUserAgent(value))
 }
 
 func WithKeepCookies() Option {
@@ -88,33 +92,23 @@ func WithKeepCookies() Option {
 }
 
 func WithCustomName(name string) Option {
-	return func(opts *Options) {
-		drivers.WithCustomName(name)(opts.Options)
-	}
+	return WithOptions(drivers.WithCustomName(name))
 }
 
 func WithHeader(name string, header []string) Option {
-	return func(opts *Options) {
-		drivers.WithHeader(name, header)(opts.Options)
-	}
+	return WithOptions(drivers.WithHeader(name, header))
 }
 
 func WithHeaders(headers textproto.MIMEHeader) Option {
-	return func(opts *Options) {
-		drivers.WithHeaders(headers)(opts.Options)
-	}
+	return WithOptions(drivers.WithHeaders(headers))
 }
 
 func WithCookie(cookie drivers.HTTPCookie) Option {
-	return func(opts *Options) {
-		drivers.WithCookie(cookie)(opts.Options)
-	}
+	return WithOptions(drivers.WithCookie(cookie))
 }
 
 func WithCookies(cookies []drivers.HTTPCookie) Option {
-	return func(opts *Options) {
-		drivers.WithCookies(cookies)(opts.Options)
-	}
+	return WithOptions(drivers.WithCookies(cookies))
 }
 
 func WithBufferSize(size int) Option {

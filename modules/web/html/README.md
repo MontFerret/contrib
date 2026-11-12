@@ -25,7 +25,7 @@ go get github.com/MontFerret/contrib/modules/web/html
 
 ## Register The Module
 
-Register the module with at least one driver. Most hosts should register the in-memory driver as the default and add the CDP driver for browser-backed pages.
+Register the module with at least one driver. This host uses memory for static documents and CDP for browser-backed pages. Both drivers use the same user agent and allowed origins.
 
 ```go
 package main
@@ -34,26 +34,37 @@ import (
 	"github.com/MontFerret/ferret/v2"
 
 	htmlmodule "github.com/MontFerret/contrib/modules/web/html"
+	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/memory"
 )
 
 func main() {
+	common := []drivers.Option{
+		drivers.WithAllowedOrigins("https://example.com", "https://api.example.com"),
+		drivers.WithUserAgent("example-crawler"),
+	}
+	static := memory.New(memory.WithOptions(common...))
+	defer static.Close()
+
+	browser := cdp.New(cdp.WithOptions(common...), cdp.WithAddress("http://localhost:9222"))
+	defer browser.Close()
+
 	engine, err := ferret.New(
 		ferret.WithModules(htmlmodule.New(
-			htmlmodule.WithDefaultDriver(memory.New()),
-			htmlmodule.WithDrivers(
-				cdp.New(cdp.WithAddress("http://localhost:9222")),
-			),
+			htmlmodule.WithDefaultDriver(static),
+			htmlmodule.WithDrivers(browser),
 		)),
 	)
 	if err != nil {
 		panic(err)
 	}
 
-	_ = engine
+	defer engine.Close()
 }
 ```
+
+Go callers that construct `drivers.Options` directly should use keyed struct literals. The `AllowedOrigins` slice also makes the struct non-comparable. Code that previously used `==` or `drivers.Options` as a map key must compare or key on the relevant settings instead.
 
 ### Module Options
 
@@ -82,23 +93,17 @@ chromium --headless=new --remote-debugging-port=9222 --remote-debugging-address=
 
 Use the exact browser binary name available in your environment, such as `chromium`, `google-chrome`, or `Google Chrome`.
 
-### Host-Controlled CDP Origin Allowlist
+### Host-Controlled Origin Allowlists
 
-Hosts can restrict intercepted HTTP(S) requests with a driver option:
+Configure each driver that can fetch documents. The [registration example](#register-the-module) passes one bundle of shared options to both drivers. Each constructor applies bundled options in order where `WithOptions` appears. A later `WithAllowedOrigins` replaces an earlier list, whether either option is bundled or supplied individually.
 
-```go
-driver := cdp.New(
-    cdp.WithAddress("http://localhost:9222"),
-    cdp.WithAllowedOrigins("https://example.com", "https://api.example.com"),
-)
-defer driver.Close()
-```
+Both drivers match by scheme, hostname, and effective port. Host casing, IDNA names, IP literals, and standard HTTP/HTTPS ports are normalized. Listing `https://example.com` also matches `https://EXAMPLE.com:443`. HTTP, other ports, subdomains, and the distinct hostname `example.com.` each need their own entry. Supply an HTTP(S) origin with an empty path or only `/`. Credentials, wildcards, other paths, queries, fragments, and malformed ports are rejected.
 
-**This restriction affects the entire Chromium endpoint**, including unrelated tabs, browser contexts, popups, and workers. Use a dedicated endpoint where every workload shares the same allowlist. It is not a policy scoped to one document, query, or browser context; FQL and document options cannot change it.
+Each driver copies its input and validates the final list at construction. Omitting `WithAllowedOrigins` permits unrestricted requests. Calling it with no arguments denies every outbound request the driver checks. Both `Open` and `Parse` report invalid configuration before any I/O. Only the Go host can set this policy.
 
-Origins match by scheme, hostname, and effective port. Host casing, IDNA names, IP literals, and standard HTTP/HTTPS ports are normalized. Listing `https://example.com` also matches `https://EXAMPLE.com:443`, but does not allow HTTP, other ports, subdomains, or the distinct hostname `example.com.`. Supply an origin with no path or only `/`; credentials, wildcard hosts, other paths, queries, fragments, unsupported schemes, and malformed ports are rejected.
+**Memory driver.** Each driver instance checks the destination before sending a document request, including every redirect hop and retry. A denied origin stops retries for that call and returns an error. With any valid policy, including an empty list, `PARSE` still parses supplied HTML locally.
 
-`New` preserves its existing return type. Invalid configuration is retained and reported by `Open` or `Parse` before connecting. Inputs are copied and frozen during construction. The last `WithAllowedOrigins` option replaces earlier lists; an explicitly empty list denies every intercepted network origin. Omitting the option preserves unrestricted behavior. Internal `about:blank` initialization remains available.
+**CDP driver.** The restriction affects the entire Chromium endpoint, including unrelated tabs, browser contexts, popups, and workers. Use a dedicated endpoint where every workload shares the same allowlist. Internal `about:blank` initialization remains available.
 
 The driver installs browser-level `Fetch` interception before creating its first page target. One persistent policy connection stays alive until `Driver.Close()`, even when all pages have closed. Concurrent callers can cancel their own initialization waits independently. Canceling the caller that started initialization cancels that attempt; waiting callers with live contexts may retry after its resources are released. Closing the driver cancels pending initialization, invalidates its active pages, and releases its connections. An unexpected policy-connection or interception-stream failure is terminal: active sessions are invalidated, future `Open`/`Parse` calls fail, and recovery requires a new driver. Policy connection/setup errors fail the operation without creating a page target.
 
@@ -122,7 +127,7 @@ The browser-backed tests use local HTTP/HTTPS fixtures and have been exercised o
 | WebRTC, WebTransport, DNS/prefetch/preconnect, browser background traffic, and other paths outside Fetch | No enforcement guarantee; not validated by this suite. |
 | Local/non-network schemes such as `data:` and `blob:` | No scheme-wide guarantee; unsupported URLs are denied when Fetch presents them. |
 
-This feature is CDP request interception. It does not install administrator-managed Chrome `URLBlocklist`/`URLAllowlist` policies, and it does not provide OS/container network isolation, IP-address restrictions, or DNS-rebinding protection. A permitted hostname may resolve to any address Chrome can reach. Non-browser clients, including the memory driver, are unaffected.
+This feature is CDP request interception. It does not install administrator-managed Chrome `URLBlocklist`/`URLAllowlist` policies, and it does not provide OS/container network isolation, IP-address restrictions, or DNS-rebinding protection. A permitted hostname may resolve to any address Chrome can reach. The memory driver enforces its own configured list through its HTTP client. Both drivers match URL origins, so hosts that also require IP restrictions must enforce those separately.
 
 Chrome removes interception when its policy connection disconnects. Terminal driver failure prevents continued driver use and triggers cleanup, but cannot atomically stop Chrome networking during that loss. Closing the last restricted driver also removes its browser-wide restriction; stop unmanaged endpoint workloads separately. For hostile workloads, enforce destination restrictions at the network level in addition to this option.
 

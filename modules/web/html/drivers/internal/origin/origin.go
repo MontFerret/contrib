@@ -1,4 +1,4 @@
-package network
+package origin
 
 import (
 	"fmt"
@@ -18,26 +18,8 @@ type origin struct {
 
 var originNames = idna.New(idna.MapForLookup(), idna.StrictDomainName(true), idna.ValidateLabels(true), idna.VerifyDNSLength(true))
 
-func compileOrigins(values []string) (map[origin]struct{}, error) {
-	origins := make(map[origin]struct{}, len(values))
-
-	for index, value := range values {
-		parsed, err := parseOrigin(value, true)
-		if err != nil {
-			// Configuration may contain credentials; report the position without
-			// echoing the supplied URL or a parser error containing it.
-			return nil, fmt.Errorf("allowed origin %d: %w", index+1, err)
-		}
-
-		origins[parsed] = struct{}{}
-	}
-
-	return origins, nil
-}
-
-func parseOrigin(value string, configuration bool) (origin, error) {
-	parsed, err := url.Parse(value)
-	if err != nil || parsed.Opaque != "" || parsed.Host == "" {
+func normalize(parsed *url.URL) (origin, error) {
+	if parsed == nil || parsed.Opaque != "" || parsed.Host == "" {
 		return origin{}, fmt.Errorf("expected an absolute HTTP(S) URL")
 	}
 
@@ -45,12 +27,7 @@ func parseOrigin(value string, configuration bool) (origin, error) {
 		return origin{}, fmt.Errorf("scheme must be http or https")
 	}
 
-	if configuration && (parsed.User != nil || (parsed.Path != "" && parsed.Path != "/") ||
-		parsed.RawPath != "" || parsed.ForceQuery || parsed.RawQuery != "" || strings.Contains(value, "#")) {
-		return origin{}, fmt.Errorf("expected an origin without credentials, path, query, or fragment")
-	}
-
-	host := strings.ToLower(parsed.Hostname())
+	host := parsed.Hostname()
 	if host == "" || strings.ContainsAny(host, "*%\\") {
 		return origin{}, fmt.Errorf("invalid hostname")
 	}
@@ -62,6 +39,7 @@ func parseOrigin(value string, configuration bool) (origin, error) {
 
 		host = address.String()
 	} else {
+		// IDNA applies its own case mapping to the original labels, as net/http does.
 		ascii, nameErr := originNames.ToASCII(host)
 		if nameErr != nil || strings.HasPrefix(parsed.Host, "[") || strings.ContainsAny(host, ":[]") {
 			return origin{}, fmt.Errorf("invalid hostname")
@@ -76,10 +54,12 @@ func parseOrigin(value string, configuration bool) (origin, error) {
 	}
 
 	if text := parsed.Port(); text != "" {
-		port, err = strconv.ParseUint(text, 10, 16)
+		value, err := strconv.ParseUint(text, 10, 16)
 		if err != nil {
 			return origin{}, fmt.Errorf("invalid port")
 		}
+
+		port = value
 	} else if strings.HasSuffix(parsed.Host, ":") {
 		return origin{}, fmt.Errorf("empty port")
 	}

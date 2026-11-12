@@ -116,7 +116,7 @@ func TestBrowserAllowedOriginsRequests(t *testing.T) {
 	}))
 	defer allowed.Close()
 
-	driver := New(WithAddress(address), WithAllowedOrigins(allowed.URL))
+	driver := New(WithAddress(address), WithOptions(drivers.WithAllowedOrigins(allowed.URL)))
 	defer driver.Close()
 	p := policyPage(t, ctx, driver, allowed.URL)
 
