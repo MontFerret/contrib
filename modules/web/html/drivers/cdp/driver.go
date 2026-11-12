@@ -34,8 +34,8 @@ func New(opts ...Option) *Driver {
 	drv.options = NewOptions(opts)
 	drv.dev = devtool.New(drv.options.Address)
 
-	if drv.options.allowedOrigins != nil {
-		drv.policy = newBrowserPolicy(drv.options.allowedOrigins)
+	if drv.options.AllowedOrigins != nil {
+		drv.policy = newBrowserPolicy(drv.options.AllowedOrigins)
 	}
 
 	return drv

@@ -2,6 +2,7 @@ package memory
 
 import (
 	stdhttp "net/http"
+	"slices"
 	"time"
 
 	"github.com/gobwas/glob"
@@ -52,6 +53,18 @@ func NewOptions(setters []Option) *Options {
 	return opts
 }
 
+// WithOptions applies shared driver options in order at this position in the
+// constructor's option list. The supplied slice may be reused or modified.
+func WithOptions(options ...drivers.Option) Option {
+	setters := slices.Clone(options)
+
+	return func(opts *Options) {
+		for _, set := range setters {
+			set(opts.Options)
+		}
+	}
+}
+
 func WithDefaultBackoff() Option {
 	return func(opts *Options) {
 		opts.Backoff = pester.DefaultBackoff
@@ -83,27 +96,19 @@ func WithConcurrency(value int) Option {
 }
 
 func WithProxy(address string) Option {
-	return func(opts *Options) {
-		drivers.WithProxy(address)(opts.Options)
-	}
+	return WithOptions(drivers.WithProxy(address))
 }
 
 func WithUserAgent(value string) Option {
-	return func(opts *Options) {
-		drivers.WithUserAgent(value)(opts.Options)
-	}
+	return WithOptions(drivers.WithUserAgent(value))
 }
 
 func WithCustomName(name string) Option {
-	return func(opts *Options) {
-		drivers.WithCustomName(name)(opts.Options)
-	}
+	return WithOptions(drivers.WithCustomName(name))
 }
 
 func WithHeader(name string, value []string) Option {
-	return func(opts *Options) {
-		drivers.WithHeader(name, value)(opts.Options)
-	}
+	return WithOptions(drivers.WithHeader(name, value))
 }
 
 func WithHeaders(headers *drivers.HTTPHeaders) Option {
@@ -117,15 +122,18 @@ func WithHeaders(headers *drivers.HTTPHeaders) Option {
 }
 
 func WithCookie(cookie drivers.HTTPCookie) Option {
-	return func(opts *Options) {
-		drivers.WithCookie(cookie)(opts.Options)
-	}
+	return WithOptions(drivers.WithCookie(cookie))
 }
 
 func WithCookies(cookies []drivers.HTTPCookie) Option {
-	return func(opts *Options) {
-		drivers.WithCookies(cookies)(opts.Options)
-	}
+	return WithOptions(drivers.WithCookies(cookies))
+}
+
+// WithAllowedOrigins restricts outbound requests, including redirects and retries,
+// to the listed HTTP(S) origins. An empty list denies all requests. Open and
+// Parse report invalid configuration. A valid policy always permits offline Parse.
+func WithAllowedOrigins(origins ...string) Option {
+	return WithOptions(drivers.WithAllowedOrigins(origins...))
 }
 
 func WithAllowedHTTPCode(httpCode int) Option {

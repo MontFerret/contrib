@@ -9,10 +9,22 @@ type (
 		Name      string       `json:"name"`
 		Proxy     string       `json:"proxy"`
 		UserAgent string       `json:"userAgent"`
+		// AllowedOrigins is host configuration. Nil permits all origins and an empty list denies all.
+		AllowedOrigins []string `json:"-"`
 	}
 
 	Option func(opts *Options)
 )
+
+// WithAllowedOrigins sets the HTTP(S) origins the driver may request. Calling
+// it with no origins enables deny-all. Each application gets its own list.
+func WithAllowedOrigins(origins ...string) Option {
+	values := append([]string{}, origins...)
+
+	return func(opts *Options) {
+		opts.AllowedOrigins = append([]string{}, values...)
+	}
+}
 
 func WithProxy(address string) Option {
 	return func(opts *Options) {
