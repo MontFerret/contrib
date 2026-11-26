@@ -56,7 +56,12 @@ make fmt [module ...]
 
 If no module names are provided, the commands run against all available modules.
 
-Run `make test-runtime` to validate the binary runtime harness used by Ferret Lab.
+Build the Wire integration runtime with `make build-cli` and start it with
+`./bin/runtime --listen=127.0.0.1:0`. It prints one `wire+tcp://127.0.0.1:<port>`
+line to stdout once the listener is bound. Connect a Wire client to complete the
+handshake and submit queries and parameters. Use `--browser-address` to select
+the Chromium CDP endpoint and `--log-level` to adjust engine logging on stderr.
+SIGINT or SIGTERM shuts down the host. Run `make test-runtime` to test it.
 
 Support packages under `pkg/` can be updated across module `go.mod` and `go.sum` files with:
 
