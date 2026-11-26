@@ -5,25 +5,49 @@ import (
 	"errors"
 )
 
+// Close uses the standalone cleanup budget. With managed cleanup the driver
+// already owns the page and performs browser cleanup when the host closes it.
 func (p *HTMLPage) Close() error {
+	if p.policySession != nil && p.policySession.managed() {
+		p.policySession.invalidate()
+
+		return nil
+	}
+
+	ctx, cancel := defaultCleanupContext()
+	defer cancel()
+
+	return p.CloseContext(ctx)
+}
+
+// CloseContext starts or waits for page cleanup. The first caller supplies
+// the cleanup context; each caller can independently cancel its wait.
+// Once cleanup settles, repeated calls return its result.
+func (p *HTMLPage) CloseContext(ctx context.Context) error {
 	if p.policySession != nil {
-		return p.policySession.Close()
+		return p.policySession.CloseContext(ctx)
 	}
 
-	if p.sessions.IsFlat() {
-		p.closeOnce.Do(func() {
-			// Public LoadHTMLPage callers own a manager directly. Interrupt
-			// pending renderer commands before waiting for the page mutex.
-			ctx, cancel := context.WithTimeout(context.Background(), policyCleanupTimeout)
-			defer cancel()
+	return p.cleanup.Run(ctx, p.close)
+}
 
-			p.closeErr = errors.Join(p.sessions.ClosePageTargets(ctx, nil), p.sessions.Close(), p.closeResources())
-		})
+func (p *HTMLPage) close(ctx context.Context) error {
+	var err error
+	if p.sessions != nil {
+		err = p.sessions.ClosePageTargets(ctx, nil)
+		managerErr := p.sessions.CloseContext(ctx)
+		if ctx.Err() != nil {
+			managerErr = p.sessions.CloseContext(context.Background())
+		}
 
-		return p.closeErr
+		err = errors.Join(err, managerErr)
+	} else if p.client != nil && p.client.Page != nil {
+		if err = ctx.Err(); err == nil {
+			err = p.client.Page.Close(ctx)
+		}
 	}
 
-	return p.closeResources()
+	return errors.Join(err, p.closeResources())
 }
 
 func (p *HTMLPage) closeResources() error {
@@ -66,33 +90,7 @@ func (p *HTMLPage) closeResources() error {
 		}
 	}
 
-	if p.policySession == nil && !p.sessions.IsFlat() && p.client != nil && p.client.Page != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), policyCleanupTimeout)
-		defer cancel()
-
-		if err := p.client.Page.Close(ctx); err != nil {
-			p.logger.Warn().
-				Str("url", url).
-				Err(err).
-				Msg("failed to close browser page")
-		}
-	}
-
-	if p.policySession == nil && p.sessions != nil && !p.sessions.IsFlat() {
-		if err := p.sessions.Close(); err != nil {
-			errs = append(errs, err)
-			p.logger.Warn().
-				Str("url", url).
-				Err(err).
-				Msg("failed to close session manager")
-		}
-	}
-
-	if p.policySession != nil || p.sessions.IsFlat() {
-		return errors.Join(errs...)
-	}
-
-	return nil
+	return errors.Join(errs...)
 }
 
 func (p *HTMLPage) withPolicyContext(ctx context.Context) (context.Context, context.CancelFunc) {

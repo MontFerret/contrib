@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/target"
@@ -11,12 +12,16 @@ import (
 // ClosePageTargets closes the page and its popup descendants. An optional
 // replacement browser client permits cleanup after the page socket is lost.
 func (m *Manager) ClosePageTargets(ctx context.Context, browser *cdp.Client) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if m.targets == nil {
 		if root := m.Root(); root != nil {
 			return root.CDP.Page.Close(ctx)
 		}
 
-		return nil
+		return fmt.Errorf("page target %s has no renderer session to confirm closure", m.rootTargetID)
 	}
 
 	if browser == nil {
@@ -42,12 +47,12 @@ func (m *Manager) ClosePageTargets(ctx context.Context, browser *cdp.Client) err
 }
 
 func (m *Manager) closePopups(ctx context.Context, browser *cdp.Client) error {
-	failed := make(map[target.ID]error)
+	attempted := make(map[target.ID]error)
 	for {
 		reply, err := browser.Target.GetTargets(ctx, target.NewGetTargetsArgs())
 		if err != nil {
 			errs := []error{err}
-			for _, cause := range failed {
+			for _, cause := range attempted {
 				errs = append(errs, cause)
 			}
 
@@ -58,16 +63,22 @@ func (m *Manager) closePopups(ctx context.Context, browser *cdp.Client) error {
 		var stillOpen []error
 		for _, id := range owned {
 			// The target may have closed itself before our command arrived.
-			// Only report a failed close if the next enumeration still sees it.
-			if cause := failed[id]; cause != nil {
+			// Report any target that remains after a close attempt.
+			if cause, alreadyAttempted := attempted[id]; alreadyAttempted {
+				if cause == nil {
+					cause = fmt.Errorf("popup target %s is still present after closure", id)
+				}
+
 				stillOpen = append(stillOpen, cause)
 
 				continue
 			}
 
-			if _, err := browser.Target.CloseTarget(ctx, target.NewCloseTargetArgs(id)); err != nil {
-				failed[id] = err
+			if err := ctx.Err(); err != nil {
+				return err
 			}
+
+			_, attempted[id] = browser.Target.CloseTarget(ctx, target.NewCloseTargetArgs(id))
 		}
 
 		if len(stillOpen) == len(owned) {

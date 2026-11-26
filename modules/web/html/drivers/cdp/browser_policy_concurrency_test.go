@@ -136,7 +136,8 @@ func TestBrowserPolicyCanceledInitiatorAllowsRetry(t *testing.T) {
 	go func() {
 		session, err := driver.policy.begin(t.Context(), driver)
 		if err == nil {
-			err = session.Close()
+			_, err = session.finish(nil, nil)
+			err = errors.Join(err, session.Close())
 		}
 
 		second <- err

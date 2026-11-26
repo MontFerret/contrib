@@ -20,6 +20,7 @@ type transport struct {
 	recvC    chan []byte
 	send     func([]byte) error
 	init     chan struct{}
+	browser  *cdp.Client
 	conn     *rpcc.Conn
 	id       target.SessionID
 	targetID target.ID
@@ -34,6 +35,7 @@ func newTransport(
 ) (*transport, error) {
 	s := &transport{
 		id:       sessionID,
+		browser:  browserClient,
 		targetID: targetID,
 		recvC:    make(chan []byte, 1),
 		init:     make(chan struct{}),
@@ -49,36 +51,16 @@ func newTransport(
 		)
 	}
 
-	detach := func() error {
-		if !s.detached.CompareAndSwap(false, true) {
-			return nil
-		}
-
-		detachCtx, cancel := context.WithTimeout(context.Background(), defaultDetachTimeout)
-		defer cancel()
-
-		err := browserClient.Target.DetachFromTarget(
-			detachCtx,
-			target.NewDetachFromTargetArgs().SetSessionID(s.id),
-		)
-		if errors.Is(err, context.DeadlineExceeded) {
-			return fmt.Errorf("session: detach timed out for session %s", s.id)
-		}
-		if isMissingSessionError(err) {
-			return nil
-		}
-		if err != nil {
-			return fmt.Errorf("session: detach failed for session %s: %w", s.id, err)
-		}
-
-		return nil
-	}
-
 	conn, err := rpcc.DialContext(
 		ctx,
 		"",
 		rpcc.WithDialer(func(_ context.Context, _ string) (io.ReadWriteCloser, error) {
-			return &closeConn{close: detach}, nil
+			return &closeConn{close: func() error {
+				ctx, cancel := context.WithTimeout(context.Background(), defaultDetachTimeout)
+				defer cancel()
+
+				return s.detach(ctx)
+			}}, nil
 		}),
 		rpcc.WithCodec(func(_ io.ReadWriter) rpcc.Codec {
 			return s
@@ -129,6 +111,31 @@ func (s *transport) Close() error {
 	}
 
 	return s.conn.Close()
+}
+
+func (s *transport) closeContext(ctx context.Context) error {
+	return errors.Join(s.detach(ctx), s.Close())
+}
+
+func (s *transport) detach(ctx context.Context) error {
+	if !s.detached.CompareAndSwap(false, true) {
+		return nil
+	}
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	err := s.browser.Target.DetachFromTarget(ctx, target.NewDetachFromTargetArgs().SetSessionID(s.id))
+	if isMissingSessionError(err) {
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("session: detach failed for session %s: %w", s.id, err)
+	}
+
+	return nil
 }
 
 func (s *transport) MarkDetached() {

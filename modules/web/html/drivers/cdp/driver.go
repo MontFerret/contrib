@@ -2,7 +2,6 @@ package cdp
 
 import (
 	"context"
-	stderrors "errors"
 
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/devtool"
@@ -59,7 +58,7 @@ func (drv *Driver) Open(ctx context.Context, params drivers.Params) (drivers.HTM
 			Str("driver", drv.options.Name).
 			Msg("failed to create a new connection")
 
-		return nil, err
+		return owned.finish(nil, err)
 	}
 
 	page, err := loadHTMLPage(ctx, sessions, drv.setDefaultParams(params), owned)
@@ -82,7 +81,7 @@ func (drv *Driver) Parse(ctx context.Context, params drivers.ParseParams) (drive
 			Str("driver", drv.options.Name).
 			Msg("failed to create a new connection")
 
-		return nil, err
+		return owned.finish(nil, err)
 	}
 
 	page, err := loadHTMLPageWithContent(ctx, sessions, drv.setDefaultParams(drivers.Params{
@@ -102,8 +101,17 @@ func (drv *Driver) Parse(ctx context.Context, params drivers.ParseParams) (drive
 // the endpoint may still contain live targets when cleanup fails.
 // Without an allowlist, page lifecycles remain owned by their callers.
 func (drv *Driver) Close() error {
+	ctx, cancel := defaultCleanupContext()
+	defer cancel()
+
+	return drv.CloseContext(ctx)
+}
+
+// CloseContext closes a restricted driver's pages and browser policy within
+// one budget. A caller that stops waiting can call again to observe settlement.
+func (drv *Driver) CloseContext(ctx context.Context) error {
 	if drv.policy != nil {
-		return drv.policy.Close()
+		return drv.policy.CloseContext(ctx)
 	}
 
 	return nil
@@ -111,6 +119,10 @@ func (drv *Driver) Close() error {
 
 func (drv *Driver) beginPolicySession(ctx context.Context) (*policySession, context.Context, error) {
 	if drv.policy == nil {
+		if drv.options.managedPageCleanup {
+			return nil, ctx, errors.New("managed CDP cleanup requires an origin policy")
+		}
+
 		owned := newPageSession(ctx, nil, drv)
 
 		return owned, owned.ctx, nil
@@ -124,13 +136,7 @@ func (drv *Driver) beginPolicySession(ctx context.Context) (*policySession, cont
 	return owned, owned.ctx, nil
 }
 
-func (drv *Driver) createSessionManager(ctx context.Context, keepCookies bool, owned *policySession) (manager *cdpsession.Manager, err error) {
-	defer func() {
-		if err != nil {
-			err = stderrors.Join(err, owned.Close())
-		}
-	}()
-
+func (drv *Driver) createSessionManager(ctx context.Context, keepCookies bool, owned *policySession) (*cdpsession.Manager, error) {
 	ver, err := drv.dev.Version(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "get browser endpoint")

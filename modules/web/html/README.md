@@ -119,7 +119,21 @@ Each driver copies its input and validates the final list at construction. Omitt
 
 The driver installs browser-level `Fetch` interception before creating its first page target. One persistent policy connection stays alive until `Driver.Close()`, even when all pages have closed. Concurrent callers can cancel their own initialization waits independently. Canceling the caller that started initialization cancels that attempt; waiting callers with live contexts may retry after its resources are released. Closing the driver cancels pending initialization, invalidates its active pages, and releases its connections. An unexpected policy-connection or interception-stream failure is terminal: active sessions are invalidated, future `Open`/`Parse` calls fail, and recovery requires a new driver. Policy connection/setup errors fail the operation without creating a page target.
 
-Restricted page and driver closure report unresolved cleanup failures. Target/context cleanup uses a shared five-second budget, including fallback through the existing policy connection. `Driver.Close()` releases the policy connection even if cleanup fails; the endpoint may retain live tabs that now require external cleanup. Cleanup errors from earlier page closure or terminal failure remain visible in `Driver.Close()`, and repeated closes return the cached result.
+The concrete CDP `HTMLPage` and `Driver` expose `CloseContext(ctx)` to Go
+hosts. The first call supplies the cleanup context for target or browser-context
+disposal, popup cleanup, fallback, and detach. Concurrent callers can cancel
+their own wait. Once cleanup settles, repeated calls return its result.
+`Close()` uses a five-second budget by default. An expired context still
+initiates local cleanup and releases owned sockets. If Chromium has not
+confirmed disposal, closure reports an error. Closing a page leaves the shared
+origin policy running.
+
+An execution host using an origin policy can enable `cdp.WithManagedPageCleanup()`.
+The VM's implicit page `Close()` then releases the handle and leaves browser
+disposal with the driver. The host must call `Driver.CloseContext(ctx)` after
+the native session settles, even on failure. This disposes all owned pages
+under one deadline, including pages whose initialization failed. A host can
+still explicitly dispose of one page with `HTMLPage.CloseContext(ctx)`.
 
 Independent drivers use independent CDP connections. Closing one does not disable another's policy. Their restrictions compose rather than replacing each other, so all drivers sharing an endpoint should use the same policy. Existing page-level `Ignore` resource filters continue to apply.
 

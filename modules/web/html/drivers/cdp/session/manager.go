@@ -9,6 +9,8 @@ import (
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/target"
 	"github.com/mafredri/cdp/rpcc"
+
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/internal/cleanup"
 )
 
 var (
@@ -40,8 +42,7 @@ type Manager struct {
 	wg               sync.WaitGroup
 	nextListenerID   atomic.Int64
 	mu               sync.RWMutex
-	closeOnce        sync.Once
-	closeErr         error
+	cleanup          cleanup.State
 }
 
 func New(
@@ -188,66 +189,98 @@ func (m *Manager) RemoveListener(id ListenerID) {
 }
 
 func (m *Manager) Close() error {
-	m.closeOnce.Do(func() {
-		if m.targets != nil {
-			m.targets.endPage(rpcc.ErrConnClosing)
-		}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultDetachTimeout)
+	defer cancel()
 
-		m.cancel()
-		if m.targets != nil {
-			m.targets.events.stop(context.Canceled)
-			if m.browserConn.Context().Err() == nil {
-				m.closeErr = m.browserConn.Close()
-			}
+	return m.CloseContext(ctx)
+}
 
-			m.wg.Wait()
+// CloseContext stops routing and detaches child sessions within ctx.
+// Closing the owned browser socket also interrupts pending transport writes.
+func (m *Manager) CloseContext(ctx context.Context) error {
+	return m.cleanup.Run(ctx, m.close)
+}
 
-			return
-		}
+// StopRouting cancels flat renderer work while retaining the owned browser
+// socket for browser-context disposal. CloseContext releases that socket.
+func (m *Manager) StopRouting() {
+	if m.targets == nil {
+		return
+	}
 
-		clients := m.Snapshot()
-		errs := make([]error, 0, len(clients)+4)
+	m.targets.endPage(rpcc.ErrConnClosing)
+	m.cancel()
+	m.targets.events.stop(context.Canceled)
+}
 
-		for _, client := range clients {
-			if m.browserConn != nil && m.browserConn.Context().Err() != nil {
-				// The browser channel is already gone; a remote detach cannot run.
-				client.markDetached()
-			}
+func (m *Manager) close(ctx context.Context) error {
+	stopAbort := context.AfterFunc(ctx, func() { _ = m.closeBrowserConnection() })
+	defer stopAbort()
 
-			if err := client.Close(); err != nil {
-				errs = append(errs, err)
-			}
-		}
-
-		if m.attached != nil {
-			if err := m.attached.Close(); err != nil && !isIgnorableManagerStreamCloseError(err) {
-				errs = append(errs, err)
-			}
-		}
-
-		if m.detached != nil {
-			if err := m.detached.Close(); err != nil && !isIgnorableManagerStreamCloseError(err) {
-				errs = append(errs, err)
-			}
-		}
-
-		if m.message != nil {
-			if err := m.message.Close(); err != nil && !isIgnorableManagerStreamCloseError(err) {
-				errs = append(errs, err)
-			}
-		}
-
-		if m.browserConn != nil && m.browserConn.Context().Err() == nil {
-			if err := m.browserConn.Close(); err != nil {
-				errs = append(errs, err)
-			}
-		}
+	if m.targets != nil {
+		m.StopRouting()
+		err := m.closeBrowserConnection()
 
 		m.wg.Wait()
-		m.closeErr = errors.Join(errs...)
-	})
 
-	return m.closeErr
+		return err
+	}
+
+	m.cancel()
+	clients := m.Snapshot()
+	errs := make([]error, 0, len(clients)+4)
+
+	for _, client := range clients {
+		if m.browserConn != nil && m.browserConn.Context().Err() != nil {
+			// The browser channel is already gone; a remote detach cannot run.
+			client.markDetached()
+		}
+
+		if err := client.closeContext(ctx); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if m.attached != nil {
+		if err := m.attached.Close(); err != nil && !isIgnorableManagerStreamCloseError(err) {
+			errs = append(errs, err)
+		}
+	}
+
+	if m.detached != nil {
+		if err := m.detached.Close(); err != nil && !isIgnorableManagerStreamCloseError(err) {
+			errs = append(errs, err)
+		}
+	}
+
+	if m.message != nil {
+		if err := m.message.Close(); err != nil && !isIgnorableManagerStreamCloseError(err) {
+			errs = append(errs, err)
+		}
+	}
+
+	if m.browserConn != nil && m.browserConn.Context().Err() == nil {
+		if err := m.closeBrowserConnection(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	m.wg.Wait()
+
+	return errors.Join(errs...)
+}
+
+func (m *Manager) closeBrowserConnection() error {
+	if m.browserConn == nil || m.browserConn.Context().Err() != nil {
+		return nil
+	}
+
+	err := m.browserConn.Close()
+	if errors.Is(err, rpcc.ErrConnClosing) {
+		return nil
+	}
+
+	return err
 }
 
 func (m *Manager) routeMessages() {
