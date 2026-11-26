@@ -21,6 +21,69 @@ requires_chromium() {
   esac
 }
 
+run_lab() {
+  local status=0
+  # Waiting on a background job lets INT or TERM interrupt the wait immediately.
+  lab "$@" &
+  lab_pid=$!
+  wait "$lab_pid" || status=$?
+  lab_pid=""
+  return "$status"
+}
+
+stop_wire_suite() {
+  local status=0
+  trap - EXIT
+  trap '' INT TERM
+
+  if [[ -n "$lab_pid" ]]; then
+    kill -TERM "$lab_pid" 2>/dev/null || true
+    wait "$lab_pid" 2>/dev/null || true
+  fi
+
+  if [[ -n "$wire_pid" ]]; then
+    kill -TERM "$wire_pid" 2>/dev/null || true
+    wait "$wire_pid" || status=$?
+    if [[ "$status" -ne 0 ]]; then
+      echo "Wire runtime exited with status $status" >&2
+    fi
+  fi
+
+  if [[ -n "$wire_dir" ]]; then
+    rm -f "$wire_dir/endpoint"
+    rmdir "$wire_dir"
+  fi
+  trap - INT TERM
+  return "$status"
+}
+
+run_wire_suite() {
+  local runtime="$1" endpoint
+  shift
+  # EXIT traps can run after Bash has discarded function-local variables.
+  wire_dir="" wire_pid="" lab_pid=""
+  trap 'status=$?; stop_wire_suite || true; exit "$status"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+
+  wire_dir=$(mktemp -d)
+  mkfifo "$wire_dir/endpoint"
+  "$runtime" --listen=127.0.0.1:0 > "$wire_dir/endpoint" &
+  wire_pid=$!
+  if ! IFS= read -r -t 10 endpoint < "$wire_dir/endpoint"; then
+    echo "Could not read the Wire runtime endpoint (startup timeout: 10 seconds)" >&2
+    return 1
+  fi
+  if [[ "$endpoint" != wire+tcp://127.0.0.1:* ]]; then
+    echo "Unexpected Wire runtime endpoint: $endpoint" >&2
+    return 1
+  fi
+
+  run_lab version --runtime="$endpoint"
+  run_lab run --runtime="$endpoint" "$@"
+  stop_wire_suite
+}
+
 get_modules() {
   find "$DIR_MODULES" -type f -name go.mod \
     -exec dirname {} \; \
@@ -151,7 +214,6 @@ main() {
       test-integration)
         echo "Running integration tests for module '$module'"
 
-        local runtime_uri="bin://$root_dir/${DIR_BIN#./}/runtime"
         local module_test_files="$root_dir/${DIR_MODULE_TESTS#./}/$module"
         local serve_dynamic="$root_dir/${DIR_TESTDATA#./}/pages/dynamic"
         local serve_static="$root_dir/${DIR_TESTDATA#./}/pages/static"
@@ -164,7 +226,6 @@ main() {
         fi
 
         local lab_args=(
-          --runtime="$runtime_uri"
           --timeout=120
           --attempts=5
           --concurrency=1
@@ -179,7 +240,7 @@ main() {
         lab_args+=(--serve="$serve_static")
         lab_args+=(--mock="$mock_api@api")
 
-        lab run "${lab_args[@]}"
+        run_wire_suite "$root_dir/${DIR_BIN#./}/runtime" "${lab_args[@]}"
         ;;
       lint)
         echo "Linting module '$module'"

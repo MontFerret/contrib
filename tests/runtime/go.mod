@@ -3,6 +3,7 @@ module github.com/MontFerret/contrib/tests/runner
 go 1.26.5
 
 require (
+	github.com/MontFerret/api v1.0.0-alpha.21
 	github.com/MontFerret/contrib/modules/ai/llm v1.0.0-rc.5
 	github.com/MontFerret/contrib/modules/archive v1.0.0-rc.4
 	github.com/MontFerret/contrib/modules/csv v1.0.0-rc.17
@@ -22,14 +23,15 @@ require (
 	github.com/MontFerret/contrib/modules/xml v1.0.0-rc.17
 	github.com/MontFerret/contrib/modules/yaml v1.0.0-rc.15
 	github.com/MontFerret/ferret/v2 v2.0.0-alpha.62
+	github.com/MontFerret/wire v1.0.0-alpha.5
 	github.com/rs/zerolog v1.35.1
+	google.golang.org/grpc v1.84.0
 )
 
 require (
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/JohannesKaufmann/dom v0.3.1 // indirect
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2 // indirect
-	github.com/MontFerret/api v1.0.0-alpha.21 // indirect
 	github.com/MontFerret/contrib/pkg/common v0.2.0 // indirect
 	github.com/MontFerret/cssx v0.2.0 // indirect
 	github.com/PuerkitoBio/goquery v1.13.0 // indirect
@@ -87,6 +89,8 @@ require (
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260706201446-f0a921348800 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
 	modernc.org/libc v1.80.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
