@@ -1,3 +1,4 @@
+// Package cleanup coordinates one teardown operation with independent waiters.
 package cleanup
 
 import (
