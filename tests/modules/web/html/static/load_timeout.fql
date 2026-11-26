@@ -1,0 +1,6 @@
+LET url = @lab.static.static + "/overview.html"
+LET page = DOCUMENT(url, { timeout: 5000 })
+LET invalid = DOCUMENT(url, { timeout: NONE }) ON ERROR RETURN NONE
+
+T::EQ(page.url, url)
+RETURN T::EQ(invalid, NONE)

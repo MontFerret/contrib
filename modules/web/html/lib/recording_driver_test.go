@@ -9,6 +9,7 @@ import (
 
 type recordingDriver struct {
 	page        drivers.HTMLPage
+	openContext context.Context
 	openParams  *drivers.Params
 	parseParams *drivers.ParseParams
 }
@@ -32,8 +33,13 @@ func (d *recordingDriver) Name() string {
 	return "recording"
 }
 
-func (d *recordingDriver) Open(_ context.Context, params drivers.Params) (drivers.HTMLPage, error) {
+func (d *recordingDriver) Open(ctx context.Context, params drivers.Params) (drivers.HTMLPage, error) {
+	d.openContext = ctx
 	d.openParams = &params
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	return d.page, nil
 }
