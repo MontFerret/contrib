@@ -5,11 +5,148 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+	"testing/synctest"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/ferret/v2/pkg/runtime"
 )
+
+const maxNavigationTimeoutMillis = 9_223_372_036_854
+
+func TestNewPageLoadParamsTimeout(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value runtime.Value
+		want  time.Duration
+	}{
+		{name: "omitted", want: 60 * time.Second},
+		{name: "five seconds", value: runtime.Int(5000), want: 5 * time.Second},
+		{name: "one millisecond", value: runtime.Int(1), want: time.Millisecond},
+		{name: "maximum", value: runtime.Int(maxNavigationTimeoutMillis), want: maxNavigationTimeoutMillis * time.Millisecond},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			options := runtime.NewObject()
+			if tc.value != nil {
+				if err := options.Set(t.Context(), runtime.String("timeout"), tc.value); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			params, err := newPageLoadParams(t.Context(), "https://example.com", options)
+			if assert.NoError(t, err) {
+				assert.Equal(t, tc.want, params.Timeout)
+			}
+		})
+	}
+}
+
+func TestOpenRejectsInvalidTimeout(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		value   runtime.Value
+		wantErr error
+	}{
+		{name: "zero", value: runtime.Int(0), wantErr: runtime.ErrInvalidArgument},
+		{name: "negative", value: runtime.Int(-1), wantErr: runtime.ErrInvalidArgument},
+		{name: "overflow", value: runtime.Int(maxNavigationTimeoutMillis + 1), wantErr: runtime.ErrInvalidArgument},
+		{name: "string", value: runtime.String("5000"), wantErr: runtime.ErrInvalidArgumentType},
+		{name: "float", value: runtime.Float(5000), wantErr: runtime.ErrInvalidArgumentType},
+		{name: "boolean", value: runtime.True, wantErr: runtime.ErrInvalidArgumentType},
+		{name: "duration", value: runtime.NewDuration(5 * time.Second), wantErr: runtime.ErrInvalidArgumentType},
+		{name: "none", value: runtime.None, wantErr: runtime.ErrInvalidArgumentType},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, drv := newRecordingDriver(t)
+			options := runtime.NewObjectWith(map[string]runtime.Value{"timeout": tc.value})
+
+			_, err := Open(ctx, runtime.String("https://example.com"), options)
+			if assert.ErrorIs(t, err, tc.wantErr) {
+				assert.ErrorContains(t, err, "timeout")
+			}
+
+			assert.Nil(t, drv.openContext)
+		})
+	}
+}
+
+func TestOpenNavigationDeadline(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		options       runtime.Value
+		parentTimeout time.Duration
+		wantTimeout   time.Duration
+	}{
+		{name: "no options", wantTimeout: 60 * time.Second},
+		{
+			name:        "driver option without timeout",
+			options:     runtime.NewObjectWith(map[string]runtime.Value{"driver": runtime.String("recording")}),
+			wantTimeout: 60 * time.Second,
+		},
+		{name: "driver shorthand", options: runtime.String("recording"), wantTimeout: 60 * time.Second},
+		{
+			name:        "explicit five seconds",
+			options:     runtime.NewObjectWith(map[string]runtime.Value{"timeout": runtime.Int(5000)}),
+			wantTimeout: 5 * time.Second,
+		},
+		{
+			name:        "explicit one millisecond",
+			options:     runtime.NewObjectWith(map[string]runtime.Value{"timeout": runtime.Int(1)}),
+			wantTimeout: time.Millisecond,
+		},
+		{name: "earlier caller deadline", parentTimeout: 2 * time.Second, wantTimeout: 2 * time.Second},
+		{
+			name:          "later caller deadline",
+			options:       runtime.NewObjectWith(map[string]runtime.Value{"timeout": runtime.Int(5000)}),
+			parentTimeout: 10 * time.Second,
+			wantTimeout:   5 * time.Second,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ctx, drv := newRecordingDriver(t)
+				args := []runtime.Value{runtime.String("https://example.com")}
+
+				if tc.options != nil {
+					args = append(args, tc.options)
+				}
+
+				start := time.Now()
+				if tc.parentTimeout != 0 {
+					parent, cancel := context.WithDeadline(ctx, start.Add(tc.parentTimeout))
+					defer cancel()
+					ctx = parent
+				}
+
+				_, err := Open(ctx, args...)
+				assert.NoError(t, err)
+
+				if drv.openContext == nil {
+					t.Fatal("driver was not called")
+				}
+
+				deadline, ok := drv.openContext.Deadline()
+				if assert.True(t, ok, "driver context has no deadline") {
+					assert.Equal(t, tc.wantTimeout, deadline.Sub(start))
+				}
+
+				assert.ErrorIs(t, drv.openContext.Err(), context.Canceled)
+			})
+		})
+	}
+}
+
+func TestOpenPropagatesParentCancellation(t *testing.T) {
+	ctx, drv := newRecordingDriver(t)
+	ctx, cancel := context.WithCancel(ctx)
+	cancel()
+
+	_, err := Open(ctx, runtime.String("https://example.com"))
+	assert.ErrorIs(t, err, context.Canceled)
+	assert.NotNil(t, drv.openContext)
+}
 
 func TestNewPageLoadParamsInitScript(t *testing.T) {
 	ctx := context.Background()
@@ -62,8 +199,6 @@ func TestNewPageLoadParamsInitScript(t *testing.T) {
 }
 
 func TestDocument(t *testing.T) {
-	defaultTimeout := drivers.DefaultPageLoadTimeout * time.Millisecond
-
 	t.Run("newPageLoadParams", func(t *testing.T) {
 		t.Run("all params", func(t *testing.T) {
 			expected := PageLoadParams{
@@ -104,13 +239,13 @@ func TestDocument(t *testing.T) {
 					},
 				},
 				Driver:  "cdp",
-				Timeout: 5000,
+				Timeout: 5 * time.Second,
 			}
 			out, err := newPageLoadParams(context.Background(), "https://example.com", runtime.NewObjectWith(map[string]runtime.Value{
 				"driver":      runtime.NewString(expected.Driver),
 				"userAgent":   runtime.NewString(expected.UserAgent),
 				"keepCookies": runtime.True,
-				"timeout":     runtime.NewInt(int(expected.Timeout)),
+				"timeout":     runtime.Int(5000),
 				"charset":     runtime.NewString(expected.Charset),
 				"headers": runtime.NewObjectWith(map[string]runtime.Value{
 					"Accept": runtime.String("text/html"),
@@ -155,7 +290,7 @@ func TestDocument(t *testing.T) {
 			}
 
 			if out.Timeout != expected.Timeout {
-				t.Fatalf("expected timeout %v, got %v", defaultTimeout, out.Timeout)
+				t.Fatalf("expected timeout %v, got %v", expected.Timeout, out.Timeout)
 			}
 
 			if !reflect.DeepEqual(out.Headers, expected.Headers) {

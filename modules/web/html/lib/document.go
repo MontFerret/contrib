@@ -2,6 +2,7 @@ package lib
 
 import (
 	"context"
+	"math"
 	"time"
 
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
@@ -13,12 +14,12 @@ type (
 	PageLoadParams struct {
 		Driver string `json:"driver"`
 		drivers.Params
-		Timeout time.Duration `json:"timeout"`
+		Timeout time.Duration `json:"timeout"` // Normalized page load timeout.
 	}
 
 	pageLoadParamsInput struct {
 		Driver      *string             `json:"driver"`
-		Timeout     *time.Duration      `json:"timeout"`
+		Timeout     runtime.Value       `json:"timeout"`
 		UserAgent   *string             `json:"userAgent"`
 		KeepCookies *bool               `json:"keepCookies"`
 		Cookies     runtime.Value       `json:"cookies"`
@@ -68,7 +69,7 @@ func Open(ctx context.Context, args ...runtime.Value) (runtime.Value, error) {
 		params = p
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, params.Timeout*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, params.Timeout)
 	defer cancel()
 
 	drv, err := drivers.FromContext(ctx, params.Driver)
@@ -109,7 +110,19 @@ func newPageLoadParams(ctx context.Context, url runtime.String, arg runtime.Valu
 		}
 
 		if input.Timeout != nil {
-			res.Timeout = *input.Timeout
+			milliseconds, ok := input.Timeout.(runtime.Int)
+			if !ok {
+				return PageLoadParams{}, runtime.Errorf(runtime.ErrInvalidArgumentType,
+					"timeout must be a positive integer in milliseconds (got %s)", runtime.TypeOf(input.Timeout))
+			}
+
+			const maxTimeoutMillis = math.MaxInt64 / int64(time.Millisecond)
+			if milliseconds <= 0 || int64(milliseconds) > maxTimeoutMillis {
+				return PageLoadParams{}, runtime.Errorf(runtime.ErrInvalidArgument,
+					"timeout must be between 1 and %d milliseconds", maxTimeoutMillis)
+			}
+
+			res.Timeout = time.Duration(milliseconds) * time.Millisecond
 		}
 
 		if input.UserAgent != nil {

@@ -208,7 +208,7 @@ RETURN ELEMENT(page, "#post h1").innerText
 | Option | Type | Notes |
 | --- | --- | --- |
 | `driver` | `String` | Driver name. Use `"memory"`, `"cdp"`, or another registered custom driver name. |
-| `timeout` | `Int` | Page load timeout in milliseconds. |
+| `timeout` | `Int` | Positive page load timeout in milliseconds. Defaults to 60 seconds. An earlier caller deadline takes precedence. |
 | `userAgent` | `String` | User-Agent value for the request or browser page. |
 | `keepCookies` | `Boolean` | Reuses browser/session cookies where the selected driver supports it. |
 | `cookies` | `Object` or `Object[]` | Cookie or cookies to send during loading. |
