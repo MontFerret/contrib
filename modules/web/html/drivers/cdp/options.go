@@ -13,9 +13,10 @@ import (
 type (
 	Options struct {
 		*drivers.Options
-		Connection  *ConnectionOptions
-		Address     string
-		KeepCookies bool
+		Connection         *ConnectionOptions
+		Address            string
+		KeepCookies        bool
+		managedPageCleanup bool
 	}
 
 	ConnectionOptions struct {
@@ -75,6 +76,15 @@ func WithAddress(address string) Option {
 // The policy connection remains active until Driver.Close.
 func WithAllowedOrigins(origins ...string) Option {
 	return WithOptions(drivers.WithAllowedOrigins(origins...))
+}
+
+// WithManagedPageCleanup transfers implicit page cleanup to the restricted
+// driver. The host must close the driver after every execution, including on
+// failure. Explicit HTMLPage.CloseContext still disposes an individual page.
+func WithManagedPageCleanup() Option {
+	return func(opts *Options) {
+		opts.managedPageCleanup = true
+	}
 }
 
 func WithProxy(address string) Option {

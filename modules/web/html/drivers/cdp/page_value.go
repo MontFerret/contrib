@@ -106,6 +106,10 @@ func (p *HTMLPage) Length(ctx context.Context) (runtime.Int, error) {
 }
 
 func (p *HTMLPage) IsClosed() runtime.Boolean {
+	if p.policySession != nil && p.policySession.lifetime.Err() != nil {
+		return runtime.True
+	}
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 

@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/rpcc"
 
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/internal/cleanup"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/network"
 	"github.com/MontFerret/ferret/v2/pkg/logging"
 )
@@ -34,11 +34,9 @@ type (
 		sessions     map[*policySession]struct{}
 		err          error
 		closed       bool
-		closeDone    chan struct{}
-		closeErr     error
+		cleanup      cleanup.State
 		watchDone    chan struct{}
 		initializing *policyInitialization
-		failing      bool
 		cleanupErr   error
 	}
 )
@@ -48,10 +46,9 @@ func newBrowserPolicy(origins []string) *browserPolicy {
 	_, err := network.NewInterceptorFilter(filter)
 
 	return &browserPolicy{
-		filter:    filter,
-		err:       err,
-		sessions:  make(map[*policySession]struct{}),
-		closeDone: make(chan struct{}),
+		filter:   filter,
+		err:      err,
+		sessions: make(map[*policySession]struct{}),
 	}
 }
 
@@ -216,12 +213,20 @@ func (p *browserPolicy) watch(conn *rpcc.Conn, interceptor *network.Interceptor)
 	}
 
 	p.err = fmt.Errorf("CDP browser policy lost; create a new driver: %w", err)
-	p.failing = true
 	sessions := p.snapshot()
 	p.mu.Unlock()
 
-	p.closeSessions(sessions)
-	p.recordCleanup(errors.Join(conn.Close(), interceptor.Close()))
+	ctx, cancel := defaultCleanupContext()
+	defer cancel()
+
+	for _, session := range sessions {
+		session.invalidate()
+		session.cancel()
+	}
+
+	// Managed cleanup belongs to the host, even after policy failure.
+	p.closeSessions(ctx, sessions, true)
+	p.recordCleanup(errors.Join(closeConnection(conn), interceptor.Close()))
 }
 
 func (p *browserPolicy) release(session *policySession, err error) {
@@ -244,27 +249,21 @@ func (p *browserPolicy) snapshot() []*policySession {
 	return sessions
 }
 
-func (p *browserPolicy) closeSessions(sessions []*policySession) {
+func (p *browserPolicy) closeSessions(ctx context.Context, sessions []*policySession, unmanagedOnly bool) {
 	var wg sync.WaitGroup
 	for _, session := range sessions {
-		// Close records cleanup failures before releasing the session.
-		wg.Go(func() { _ = session.Close() })
+		if unmanagedOnly && session.managed() {
+			continue
+		}
+
+		wg.Go(func() {
+			_ = session.CloseContext(ctx)
+			// Policy remains active until all owned page workers have settled.
+			_ = session.CloseContext(context.Background())
+		})
 	}
 
 	wg.Wait()
-}
-
-// cleanupClient borrows the existing policy channel only for target cleanup.
-// It never initializes or reconnects the policy, including during shutdown.
-func (p *browserPolicy) cleanupClient() *cdp.Client {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	if p.conn == nil || p.conn.Context().Err() != nil {
-		return nil
-	}
-
-	return cdp.NewClient(p.conn)
 }
 
 func (p *browserPolicy) recordCleanup(err error) {
@@ -278,36 +277,39 @@ func (p *browserPolicy) recordCleanup(err error) {
 }
 
 func (p *browserPolicy) Close() error {
-	p.mu.Lock()
-	if p.closed {
-		p.mu.Unlock()
-		<-p.closeDone
+	ctx, cancel := defaultCleanupContext()
+	defer cancel()
 
-		return p.closeErr
+	return p.CloseContext(ctx)
+}
+
+func (p *browserPolicy) CloseContext(ctx context.Context) error {
+	p.mu.Lock()
+	p.closed = true
+	if p.initializing != nil {
+		p.initializing.cancel()
 	}
 
-	p.closed = true
+	p.mu.Unlock()
+
+	return p.cleanup.Run(ctx, p.close)
+}
+
+func (p *browserPolicy) close(ctx context.Context) error {
+	p.mu.Lock()
 	sessions := p.snapshot()
 	conn, interceptor, watchDone := p.conn, p.interceptor, p.watchDone
-	attempt, failing := p.initializing, p.failing
+	attempt := p.initializing
 	p.mu.Unlock()
 
 	if attempt != nil {
-		attempt.cancel()
 		<-attempt.done
 	}
 
-	// If the watcher already claimed failure cleanup, let it finish instead of
-	// closing its channels while it is still disposing owned targets.
-	if !failing {
-		p.closeSessions(sessions)
-		if interceptor != nil {
-			p.recordCleanup(interceptor.Close())
-		}
-
-		if conn != nil && conn.Context().Err() == nil {
-			p.recordCleanup(conn.Close())
-		}
+	p.closeSessions(ctx, sessions, false)
+	p.recordCleanup(closeConnection(conn))
+	if interceptor != nil {
+		p.recordCleanup(interceptor.Close())
 	}
 
 	if watchDone != nil {
@@ -315,9 +317,7 @@ func (p *browserPolicy) Close() error {
 	}
 
 	p.mu.Lock()
-	p.closeErr = p.cleanupErr
-	close(p.closeDone)
-	p.mu.Unlock()
+	defer p.mu.Unlock()
 
-	return p.closeErr
+	return p.cleanupErr
 }

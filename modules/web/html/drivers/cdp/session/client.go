@@ -1,6 +1,8 @@
 package session
 
 import (
+	"context"
+
 	"github.com/mafredri/cdp"
 	"github.com/mafredri/cdp/protocol/target"
 	"github.com/mafredri/cdp/rpcc"
@@ -13,6 +15,7 @@ type Client struct {
 	Conn           *rpcc.Conn
 	CDP            *cdp.Client
 	closeFn        func() error
+	closeContextFn func(context.Context) error
 	markDetachedFn func()
 	writeFn        func([]byte) error
 	ID             target.SessionID
@@ -25,6 +28,14 @@ func (c *Client) Close() error {
 	}
 
 	return c.closeFn()
+}
+
+func (c *Client) closeContext(ctx context.Context) error {
+	if c != nil && c.closeContextFn != nil {
+		return c.closeContextFn(ctx)
+	}
+
+	return c.Close()
 }
 
 func (c *Client) markDetached() {

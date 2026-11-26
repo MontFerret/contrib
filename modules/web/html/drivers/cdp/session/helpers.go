@@ -58,6 +58,7 @@ func newClientFromSession(
 		Conn:           conn,
 		CDP:            cdp.NewClient(conn),
 		closeFn:        transport.Close,
+		closeContextFn: transport.closeContext,
 		markDetachedFn: transport.MarkDetached,
 		writeFn:        transport.Write,
 	}, nil

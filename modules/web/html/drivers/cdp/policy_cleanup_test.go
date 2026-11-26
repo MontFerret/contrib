@@ -73,7 +73,7 @@ func TestPolicySessionCleanupFallback(t *testing.T) {
 			endpoint := newPolicyTestEndpoint(t, func(id int32, method string, _ json.RawMessage) (any, error) {
 				switch method {
 				case "Target.closeTarget", "Target.disposeBrowserContext":
-					if id == 1 {
+					if id == 3 {
 						fallbackCalls.Add(1)
 						if test.fallbackOK {
 							return map[string]any{"success": true}, nil
@@ -127,8 +127,17 @@ func TestPolicySessionCleanupFallback(t *testing.T) {
 				t.Fatal("cleanup used a disconnected channel")
 			}
 
-			if endpoint.opened.Load() != 2 {
-				t.Fatal("cleanup opened a replacement connection")
+			wantConnections := int32(3)
+			if test.primaryOK {
+				wantConnections = 2
+			}
+
+			if got := endpoint.opened.Load(); got != wantConnections {
+				t.Fatalf("opened %d connections, want %d", got, wantConnections)
+			}
+
+			if policy.conn.Context().Err() != nil {
+				t.Fatal("page cleanup closed the browser policy connection")
 			}
 
 			if closeErr := policy.Close(); (closeErr != nil) != wantFailure {
@@ -146,7 +155,7 @@ func newPolicyCleanupSession(t *testing.T, endpoint *policyTestEndpoint) (*brows
 	policy.conn = policyConn
 	lifetime, invalidate := context.WithCancel(t.Context())
 	ctx, cancel := context.WithCancel(t.Context())
-	session := &policySession{policy: policy, conn: conn, client: client, targetID: "owned-target", ctx: ctx, cancel: cancel, lifetime: lifetime, invalidate: invalidate}
+	session := &policySession{policy: policy, driver: New(WithAddress(endpoint.server.URL)), conn: conn, client: client, targetID: "owned-target", ctx: ctx, cancel: cancel, lifetime: lifetime, invalidate: invalidate}
 	policy.sessions[session] = struct{}{}
 	t.Cleanup(func() { _ = policy.Close() })
 
@@ -211,13 +220,16 @@ func TestPolicySessionCleanupSharesDeadline(t *testing.T) {
 		return struct{}{}, nil
 	})
 	policy, session := newPolicyCleanupSession(t, endpoint)
+	ctx, cancel := context.WithTimeout(t.Context(), 150*time.Millisecond)
+	defer cancel()
 	started := time.Now()
-	err := session.Close()
+
+	err := session.CloseContext(ctx)
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("cleanup deadline = %v", err)
 	}
 
-	if elapsed := time.Since(started); elapsed > policyCleanupTimeout+time.Second {
+	if elapsed := time.Since(started); elapsed > time.Second {
 		t.Fatalf("cleanup attempts did not share a deadline: %s", elapsed)
 	}
 
@@ -314,6 +326,9 @@ func TestBrowserPolicyRetainsTerminalCleanupFailure(t *testing.T) {
 	}
 
 	session.targetID = "terminal-target"
+	if _, err := session.finish(nil, nil); err != nil {
+		t.Fatal(err)
+	}
 	if err := driver.policy.interceptor.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -331,5 +346,118 @@ func TestBrowserPolicyRetainsTerminalCleanupFailure(t *testing.T) {
 
 	if again := driver.Close(); again != err {
 		t.Fatalf("repeated Close changed its result: %v", again)
+	}
+}
+
+func TestPolicySessionExpiredCloseReleasesTransport(t *testing.T) {
+	var calls atomic.Int32
+	endpoint := newPolicyTestEndpoint(t, func(_ int32, _ string, _ json.RawMessage) (any, error) {
+		calls.Add(1)
+
+		return struct{}{}, nil
+	})
+	policy, session := newPolicyCleanupSession(t, endpoint)
+	page := &HTMLPage{policySession: session}
+	session.page = page
+	ctx, cancel := context.WithDeadline(t.Context(), time.Now().Add(-time.Second))
+	defer cancel()
+
+	if err := page.CloseContext(ctx); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("expired close returned %v", err)
+	}
+
+	err := page.CloseContext(t.Context())
+	if !errors.Is(err, context.DeadlineExceeded) || !strings.Contains(err.Error(), "owned-target") {
+		t.Fatalf("unconfirmed target was not retained: %v", err)
+	}
+
+	if again := page.Close(); again != err {
+		t.Fatalf("legacy close changed the retained error: %v", again)
+	}
+
+	if calls.Load() != 0 || session.conn.Context().Err() == nil || policy.conn.Context().Err() != nil {
+		t.Fatal("expired cleanup sent a command, leaked its transport, or closed the policy transport")
+	}
+}
+
+func TestPageCloseWaiterCanCancelIndependently(t *testing.T) {
+	entered := make(chan struct{})
+	endpoint := newPolicyTestEndpoint(t, func(id int32, method string, _ json.RawMessage) (any, error) {
+		if id == 2 && method == "Target.closeTarget" {
+			close(entered)
+
+			return nil, nil
+		}
+
+		return map[string]any{"success": true}, nil
+	})
+	_, session := newPolicyCleanupSession(t, endpoint)
+	page := &HTMLPage{policySession: session}
+	session.page = page
+
+	first, stop := context.WithTimeout(t.Context(), 300*time.Millisecond)
+	defer stop()
+	result := make(chan error, 1)
+	go func() { result <- page.CloseContext(first) }()
+	<-entered
+
+	waiter, cancel := context.WithCancel(t.Context())
+	cancel()
+	if err := page.CloseContext(waiter); !errors.Is(err, context.Canceled) {
+		t.Fatalf("concurrent waiter returned %v", err)
+	}
+
+	if err := <-result; err != nil {
+		t.Fatalf("waiter canceled the owner's fallback: %v", err)
+	}
+
+	if err := page.CloseContext(waiter); err != nil {
+		t.Fatalf("settled cleanup did not retain success: %v", err)
+	}
+}
+
+func TestManagedDriverClosesDuringPageInitialization(t *testing.T) {
+	creating := make(chan struct{})
+	var disposals atomic.Int32
+	endpoint := newPolicyTestEndpoint(t, func(_ int32, method string, _ json.RawMessage) (any, error) {
+		switch method {
+		case "Target.createBrowserContext":
+			return map[string]string{"browserContextId": "owned"}, nil
+		case "Target.createTarget":
+			close(creating)
+
+			return nil, nil
+		case "Target.disposeBrowserContext":
+			disposals.Add(1)
+		}
+
+		return struct{}{}, nil
+	})
+
+	driver := New(WithAddress(endpoint.server.URL), WithAllowedOrigins(), WithManagedPageCleanup())
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+	defer cancel()
+	result := make(chan error, 1)
+	go func() {
+		_, err := driver.Open(ctx, drivers.Params{URL: BlankPageURL})
+		result <- err
+	}()
+
+	select {
+	case <-creating:
+	case <-ctx.Done():
+		t.Fatal("page initialization did not start")
+	}
+
+	if err := driver.CloseContext(ctx); err != nil {
+		t.Fatalf("close during page initialization: %v", err)
+	}
+
+	if err := <-result; !errors.Is(err, context.Canceled) {
+		t.Fatalf("initializing open returned %v", err)
+	}
+
+	if disposals.Load() != 1 {
+		t.Fatalf("partially initialized page was disposed %d times", disposals.Load())
 	}
 }

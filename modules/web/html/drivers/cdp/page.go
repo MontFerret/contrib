@@ -13,6 +13,7 @@ import (
 	"github.com/MontFerret/contrib/modules/web/html/drivers"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/dom"
 	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/input"
+	"github.com/MontFerret/contrib/modules/web/html/drivers/cdp/internal/cleanup"
 	cdpnet "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/network"
 	cdpsession "github.com/MontFerret/contrib/modules/web/html/drivers/cdp/session"
 	"github.com/MontFerret/contrib/modules/web/html/internal/logutil"
@@ -33,8 +34,7 @@ type (
 		policySession *policySession
 		mu            sync.Mutex
 		closed        runtime.Boolean
-		closeOnce     sync.Once
-		closeErr      error
+		cleanup       cleanup.State
 	}
 )
 
@@ -67,6 +67,11 @@ func loadHTMLPage(ctx context.Context, sessions *cdpsession.Manager, params driv
 		return nil, runtime.Error(runtime.ErrMissedArgument, "root session")
 	}
 
+	// Flat network setup uses the page lifetime for subscriptions. Interrupt
+	// that lifetime if the loading operation is canceled before publication.
+	stopInitialization := context.AfterFunc(ctx, sessions.StopRouting)
+	defer stopInitialization()
+
 	client := root.CDP
 	var netManager *cdpnet.Manager
 	var domManager *dom.Manager
@@ -74,7 +79,9 @@ func loadHTMLPage(ctx context.Context, sessions *cdpsession.Manager, params driv
 	defer func() {
 		if err != nil {
 			if p != nil {
-				err = errors.Join(err, p.Close())
+				if owned == nil {
+					err = errors.Join(err, p.Close())
+				}
 
 				return
 			}
@@ -100,12 +107,10 @@ func loadHTMLPage(ctx context.Context, sessions *cdpsession.Manager, params driv
 			}
 
 			if owned != nil {
-				err = errors.Join(err, owned.Close())
-
 				return
 			}
 
-			cleanupCtx, cancel := context.WithTimeout(context.Background(), policyCleanupTimeout)
+			cleanupCtx, cancel := defaultCleanupContext()
 			defer cancel()
 			if closeErr := sessions.ClosePageTargets(cleanupCtx, nil); closeErr != nil {
 				logger.Error().Err(closeErr).Msg("failed to close page")
@@ -114,7 +119,7 @@ func loadHTMLPage(ctx context.Context, sessions *cdpsession.Manager, params driv
 				}
 			}
 
-			if closeErr := sessions.Close(); closeErr != nil {
+			if closeErr := sessions.CloseContext(cleanupCtx); closeErr != nil {
 				logger.Error().Err(closeErr).Msg("failed to close session manager")
 				if sessions.IsFlat() {
 					err = errors.Join(err, closeErr)
@@ -219,7 +224,7 @@ func loadHTMLPageWithContent(ctx context.Context, sessions *cdpsession.Manager, 
 	}
 
 	defer func(page *HTMLPage) {
-		if err != nil {
+		if err != nil && owned == nil {
 			if e := page.Close(); e != nil {
 				logger.Error().Err(e).Msg("failed to close page")
 				err = errors.Join(err, e)

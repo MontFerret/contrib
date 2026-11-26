@@ -125,8 +125,12 @@ func (s *targetSession) detach() error {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDetachTimeout)
+	ctx, cancel := context.WithTimeout(r.targets.manager.ctx, defaultDetachTimeout)
 	defer cancel()
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 
 	err := parent.Target.DetachFromTarget(ctx, target.NewDetachFromTargetArgs().SetSessionID(s.id))
 	if isMissingSessionError(err) || errors.Is(err, rpcc.ErrConnClosing) {
