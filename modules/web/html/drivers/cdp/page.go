@@ -67,6 +67,11 @@ func loadHTMLPage(ctx context.Context, sessions *cdpsession.Manager, params driv
 		return nil, runtime.Error(runtime.ErrMissedArgument, "root session")
 	}
 
+	// Flat network setup uses the page lifetime for subscriptions. Interrupt
+	// that lifetime if the loading operation is canceled before publication.
+	stopInitialization := context.AfterFunc(ctx, sessions.StopRouting)
+	defer stopInitialization()
+
 	client := root.CDP
 	var netManager *cdpnet.Manager
 	var domManager *dom.Manager

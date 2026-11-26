@@ -164,7 +164,12 @@ func (s *policySession) CloseContext(ctx context.Context) error {
 	s.cancel()
 	s.mu.Lock()
 	s.closed = true
+	sessions := s.sessions
 	s.mu.Unlock()
+
+	if sessions != nil {
+		sessions.StopRouting()
+	}
 
 	return s.cleanup.Run(ctx, s.close)
 }
@@ -172,10 +177,6 @@ func (s *policySession) CloseContext(ctx context.Context) error {
 func (s *policySession) close(ctx context.Context) error {
 	if s.initialized != nil {
 		<-s.initialized
-	}
-
-	if s.contextID != "" && s.sessions != nil {
-		s.sessions.StopRouting()
 	}
 
 	err := errors.Join(s.creationErr, s.closeTarget(ctx), closeConnection(s.conn))
