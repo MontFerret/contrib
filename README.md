@@ -63,6 +63,20 @@ handshake and submit queries and parameters. Use `--browser-address` to select
 the Chromium CDP endpoint and `--log-level` to adjust engine logging on stderr.
 SIGINT or SIGTERM shuts down the host. Run `make test-runtime` to test it.
 
+To run a module's integration suite locally, put Ferret Lab
+`v2.0.0-alpha.37` on your PATH, then build and run the suite.
+
+```sh
+go install github.com/MontFerret/lab/v2@v2.0.0-alpha.37
+make build-cli
+make test-integration db/sqlite
+```
+
+The integration command starts a Wire host for each selected suite, checks its
+handshake with Lab, and stops it after the suite. Omit the module name to run
+all suites. The `web/html` suite also needs Chromium listening on
+`http://127.0.0.1:9222`.
+
 Support packages under `pkg/` can be updated across module `go.mod` and `go.sum` files with:
 
 ```sh

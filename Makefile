@@ -46,6 +46,7 @@ test: test-unit test-integration
 
 test-runtime:
 	go test ${DIR_TEST_CLI}/...
+	@bash scripts/modules-integration-test.sh
 
 test-unit:
 	@./scripts/modules.sh test-unit $(filter-out $@,$(MAKECMDGOALS))
